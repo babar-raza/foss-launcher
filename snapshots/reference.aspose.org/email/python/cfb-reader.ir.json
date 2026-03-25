@@ -1,0 +1,257 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/email/python/cfb-reader/",
+    "canonical_import": "aspose.email",
+    "code_import": "aspose.email",
+    "date": "2026-03-24T16:46:41Z",
+    "dateModified": "2026-03-24T16:46:41Z",
+    "datePublished": "2026-03-24T16:46:41Z",
+    "description": "It serves as the in-memory representation used by the `CFBWriter` to serialize CFB containers deterministically.",
+    "display_name": "Aspose.Email FOSS",
+    "family": "email",
+    "keywords": [
+      "email python",
+      "email python library",
+      "email python package",
+      "email python module",
+      "email python install",
+      "email python code",
+      "email python documentation",
+      "email python regex"
+    ],
+    "lastmod": "2026-03-24T16:46:41Z",
+    "page_role": "reference_object_page",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "The CFBDocument class represents a mutable Compound File",
+    "slug": "cfb-reader",
+    "title": "The CFBDocument class represents a mutable Compound File Binary (CFB) documen...",
+    "type": "reference_object_page",
+    "url": "/reference.aspose.org/email/python/cfb-reader/",
+    "weight": 19
+  },
+  "page_id": "reference/cfb-reader",
+  "page_role": "reference_object_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-email-5ebce4"
+          ],
+          "content": "The `CFBDocument` class represents a mutable Compound File Binary (CFB) document and can be constructed from a file or a `CFBReader` instance. It serves as the in-memory representation used by the `CFBWriter` to serialize CFB containers deterministically.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-5ebce4",
+            "CLM-email-c77072"
+          ],
+          "content": "from aspose.email import CFBDocument, CFBReader\n\nreader = CFBReader.from_file(\"example.msg\")\ndocument = CFBDocument.from_reader(reader)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-5ebce4"
+          ],
+          "content": "| Method | Signature | Description |\n|--------|-----------|-------------|\n| `from_reader` | `from_reader`(reader: `CFBReader`) -> '`CFBDocument`' | Constructs a document from a `CFBReader` instance. |\n| `from_file` | `from_file`(path: Path | str) -> '`CFBDocument`' | Constructs a document by reading a CFB file. |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-email-5ebce4",
+            "CLM-email-e00487"
+          ],
+          "content": "The `CFBDocument` class represents a mutable Compound File Binary (CFB) document and can be constructed from a file or a `CFBReader` instance. It serves as an in-memory representation of the CFB structure for modification and serialization via `CFBWriter`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-5ebce4",
+            "CLM-email-084862"
+          ],
+          "content": "| Method | Signature | Description |\n|--------|-----------|-------------|\n| `from_file` | `from_file(path: Path | str) -> 'CFBDocument'` | Constructs a `CFBDocument` by reading a CFB file. |\n| `from_reader` | `from_reader(reader: CFBReader) -> 'CFBDocument'` | Constructs a `CFBDocument` from an existing `CFBReader` instance. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-084862",
+            "CLM-email-5ebce4",
+            "CLM-email-c77072"
+          ],
+          "content": "import aspose.email\nfrom aspose.email import CFBReader, CFBDocument\n\nreader = CFBReader.from_file(\"example.msg\")\ndocument = CFBDocument.from_reader(reader)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Constructor",
+      "level": 2,
+      "section_id": "constructor"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-email-5ebce4",
+            "CLM-email-500ec1",
+            "CLM-email-711ad0"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| root_storage | `CFBStorage` | The root storage node of the CFB document. |\n| header | `Header` | The CFB header record defining geometry and allocation chain entry points. |\n| storages | list[`CFBStorage`] | List of top-level storage nodes in the document. |\n| streams | list[`CFBStream`] | List of top-level stream nodes in the document. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-5ebce4",
+            "CLM-email-500ec1",
+            "CLM-email-c77072"
+          ],
+          "content": "from aspose.email import CFBDocument, CFBReader\n\nreader = CFBReader.from_file(\"example.msg\")\ndocument = CFBDocument.from_reader(reader)\nprint(document.header.sector_size)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-email-5ebce4",
+            "CLM-email-c77072"
+          ],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `from_reader(reader: CFBReader) -> 'CFBDocument'` | `CFBDocument` | Constructs a `CFBDocument` from an existing `CFBReader` instance. |\n| `from_file(path: Path | str) -> 'CFBDocument'` | `CFBDocument` | Constructs a `CFBDocument` by reading a CFB file directly. |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-5ebce4",
+            "CLM-email-c77072"
+          ],
+          "content": "from aspose.email import CFBDocument, CFBReader\n\n# Load a CFB file and construct a document\nreader = CFBReader.from_file(\"example.msg\")\ndocument = CFBDocument.from_reader(reader)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-email-5ebce4",
+            "CLM-email-f27dab",
+            "CLM-email-084862",
+            "CLM-email-c77072"
+          ],
+          "content": "The following example demonstrates constructing a `CFBDocument` from a file using `CFBDocument.from_file()`, then reading stream data via a `CFBReader` instance. It shows how to open a CFB container, inspect directory entries, and extract raw stream bytes using `get_stream_data()`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-5ebce4",
+            "CLM-email-f27dab",
+            "CLM-email-084862",
+            "CLM-email-c77072"
+          ],
+          "content": "import aspose.email\nfrom aspose.email import CFBReader, CFBDocument\n\n# Load CFB container from file\nreader = CFBReader.from_file(\"example.msg\")\n\n# Resolve a stream by name and read its data\nstream_id = reader.resolve_path(\"\\x01Storage\\x01Stream\")\ndata = reader.get_stream_data(stream_id)\n\n# Construct a CFBDocument from the reader\ndoc = CFBDocument.from_reader(reader)\n\nprint(f\"Stream data length: {len(data)} bytes\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Example",
+      "level": 2,
+      "section_id": "example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-email-5ebce4",
+            "CLM-email-2ce942",
+            "CLM-email-15641e"
+          ],
+          "content": "The `CFBDocument` class represents a mutable Compound File Binary (CFB) document and can be constructed from a file or a `CFBReader` instance. Related classes include `CFBReader` for reading CFB containers, `CFBWriter` for serialization, and `DirectoryEntry` for inspecting container structure.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-5ebce4",
+            "CLM-email-15641e",
+            "CLM-email-084862",
+            "CLM-email-c77072"
+          ],
+          "content": "from aspose.email import CFBReader, CFBDocument\n\nreader = CFBReader.from_file(\"example.msg\")\ndocument = CFBDocument.from_reader(reader)\nentry = reader.get_entry(reader.iter_storages().__next__())\nprint(entry.is_storage(), entry.is_stream(), entry.is_root())",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Aspose.Email FOSS API reference](/reference.aspose.org/email/python/api-overview/)",
+            "[Key features overview](/blog.aspose.org/email/python/email-key-features/)",
+            "[Introducing Aspose.Email FOSS Python](/blog.aspose.org/email/python/introducing-email-foss-python/)",
+            "[Convert file formats guide](/kb.aspose.org/email/python/how-to-convert-files-python/)",
+            "[Fix common errors](/kb.aspose.org/email/python/how-to-fix-files-errors-python/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "The CFBDocument class represents a mutable Compound File Binary (CFB) documen..."
+}

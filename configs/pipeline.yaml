@@ -15,6 +15,13 @@ pipeline:
     output_schema: scout_bundle.schema.json
     checkpoint: true
 
+  # TC-5167: optional drift detection — active in verify and maintain pipeline_mode only
+  - worker: verify
+    input_schema: scout_bundle.schema.json
+    output_schema: scout_bundle.schema.json
+    checkpoint: false
+    optional: true
+
   - worker: understand
     input_schema: scout_bundle.schema.json
     output_schema: understanding_bundle.schema.json

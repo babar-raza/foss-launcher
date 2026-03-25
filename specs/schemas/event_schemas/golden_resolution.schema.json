@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "golden_resolution.schema.json",
+  "title": "golden_resolution event",
+  "description": "Emitted for every section where golden matching is attempted during generation. TC-OBS-001.",
+  "type": "object",
+  "properties": {
+    "match_level": {
+      "type": "string",
+      "enum": ["exact", "substring", "jaccard", "role_fallback", "generic_fallback", "miss"],
+      "description": "Which matching level succeeded, or miss if no golden was found."
+    },
+    "matched_heading": {
+      "type": "string",
+      "description": "The golden section heading that matched. Empty string on miss."
+    },
+    "query_heading": {
+      "type": "string",
+      "description": "The section heading that was queried."
+    },
+    "page_role": {
+      "type": "string",
+      "description": "Page role used for golden lookup."
+    },
+    "page_slug": {
+      "type": "string",
+      "description": "Slug of the page being generated."
+    },
+    "section_index": {
+      "type": "integer",
+      "description": "0-based index of the section within the page."
+    },
+    "variant": {
+      "type": "string",
+      "description": "Golden variant used for lookup (e.g. standard, minimal)."
+    },
+    "jaccard_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Jaccard similarity score. 0.0 unless match_level is jaccard."
+    },
+    "golden_page_path": {
+      "type": "string",
+      "description": "Path to the golden file that matched. Empty string on miss."
+    },
+    "golden_word_count": {
+      "type": "integer",
+      "description": "Word count of the matched golden section. 0 on miss."
+    },
+    "has_structural_spec": {
+      "type": "boolean",
+      "description": "Whether a GoldenBlockSpec was derivable from the matched section."
+    },
+    "is_heal_mode": {
+      "type": "boolean",
+      "description": "Whether this section was in heal/regeneration mode."
+    },
+    "heal_attempt": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Heal attempt number (0 if not in heal mode)."
+    }
+  },
+  "required": [
+    "match_level", "matched_heading", "query_heading",
+    "page_role", "page_slug", "section_index", "variant",
+    "jaccard_score", "is_heal_mode", "heal_attempt"
+  ],
+  "additionalProperties": false
+}

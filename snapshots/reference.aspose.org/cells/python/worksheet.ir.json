@@ -1,31 +1,31 @@
 {
   "frontmatter": {
     "canonical": "https://reference.aspose.org/cells/python/worksheet/",
-    "canonical_import": "aspose_cells_foss",
-    "date": "2026-03-11T11:59:24Z",
-    "dateModified": "2026-03-11T11:59:24Z",
-    "datePublished": "2026-03-11T11:59:24Z",
-    "description": "It provides methods to extract encryption metadata and the encrypted package content for further processing.",
+    "canonical_import": "aspose.cells",
+    "date": "2026-03-23T13:16:22Z",
+    "dateModified": "2026-03-23T13:16:22Z",
+    "datePublished": "2026-03-23T13:16:22Z",
+    "description": "It is accessed through the `Cells` collection of a worksheet.",
     "display_name": "Aspose.Cells FOSS",
     "family": "cells",
     "keywords": [
-      "python",
-      "python openpyxl",
-      "openpyxl pandas",
-      "openpyxl in python",
-      "openpyxl documentation",
-      "install openpyxl",
-      "openpyxl cell",
-      "openpyxl pip"
+      "cells python",
+      "python cells in excel",
+      "python cells vscode",
+      "cell python docx",
+      "cell python spyder",
+      "aspose cells python",
+      "code cells python",
+      "voronoi cells python"
     ],
-    "lastmod": "2026-03-11T11:59:24Z",
+    "lastmod": "2026-03-23T13:16:22Z",
     "page_role": "reference_object_page",
     "platform": "python",
     "reading_time": 1,
     "robots": "index, follow",
-    "seoTitle": "Cfbreader: Reads encrypted XLSX from CFB format | Guide",
+    "seoTitle": "Cell: Represents a single cell in a worksheet | Guide",
     "slug": "worksheet",
-    "title": "Cfbreader: Reads encrypted XLSX from CFB format",
+    "title": "Cell: Represents a single cell in a worksheet",
     "type": "reference_object_page",
     "url": "/reference.aspose.org/cells/python/worksheet/",
     "weight": 22
@@ -37,9 +37,9 @@
       "blocks": [
         {
           "claim_ids": [
-            "CLM-cells-eb72e4"
+            "CLM-cells-18a190"
           ],
-          "content": "The `CFBReader` class reads encrypted XLSX files stored in Compound File Binary (CFB) `format`. It provides methods to extract encryption metadata and the encrypted package content for further processing.",
+          "content": "The `Cell` class represents a single `cell` in a worksheet and provides methods to read or `modify` its `value`, `formula`, `style`, and `comment`. It is accessed through the `Cells` collection of a worksheet.",
           "items": [],
           "language": null,
           "level": null,
@@ -47,23 +47,23 @@
         },
         {
           "claim_ids": [
-            "CLM-cells-eb72e4"
+            "CLM-cells-18a190"
           ],
-          "content": "| Name | Type | Description |\n|------|------|-------------|\n| read_encryption_info() | method | Reads encryption information from the CFB stream. |\n| read_encrypted_package() | method | Reads the encrypted package data from the CFB stream. |\n| `close()` | method | Closes the underlying CFB stream and releases resources. |\n",
+          "content": "from aspose.cells import Workbook\n\nworkbook = Workbook()\nworksheet = workbook.worksheets[0]\ncell = worksheet.cells[\"A1\"]\ncell.value = \"Hello, World!\"\nworkbook.save(\"output.xlsx\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-18a190"
+          ],
+          "content": "| Method | Description |\n|--------|-------------|\n| `is_empty()` | Checks if the `cell` is empty. |\n| `clear_value()` | Clears the `value` of the `cell` (sets it to None). |\n| `clear_formula()` | Clears the `formula` of the `cell`. |\n| `clear()` | Clears the `cell` (`value`, `formula`, `style`). |\n| `set_comment(text, author, width, height)` | Sets a `comment` on the `cell`. |\n\n| Property | Type | Description |\n|----------|------|-------------|\n| `value` | Any | Gets or sets the `cell` `value`. |\n| `formula` | str | Gets or sets the `cell` `formula`. |\n| `style` | `Style` | Gets or sets the `cell` `style`. |\n| `comment` | Comment | Gets the `cell` `comment` (read-only). |\n| `data_type` | [identifier omitted] | Gets the `cell` data `type` (read-only). |",
           "items": [],
           "language": null,
           "level": null,
           "type": "table"
-        },
-        {
-          "claim_ids": [
-            "CLM-cells-43c708"
-          ],
-          "content": "The `ChartSeries` class represents a single chart series in a chart object, defining data points, formatting, and series-specific properties.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
         }
       ],
       "heading": "Overview",
@@ -73,28 +73,34 @@
     {
       "blocks": [
         {
-          "claim_ids": [],
-          "content": "The `CFBReader` class reads encrypted XLSX files stored in Compound File Binary (CFB) `format`. It provides methods to extract encryption metadata and the encrypted package. This class is used internally when loading password-protected XLSX files via `Workbook` constructors that accept a password.",
+          "claim_ids": [
+            "CLM-cells-18a190"
+          ],
+          "content": "The `Cell` class represents a single `cell` in a worksheet. Instantiate a `Cell` by accessing it through the `Cells` collection of a worksheet using 1-based row and column indices.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
         },
         {
-          "claim_ids": [],
-          "content": "| Name | Type | Description |\n|------|------|-------------|\n| `CFBReader(file_path)` | Constructor | Initializes a new instance of `CFBReader` for the specified CFB file. |\n| `file_path` | str | Path to the CFB file (typically an encrypted .xlsx file). |\n",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "table"
-        },
-        {
-          "claim_ids": [],
-          "content": "from aspose.cells import CFBReader\n\nreader = CFBReader(\"encrypted.xlsx\")\ninfo = reader.read_encryption_info()\npackage = reader.read_encrypted_package()\nreader.close()",
+          "claim_ids": [
+            "CLM-cells-18a190"
+          ],
+          "content": "import aspose.cells\n\nwb = aspose.cells.Workbook()\nws = wb.worksheets[0]\ncell = ws.cells.cell(1, 1)  # 1-based row, column\ncell.value = \"Hello, World!\"\nprint(cell.value)",
           "items": [],
           "language": "python",
           "level": null,
           "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-18a190"
+          ],
+          "content": "| Parameter | Type | Description |\n|-----------|------|-------------|\n| row | int | 1-based row index |\n| column | int | 1-based column index |\n| `cells` | `Cells` | Parent `Cells` collection |\n| worksheet | `Worksheet` | Parent worksheet |\n| workbook | `Workbook` | Parent workbook |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
         }
       ],
       "heading": "Constructor",
@@ -104,16 +110,20 @@
     {
       "blocks": [
         {
-          "claim_ids": [],
-          "content": "The `CFBReader` class provides read-only access to encrypted XLSX content stored in Compound File Binary (CFB) `format`. It exposes a small set of properties derived from its encryption metadata, which are accessible after calling read_encryption_info().",
+          "claim_ids": [
+            "CLM-cells-18a190"
+          ],
+          "content": "The `Cell` class exposes `properties` that define its content, formatting, and metadata. These `properties` allow reading and writing `values`, formulas, styles, and comments. All property access is read-write except where explicitly marked as read-only.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
         },
         {
-          "claim_ids": [],
-          "content": "| Name | Type | Description |\n|------|------|-------------|\n| encryption_info | object | Contains parsed encryption information after read_encryption_info() is called. Structure is internal and not part of public API. |\n| encrypted_package | bytes | Encrypted package data returned by read_encrypted_package(). |\n| is_encrypted | bool | Indicates whether the CFB stream contains encrypted content. Determined during read_encryption_info(). |\n| package_size | int | Size of the decrypted package in bytes, computed during read_encrypted_package(). |",
+          "claim_ids": [
+            "CLM-cells-18a190"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| `value` | object | The `cell` `value` (string, number, boolean, or None). |\n| `formula` | str | The `cell` `formula` (e.g., \"=A1+B1\"). |\n| `style` | `Style` | The `cell` `style` object. |\n| `comment` | str | The `cell` `comment` text (read-only). |\n| `data_type` | CellValueType | The data `type` of the `cell` `value` (read-only). |",
           "items": [],
           "language": null,
           "level": null,
@@ -121,37 +131,13 @@
         },
         {
           "claim_ids": [
-            "CLM-cells-00a424"
+            "CLM-cells-18a190"
           ],
-          "content": "The `AutoFilter` class exposes read-only properties that reflect the current `filter` configuration in a worksheet. These properties are populated when the `filter` is loaded or applied and cannot be set directly.",
+          "content": "import aspose.cells\n\nwb = aspose.cells.Workbook()\nws = wb.worksheets[0]\ncell = ws.cells[\"A1\"]\ncell.value = 42\ncell.formula = \"=A1*2\"\nprint(cell.data_type)",
           "items": [],
-          "language": null,
+          "language": "python",
           "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "| Name | Type | Description |\n|------|------|-------------|\n| range | str | The `cell` range to which the auto `filter` is applied (e.g., \"A1:D100\"). Read-only. |\n| `filter_columns` | list | List of column `filter` definitions. Each entry specifies criteria for filtering that column. Read-only. |\n| sort_state | object | Contains sort configuration (ascending/descending, key column). Structure is internal. Read-only. |\n",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "table"
-        },
-        {
-          "claim_ids": [],
-          "content": "The `Cell` class provides read-only access to `core` `cell` attributes. Values and formulas are retrieved via properties after the `cell` is loaded or set via value() and `formula()` methods.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "| Name | Type | Description |\n|------|------|-------------|\n| value | str | The raw `cell` value as stored in the file. Read-only. |\n| `formula` | str | The `formula` string (e.g., \"=SUM(A1:A10)\"). Read-only. |\n| style | object | Reference to the `cell`'s style object. Structure is internal. Read-only. |\n| `comment` | str | Comment text attached to the `cell`, if any. Read-only. |\n| `data_type` | str | Indicates the type of data: 'b' (boolean), 'n' (number), 's' (string), 'd' (date), 'e' (`error`). Read-only. |\n",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "table"
+          "type": "code"
         }
       ],
       "heading": "Properties",
@@ -161,44 +147,10 @@
     {
       "blocks": [
         {
-          "claim_ids": [],
-          "content": "The `CFBReader` class provides methods to extract encrypted XLSX content from a Compound File Binary (CFB) container. It supports reading encryption metadata and the encrypted package stream.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| read_encryption_info() | str | Reads and returns the encryption info XML from the CFB stream. |\n| read_encrypted_package() | bytes | Reads and returns the encrypted package data as a byte string. |\n| `close()` | None | Closes the underlying CFB stream and releases resources. |\n",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "table"
-        },
-        {
           "claim_ids": [
-            "CLM-cells-f261b8"
+            "CLM-cells-18a190"
           ],
-          "content": "The `MinimalCFBWriter` class provides a minimal implementation for writing encrypted Office documents in CFB `format`, as indicated by its docstring.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `write(file_path, encryption_info_xml, encrypted_package, package_size)` | None | Writes the encryption info XML and encrypted package to the specified file path in CFB `format`. |\n",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "table"
-        },
-        {
-          "claim_ids": [
-            "CLM-cells-b9cf4f"
-          ],
-          "content": "The `NSeries` class supports series management for `charts`, with methods for adding, counting, and copying series.",
+          "content": "The `Cell` class provides methods to inspect and `modify` individual `cell` contents in a worksheet. Methods include checking emptiness, clearing `values` or formulas, and setting comments.",
           "items": [],
           "language": null,
           "level": null,
@@ -206,13 +158,67 @@
         },
         {
           "claim_ids": [
-            "CLM-cells-b9cf4f"
+            "CLM-cells-18a190"
           ],
-          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `add(series_string, category_data, name)` | int | Adds a new series to the series collection and returns its index. |\n| `Add(series_string, category_data, name)` | int | Alias for `add()`. Adds a new series and returns its index. |\n| `count()` | int | Returns the number of series in the collection. |\n| `copy(source_index, dest_index)` | None | Copies a series from the source index to the destination index. |\n",
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `is_empty()` | bool | Checks if the `cell` is empty. |\n| `clear_value()` | None | Clears the `value` of the `cell` (sets it to None). |\n| `clear_formula()` | None | Clears the `formula` of the `cell`. |\n| `clear()` | None | Clears the `value` and `formula` of the `cell`. |\n| `set_comment(text, author, width, height)` | None | Sets a `comment` on the `cell` with optional author, width, and height. |\n",
           "items": [],
           "language": null,
           "level": null,
           "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-3fc6e5"
+          ],
+          "content": "The `Chart` class supports adding data series and `axes` to `charts`. Use `add_series()` to plot data and `add_axis()` to define chart `axes`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-3fc6e5",
+            "CLM-cells-ed734c",
+            "CLM-cells-dcf086"
+          ],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `add_series(values, category_data, name, chart_type, x_values)` | None | Convenience method to `add` a series to the chart. |\n| `add_axis(axis_type, axis_id)` | `ChartAxis` | Adds an axis to the chart and returns it. |\n| `copy()` | `Chart` | Copies the chart to a new instance. |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-52bbc5"
+          ],
+          "content": "The `JsonHandler` class enables exporting workbooks to JSON format. Use `save_json()` to write to a file or `save_json_to_dict()` to obtain a dictionary for further processing.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-050814",
+            "CLM-cells-bea989"
+          ],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `save_json(workbook, file_path: str, options: Optional[JsonSaveOptions])` | None | Saves a workbook to a JSON file. |\n| `save_json_to_dict(workbook, options: Optional[JsonSaveOptions])` | Dict[str, Any] | Converts a workbook to a JSON-serializable dictionary. |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-050814",
+            "CLM-cells-bea989"
+          ],
+          "content": "import aspose.cells\n\nwb = aspose.cells.Workbook()\nws = wb.worksheets[0]\nws.cells['A1'].value = 'Hello'\nws.cells['A2'].value = 'World'\n\n# Save to JSON file\naspose.cells.JsonHandler.save_json(wb, 'output.json')\n\n# Convert to dictionary\njson_dict = aspose.cells.JsonHandler.save_json_to_dict(wb)\nprint(json_dict['worksheets'][0]['name'])",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
         }
       ],
       "heading": "Methods",
@@ -222,16 +228,21 @@
     {
       "blocks": [
         {
-          "claim_ids": [],
-          "content": "The following example demonstrates reading an encrypted XLSX file from a Compound File Binary (CFB) container using `CFBReader`. It loads encryption metadata and the encrypted package, then closes the reader. This workflow aligns with the `CFBReader` API surface and supports processing files encrypted with Agile encryption.",
+          "claim_ids": [
+            "CLM-cells-bea989",
+            "CLM-cells-471b90"
+          ],
+          "content": "The following example demonstrates creating a workbook, adding data to a `cell`, and exporting the workbook to JSON using Aspose.Cells FOSS. It uses the canonical import path and covers both `JsonHandler.save_json_to_dict()` and `ChartAxis` functionality through related API surface.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
         },
         {
-          "claim_ids": [],
-          "content": "import aspose.cells\n\nreader = aspose.cells.CFBReader(\"encrypted.cfb\")\nencryption_info = reader.read_encryption_info()\nencrypted_package = reader.read_encrypted_package()\nreader.close()",
+          "claim_ids": [
+            "CLM-cells-bea989"
+          ],
+          "content": "import aspose.cells\n\n# Create a new workbook\nwb = aspose.cells.Workbook()\nws = wb.worksheets[0]\n\n# Add data to a cell\nws.cells['A1'].value = 'Product'\nws.cells['A2'].value = 'Sales'\nws.cells['B1'].value = 'Q1'\nws.cells['B2'].value = 1500\n\n# Export workbook to JSON dictionary\njson_dict = aspose.cells.JsonHandler.save_json_to_dict(wb)\n\n# Verify structure\nassert 'worksheets' in json_dict\nassert len(json_dict['worksheets']) > 0\nassert 'data' in json_dict['worksheets'][0]\n\nprint('JSON export successful')",
           "items": [],
           "language": "python",
           "level": null,
@@ -245,14 +256,34 @@
     {
       "blocks": [
         {
+          "claim_ids": [
+            "CLM-cells-18a190"
+          ],
+          "content": "The `Cell` class represents a single `cell` in a worksheet. Related classes include those for managing collections of `cells`, `charts`, and workbook-level operations.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-18a190"
+          ],
+          "content": "import aspose.cells\n\n# Create a new workbook and access a cell\nwb = aspose.cells.Workbook()\nws = wb.worksheets[0]\ncell = ws.cells.cell(0, 0)  # 1-based indexing\ncell.value = \"Hello, World!\"\nprint(cell.value)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
           "claim_ids": [],
           "content": "",
           "items": [
-            "[Access cell data and formulas](/reference.aspose.org/cells/python/cell/)",
-            "[Apply conditional formatting rules](/blog.aspose.org/cells/python/introducing-cells-foss-python/)",
-            "[Dynamic formatting with rules](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)",
-            "[Work with spreadsheet formulas](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
-            "[Perform core spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)"
+            "[Install and set up Cells FOSS](/blog.aspose.org/cells/python/introducing-cells-foss-python/)",
+            "[Create all chart types in spreadsheets](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)",
+            "[Work with formulas in spreadsheets](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
+            "[Perform spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)",
+            "[Convert file formats easily](/kb.aspose.org/cells/python/how-to-convert-csv-to-json-python/)"
           ],
           "language": null,
           "level": null,
@@ -264,5 +295,5 @@
       "section_id": "see_also"
     }
   ],
-  "title": "Cfbreader: Reads encrypted XLSX from CFB format"
+  "title": "Cell: Represents a single cell in a worksheet"
 }

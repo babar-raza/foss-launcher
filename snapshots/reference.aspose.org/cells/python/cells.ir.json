@@ -1,31 +1,31 @@
 {
   "frontmatter": {
     "canonical": "https://reference.aspose.org/cells/python/cells/",
-    "canonical_import": "aspose_cells_foss",
-    "date": "2026-03-11T20:08:46Z",
-    "dateModified": "2026-03-11T20:08:46Z",
-    "datePublished": "2026-03-11T20:08:46Z",
-    "description": "It supports operations like merging, unmerging, and page break management, and integrates with the `Cell` class for per-cell data handling.",
+    "canonical_import": "aspose.cells",
+    "date": "2026-03-22T08:56:20Z",
+    "dateModified": "2026-03-22T08:56:20Z",
+    "datePublished": "2026-03-22T08:56:20Z",
+    "description": "CSVHandler.save_csv() is part of the public API for Aspose.Cells FOSS.",
     "display_name": "Aspose.Cells FOSS",
     "family": "cells",
     "keywords": [
-      "python",
-      "python openpyxl",
-      "openpyxl pandas",
-      "openpyxl in python",
-      "openpyxl documentation",
-      "install openpyxl",
-      "openpyxl cell",
-      "openpyxl pip"
+      "cells python",
+      "python cells in excel",
+      "python cells vscode",
+      "cell python docx",
+      "cell python spyder",
+      "aspose cells python",
+      "code cells python",
+      "voronoi cells python"
     ],
-    "lastmod": "2026-03-11T20:08:46Z",
+    "lastmod": "2026-03-22T08:56:20Z",
     "page_role": "reference_object_page",
     "platform": "python",
     "reading_time": 1,
     "robots": "index, follow",
-    "seoTitle": "Cells: Represents a collection of cells in a worksheet | Guide",
+    "seoTitle": "Aspose.Cells FOSS Cells",
     "slug": "cells",
-    "title": "Cells: Represents a collection of cells in a worksheet",
+    "title": "Cells",
     "type": "reference_object_page",
     "url": "/reference.aspose.org/cells/python/cells/",
     "weight": 21
@@ -37,7 +37,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "The `Cells` class represents a collection of cells in a worksheet and provides methods to access, modify, and manage individual cells and cell ranges. It supports operations like merging, unmerging, and page break management, and integrates with the `Cell` class for per-cell data handling.",
+          "content": "Aspose.Cells FOSS -- Class or function purpose in 1-3 sentences.",
           "items": [],
           "language": null,
           "level": null,
@@ -45,44 +45,125 @@
         },
         {
           "claim_ids": [
-            "CLM-cells-042a6f"
+            "CLM-cells-044179",
+            "CLM-cells-788e51"
           ],
-          "content": "from aspose.cells import Workbook\n\nwb = Workbook()\nws = wb.worksheets[0]\nws.cells[\"A1\"].put_value(\"[identifier omitted]\")\nws.cells[\"A1\"].value",
-          "items": [],
-          "language": "python",
-          "level": null,
-          "type": "code"
-        },
-        {
-          "claim_ids": [
-            "CLM-cells-042a6f"
-          ],
-          "content": "ws.cells.merge(0, 0, 1, 3)\nws.cells.unmerge(0, 0, 1, 3)",
-          "items": [],
-          "language": "python",
-          "level": null,
-          "type": "code"
-        },
-        {
-          "claim_ids": [
-            "CLM-cells-042a6f"
-          ],
-          "content": "ws.horizontal_page_breaks.add(19)\nws.vertical_page_breaks.add(3)\nws.horizontal_page_breaks.remove(19)\nws.horizontal_page_breaks.clear()",
-          "items": [],
-          "language": "python",
-          "level": null,
-          "type": "code"
-        },
-        {
-          "claim_ids": [
-            "CLM-cells-18c943",
-            "CLM-cells-042a6f"
-          ],
-          "content": "| Name | Type | [identifier omitted] |\n|------|------|-------------|\n| comment | Comment (read-only) | Gets the comment associated with the cell. |\n| `coordinate_to_string(row, col)` | `str` | Converts row and column (1-based) to an A1 coordinate string. |",
+          "content": "Aspose.Cells FOSS MarkdownHandler.save_markdown(): Saves a workbook to a Markdown file. CSVHandler.save_csv() is part of the public API for Aspose.Cells FOSS.",
           "items": [],
           "language": null,
           "level": null,
-          "type": "table"
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-d289df",
+            "CLM-cells-dc36dc",
+            "CLM-cells-fefc07",
+            "CLM-cells-6faf16",
+            "CLM-cells-e7aacb",
+            "CLM-cells-e6c950",
+            "CLM-cells-e62dd9",
+            "CLM-cells-18a190",
+            "CLM-cells-c861f6",
+            "CLM-cells-788e51",
+            "CLM-cells-bf07d6",
+            "CLM-cells-c1d98c",
+            "CLM-cells-3ca075",
+            "CLM-cells-d30813",
+            "CLM-cells-c631fc",
+            "CLM-cells-39a6d4"
+          ],
+          "content": "from aspose.cells import Workbook\n\n# Create a new workbook\nworkbook = Workbook()\n\n# Get the first worksheet\nworksheet = workbook.worksheets[0]\n\n# Set cell values\nworksheet.cells[\"A1\"].value = \"Hello\"\nworksheet.cells[\"B1\"].value = \"World\"\nworksheet.cells[\"A2\"].value = 42\nworksheet.cells[\"B2\"].value = 3.14\n\n# Save the workbook\nworkbook.save(\"output.xlsx\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-d289df",
+            "CLM-cells-dc36dc",
+            "CLM-cells-fefc07",
+            "CLM-cells-6faf16",
+            "CLM-cells-e7aacb",
+            "CLM-cells-e6c950",
+            "CLM-cells-e62dd9",
+            "CLM-cells-18a190",
+            "CLM-cells-c861f6",
+            "CLM-cells-788e51",
+            "CLM-cells-bf07d6",
+            "CLM-cells-c1d98c",
+            "CLM-cells-3ca075",
+            "CLM-cells-d30813",
+            "CLM-cells-c631fc",
+            "CLM-cells-39a6d4"
+          ],
+          "content": "from aspose.cells import Workbook\n\n# Open an existing workbook\nworkbook = Workbook(\"input.xlsx\")\n\n# Access a worksheet\nworksheet = workbook.worksheets[0]\n\n# Read cell values\nvalue = worksheet.cells[\"A1\"].value\nprint(f\"Cell A1 contains: {value}\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-d289df",
+            "CLM-cells-dc36dc",
+            "CLM-cells-fefc07",
+            "CLM-cells-6faf16",
+            "CLM-cells-e7aacb",
+            "CLM-cells-e6c950",
+            "CLM-cells-e62dd9",
+            "CLM-cells-18a190",
+            "CLM-cells-c861f6",
+            "CLM-cells-788e51",
+            "CLM-cells-bf07d6",
+            "CLM-cells-c1d98c",
+            "CLM-cells-3ca075",
+            "CLM-cells-d30813",
+            "CLM-cells-c631fc",
+            "CLM-cells-39a6d4"
+          ],
+          "content": "from aspose.cells import Workbook\n\nworkbook = Workbook()\nworksheet = workbook.worksheets[0]\ncell = worksheet.cells[\"A1\"]\n\ncell.value = \"Styled Text\"\n\n# Get and modify the cell style\nstyle = cell.get_style()\nstyle.font.bold = True\nstyle.font.color = \"#FF0000\"  # Red\nstyle.font.size = 14\ncell.apply_style(style)\n\nworkbook.save(\"styled.xlsx\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-b5d99f",
+            "CLM-cells-044179"
+          ],
+          "content": "from aspose.cells import Workbook\n\nworkbook = Workbook()\nworksheet = workbook.worksheets[0]\nworksheet.cells[\"A1\"].value = \"Confidential Data\"\n\n# Save with password protection\nworkbook.save(\"protected.xlsx\", password=\"mypassword\")\n\n# Open a password-protected file\nworkbook2 = Workbook(\"protected.xlsx\", password=\"mypassword\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-b5d99f",
+            "CLM-cells-044179"
+          ],
+          "content": "import unittest\nimport os\nimport sys\n\n# Add parent directory to path to import aspose.cells_foss\nsys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))\n\nfrom aspose.cells import Workbook, Cell\n\n\nclass [identifier omitted](unittest.[identifier omitted]):\n    \"\"\"\n    Test comprehensive alignment properties functionality with save/load verification.\n    \n    Features tested:\n    - Horizontal alignment (general, left, center, right, fill, justify, centerContinuous, distributed)\n    - Vertical alignment (top, center, bottom, justify, distributed)\n    - Text wrap setting\n    - Shrink to fit setting\n    - Indent level setting\n    - Text rotation (0-180 degrees, 255 for vertical text)\n    - Reading order (context, left-to-right, right-to-left)\n    - Relative indent setting\n    \"\"\"\n    \n    def setUp(self):\n        \"\"\"Set up test workbook and worksheet.\"\"\"\n        self.workbook = Workbook()\n        self.worksheet = self.workbook.worksheets[0]\n    \n    def test_horizontal_alignment(self):\n        \"\"\"Test horizontal alignment settings.\"\"\"\n        horizontal_alignments = [\n            'general',\n            'left',\n            'center',\n            'right',\n            'fill',\n            'justify',\n            'centerContinuous',\n            'distributed'\n        ]\n        \n        for i, alignment in enumerate(horizontal_alignments):\n            cell = Cell(f\"Horizontal: {alignment}\")\n            cell.style.set_horizontal_alignment(alignment)\n            self.worksheet.cells[f\"A{i+1}\"] = cell\n            \n            # Verify alignment was set correctly\n            self.assertEqual(self.worksheet.cells[f\"A{i+1}\"].style.alignment.horizontal, alignment)\n    \n    def test_vertical_alignment(self):\n        \"\"\"Test vertical alignment settings.\"\"\"\n        vertical_alignments = [\n            'top',\n            'center',\n            'bottom',\n            'justify',\n            'distributed'\n        ]\n        \n        for i, alignment in enumerate(vertical_alignments):\n            cell = Cell(f\"Vertical: {alignment}\")\n            cell.style.set_vertical_alignment(alignment)\n            self.worksheet.cells[f\"B{i+1}\"] = cell\n            \n            # Verify alignment was set correctly\n            self.assertEqual(self.worksheet.cells[f\"B{i+1}\"].style.alignment.vertical, alignment)\n    \n    def test_text_wrap(self):\n        \"\"\"Test text wrap setting.\"\"\"\n        # Test wrap text enabled\n        cell1 = Cell(\"Text Wrap Enabled\")\n        cell1.style.set_text_wrap(True)\n        self.worksheet.cells[\"C1\"] = cell1\n        self.assertTrue(self.worksheet.cells[\"C1\"].style.alignment.wrap_text)\n        \n        # Test wrap text disabled\n        cell2 = Cell(\"Text Wrap Disabled\")\n        cell2.style.set_text_wrap(False)\n        self.worksheet.cells[\"C2\"] = cell2\n        self.assertFalse(self.worksheet.cells[\"C2\"].style.alignment.wrap_text)\n    \n    def test_shrink_to_fit(self):\n        \"\"\"Test shrink to fit setting.\"\"\"\n        # Test shrink to fit enabled\n        cell1 = Cell(\"Shrink to Fit Enabled\")\n        cell1.style.set_shrink_to_fit(True)\n        self.worksheet.cells[\"D1\"] = cell1\n        self.assertTrue(self.worksheet.cells[\"D1\"].style.alignment.shrink_to_fit)\n        \n        # Test shrink to fit disabled\n        cell2 = Cell(\"Shrink to Fit Disabled\")\n        cell2.style.set_shrink_to_fit(False)\n        self.worksheet.cells[\"D2\"] = cell2\n        self.assertFalse(self.worksheet.cells[\"D2\"].style.alignment.shrink_to_fit)\n    \n    def test_indent_level(self):\n        \"\"\"Test indent level setting.\"\"\"\n        indent_levels = [0, 1, 2, 3, 5, 10]\n        \n        for i, indent in enumerate(indent_levels):\n            cell = Cell(f\"Indent: {indent}\")\n            cell.style.set_indent(indent)\n            self.worksheet.cells[f\"E{i+1}\"] = cell\n            \n            # Verify indent was set correctly\n            self.assertEqual(self.worksheet.cells[f\"E{i+1}\"].style.alignment.indent, indent)\n    \n    def test_text_rotation(self):\n        \"\"\"Test text rotation setting (0-180 degrees).\"\"\"\n        rotations = [0, 45, 90, 135, 180, 255]\n        \n        for i, rotation in enumerate(rotations):\n            cell = Cell(f\"Rotation: {rotation}\")\n            cell.style.set_text_rotation(rotation)\n            self.worksheet.cells[f\"F{i+1}\"] = cell\n            \n            # Verify rotation was set correctly\n            self.assertEqual(self.worksheet.cells[f\"F{i+1}\"].style.alignment.text_rotation, rotation)\n    \n    def test_reading_order(self):\n        \"\"\"Test reading order setting.\"\"\"\n        reading_orders = [\n            (0, 'Context'),\n            (1, 'Left-to-Right'),\n            (2, 'Right-to-Left')\n        ]\n        \n        for i, (order, description) in enumerate(reading_orders):\n            cell = Cell(f\"Reading Order: {description}\")\n            cell.style.set_reading_order(order)\n            self.worksheet.cells[f\"G{i+1}\"] = cell\n            \n            # Verify reading order was set correctly\n            self.assertEqual(self.worksheet.cells[f\"G{i+1}\"].style.alignment.reading_order, order)\n    \n    def test_relative_indent(self):\n        \"\"\"Test relative indent setting.\"\"\"\n        relative_indents = [0, 1, 2, 3, 5]\n        \n        for i, indent in enumerate(relative_indents):\n            cell = Cell(f\"Relative Indent: {indent}\")\n            cell.style.alignment.relative_indent = indent\n            self.worksheet.cells[f\"H{i+1}\"] = cell\n            \n            # Verify relative indent was set correctly\n            self.assertEqual(self.worksheet.cells[f\"H{i+1}\"].style.alignment.relative_indent, indent)\n    \n    def test_comprehensive_alignment_settings(self):\n        \"\"\"Test creating all alignment settings and applying them to different cells.\"\"\"\n        # Test data for comprehensive alignment testing\n        alignment_test_cases = [\n            {\n                'cell': 'A1',\n                'value': 'Default Alignment',\n                'description': 'Default alignment settings',\n                'expected_alignment': {\n                    'horizontal': 'general',\n                    'vertical': 'bottom',\n                    'wrap_text': False,\n                    'shrink_to_fit': False,\n                    'indent': 0,\n                    'text_rotation': 0,\n                    'reading_order': 0,\n                    'relative_indent': 0\n                }\n            },\n            {\n                'cell': 'A2',\n                'value': 'Left Top',\n                'horizontal': 'left',\n                'vertical': 'top',\n                'description': 'Left horizontal, Top vertical',\n                'expected_alignment': {\n                    'horizontal': 'left',\n                    'vertical': 'top',\n                    'wrap_text': False,\n                    'shrink_to_fit': False,\n                    'indent': 0,\n                    'text_rotation': 0,\n                    'reading_order': 0,\n                    'relative_indent': 0\n                }\n            },\n            {\n                'cell': 'A3',\n                'value': 'Center Center',\n                'horizontal': 'center',\n                'vertical': 'center',\n                'description': 'Center horizontal, Center vertical',\n                'expected_alignment': {\n                    'horizontal': 'center',\n                    'vertical': 'center',\n                    'wrap_text': False,\n                    'shrink_to_fit': False,\n                    'indent': 0,\n                    'text_rotation': 0,\n                    'reading_order': 0,\n                    'relative_indent': 0\n                }\n            },\n            {\n                'cell': 'A4',\n                'value': 'Right Bottom',\n                'horizontal': 'right',\n                'vertical': 'bottom',\n                'description': 'Right horizontal, Bottom vertical',\n                'expected_alignment': {\n                    'horizontal': 'right',\n                    'vertical': 'bottom',\n                    'wrap_text': False,\n                    'shrink_to_fit': False,\n                    'indent': 0,\n                    'text_rotation': 0,\n                    'reading_order': 0,\n                    'relative_indent': 0\n                }\n            },\n            {\n                'cell': 'A5',\n                'value': 'Fill Justify',\n                'horizontal': 'fill',\n                'vertical': 'justify',\n                'description': 'Fill horizontal, Justify vertical',\n                'expected_alignment': {\n                    'horizontal': 'fill',\n                    'vertical': 'justify',\n                    'wrap_text': False,\n                    'shrink_to_fit': False,\n                    'indent': 0,\n                    'text_rotation': 0,\n                    'reading_order': 0,\n                    'relative_indent': 0\n                }\n            },\n            {\n                'cell': 'A6',\n                'value': '[identifier omitted] Distributed',\n                'horizontal': 'centerContinuous',\n                'vertical': 'distributed',\n                'description': '[identifier omitted] horizontal, Distributed vertical',\n                'expected_alignment': {\n                    'horizontal': 'centerContinuous',\n                    'vertical': 'distributed',\n                    'wrap_text': False,\n                    'shrink_to_fit': False,\n                    'indent': 0,\n                    'text_rotation': 0,\n                    'reading_order': 0,\n                    'relative_indent': 0\n                }\n            },\n            {\n                'cell': 'A7',\n                'value': 'Text Wrap',\n                'horizontal': 'left',\n                'vertical': 'top',\n                'wrap_text': True,\n                'description': 'Text wrap enabled',\n                'expected_alignment': {\n                    'horizontal': 'left',\n                    'vertical': 'top',\n                    'wrap_text': True,\n                    'shrink_to_fit': False,\n                    'indent': 0,\n                    'text_rotation': 0,\n                    'reading_order': 0,\n                    'relative_indent': 0\n                }\n            },\n            {\n                'cell': 'A8',\n                'value': 'Shrink to Fit',\n                'horizontal': 'center',\n                'vertical': 'center',\n                'shrink_to_fit': True,\n                'description': 'Shrink to fit enabled',\n                'expected_alignment': {\n                    'horizontal': 'center',\n                    'vertical': 'center',\n                    'wrap_text': False,\n                    'shrink_to_fit': True,\n                    'indent': 0,\n                    'text_rotation': 0,\n                    'reading_order': 0,\n                    'relative_indent': 0\n                }\n            },\n            {\n                'cell': 'A9',\n                'value': 'Indent 3',\n                'horizontal': 'left',\n                'vertical': 'center',\n                'indent': 3,\n                'description': 'Indent level 3',\n                'expected_alignment': {\n                    'horizontal': 'left',\n                    'vertical': 'center',\n                    'wrap_text': False,\n                    'shrink_to_fit': False,\n                    'indent': 3,\n                    'text_rotation': 0,\n                    'reading_order': 0,\n                    'relative_indent': 0\n                }\n            },\n            {\n                'cell': 'A10',\n                'value': 'Rotation 45',\n                'horizontal': 'center',\n                'vertical': 'center',\n                'text_rotation': 45,\n                'description': 'Text rotation 45 degrees',\n                'expected_alignment': {\n                    'horizontal': 'center',\n                    'vertical': 'center',\n                    'wrap_text': False,\n                    'shrink_to_fit': False,\n                    'indent': 0,\n                    'text_rotation': 45,\n                    'reading_order': 0,\n                    'relative_indent': 0\n                }\n            },\n            {\n                'cell': 'A11',\n                'value': 'Rotation 90',\n                'horizontal': 'center',\n                'vertical': 'center',\n                'text_rotation': 90,\n                'description': 'Text rotation 90 degrees',\n                'expected_alignment': {\n                    'horizontal': 'center',\n                    'vertical': 'center',\n                    'wrap_text': False,\n                    'shrink_to_fit': False,\n                    'indent': 0,\n                    'text_rotation': 90,\n                    'reading_order': 0,\n                    'relative_indent': 0\n                }\n            },\n            {\n                'cell': 'A12',\n                'value': 'Rotation 180',\n                'horizontal': 'center',\n                'vertical': 'center',\n                'text_rotation': 180,\n                'description': 'Text rotation 180 degrees',\n                'expected_alignment': {\n                    'horizontal': 'center',\n                    'vertical': 'center',\n                    'wrap_text': False,\n                    'shrink_to_fit': False,\n                    'indent': 0,\n                    'text_rotation': 180,\n                    'reading_order': 0,\n                    'relative_indent': 0\n                }\n            },\n            {\n                'cell': 'A13',\n                'value': 'Rotation 255 (Vertical)',\n                'horizontal': 'center',\n                'vertical': 'center',\n                'text_rotation': 255,\n                'description': 'Vertical text (rotation 255)',\n                'expected_alignment': {\n                    'horizontal': 'center',\n                    'vertical': 'center',\n                    'wrap_text': False,\n                    'shrink_to_fit': False,\n                    'indent': 0,\n                    'text_rotation': 255,\n                    'reading_order': 0,\n                    'relative_indent': 0\n                }\n            },\n            {\n                'cell': 'A14',\n                'value': 'LTR Reading Order',\n                'horizontal': 'left',\n                'vertical': 'center',\n                'reading_order': 1,\n                'description': 'Left-to-Right reading order',\n                'expected_alignment': {\n                    'horizontal': 'left',\n                    'vertical': 'center',\n                    'wrap_text': False,\n                    'shrink_to_fit': False,\n                    'indent': 0,\n                    'text_rotation': 0,\n                    'reading_order': 1,\n                    'relative_indent': 0\n                }\n            },\n            {\n                'cell': 'A15',\n                'value': 'RTL Reading Order',\n                'horizontal': 'right',\n                'vertical': 'center',\n                'reading_order': 2,\n                'description': 'Right-to-Left reading order',\n                'expected_alignment': {\n                    'horizontal': 'right',\n                    'vertical': 'center',\n                    'wrap_text': False,\n                    'shrink_to_fit': False,\n                    'indent': 0,\n                    'text_rotation': 0,\n                    'reading_order': 2,\n                    'relative_indent': 0\n                }\n            },\n            {\n                'cell': 'A16',\n                'value': 'Relative Indent 2',\n                'horizontal': 'left',\n                'vertical': 'center',\n                'relative_indent': 2,\n                'description': 'Relative indent 2',\n                'expected_alignment': {\n                    'horizontal': 'left',\n                    'vertical': 'center',\n                    'wrap_text': False,\n                    'shrink_to_fit': False,\n                    'indent': 0,\n                    'text_rotation': 0,\n                    'reading_order': 0,\n                    'relative_indent': 2\n                }\n            },\n            {\n                'cell': 'A17',\n                'value': 'All Settings',\n                'horizontal': 'center',\n                'vertical': 'center',\n                'wrap_text': True,\n                'shrink_to_fit': False,\n                'indent': 2,\n                'text_rotation': 30,\n                'reading_order': 1,\n                'relative_indent': 1,\n                'description': 'All alignment settings combined',\n                'expected_alignment': {\n                    'horizontal': 'center',\n                    'vertical': 'center',\n                    'wrap_text': True,\n                    'shrink_to_fit': False,\n                    'indent': 2,\n                    'text_rotation': 30,\n                    'reading_order': 1,\n                    'relative_indent': 1\n                }\n            }\n        ]\n        \n        # Apply all alignment settings to cells\n        print(\"Setting up alignment settings for all test cells...\")\n        for test_case in alignment_test_cases:\n            cell_ref = test_case['cell']\n            cell_value = test_case['value']\n            description = test_case['description']\n            \n            print(f\"  {cell_ref}: {description}\")\n            \n            # Create cell with value\n            cell = Cell(cell_value)\n            \n            # Apply alignment settings based on test case\n            if 'horizontal' in test_case:\n                cell.style.set_horizontal_alignment(test_case['horizontal'])\n            if 'vertical' in test_case:\n                cell.style.set_vertical_alignment(test_case['vertical'])\n            if 'wrap_text' in test_case:\n                cell.style.set_text_wrap(test_case['wrap_text'])\n            if 'shrink_to_fit' in test_case:\n                cell.style.set_shrink_to_fit(test_case['shrink_to_fit'])\n            if 'indent' in test_case:\n                cell.style.set_indent(test_case['indent'])\n            if 'text_rotation' in test_case:\n                cell.style.set_text_rotation(test_case['text_rotation'])\n            if 'reading_order' in test_case:\n                cell.style.set_reading_order(test_case['reading_order'])\n            if 'relative_indent' in test_case:\n                cell.style.alignment.relative_indent = test_case['relative_indent']\n            \n            # Set the cell in the worksheet\n            self.worksheet.cells[cell_ref] = cell\n        \n        # Save workbook to outputfiles folder\n        output_path = 'outputfiles/test_alignment_properties.xlsx'\n        \n        # Ensure outputfiles directory exists\n        os.makedirs('outputfiles', exist_ok=True)\n        \n        print(f\"Saving workbook to {output_path}...\")\n        self.workbook.save(output_path)\n        \n        # Verify file was created\n        self.assertTrue(os.path.exists(output_path))\n        \n        # Verify file is not empty\n        file_size = os.path.getsize(output_path)\n        self.assertGreater(file_size, 0)\n        \n        print(f\"Alignment properties test file saved to: {output_path}\")\n        print(f\"File size: {file_size} bytes\")\n        \n        return alignment_test_cases\n    \n    def test_verify_alignment_settings(self):\n        \"\"\"Test reading generated files and verify all alignment settings are correct.\"\"\"\n        # First create the alignment settings\n        alignment_test_cases = self.test_comprehensive_alignment_settings()\n        \n        # Load the file back and verify alignment settings\n        print(\"Loading file back and verifying alignment settings...\")\n        loaded_workbook = Workbook('outputfiles/test_alignment_properties.xlsx')\n        loaded_worksheet = loaded_workbook.worksheets[0]\n        \n        # Verify all alignment settings are preserved\n        for test_case in alignment_test_cases:\n            cell_ref = test_case['cell']\n            expected_alignment = test_case['expected_alignment']\n            \n            # Get the loaded cell\n            loaded_cell = loaded_worksheet.cells[cell_ref]\n            \n            # Verify cell value\n            self.assertEqual(loaded_cell.value, test_case['value'],\n                           f\"Cell {cell_ref} value mismatch\")\n            \n            # Verify alignment settings\n            alignment = loaded_cell.style.alignment\n            \n            self.assertEqual(alignment.horizontal, expected_alignment['horizontal'],\n                           f\"Cell {cell_ref} horizontal alignment mismatch\")\n            self.assertEqual(alignment.vertical, expected_alignment['vertical'],\n                           f\"Cell {cell_ref} vertical alignment mismatch\")\n            self.assertEqual(alignment.wrap_text, expected_alignment['wrap_text'],\n                           f\"Cell {cell_ref} wrap text mismatch\")\n            self.assertEqual(alignment.indent, expected_alignment['indent'],\n                           f\"Cell {cell_ref} indent mismatch\")\n            # Note: shrink_to_fit, text_rotation, reading_order, and relative_indent\n            # may not be fully persisted in current implementation\n            # The test should verify API works even if persistence is limited\n            if expected_alignment['shrink_to_fit']:\n                if alignment.shrink_to_fit != expected_alignment['shrink_to_fit']:\n                    print(f\"Note: Cell {cell_ref} shrink_to_fit not persisted (expected {expected_alignment['shrink_to_fit']}, got {alignment.shrink_to_fit})\")\n            if expected_alignment['text_rotation'] != 0:\n                if alignment.text_rotation != expected_alignment['text_rotation']:\n                    print(f\"Note: Cell {cell_ref} text_rotation not persisted (expected {expected_alignment['text_rotation']}, got {alignment.text_rotation})\")\n            if expected_alignment['reading_order'] != 0:\n                if alignment.reading_order != expected_alignment['reading_order']:\n                    print(f\"Note: Cell {cell_ref} reading_order not persisted (expected {expected_alignment['reading_order']}, got {alignment.reading_order})\")\n            if expected_alignment['relative_indent'] != 0:\n                if alignment.relative_indent != expected_alignment['relative_indent']:\n                    print(f\"Note: Cell {cell_ref} relative_indent not persisted (expected {expected_alignment['relative_indent']}, got {alignment.relative_indent})\")\n        \n        print(\"All alignment settings verified successfully!\")\n    \n    def test_alignment_edge_cases(self):\n        \"\"\"Test edge cases for alignment settings.\"\"\"\n        # Test invalid horizontal alignment\n        with self.assertRaises(ValueError):\n            cell = Cell(\"Test\")\n            cell.style.set_horizontal_alignment('invalid')\n        \n        # Test invalid vertical alignment\n        with self.assertRaises(ValueError):\n            cell = Cell(\"Test\")\n            cell.style.set_vertical_alignment('invalid')\n        \n        # Test invalid text rotation\n        with self.assertRaises(ValueError):\n            cell = Cell(\"Test\")\n            cell.style.set_text_rotation(200)  # Not in 0-180 or 255 range\n        \n        # Test invalid reading order\n        with self.assertRaises(ValueError):\n            cell = Cell(\"Test\")\n            cell.style.set_reading_order(5)  # Not 0, 1, or 2\n        \n        # Test negative indent (should be set to 0)\n        cell = Cell(\"Test\")\n        cell.style.set_indent(-5)\n        self.assertEqual(cell.style.alignment.indent, 0)\n\n\nif __name__ == '__main__':\n    unittest.main()",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-bea989",
+            "CLM-cells-050814",
+            "CLM-cells-0b32d6",
+            "CLM-cells-044179",
+            "CLM-cells-1ae591"
+          ],
+          "content": "\"\"\"\nTest Suite for XLSX to Markdown Conversion\n\nThis test suite covers converting XLSX files to Markdown format, including:\n- Basic XLSX to Markdown conversion\n- Multiple worksheets handling\n- Custom formatting options\n- Unicode and special characters\n- Large datasets\n- Empty worksheets\n\"\"\"\n\nimport unittest\nimport os\nimport sys\nfrom datetime import datetime, date, time\n\n# Add parent directory to path to import aspose.cells_foss\nsys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))\n\nfrom aspose.cells import Workbook\nfrom aspose.cells.markdown_handler import MarkdownHandler, MarkdownSaveOptions\n\n\nclass TestXLSXToMarkdownConversion(unittest.[identifier omitted]):\n    \"\"\"Test XLSX to Markdown conversion functionality.\"\"\"\n    \n    def setUp(self):\n        \"\"\"Set up test fixtures.\"\"\"\n        self.input_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'input')\n        self.output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'outputfiles')\n        os.makedirs(self.output_dir, exist_ok=True)\n    \n    def test_convert_all_xlsx_to_markdown(self):\n        \"\"\"\n        Test converting all XLSX files from input directory to Markdown.\n        \n        This test:\n        1. Finds all .xlsx files in the input directory\n        2. Converts each to Markdown format\n        3. Saves to tests/outputfiles directory\n        4. Verifies the Markdown files were created\n        \"\"\"\n        # Find all XLSX files in input directory\n        xlsx_files = []\n        if os.path.exists(self.input_dir):\n            for filename in os.listdir(self.input_dir):\n                if filename.endswith('.xlsx'):\n                    xlsx_files.append(filename)\n        \n        self.assertGreater(len(xlsx_files), 0, \"No XLSX files found in input directory\")\n        \n        # Convert each XLSX file to Markdown\n        for xlsx_file in xlsx_files:\n            # Input file path\n            input_path = os.path.join(self.input_dir, xlsx_file)\n            \n            # Output file path (change extension to .md)\n            base_name = os.path.splitext(xlsx_file)[0]\n            output_path = os.path.join(self.output_dir, f'{base_name}.md')\n            \n            # Load workbook\n            wb = Workbook(input_path)\n            \n            # Save as Markdown with default options\n            wb.save_as_markdown(output_path)\n            \n            # Verify file was created\n            self.assertTrue(os.path.exists(output_path), \n                          f\"Markdown file not created: {output_path}\")\n            \n            # Verify file is not empty\n            file_size = os.path.getsize(output_path)\n            self.assertGreater(file_size, 0, \n                           f\"Markdown file is empty: {output_path}\")\n            \n            # Read and verify basic Markdown structure\n            with open(output_path, 'r', encoding='utf-8') as f:\n                content = f.read()\n            \n            # Markdown should have some structure (headers, tables, etc.)\n            self.assertGreater(len(content), 0, \n                           f\"Markdown file has no content: {output_path}\")\n            \n            print(f\"[OK] Converted {xlsx_file} to {base_name}.md\")\n\n\nclass [identifier omitted](unittest.[identifier omitted]):\n    \"\"\"Test Markdown export with various options.\"\"\"\n    \n    def setUp(self):\n        \"\"\"Set up test fixtures.\"\"\"\n        self.output_dir = 'tests/outputfiles'\n        os.makedirs(self.output_dir, exist_ok=True)\n    \n    def test_markdown_with_custom_alignment(self):\n        \"\"\"Test Markdown export with custom column alignment.\"\"\"\n        wb = Workbook()\n        ws = wb.worksheets[0]\n        \n        # Add data\n        ws.cells['A1'].value = \"Name\"\n        ws.cells['B1'].value = \"Age\"\n        ws.cells['C1'].value = \"Active\"\n        ws.cells['A2'].value = \"Alice\"\n        ws.cells['B2'].value = 30\n        ws.cells['C2'].value = True\n        ws.cells['A3'].value = \"Bob\"\n        ws.cells['B3'].value = 25\n        ws.cells['C3'].value = False\n        \n        # Create options with center alignment\n        options = MarkdownSaveOptions()\n        options.default_alignment = 'center'\n        \n        output_path = os.path.join(self.output_dir, 'test_markdown_alignment.md')\n        wb.save_as_markdown(output_path, options)\n        \n        # Verify file was created\n        self.assertTrue(os.path.exists(output_path))\n        \n        # Verify alignment markers in content\n        with open(output_path, 'r', encoding='utf-8') as f:\n            content = f.read()\n        \n        # Center alignment should have :---: separators\n        self.assertIn(':---:', content)\n    \n    def test_markdown_without_worksheet_name(self):\n        \"\"\"Test Markdown export without worksheet name header.\"\"\"\n        wb = Workbook()\n        ws = wb.worksheets[0]\n        ws.name = \"[identifier omitted]\"\n        \n        # Add data\n        ws.cells['A1'].value = \"Name\"\n        ws.cells['A2'].value = \"Alice\"\n        \n        # Create options without worksheet name\n        options = MarkdownSaveOptions()\n        options.include_worksheet_name = False\n        \n        output_path = os.path.join(self.output_dir, 'test_markdown_no_header.md')\n        wb.save_as_markdown(output_path, options)\n        \n        # Verify file was created\n        self.assertTrue(os.path.exists(output_path))\n        \n        # Verify no worksheet name header\n        with open(output_path, 'r', encoding='utf-8') as f:\n            content = f.read()\n        \n        # Should not have ## [identifier omitted] header\n        self.assertNotIn('## [identifier omitted]', content)\n    \n    def test_markdown_with_custom_header_level(self):\n        \"\"\"Test Markdown export with custom header level.\"\"\"\n        wb = Workbook()\n        ws = wb.worksheets[0]\n        ws.name = \"[identifier omitted]\"\n        \n        # Add data\n        ws.cells['A1'].value = \"Data\"\n        ws.cells['A2'].value = \"Value\"\n        \n        # Create options with H3 header\n        options = MarkdownSaveOptions()\n        options.header_level = 3\n        \n        output_path = os.path.join(self.output_dir, 'test_markdown_h3.md')\n        wb.save_as_markdown(output_path, options)\n        \n        # Verify file was created\n        self.assertTrue(os.path.exists(output_path))\n        \n        # Verify H3 header\n        with open(output_path, 'r', encoding='utf-8') as f:\n            content = f.read()\n        \n        # Should have ### [identifier omitted] (not ## [identifier omitted])\n        self.assertIn('### [identifier omitted]', content)\n        self.assertNotIn('\\n## [identifier omitted]', content)  # Check for H2 at line start\n    \n    def test_markdown_with_date_formatting(self):\n        \"\"\"Test Markdown export with custom date formatting.\"\"\"\n        wb = Workbook()\n        ws = wb.worksheets[0]\n        \n        # Add data with dates\n        ws.cells['A1'].value = \"Date\"\n        ws.cells['A2'].value = date(2023, 1, 15)\n        ws.cells['A3'].value = date(2023, 12, 31)\n        \n        # Create options with custom date format\n        options = MarkdownSaveOptions()\n        options.date_format = '%Y/%m/%d'\n        \n        output_path = os.path.join(self.output_dir, 'test_markdown_dates.md')\n        wb.save_as_markdown(output_path, options)\n        \n        # Verify file was created\n        self.assertTrue(os.path.exists(output_path))\n        \n        # Verify date format\n        with open(output_path, 'r', encoding='utf-8') as f:\n            content = f.read()\n        \n        # Should have dates in YYYY/MM/DD format\n        self.assertIn('2023/01/15', content)\n        self.assertIn('2023/12/31', content)\n    \n    def test_markdown_with_datetime_formatting(self):\n        \"\"\"Test Markdown export with custom datetime formatting.\"\"\"\n        wb = Workbook()\n        ws = wb.worksheets[0]\n        \n        # Add data with datetimes\n        ws.cells['A1'].value = \"[identifier omitted]\"\n        ws.cells['A2'].value = datetime(2023, 1, 15, 14, 30, 45)\n        ws.cells['A3'].value = datetime(2023, 12, 31, 23, 59, 59)\n        \n        # Create options with custom datetime format\n        options = MarkdownSaveOptions()\n        options.datetime_format = '%Y-%m-%d %H:%M:%S'\n        \n        output_path = os.path.join(self.output_dir, 'test_markdown_datetimes.md')\n        wb.save_as_markdown(output_path, options)\n        \n        # Verify file was created\n        self.assertTrue(os.path.exists(output_path))\n        \n        # Verify datetime format\n        with open(output_path, 'r', encoding='utf-8') as f:\n            content = f.read()\n        \n        # Should have datetimes in YYYY-MM-DD HH:MM:SS format\n        self.assertIn('2023-01-15 14:30:45', content)\n        self.assertIn('2023-12-31 23:59:59', content)\n    \n    def test_markdown_with_boolean_values(self):\n        \"\"\"Test Markdown export with boolean values.\"\"\"\n        wb = Workbook()\n        ws = wb.worksheets[0]\n        \n        # Add data with booleans\n        ws.cells['A1'].value = \"Active\"\n        ws.cells['A2'].value = True\n        ws.cells['A3'].value = False\n        ws.cells['A4'].value = True\n        \n        output_path = os.path.join(self.output_dir, 'test_markdown_booleans.md')\n        wb.save_as_markdown(output_path)\n        \n        # Verify file was created\n        self.assertTrue(os.path.exists(output_path))\n        \n        # Verify boolean formatting\n        with open(output_path, 'r', encoding='utf-8') as f:\n            content = f.read()\n        \n        # Booleans should be Yes/No\n        self.assertIn('Yes', content)\n        self.assertIn('No', content)\n    \n    def test_markdown_with_empty_cells(self):\n        \"\"\"Test Markdown export with empty cells.\"\"\"\n        wb = Workbook()\n        ws = wb.worksheets[0]\n        \n        # Add data with empty cells\n        ws.cells['A1'].value = \"Name\"\n        ws.cells['B1'].value = \"Age\"\n        ws.cells['A2'].value = \"Alice\"\n        ws.cells['B2'].value = None  # Empty\n        ws.cells['A3'].value = None  # Empty\n        ws.cells['B3'].value = 25\n        \n        output_path = os.path.join(self.output_dir, 'test_markdown_empty.md')\n        wb.save_as_markdown(output_path)\n        \n        # Verify file was created\n        self.assertTrue(os.path.exists(output_path))\n        \n        # Verify table structure\n        with open(output_path, 'r', encoding='utf-8') as f:\n            content = f.read()\n        \n        # Should have proper table structure\n        self.assertIn('|', content)  # Table separators\n        self.assertIn('Name', content)\n        self.assertIn('Age', content)\n    \n    def test_markdown_with_special_characters(self):\n        \"\"\"Test Markdown export with special characters.\"\"\"\n        wb = Workbook()\n        ws = wb.worksheets[0]\n        \n        # Add data with special characters\n        ws.cells['A1'].value = \"Text\"\n        ws.cells['A2'].value = \"Has | pipe\"\n        ws.cells['A3'].value = \"Has * asterisk\"\n        ws.cells['A4'].value = \"Has _ underscore\"\n        \n        output_path = os.path.join(self.output_dir, 'test_markdown_special.md')\n        wb.save_as_markdown(output_path)\n        \n        # Verify file was created\n        self.assertTrue(os.path.exists(output_path))\n        \n        # Verify special character handling\n        with open(output_path, 'r', encoding='utf-8') as f:\n            content = f.read()\n        \n        # Pipes should be escaped by default\n        self.assertIn('\\\\|', content)\n    \n    def test_markdown_with_unicode(self):\n        \"\"\"Test Markdown export with Unicode characters.\"\"\"\n        wb = Workbook()\n        ws = wb.worksheets[0]\n        \n        # Add data with various Unicode\n        ws.cells['A1'].value = \"Language\"\n        ws.cells['A2'].value = \"English\"\n        ws.cells['A3'].value = \"中文\"\n        ws.cells['A4'].value = \"日本語\"\n        ws.cells['A5'].value = \"العربية\"\n        ws.cells['A6'].value = \"한국어\"\n        \n        output_path = os.path.join(self.output_dir, 'test_markdown_unicode.md')\n        wb.save_as_markdown(output_path)\n        \n        # Verify file was created\n        self.assertTrue(os.path.exists(output_path))\n        \n        # Verify Unicode characters are preserved\n        with open(output_path, 'r', encoding='utf-8') as f:\n            content = f.read()\n        \n        self.assertIn('中文', content)\n        self.assertIn('日本語', content)\n        self.assertIn('العربية', content)\n        self.assertIn('한국어', content)\n    \n    def test_markdown_multiple_worksheets(self):\n        \"\"\"Test Markdown export with multiple worksheets.\"\"\"\n        wb = Workbook()\n        \n        # First worksheet\n        ws1 = wb.worksheets[0]\n        ws1.name = \"[identifier omitted]\"\n        ws1.cells['A1'].value = \"Data\"\n        ws1.cells['A2'].value = \"[identifier omitted]\"\n        \n        # Second worksheet\n        ws2 = wb.add_worksheet(\"[identifier omitted]\")\n        ws2.cells['A1'].value = \"Data\"\n        ws2.cells['A2'].value = \"[identifier omitted]\"\n        \n        # Export all worksheets\n        options = MarkdownSaveOptions()\n        options.worksheet_index = -1  # Export all\n        \n        output_path = os.path.join(self.output_dir, 'test_markdown_multiple_sheets.md')\n        wb.save_as_markdown(output_path, options)\n        \n        # Verify file was created\n        self.assertTrue(os.path.exists(output_path))\n        \n        # Verify both worksheets are included\n        with open(output_path, 'r', encoding='utf-8') as f:\n            content = f.read()\n        \n        self.assertIn('## [identifier omitted]', content)\n        self.assertIn('## [identifier omitted]', content)\n        self.assertIn('[identifier omitted]', content)\n        self.assertIn('[identifier omitted]', content)\n    \n    def test_markdown_single_worksheet(self):\n        \"\"\"Test Markdown export of single worksheet from multi-sheet workbook.\"\"\"\n        wb = Workbook()\n        \n        # First worksheet\n        ws1 = wb.worksheets[0]\n        ws1.name = \"[identifier omitted]\"\n        ws1.cells['A1'].value = \"Data\"\n        ws1.cells['A2'].value = \"[identifier omitted]\"\n        \n        # Second worksheet\n        ws2 = wb.add_worksheet(\"[identifier omitted]\")\n        ws2.cells['A1'].value = \"Data\"\n        ws2.cells['A2'].value = \"[identifier omitted]\"\n        \n        # Export only second worksheet\n        options = MarkdownSaveOptions()\n        options.worksheet_index = 1  # Export only [identifier omitted]\n        \n        output_path = os.path.join(self.output_dir, 'test_markdown_single_sheet.md')\n        wb.save_as_markdown(output_path, options)\n        \n        # Verify file was created\n        self.assertTrue(os.path.exists(output_path))\n        \n        # Verify only [identifier omitted] is included\n        with open(output_path, 'r', encoding='utf-8') as f:\n            content = f.read()\n        \n        self.assertNotIn('## [identifier omitted]', content)\n        self.assertIn('## [identifier omitted]', content)\n        self.assertNotIn('[identifier omitted]', content)\n        self.assertIn('[identifier omitted]', content)\n    \n    def test_markdown_empty_worksheet(self):\n        \"\"\"Test Markdown export of empty worksheet.\"\"\"\n        wb = Workbook()\n        ws = wb.worksheets[0]\n        ws.name = \"[identifier omitted]\"\n        # Don't add any data\n        \n        output_path = os.path.join(self.output_dir, 'test_markdown_empty_sheet.md')\n        wb.save_as_markdown(output_path)\n        \n        # Verify file was created\n        self.assertTrue(os.path.exists(output_path))\n        \n        # Verify content indicates no data\n        with open(output_path, 'r', encoding='utf-8') as f:\n            content = f.read()\n        \n        self.assertIn('[identifier omitted]', content)\n        self.assertIn('*No data*', content)\n    \n    def test_markdown_large_dataset(self):\n        \"\"\"Test Markdown export with large dataset.\"\"\"\n        wb = Workbook()\n        ws = wb.worksheets[0]\n        \n        # Create large dataset (100 rows x 10 columns)\n        for row in range(1, 101):\n            for col in range(1, 11):\n                col_letter = chr(ord('A') + col - 1)\n                ws.cells[f'{col_letter}{row}'].value = f'Row{row}_Col{col}'\n        \n        output_path = os.path.join(self.output_dir, 'test_markdown_large.md')\n        wb.save_as_markdown(output_path)\n        \n        # Verify file was created\n        self.assertTrue(os.path.exists(output_path))\n        \n        # Verify file has reasonable size\n        file_size = os.path.getsize(output_path)\n        self.assertGreater(file_size, 1000)  # At least 1KB\n        \n        # Verify some data points\n        with open(output_path, 'r', encoding='utf-8') as f:\n            content = f.read()\n        \n        self.assertIn('Row1_Col1', content)\n        self.assertIn('Row100_Col10', content)\n    \n    def test_markdown_to_string(self):\n        \"\"\"Test Markdown export to string.\"\"\"\n        wb = Workbook()\n        ws = wb.worksheets[0]\n        \n        # Add data\n        ws.cells['A1'].value = \"Name\"\n        ws.cells['A2'].value = \"Alice\"\n        \n        # Export to string\n        md_string = MarkdownHandler.save_markdown_to_string(wb)\n        \n        # Verify string content\n        self.assertGreater(len(md_string), 0)\n        self.assertIn('Name', md_string)\n        self.assertIn('Alice', md_string)\n        self.assertIn('|', md_string)  # Table separators\n    \n    def test_markdown_with_row_numbers(self):\n        \"\"\"Test Markdown export with row numbers.\"\"\"\n        wb = Workbook()\n        ws = wb.worksheets[0]\n        \n        # Add data\n        ws.cells['A1'].value = \"Name\"\n        ws.cells['A2'].value = \"Alice\"\n        ws.cells['A3'].value = \"Bob\"\n        \n        # Create options with row numbers\n        options = MarkdownSaveOptions()\n        options.include_row_numbers = True\n        \n        output_path = os.path.join(self.output_dir, 'test_markdown_row_numbers.md')\n        wb.save_as_markdown(output_path, options)\n        \n        # Verify file was created\n        self.assertTrue(os.path.exists(output_path))\n        \n        # Verify row numbers\n        with open(output_path, 'r', encoding='utf-8') as f:\n            content = f.read()\n        \n        # Should have row number column\n        # Note: Header row (A1) becomes table header, data rows (A2, A3) are numbered 1 and 2\n        self.assertIn('#', content)  # Row number header\n        self.assertIn('1', content)\n        self.assertIn('2', content)\n    \n    def test_markdown_with_max_column_width(self):\n        \"\"\"Test Markdown export with maximum column width.\"\"\"\n        wb = Workbook()\n        ws = wb.worksheets[0]\n        \n        # Add data with long strings\n        ws.cells['A1'].value = \"Short\"\n        ws.cells['A2'].value = \"This is a very long string that should be truncated\"\n        \n        # Create options with max width\n        options = MarkdownSaveOptions()\n        options.max_column_width = 20\n        \n        output_path = os.path.join(self.output_dir, 'test_markdown_max_width.md')\n        wb.save_as_markdown(output_path, options)\n        \n        # Verify file was created\n        self.assertTrue(os.path.exists(output_path))\n        \n        # Verify truncation\n        with open(output_path, 'r', encoding='utf-8') as f:\n            content = f.read()\n        \n        # Long string should be truncated with '...'\n        self.assertIn('...', content)\n        # Full string should not be present\n        self.assertNotIn('This is a very long string that should be truncated', content)\n\n\nif __name__ == '__main__':\n    unittest.main()",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
         }
       ],
       "heading": "Overview",
@@ -92,22 +173,16 @@
     {
       "blocks": [
         {
-          "claim_ids": [
-            "CLM-cells-c192e7",
-            "CLM-cells-ed6d7c"
-          ],
-          "content": "The `Cells` class represents a collection of cells in a worksheet. It provides access to individual cells via indexers and supports iteration over rows using iter_rows().",
+          "claim_ids": [],
+          "content": "The `Workbook` class in Aspose.Cells FOSS provides the primary interface for working with Excel files in Python. Instantiate it to create a new workbook or load an existing one. The constructor supports optional file paths for loading existing spreadsheets.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
         },
         {
-          "claim_ids": [
-            "CLM-cells-c192e7",
-            "CLM-cells-ed6d7c"
-          ],
-          "content": "| Name | Type | [identifier omitted] |\n|------|------|-------------|\n| worksheet | Worksheet | The parent worksheet containing the cells collection |\n| count | `int` | The number of cells in the collection |\n| item(int) | `Cell` | Gets the cell at the specified index |\n| item(str) | `Cell` | Gets the cell at the specified address (e.g., \"A1\") |\n| iter_rows() | generator | Iterates over rows in the worksheet |\n| get_cell(int, int) | `Cell` | Gets the cell at the specified row and column index |\n| put_value(int, int, object) | `None` | Sets the value of the cell at the specified row and column |\n| clear(int, int) | `None` | Clears the content of the cell at the specified row and column |\n| copy(`Cells`) | `None` | Copies cells from another `Cells` collection |\n| get_range(str) | Range | Gets the range object for the specified address |\n| get_used_range(bool) | Range | Gets the range of used cells |\n| get_cell(int, int) | `Cell` | Gets the cell at the specified row and column index |\n| set_row_height(int, float) | `None` | Sets the height of the specified row |\n| set_column_width(int, float) | `None` | Sets the width of the specified column |\n| get_row_height(int) | `float` | Gets the height of the specified row |\n| get_column_width(int) | `float` | Gets the width of the specified column |",
+          "claim_ids": [],
+          "content": "| Parameter | Type | Description |\n|-----------|------|-------------|\n| `file_path` | Optional[str] | Path to an existing Excel file (.xlsx, .xls, etc.). If omitted, creates a new workbook. |\n| password | Optional[str] | Password for encrypted workbooks. Only Agile encryption is supported. |\n| load_format | Optional[str] | Load format hint (e.g., \"xlsx\"). Auto-detected if omitted. |",
           "items": [],
           "language": null,
           "level": null,
@@ -115,9 +190,10 @@
         },
         {
           "claim_ids": [
-            "CLM-cells-c192e7"
+            "CLM-cells-bf07d6",
+            "CLM-cells-1ae591"
           ],
-          "content": "from aspose.cells import Workbook\n\nworkbook = Workbook()\nworksheet = workbook.worksheets[0]\ncells = worksheet.cells",
+          "content": "import aspose.cells\n\n# Create a new workbook\nworkbook = aspose.cells.Workbook()\n\n# Load an existing workbook\nworkbook = aspose.cells.Workbook(\"input.xlsx\")",
           "items": [],
           "language": "python",
           "level": null,
@@ -132,10 +208,9 @@
       "blocks": [
         {
           "claim_ids": [
-            "CLM-cells-4d372e",
-            "CLM-cells-243707"
+            "CLM-cells-b5d99f"
           ],
-          "content": "The `Cells` class exposes properties that provide access to worksheet-level cell collections and iteration mechanisms. [identifier omitted] properties support standard operations for navigating and manipulating cell data in a worksheet.",
+          "content": "The `Workbook` class exposes several read-only `properties` that provide access to workbook-level metadata and collections. These `properties` are part of the public API and support programmatic inspection of workbook structure and `protection` state.",
           "items": [],
           "language": null,
           "level": null,
@@ -143,14 +218,43 @@
         },
         {
           "claim_ids": [
-            "CLM-cells-4d372e",
-            "CLM-cells-243707"
+            "CLM-cells-b5d99f"
           ],
-          "content": "| Name | Type | [identifier omitted] |\n|------|------|-------------|\n| cell | method | Accesses a cell by row and column (1-based). |\n| iter_cols | method | Iterates over columns in the worksheet. |\n| count | int | Returns the total number of cells in the collection. |\n| worksheet | Worksheet | Returns the parent worksheet containing this cell collection. |\n",
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| `worksheets` | WorksheetCollection | Read-only collection of `worksheets` in the workbook |\n| `file_path` | `str` | Read-only path of the workbook file (empty if newly created) |\n| `properties` | `dict` | Read-only dictionary of built-in document `properties` |\n| `document_properties` | `dict` | Read-only dictionary of custom document `properties` |\n| `protection` | `dict` | Read-only dictionary containing current workbook `protection` settings |\n",
           "items": [],
           "language": null,
           "level": null,
           "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-18a190"
+          ],
+          "content": "The `Cell` class exposes `properties` that represent the core attributes of a spreadsheet `cell`. These `properties` enable reading and writing `cell` content, `style`, and metadata.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-18a190"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| `value` | `Any` | The raw `value` stored in the `cell` |\n| `formula` | `str` | The `formula` string assigned to the `cell` |\n| `style` | `Style` | The `style` object applied to the `cell` |\n| `comment` | `str` | Read-only `comment` text attached to the `cell` |\n| `data_type` | `str` | Read-only indicator of the `cell`'s data `type` (e.g., 'string', 'double', 'bool') |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-b5d99f"
+          ],
+          "content": "import aspose.cells\n\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\nworksheet.cells[\"A1\"].value = \"Confidential Data\"\nprotection_settings = workbook.protection\nprint(protection_settings)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
         }
       ],
       "heading": "Properties",
@@ -160,15 +264,98 @@
     {
       "blocks": [
         {
+          "claim_ids": [],
+          "content": "Aspose.Cells FOSS -- Method table: signature, return type, description.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
           "claim_ids": [
-            "CLM-cells-40f8b3",
-            "CLM-cells-f82996"
+            "CLM-cells-18a190",
+            "CLM-cells-3ca075"
           ],
-          "content": "| [identifier omitted] | Return Type | [identifier omitted] |\n|--------|-------------|-------------|\n| `column_index_from_string(column_letter)` | int | Converts a column letter to a 1-based index. |\n| count() | int | Gets the number of cells in the collection. |",
+          "content": "| Item | Description |\n| --- | --- |\n| Cell: Represents a single cell in a worksheet. |  |\n| CSVLoadOptions configures file import options in Aspose.Cells FOSS. |  |",
           "items": [],
           "language": null,
           "level": null,
           "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-d289df",
+            "CLM-cells-dc36dc",
+            "CLM-cells-fefc07",
+            "CLM-cells-6faf16",
+            "CLM-cells-e7aacb",
+            "CLM-cells-e6c950",
+            "CLM-cells-e62dd9",
+            "CLM-cells-18a190",
+            "CLM-cells-c861f6",
+            "CLM-cells-788e51",
+            "CLM-cells-bf07d6",
+            "CLM-cells-c1d98c",
+            "CLM-cells-3ca075",
+            "CLM-cells-d30813",
+            "CLM-cells-c631fc",
+            "CLM-cells-39a6d4"
+          ],
+          "content": "from aspose.cells import Workbook\n\n# Create a new workbook\nworkbook = Workbook()\n\n# Get the first worksheet\nworksheet = workbook.worksheets[0]\n\n# Set cell values\nworksheet.cells[\"A1\"].value = \"Hello\"\nworksheet.cells[\"B1\"].value = \"World\"\nworksheet.cells[\"A2\"].value = 42\nworksheet.cells[\"B2\"].value = 3.14\n\n# Save the workbook\nworkbook.save(\"output.xlsx\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-d289df",
+            "CLM-cells-dc36dc",
+            "CLM-cells-fefc07",
+            "CLM-cells-6faf16",
+            "CLM-cells-e7aacb",
+            "CLM-cells-e6c950",
+            "CLM-cells-e62dd9",
+            "CLM-cells-18a190",
+            "CLM-cells-c861f6",
+            "CLM-cells-788e51",
+            "CLM-cells-bf07d6",
+            "CLM-cells-c1d98c",
+            "CLM-cells-3ca075",
+            "CLM-cells-d30813",
+            "CLM-cells-c631fc",
+            "CLM-cells-39a6d4"
+          ],
+          "content": "from aspose.cells import Workbook\n\n# Open an existing workbook\nworkbook = Workbook(\"input.xlsx\")\n\n# Access a worksheet\nworksheet = workbook.worksheets[0]\n\n# Read cell values\nvalue = worksheet.cells[\"A1\"].value\nprint(f\"Cell A1 contains: {value}\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-d289df",
+            "CLM-cells-dc36dc",
+            "CLM-cells-fefc07",
+            "CLM-cells-6faf16",
+            "CLM-cells-e7aacb",
+            "CLM-cells-e6c950",
+            "CLM-cells-e62dd9",
+            "CLM-cells-18a190",
+            "CLM-cells-c861f6",
+            "CLM-cells-788e51",
+            "CLM-cells-bf07d6",
+            "CLM-cells-c1d98c",
+            "CLM-cells-3ca075",
+            "CLM-cells-d30813",
+            "CLM-cells-c631fc",
+            "CLM-cells-39a6d4"
+          ],
+          "content": "from aspose.cells import Workbook\n\nworkbook = Workbook()\nworksheet = workbook.worksheets[0]\ncell = worksheet.cells[\"A1\"]\n\ncell.value = \"Styled Text\"\n\n# Get and modify the cell style\nstyle = cell.get_style()\nstyle.font.bold = True\nstyle.font.color = \"#FF0000\"  # Red\nstyle.font.size = 14\ncell.apply_style(style)\n\nworkbook.save(\"styled.xlsx\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
         }
       ],
       "heading": "Methods",
@@ -179,10 +366,11 @@
       "blocks": [
         {
           "claim_ids": [
-            "CLM-cells-73b4dd",
-            "CLM-cells-e98876"
+            "CLM-cells-fdf893",
+            "CLM-cells-d30813",
+            "CLM-cells-788e51"
           ],
-          "content": "The following example demonstrates two key operations on the `Cells` collection: converting a 1-based column index to its letter equivalent using column_letter_from_index(), and clearing all cell contents in the collection using clear(). This illustrates direct manipulation of the `Cells` object within a worksheet.",
+          "content": "This example demonstrates clearing a `cell` `formula` using `Cell.clear_formula()` and exporting the workbook to CSV using `CSVHandler.save_csv()` with `CSVSaveOptions`. It shows how to manipulate `cell` content and persist the result in a standard format.",
           "items": [],
           "language": null,
           "level": null,
@@ -190,10 +378,12 @@
         },
         {
           "claim_ids": [
-            "CLM-cells-73b4dd",
-            "CLM-cells-e98876"
+            "CLM-cells-fdf893",
+            "CLM-cells-d30813",
+            "CLM-cells-788e51",
+            "CLM-cells-c861f6"
           ],
-          "content": "import aspose.cells\n\nwb = aspose.cells.Workbook()\nws = wb.worksheets[0]\n\n# Write sample data to columns A–C\nws.cells[\"A1\"].put_value(\"Name\")\nws.cells[\"B1\"].put_value(\"Age\")\nws.cells[\"C1\"].put_value(\"[identifier omitted]\")\n\n# Convert 1-based column index to letter\nletter = aspose.cells.Cells.column_letter_from_index(2)  # returns \"B\"\n\n# Clear all cells in the worksheet\ncells = ws.cells\ncells.clear()\n\n# Verify: column_letter_from_index returns \"B\" for index 2\nassert letter == \"B\"\n# Verify: all cell contents are cleared\nassert cells.count == 0",
+          "content": "import aspose.cells\n\n# Create a new workbook and add a worksheet\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.create_worksheet(\"Data\")\n\n# Set a formula in cell A1\nworksheet.cells[\"A1\"].formula = \"=10+20\"\n\n# Clear the formula (leaves value blank)\nworksheet.cells[\"A1\"].clear_formula()\n\n# Set a static value instead\nworksheet.cells[\"A1\"].value = 30\n\n# Export to CSV using CSVHandler\noptions = aspose.cells.CSVSaveOptions()\naspose.cells.CSVHandler.save_csv(workbook, \"output.csv\", options)",
           "items": [],
           "language": "python",
           "level": null,
@@ -208,10 +398,11 @@
       "blocks": [
         {
           "claim_ids": [
-            "CLM-cells-0c4b8c",
-            "CLM-cells-fe009f"
+            "CLM-cells-c861f6",
+            "CLM-cells-3ca075",
+            "CLM-cells-d30813"
           ],
-          "content": "The `Cells` class provides methods to work with cell collections in a worksheet. Use coordinate_from_string() to parse A1-style references into (row, column) tuples, and get_cell_by_name() to retrieve a cell by its defined name reference.",
+          "content": "The `Workbook.create_worksheet()` method is part of the public API for Aspose.Cells FOSS and enables programmatic creation of new `worksheets` within a workbook. Related classes such as `CSVHandler`, `JsonHandler`, and `MarkdownHandler` provide structured export capabilities, while `CSVLoadOptions` and `CSVSaveOptions` configure import and export behavior respectively.",
           "items": [],
           "language": null,
           "level": null,
@@ -221,11 +412,11 @@
           "claim_ids": [],
           "content": "",
           "items": [
-            "[Chart: Represents a chart in a worksheet](/reference.aspose.org/cells/python/chart/)",
-            "[**workbook & Worksheet Protection**: Protect workbook structure and individua...](/blog.aspose.org/cells/python/introducing-cells-foss-python/)",
-            "[**workbook & Worksheet Protection**: Protect workbook structure and individua...](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)",
-            "[Work with Formulas with Aspose.Cells FOSS](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
-            "[Spreadsheet Operations with Aspose.Cells FOSS](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)"
+            "[CSV file handling](/reference.aspose.org/cells/python/csv-handler/)",
+            "[API reference documentation](/reference.aspose.org/cells/python/api-overview/)",
+            "[Introduction to Cells FOSS Python](/blog.aspose.org/cells/python/cells-foss-python/)",
+            "[Creating all chart types](/blog.aspose.org/cells/python/create-charts-spreadsheets/)",
+            "[Working with spreadsheet formulas](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)"
           ],
           "language": null,
           "level": null,
@@ -237,5 +428,5 @@
       "section_id": "see_also"
     }
   ],
-  "title": "Cells: Represents a collection of cells in a worksheet"
+  "title": "Cells"
 }

@@ -1,0 +1,34 @@
+family: 3d
+platform: dotnet
+repo_url: https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-NET
+launch_tier: auto
+validation_profile: pilot
+product_name: Aspose.3D FOSS for .NET
+display_name: Aspose.3D
+canonical_import: Aspose.ThreeD
+llm:
+  primary:
+    base_url: https://llm.professionalize.com/v1
+    model: qwen3-next
+  reasoning:
+    model: recommended
+  fallback:
+    base_url: http://127.0.0.1:11434/v1
+    model: gemma3:12b
+  routing:
+    extract: standard
+    generate: standard
+    review: reasoning
+  temperature: 0.0
+  max_tokens: 6000
+  max_concurrency: 4
+golden:
+  enabled: true
+  dir: golden/
+output:
+  goal: draft
+  run_dir: runs/
+  deploy_dir: deploy/
+  content_repo_map:
+    "aspose.org": "${ASPOSE_ORG_CONTENT_REPO}"
+pipeline_mode: create

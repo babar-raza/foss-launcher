@@ -1,0 +1,251 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/slides/dotnet/api-overview/",
+    "canonical_import": "Aspose.Slides",
+    "code_import": "Aspose.Slides",
+    "date": "2026-03-24T17:07:48Z",
+    "dateModified": "2026-03-24T17:07:48Z",
+    "datePublished": "2026-03-24T17:07:48Z",
+    "description": "It supports core presentation elements including slides, shapes, text, and formatting.",
+    "display_name": "Aspose.Slides",
+    "family": "slides",
+    "keywords": [
+      "python slides",
+      "python slides for beginners",
+      "python slideshare",
+      "python slideshow",
+      "python slides ppt",
+      "python slides pdf",
+      "python slideshow py",
+      "python slideshow with transitions"
+    ],
+    "lastmod": "2026-03-24T17:07:48Z",
+    "page_role": "api_reference",
+    "platform": "dotnet",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Slides API Reference | Guide",
+    "slug": "api-overview",
+    "title": "Aspose.Slides API Reference",
+    "type": "api_reference",
+    "url": "/reference.aspose.org/slides/dotnet/api-overview/",
+    "weight": 6
+  },
+  "page_id": "reference/api-overview",
+  "page_role": "api_reference",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-7f7351"
+          ],
+          "content": "The Aspose.Slides library provides classes for loading, creating, modifying, and saving PowerPoint presentations in .NET. It supports core presentation elements including slides, shapes, text, and formatting.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-7f7351",
+            "CLM-slides-307852",
+            "CLM-slides-5b9457"
+          ],
+          "content": "using Aspose.Slides;\n\nusing var prs = new Presentation();\nvar slide = prs.Slides[0];\nvar shape = slide.Shapes.AddAutoShape(ShapeType.Rectangle, 50, 50, 300, 150);\nshape.AddTextFrame(\"Hello, world!\");\nprs.Save(\"output.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-349ffa",
+            "CLM-slides-b35f02",
+            "CLM-slides-7f3314",
+            "CLM-slides-7f7351"
+          ],
+          "content": "| Class | `Description` | Claim IDs |\n|-------|-------------|-----------|\n| `EffectFormat` | Manages visual effects on shapes; InitInternal() receives the slide part for saving changes. | CLM-slides-349ffa |\n| IImage | Represents an image; `Save(filename)` writes to the destination file path. | CLM-slides-b35f02 |\n| IDocumentProperties | Provides access to presentation metadata; `Author()` gets or sets the dc:creator. | CLM-slides-7f3314 |\n| `AuthorData` | Represents author metadata in the API. | CLM-slides-7f7351 |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-307852"
+          ],
+          "content": "The Aspose.Slides API provides core classes for working with presentation documents in .NET. Key namespaces include Aspose.Slides.Foss for high-level operations and Aspose.Slides.Foss.Drawing for drawing primitives. The API supports loading, creating, modifying, and saving PowerPoint-compatible presentations (.pptx).",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-307852",
+            "CLM-slides-7f3314"
+          ],
+          "content": "using Aspose.Slides.Foss;\nusing Aspose.Slides.Foss.Export;\n\nusing var prs = new Presentation();\nvar slide = prs.Slides[0];\nvar shape = slide.Shapes.AddAutoShape(ShapeType.Rectangle, 50, 50, 300, 100);\nshape.AddTextFrame(\"Hello, world!\");\nprs.Save(\"shapes.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-307852",
+            "CLM-slides-5b9457",
+            "CLM-slides-d13c2d",
+            "CLM-slides-7f3314"
+          ],
+          "content": "| Class | `Description` |\n|-------|-------------|\n| Presentation | Represents a PowerPoint presentation and provides access to slides, document properties, and comment authors. |\n| `BaseSlide` | Represents a slide in a presentation, including master, layout, and regular slides. |\n| `AutoShape` | Represents an auto shape such as rectangle, circle, or arrow. |\n| ShapeCollection | `Contains` all shapes on a slide; initialized with the owning slide object. |\n| IDocumentProperties | Provides access to document metadata including author, title, and comments. |\n| `Comment` | Represents a comment attached to a slide with author, text, and timestamp. |\n| `CommentAuthors` | Manages the collection of comment authors in a presentation. |\n| IImage | Represents an image object with width, height, and save methods. |\n| `FillFormat` | Defines fill properties for shapes, including solid, gradient, and picture fills. |\n| `EffectFormat` | `Contains` effect settings such as shadow, glow, and reflection. |\n| `BulletFormat` | Controls bullet type and formatting for paragraphs. |\n| `BasePortionFormat` | Holds character-level formatting for text portions. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-7f3314",
+            "CLM-slides-d13c2d",
+            "CLM-slides-349ffa",
+            "CLM-slides-b35f02",
+            "CLM-slides-9ae549",
+            "CLM-slides-bf4e7c"
+          ],
+          "content": "| Method | Return Type | `Description` |\n|--------|-------------|-------------|\n| `IDocumentProperties.Author()` | string | Gets or sets the author (dc:creator) of the presentation. |\n| `IDocumentProperties.Title()` | string | Gets or sets the title of the presentation. |\n| `IDocumentProperties.Subject()` | string | Gets or sets the subject of the presentation. |\n| `IDocumentProperties.Keywords()` | string | Gets or sets the keywords associated with the presentation. |\n| `IDocumentProperties.Comments()` | string | Gets or sets the comments (dc:description) for the presentation. |\n| `ShapeCollection.InitInternal()` | void | Initializes the collection with the owning slide object. |\n| `EffectFormat.InitInternal()` | void | Initializes the format with the slide part for saving changes. |\n| `IImage.Save(string)` | void | Saves the image to the specified file path. |\n| `Comment.Text()` | string | Gets or sets the comment text. |\n| `Comment.CreatedTime()` | DateTime | Gets the creation timestamp of the comment. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-7f3314",
+            "CLM-slides-9ae549"
+          ],
+          "content": "using Aspose.Slides.Foss;\nusing Aspose.Slides.Foss.Export;\n\nusing var prs = new Presentation();\nvar author = prs.CommentAuthors.AddAuthor(\"Jane Smith\", \"JS\");\nvar slide = prs.Slides[0];\nauthor.Comments.AddComment(\"Review this slide\", slide, new PointF(2.0f, 2.0f), DateTime.Now);\nprs.Save(\"comments.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Public API",
+      "level": 2,
+      "section_id": "public_api"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-9ae549",
+            "CLM-slides-7f3314",
+            "CLM-slides-bf4e7c"
+          ],
+          "content": "The IDocumentProperties interface provides access to core metadata of a presentation, including title, author, subject, keywords, and comments. These properties map to Dublin Core elements in the underlying XML structure.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-9ae549",
+            "CLM-slides-7f3314",
+            "CLM-slides-bf4e7c"
+          ],
+          "content": "| Method | Return Type | `Description` |\n|--------|-------------|-------------|\n| Title() | string | Gets or sets the title (dc:title) of the presentation. |\n| Subject() | string | Gets or sets the subject of the presentation. |\n| `Author()` | string | Gets or sets the author (dc:creator) of the presentation. |\n| Keywords() | string | Gets or sets the keywords associated with the presentation. |\n| `Comments()` | string | Gets or sets the comments (dc:description) for the presentation. |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-7f3314",
+            "CLM-slides-9ae549"
+          ],
+          "content": "using Aspose.Slides;\n\nusing var prs = new Presentation();\nvar docProps = prs.DocumentProperties;\ndocProps.Author = \"John Doe\";\ndocProps.Comments = \"Internal review version\";\nprs.Save(\"metadata.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-74ca11"
+          ],
+          "content": "The `BaseCollection` class serves as the base for strongly-typed collections in Aspose.Slides, where the element type is defined by the generic parameter or concrete subclass.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-2e2420"
+          ],
+          "content": "The `AdjustValue` class represents a single adjustment value used in auto shape geometry definitions.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Common Patterns",
+      "level": 2,
+      "section_id": "common_patterns"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-bf4e7c"
+          ],
+          "content": "The `IDocumentProperties.Keywords()` method gets or sets the keywords associated with the presentation. This property is part of the IDocumentProperties interface, which provides access to core document metadata.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-bf4e7c"
+          ],
+          "content": "using Aspose.Slides;\n\nvar pres = new Presentation();\npres.DocumentProperties.Keywords = \"presentation, slides, dotnet\";\nConsole.WriteLine(pres.DocumentProperties.Keywords);\npres.Save(\"metadata.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Presentation object reference](/reference.aspose.org/slides/dotnet/presentation/)",
+            "[Frequently asked questions](/kb.aspose.org/slides/dotnet/faq/)",
+            "[Troubleshooting common issues](/kb.aspose.org/slides/dotnet/troubleshooting/)",
+            "[Getting started guide](/docs.aspose.org/slides/dotnet/developer-guide/getting-started/)",
+            "[Installation instructions](/docs.aspose.org/slides/dotnet/developer-guide/installation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Aspose.Slides API Reference"
+}

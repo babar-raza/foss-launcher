@@ -1,24 +1,24 @@
 {
   "frontmatter": {
     "canonical": "https://docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/",
-    "canonical_import": "aspose_cells_foss",
-    "date": "2026-03-11T21:00:43Z",
-    "dateModified": "2026-03-11T21:00:43Z",
-    "datePublished": "2026-03-11T21:00:43Z",
-    "description": "This page covers essential data operations including reading and writing cell values and formulas via the `Cell` class, applying alignment and border...",
+    "canonical_import": "aspose.cells",
+    "date": "2026-03-22T08:56:20Z",
+    "dateModified": "2026-03-22T08:56:20Z",
+    "datePublished": "2026-03-22T08:56:20Z",
+    "description": "Developers use this library to create, load, `modify`, and export Excel-compatible files without requiring Microsoft Excel.",
     "display_name": "Aspose.Cells FOSS",
     "family": "cells",
     "keywords": [
-      "python",
-      "python openpyxl",
-      "openpyxl pandas",
-      "openpyxl in python",
-      "openpyxl documentation",
-      "install openpyxl",
-      "openpyxl cell",
-      "openpyxl pip"
+      "cells python",
+      "python cells in excel",
+      "python cells vscode",
+      "cell python docx",
+      "cell python spyder",
+      "aspose cells python",
+      "code cells python",
+      "voronoi cells python"
     ],
-    "lastmod": "2026-03-11T21:00:43Z",
+    "lastmod": "2026-03-22T08:56:20Z",
     "page_role": "workflow_page",
     "platform": "python",
     "reading_time": 1,
@@ -37,7 +37,15 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Cells FOSS enables Python developers to perform core spreadsheet operations on Excel files using a clean, object-oriented API. This page covers essential data operations including reading and writing cell values and formulas via the `Cell` class, applying alignment and border formatting, managing auto filters with `AutoFilter`, and handling CSV import/export through `CSVHandler`. The API surface supports [identifier omitted]-376-compliant cell value handling via `CellValueHandler` and Agile encryption parameters via `AgileEncryptionParameters`.",
+          "content": "Aspose.Cells FOSS enables programmatic spreadsheet operations in Python using the `Workbook`, `Worksheet`, and `Cell` classes. Developers use this library to create, load, `modify`, and export Excel-compatible files without requiring Microsoft Excel.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Key capabilities include managing `worksheets` via `add_worksheet()` and `get_worksheet()`, reading and writing `cell` data through the `Cell` class, and exporting to formats like CSV, JSON, and Markdown using dedicated handler classes such as `CSVHandler`, `JsonHandler`, and `MarkdownHandler`.",
           "items": [],
           "language": null,
           "level": null,
@@ -52,7 +60,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Cells FOSS provides core data manipulation capabilities through the `Cell`, `AutoFilter`, and `CSVHandler` classes. [identifier omitted] can read and write cell values and formulas, apply alignment and styling, and filter or export data using CSV formats.",
+          "content": "Aspose.Cells FOSS provides core data manipulation capabilities through the `Workbook`, `Worksheet`, `Cells`, and `Cell` classes. Developers can read, write, and `modify` `cell` `values`, formulas, and metadata using documented methods from the API surface.",
           "items": [],
           "language": null,
           "level": null,
@@ -60,7 +68,7 @@
         },
         {
           "claim_ids": [],
-          "content": "Reading and Writing `Cell` [identifier omitted]",
+          "content": "Reading `Cell` Data",
           "items": [],
           "language": null,
           "level": null,
@@ -68,7 +76,7 @@
         },
         {
           "claim_ids": [],
-          "content": "Use the `Cell` class to access or assign cell content. The value() method retrieves the current value, while `value(val)` sets it. [identifier omitted] are handled similarly via formula() and `formula(val)`. The data_type property indicates the stored type.",
+          "content": "Access individual `cell` `values` and formulas using the `Cell` class. The `value` and `formula` `properties` return the stored content, while `is_empty()` checks for null or blank entries.",
           "items": [],
           "language": null,
           "level": null,
@@ -76,7 +84,7 @@
         },
         {
           "claim_ids": [],
-          "content": "import aspose.cells\n\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\ncell = worksheet.cells.get(\"A1\")\ncell.value(\"[identifier omitted], [identifier omitted]!\")\nprint(cell.value())",
+          "content": "import aspose.cells\n\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\ncell = worksheet.cells.cell(0, 0)\ncell.value = \"Hello\"\nprint(cell.value)\nprint(cell.is_empty())",
           "items": [],
           "language": "python",
           "level": null,
@@ -84,7 +92,7 @@
         },
         {
           "claim_ids": [],
-          "content": "Applying `Alignment` and [identifier omitted]",
+          "content": "Writing `Cell` Data",
           "items": [],
           "language": null,
           "level": null,
@@ -92,7 +100,7 @@
         },
         {
           "claim_ids": [],
-          "content": "`Alignment` settings are applied via the `Alignment` class and assigned to a cell's style. Horizontal and vertical alignment options include left, center, right, justify, and distributed. Use set_horizontal_alignment() and set_vertical_alignment() on the cell's style object.",
+          "content": "Set `cell` `values` and formulas directly via the `value` and `formula` `properties` of the `Cell` object. Use `Cells.cell(row, column)` to retrieve a specific `cell` reference.",
           "items": [],
           "language": null,
           "level": null,
@@ -100,7 +108,7 @@
         },
         {
           "claim_ids": [],
-          "content": "import aspose.cells\n\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\ncell = worksheet.cells.get(\"B2\")\ncell.style.set_horizontal_alignment(\"center\")\ncell.style.set_vertical_alignment(\"center\")\nworkbook.save(\"aligned.xlsx\")",
+          "content": "import aspose.cells\n\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\ncells = worksheet.cells\ncells.cell(1, 1).value = 100\ncells.cell(1, 2).formula = \"=A1+B1\"\nprint(cells.cell(1, 1).value)\nprint(cells.cell(1, 2).formula)",
           "items": [],
           "language": "python",
           "level": null,
@@ -108,7 +116,7 @@
         },
         {
           "claim_ids": [],
-          "content": "Filtering and Exporting Data",
+          "content": "Modifying `Cell` Data",
           "items": [],
           "language": null,
           "level": null,
@@ -116,7 +124,7 @@
         },
         {
           "claim_ids": [],
-          "content": "The `AutoFilter` class enables filtering on worksheet ranges. Use filter_columns() to inspect active filters and filter() to apply criteria. For data export, `CSVHandler.save_csv()` writes the workbook to CSV format, supporting optional `CSVSaveOptions`.",
+          "content": "`Clear` `cell` contents using `clear_value()`, `clear_formula()`, or `clear()` to reset specific or all data. The `set_comment()` method attaches metadata to a `cell`.",
           "items": [],
           "language": null,
           "level": null,
@@ -124,7 +132,7 @@
         },
         {
           "claim_ids": [],
-          "content": "import aspose.cells\n\nworkbook = aspose.cells.Workbook(\"input.xlsx\")\nworksheet = workbook.worksheets[0]\nauto_filter = worksheet.auto_filter\nauto_filter.filter(0, \"=[identifier omitted]\")\naspose.cells.CSVHandler.save_csv(workbook, \"output.csv\", None)",
+          "content": "import aspose.cells\n\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\ncell = worksheet.cells.cell(2, 0)\ncell.value = \"Original\"\ncell.set_comment(\"Updated value\", \"Author\", 100, 50)\ncell.clear_value()\nprint(cell.is_empty())",
           "items": [],
           "language": "python",
           "level": null,
@@ -139,7 +147,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Cells FOSS enables core spreadsheet operations in Python, including reading, writing, and manipulating cell data, styles, and autofilters. [identifier omitted] the Workbook, Worksheet, `Cell`, Style, and `AutoFilter` classes, developers can build robust data workflows for Excel-compatible formats.",
+          "content": "Aspose.Cells FOSS enables programmatic spreadsheet operations in Python using the `Workbook` and `Worksheet` classes. Developers can create, load, and manipulate Excel files with cell-level control via the `Cells` collection and `Cell` objects.",
           "items": [],
           "language": null,
           "level": null,
@@ -147,7 +155,7 @@
         },
         {
           "claim_ids": [],
-          "content": "import aspose.cells\n\n# Create a new workbook and access the first worksheet\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\n\n# Write a value and formula to cells\nworksheet.cells.get(\"A1\").value = \"[identifier omitted]\"\nworksheet.cells.get(\"A2\").formula = \"=B1+B2\"\n\n# Apply horizontal center alignment to A1\nstyle = worksheet.cells.get(\"A1\").style\nstyle.set_horizontal_alignment(\"center\")\nworksheet.cells.get(\"A1\").style = style\n\n# Save the workbook\nworkbook.save(\"output.xlsx\")",
+          "content": "import aspose.cells\n\n# Create a new workbook and access the first worksheet\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\n\n# Write a value to cell A1\ncell = worksheet.cells.cell(0, 0)\ncell.value = \"Hello, Aspose.Cells FOSS!\"\n\n# Save the workbook to XLSX format\nworkbook.save(\"output.xlsx\")",
           "items": [],
           "language": "python",
           "level": null,
@@ -155,7 +163,31 @@
         },
         {
           "claim_ids": [],
-          "content": "import aspose.cells\n\n# Load an existing workbook\nworkbook = aspose.cells.Workbook(\"input.xlsx\")\nworksheet = workbook.worksheets[0]\n\n# Apply an autofilter to a range\nautofilter = worksheet.auto_filter\nautofilter.range = \"A1:D10\"\n\n# Filter column 2 (B) for values equal to 'Active'\nautofilter.filter(1, \"[identifier omitted]\")\n\n# Save the filtered workbook\nworkbook.save(\"filtered_output.xlsx\")",
+          "content": "The `CSVHandler` class supports importing and exporting data in CSV format. Use `load_csv()` to populate a workbook from a CSV file, and `save_csv()` to export the workbook content as CSV.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose.cells\n\n# Load CSV data into a new workbook\nworkbook = aspose.cells.Workbook()\naspose.cells.CSVHandler.load_csv(workbook, \"data.csv\")\n\n# Modify a cell value\nworksheet = workbook.worksheets[0]\nworksheet.cells.cell(1, 1).value = \"Updated\"\n\n# Export the workbook back to CSV\naspose.cells.CSVHandler.save_csv(workbook, \"modified.csv\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "Charts can be added to worksheets using the `ChartCollection` class. Supported types include line, bar, pie, and area charts via methods like `add_line()` and `add_bar()`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose.cells\n\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\n\n# Populate sample data\nworksheet.cells.cell(0, 0).value = \"Category\"\nworksheet.cells.cell(0, 1).value = \"Value\"\nworksheet.cells.cell(1, 0).value = \"A\"\nworksheet.cells.cell(1, 1).value = 10\nworksheet.cells.cell(2, 0).value = \"B\"\nworksheet.cells.cell(2, 1).value = 20\n\n# Add a line chart\nchart_index = worksheet.charts.add_line(5, 0, 15, 4)\nchart = worksheet.charts[chart_index]\n\n# Save the workbook\nworkbook.save(\"chart_output.xlsx\")",
           "items": [],
           "language": "python",
           "level": null,
@@ -170,7 +202,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "When using Aspose.Cells FOSS for spreadsheet operations in Python, prioritize memory efficiency and correct resource handling, especially when processing large workbooks or integrating with tools like openpyxl or pandas. The Workbook and Worksheet classes manage internal resources that require explicit cleanup to avoid leaks.",
+          "content": "When using Aspose.Cells FOSS for spreadsheet operations in Python, prioritize memory efficiency and correct API usage to avoid runtime errors. The library supports core Excel operations including `cell` manipulation, worksheet management, and chart creation using only the documented classes and methods.",
           "items": [],
           "language": null,
           "level": null,
@@ -180,10 +212,10 @@
           "claim_ids": [],
           "content": "",
           "items": [
-            "Call `Workbook.dispose()` after completing all operations to release unmanaged resources and prevent memory leaks.",
-            "Avoid holding multiple Workbook instances simultaneously; reuse or dispose of them promptly in long-running processes.",
-            "For batch operations, process files sequentially rather than loading all into memory at once, especially when working with large datasets typical in openpyxl or pandas workflows.",
-            "When saving files, prefer `Workbook.save()` with explicit file paths over in-memory streams unless streaming is strictly required."
+            "Use `Workbook` to load or create workbooks; avoid keeping multiple instances open longer than needed to reduce memory footprint.",
+            "Access cells via `Cells` collection and `Cell` objects—always verify row/column indices are within bounds before reading or writing.",
+            "Apply styling only to required cells; excessive formatting on large ranges can significantly increase file size and processing time.",
+            "For chart operations, restrict usage to supported types (line, bar, pie, scatter, combo, waterfall, treemap) as unsupported chart types raise NotImplementedError."
           ],
           "language": null,
           "level": null,
@@ -198,7 +230,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Cells FOSS provides core spreadsheet operations through classes like Workbook, Worksheet, `Cell`, Style, `Alignment`, `Borders`, and `AutoFilter`. For data import/export, use `CSVHandler` with `CSVLoadOptions` and `CSVSaveOptions`. Encryption workflows leverage `AgileEncryptionParameters`, `CFBReader`, and `CFBWriter`. `Cell` value handling follows [identifier omitted]-376 via `CellValueHandler`.",
+          "content": "Aspose.Cells FOSS provides core spreadsheet operations through classes like `Workbook`, `Worksheet`, `Cell`, and `Cells`. For data interchange, use `CSVHandler`, `JsonHandler`, and `MarkdownHandler` to import or export data in structured formats.",
           "items": [],
           "language": null,
           "level": null,
@@ -208,11 +240,11 @@
           "claim_ids": [],
           "content": "",
           "items": [
-            "[The library supports adding and managing cell comments with author and rich text](/blog.aspose.org/cells/python/introducing-cells-foss-python/)",
-            "[The library supports workbook and worksheet protection](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)",
-            "[Work with Formulas with Aspose.Cells FOSS](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
-            "[How to Convert File Formats with Aspose.Cells FOSS](/kb.aspose.org/cells/python/how-to-convert-csv-to-json-python/)",
-            "[How to Fix Common Errors with Aspose.Cells FOSS](/kb.aspose.org/cells/python/how-to-fix-spreadsheets-errors-python/)"
+            "[Introducing Aspose.Cells FOSS for Python](/blog.aspose.org/cells/python/cells-foss-python/)",
+            "[Create all chart types in spreadsheets](/blog.aspose.org/cells/python/create-charts-spreadsheets/)",
+            "[Work with formulas in spreadsheets](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
+            "[Convert file formats in spreadsheets](/kb.aspose.org/cells/python/convert-csv-json-python/)",
+            "[Fix common spreadsheet errors](/kb.aspose.org/cells/python/fix-spreadsheets-errors-python/)"
           ],
           "language": null,
           "level": null,

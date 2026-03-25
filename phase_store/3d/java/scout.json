@@ -1,0 +1,22 @@
+{
+  "budget_log_overflow_count": 0,
+  "build_systems": [
+    "maven"
+  ],
+  "by_category": {
+    "asset": 4,
+    "config": 2,
+    "doc": 4,
+    "source": 83,
+    "test": 4
+  },
+  "content_used_bytes": 235578,
+  "files_enumerated": 97,
+  "files_read": 96,
+  "has_ci": false,
+  "has_docs_folder": false,
+  "has_examples_folder": false,
+  "has_tests": true,
+  "package_name": "com.aspose:aspose-3d-foss",
+  "primary_language": "java"
+}

@@ -1,0 +1,281 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/cells/python/csv-handler/",
+    "canonical_import": "aspose.cells",
+    "date": "2026-03-22T08:56:20Z",
+    "dateModified": "2026-03-22T08:56:20Z",
+    "datePublished": "2026-03-22T08:56:20Z",
+    "description": "It works with `CSVSaveOptions` for export configuration and `CSVLoadOptions` for import settings, enabling programmatic control over CSV file handling in...",
+    "display_name": "Aspose.Cells FOSS",
+    "family": "cells",
+    "keywords": [
+      "cells python",
+      "python cells in excel",
+      "python cells vscode",
+      "cell python docx",
+      "cell python spyder",
+      "aspose cells python",
+      "code cells python",
+      "voronoi cells python"
+    ],
+    "lastmod": "2026-03-22T08:56:20Z",
+    "page_role": "reference_object_page",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Cells FOSS Csv Handler",
+    "slug": "csv-handler",
+    "title": "Csv Handler",
+    "type": "reference_object_page",
+    "url": "/reference.aspose.org/cells/python/csv-handler/",
+    "weight": 22
+  },
+  "page_id": "reference/csv-handler",
+  "page_role": "reference_object_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-788e51",
+            "CLM-cells-d30813",
+            "CLM-cells-3ca075"
+          ],
+          "content": "The `CSVHandler` class provides static methods to import and export workbook data to and from CSV format. It works with `CSVSaveOptions` for export configuration and `CSVLoadOptions` for import settings, enabling programmatic control over CSV file handling in Aspose.Cells FOSS.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-788e51",
+            "CLM-cells-d30813"
+          ],
+          "content": "from aspose.cells import Workbook, CSVHandler, CSVSaveOptions\n\nworkbook = Workbook()\nworksheet = workbook.worksheets[0]\nworksheet.cells[\"A1\"].value = \"Name\"\nworksheet.cells[\"B1\"].value = \"Score\"\nworksheet.cells[\"A2\"].value = \"Alice\"\nworksheet.cells[\"B2\"].value = 95\n\noptions = CSVSaveOptions()\nCSVHandler.save_csv(workbook, \"output.csv\", options)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-788e51"
+          ],
+          "content": "| Method | Description |\n|--------|-------------|\n| `save_csv(workbook, file_path, options)` | Exports a workbook to a CSV file using specified options |\n| `save_csv_to_string(workbook, options)` | Exports a workbook to a CSV string using specified options |\n| `load_csv(workbook, file_path, options)` | Imports data from a CSV file into a workbook using specified options |\n| `load_csv_from_string(workbook, csv_content, options)` | Imports data from a CSV string into a workbook using specified options |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-fdf893",
+            "CLM-cells-18a190"
+          ],
+          "content": "The `Cell` class represents a single `cell` in a worksheet. It provides methods to manipulate `cell` content, including clearing formulas. Use `Cell.clear_formula()` to `remove` a `formula` and set it to `None`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-fdf893"
+          ],
+          "content": "import aspose.cells\n\n# Create a workbook and access a worksheet\nwb = aspose.cells.Workbook()\nws = wb.worksheets[0]\n\n# Set a formula in a cell\nws.cells['A1'].formula = '=SUM(B1:B10)'\n\n# Clear the formula\nws.cells['A1'].clear_formula()",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-18a190",
+            "CLM-cells-fdf893"
+          ],
+          "content": "| Method | Description |\n|--------|-------------|\n| `clear_formula()` | Clears the `formula` of the `cell` (sets it to None). |\n| `is_empty()` | Checks if the `cell` is empty. |\n| `clear_value()` | Clears the `cell` `value`. |\n| `clear()` | Clears both `value` and `formula`. |\n| `set_comment(text, author, width, height)` | Sets a `comment` on the `cell`. |\n| `value` | Gets or sets the `cell` `value`. |\n| `formula` | Gets or sets the `cell` `formula`. |\n| `style` | Gets the `cell` `style`. |\n| `comment` | Gets the `cell` `comment` (read-only). |\n| `data_type` | Gets the `cell` data `type` (read-only). |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Constructor",
+      "level": 2,
+      "section_id": "constructor"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-18a190"
+          ],
+          "content": "The `Cell` class exposes `properties` that provide read-only or read-write access to `cell` data and metadata. These `properties` are essential for inspecting or modifying individual `cell` contents in Aspose.Cells FOSS.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-18a190"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| `value` | Any | The raw `value` stored in the `cell`. |\n| `formula` | str | The `formula` string assigned to the `cell`. |\n| `style` | `Style` | The formatting `style` applied to the `cell`. |\n| `comment` | str | The `comment` text attached to the `cell` (read-only). |\n| `data_type` | str | The `type` of data stored (e.g., 'String', 'Double', 'Bool') (read-only). |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-788e51",
+            "CLM-cells-d30813",
+            "CLM-cells-3ca075"
+          ],
+          "content": "The `CSVSaveOptions` and `CSVLoadOptions` classes configure CSV import and export behavior. They are used with `CSVHandler.save_csv()` and `CSVHandler.load_csv()` methods respectively.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-d30813",
+            "CLM-cells-3ca075"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| separator | str | The character used to separate fields in the CSV output. |\n| encoding | str | The character encoding for the CSV file (e.g., 'utf-8'). |\n| has_header_row | bool | Indicates whether the first row should be treated as column headers. |\n| format_strategy | int | Controls how numeric `values` are formatted during export. |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-788e51",
+            "CLM-cells-d30813"
+          ],
+          "content": "from aspose.cells import Workbook, CSVHandler, CSVSaveOptions\n\n# Create a workbook and set a value\nworkbook = Workbook()\nworksheet = workbook.worksheets[0]\nworksheet.cells[\"A1\"].value = \"Test\"\n\n# Configure CSV export options\noptions = CSVSaveOptions()\noptions.separator = \",\"\noptions.encoding = \"utf-8\"\noptions.has_header_row = True\n\n# Save to CSV using the public API\nCSVHandler.save_csv(workbook, \"output.csv\", options)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-bf07d6"
+          ],
+          "content": "The `CSVHandler`, `JsonHandler`, and `MarkdownHandler` classes provide static methods for exporting workbook data to text-based formats. Each handler supports saving to a file or returning data as a string. The `MarkdownHandler.save_markdown()` method is part of the public API and exports workbook content to Markdown format.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-788e51",
+            "CLM-cells-bf07d6",
+            "CLM-cells-c1d98c",
+            "CLM-cells-3ca075",
+            "CLM-cells-d30813"
+          ],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `CSVHandler.save_csv(workbook, file_path: str, options: Optional[CSVSaveOptions]) -> None` | `None` | Saves the workbook to a CSV file using specified export options. |\n| `CSVHandler.save_csv_to_string(workbook, options: Optional[CSVSaveOptions]) -> str` | `str` | Exports the workbook to a CSV string using specified export options. |\n| `CSVHandler.load_csv(workbook, file_path: str, options: Optional[CSVLoadOptions]) -> None` | `None` | Loads data from a CSV file into the workbook using specified import options. |\n| `CSVHandler.load_csv_from_string(workbook, csv_content: str, options: Optional[CSVLoadOptions]) -> None` | `None` | Loads data from a CSV string into the workbook using specified import options. |\n| `JsonHandler.save_json(workbook, file_path: str, options: Optional[JsonSaveOptions]) -> None` | `None` | Exports the workbook to a JSON file using specified options. |\n| `JsonHandler.save_json_to_dict(workbook, options: Optional[JsonSaveOptions]) -> Dict[str, Any]` | `Dict[str, Any]` | Exports the workbook to a Python dictionary in JSON-compatible format. |\n| `MarkdownHandler.save_markdown(workbook, file_path: str, options: Optional[MarkdownSaveOptions]) -> None` | `None` | Exports the workbook to a Markdown file using specified options. |\n| `MarkdownHandler.save_markdown_to_string(workbook, options: Optional[MarkdownSaveOptions]) -> str` | `str` | Exports the workbook to a Markdown string using specified options. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-bf07d6"
+          ],
+          "content": "from aspose.cells import Workbook, MarkdownHandler, MarkdownSaveOptions\n\n# Create a workbook and populate data\nworkbook = Workbook()\nworksheet = workbook.worksheets[0]\nworksheet.cells[\"A1\"].value = \"Header\"\nworksheet.cells[\"A2\"].value = \"Data\"\n\n# Export to Markdown\nMarkdownHandler.save_markdown(workbook, \"output.md\", MarkdownSaveOptions())",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-c1d98c"
+          ],
+          "content": "The following example demonstrates saving a workbook to JSON format using the `JsonHandler.save_json()` method, which is part of the public API for Aspose.Cells FOSS. It creates a workbook, populates a worksheet with sample data, and exports the data to a JSON file.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Example",
+      "level": 2,
+      "section_id": "example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-3ca075",
+            "CLM-cells-d30813",
+            "CLM-cells-788e51"
+          ],
+          "content": "The `CSVHandler` class provides static methods for importing and exporting CSV data. Related handlers for other formats include `JsonHandler` and `MarkdownHandler`. The `CSVLoadOptions` and `CSVSaveOptions` classes configure import and export behavior respectively.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-788e51",
+            "CLM-cells-3ca075",
+            "CLM-cells-d30813"
+          ],
+          "content": "from aspose.cells import Workbook, CSVHandler, CSVLoadOptions, CSVSaveOptions\n\n# Load CSV with options\nworkbook = Workbook()\noptions = CSVLoadOptions()\nCSVHandler.load_csv(workbook, \"input.csv\", options)\n\n# Save CSV with options\nsave_options = CSVSaveOptions()\nCSVHandler.save_csv(workbook, \"output.csv\", save_options)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Reference the Cells object model](/reference.aspose.org/cells/python/cells/)",
+            "[Introduction to Aspose.Cells FOSS for Python](/blog.aspose.org/cells/python/cells-foss-python/)",
+            "[Create all chart types in spreadsheets](/blog.aspose.org/cells/python/create-charts-spreadsheets/)",
+            "[Work with formulas in spreadsheets](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
+            "[Perform common spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Csv Handler"
+}

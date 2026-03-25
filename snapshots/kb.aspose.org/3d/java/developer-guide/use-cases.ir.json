@@ -1,0 +1,311 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/3d/java/developer-guide/use-cases/",
+    "canonical_import": "com.aspose.threed",
+    "code_import": "com.aspose.threed",
+    "date": "2026-03-24T16:56:25Z",
+    "dateModified": "2026-03-24T16:56:25Z",
+    "datePublished": "2026-03-24T16:56:25Z",
+    "description": "The library maintains API compatibility with Aspose.3D for Java 26.1.0 while excluding licensing, trial, and DRM-related functionality.",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "3d javascript",
+      "3d javascript library",
+      "3d java",
+      "3d java skins",
+      "3d javascript game engine",
+      "3d javascript game",
+      "3d javascript framework",
+      "3d java game engine"
+    ],
+    "lastmod": "2026-03-24T16:56:25Z",
+    "page_role": "feature_showcase",
+    "platform": "java",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D Use Cases",
+    "slug": "use-cases",
+    "title": "Use Cases",
+    "type": "feature_showcase",
+    "url": "/kb.aspose.org/3d/java/developer-guide/use-cases/",
+    "weight": 10
+  },
+  "page_id": "kb/use-cases",
+  "page_role": "feature_showcase",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D -- Feature purpose and benefits.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-9f054c",
+            "CLM-3d-31a242"
+          ],
+          "content": "Aspose.3D Aspose.3D supports FBX (.fbx) format for reading and writing. The library maintains API compatibility with Aspose.3D for Java 26.1.0 while excluding licensing, trial, and DRM-related functionality.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-06867c"
+          ],
+          "content": "",
+          "items": [
+            "The library supports importing and exporting STL files (.stl) in both binary and ASCII formats."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-c85c59",
+            "CLM-3d-286559",
+            "CLM-3d-d6d847",
+            "CLM-3d-8151ca",
+            "CLM-3d-f3ad07",
+            "CLM-3d-445163",
+            "CLM-3d-12f94a",
+            "CLM-3d-4807e6",
+            "CLM-3d-7aa24b",
+            "CLM-3d-bfb409",
+            "CLM-3d-31a242",
+            "CLM-3d-ffafd6",
+            "CLM-3d-666b7b",
+            "CLM-3d-bff667",
+            "CLM-3d-06867c",
+            "CLM-3d-94f071"
+          ],
+          "content": "import static org.junit.jupiter.api.Assertions.*;\nimport java.io.ByteArrayOutputStream;\nimport java.io.IOException;\nimport java.nio.file.Files;\nimport java.nio.file.Path;\nimport java.nio.file.[identifier omitted];\n\nScene scene = new Scene();\n        Mesh mesh = new Mesh(\"TestMesh\");\n\n        mesh.addControlPoint(0, 0, 0);\n        mesh.addControlPoint(1, 0, 0);\n        mesh.addControlPoint(0, 1, 0);\n        mesh.addControlPoint(0, 0, 1);\n\n        mesh.createPolygon(new int[]{0, 1, 2});\n        mesh.createPolygon(new int[]{0, 1, 3});\n        mesh.createPolygon(new int[]{0, 2, 3});\n        mesh.createPolygon(new int[]{1, 2, 3});\n\n        scene.getRootNode().createChildNode(\"TestNode\", mesh);\n\n        Path outputPath = Files.createTempFile(\"test_export\", \".stl\");\n        try {\n            StlSaveOptions options = new StlSaveOptions();\n            options.setContentType(FileContentType.BINARY);\n            scene.save(outputPath.toString(), options);\n\n\n            byte[] content = Files.readAllBytes(outputPath);\n        } finally {\n            Files.deleteIfExists(outputPath);\n        }",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-c85c59",
+            "CLM-3d-286559",
+            "CLM-3d-d6d847",
+            "CLM-3d-445163",
+            "CLM-3d-7aa24b",
+            "CLM-3d-bfb409",
+            "CLM-3d-31a242",
+            "CLM-3d-ffafd6",
+            "CLM-3d-666b7b",
+            "CLM-3d-bff667",
+            "CLM-3d-06867c",
+            "CLM-3d-f9b8e1",
+            "CLM-3d-9be670",
+            "CLM-3d-1d7f4d",
+            "CLM-3d-a99a2d"
+          ],
+          "content": "import static org.junit.jupiter.api.Assertions.*;\nimport java.io.ByteArrayOutputStream;\nimport java.io.IOException;\nimport java.nio.file.Files;\nimport java.nio.file.Path;\nimport java.nio.file.[identifier omitted];\n\nScene scene = new Scene();\n        Mesh mesh = new Mesh(\"TestMesh\");\n\n        mesh.addControlPoint(0, 0, 0);\n        mesh.addControlPoint(1, 0, 0);\n        mesh.addControlPoint(0, 1, 0);\n\n        mesh.createPolygon(new int[]{0, 1, 2});\n\n        scene.getRootNode().createChildNode(\"TestNode\", mesh);\n\n        Path outputPath = Files.createTempFile(\"test_export_ascii\", \".stl\");\n        try {\n            StlSaveOptions options = new StlSaveOptions();\n            options.setContentType(FileContentType.ASCII);\n            scene.save(outputPath.toString(), options);\n\n            String content = Files.readString(outputPath);\n\n        } finally {\n            Files.deleteIfExists(outputPath);\n        }",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-ffafd6",
+            "CLM-3d-cb0010",
+            "CLM-3d-2d677c",
+            "CLM-3d-f9b8e1",
+            "CLM-3d-3cc559"
+          ],
+          "content": "This section demonstrates how Aspose.3D processes 3D files using its core `Scene` class and format-specific import/`export` capabilities. Developers working with 3D Java applications — including those building 3D Java game engines or 3D Java skins — can use this library to convert between common 3D formats like OBJ, STL, and glTF without external dependencies.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-ffafd6",
+            "CLM-3d-cb0010",
+            "CLM-3d-2d677c",
+            "CLM-3d-3cc559"
+          ],
+          "content": "import com.aspose.threed.Scene;\n\n// Load an OBJ file and convert it to GLTF\nScene scene = new Scene(\"testdata/input/cube.obj\");\nscene.save(\"output.gltf\");",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-3cc559",
+            "CLM-3d-06867c",
+            "CLM-3d-e31595"
+          ],
+          "content": "The `Scene` class handles loading from disk and saving to multiple formats. For glTF, both `.gltf` and `.glb` are supported with full geometry and material data. The library also supports binary and ASCII STL `export`, and OBJ import/`export` with MTL material references. This enables seamless format conversion pipelines in 3D Java workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-ffafd6",
+            "CLM-3d-666b7b",
+            "CLM-3d-deee25",
+            "CLM-3d-06867c"
+          ],
+          "content": "import com.aspose.threed.Scene;\nimport com.aspose.threed.Mesh;\nimport com.aspose.threed.FileContentType;\n\n// Create a simple triangle mesh and export as ASCII STL\nScene scene = new Scene();\nMesh mesh = new Mesh(\"TestMesh\");\nmesh.addControlPoint(0, 0, 0);\nmesh.addControlPoint(1, 0, 0);\nmesh.addControlPoint(0, 1, 0);\nmesh.createPolygon(new int[]{0, 1, 2});\nscene.getRootNode().createChildNode(\"TestNode\", mesh);\nscene.save(\"output.stl\", FileContentType.ASCII);",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "How It Works",
+      "level": 2,
+      "section_id": "how_it_works"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-2d677c",
+            "CLM-3d-f9b8e1",
+            "CLM-3d-666b7b",
+            "CLM-3d-deee25"
+          ],
+          "content": "This section demonstrates core 3D scene manipulation capabilities in Aspose.3D for Java developers. It shows how to `load` and convert between common 3D formats like OBJ and STL, and how to programmatically build scene hierarchies using child nodes and meshes. These features support use cases in 3D Java game engines, 3D Java skins, and 3D Java-based visualization tools.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-2d677c",
+            "CLM-3d-f9b8e1",
+            "CLM-3d-666b7b",
+            "CLM-3d-deee25",
+            "CLM-3d-06867c"
+          ],
+          "content": "import com.aspose.threed.*;\n\n// Load an OBJ file, create a child node with a mesh, and save as STL\nScene scene = new Scene(\"input.obj\");\nMesh mesh = new Mesh(\"CustomMesh\");\nmesh.addControlPoint(0, 0, 0);\nmesh.addControlPoint(1, 0, 0);\nmesh.addControlPoint(0, 1, 0);\nmesh.createPolygon(new int[]{0, 1, 2});\nNode childNode = scene.getRootNode().createChildNode(\"ChildMesh\", mesh);\nscene.save(\"output.stl\", new StlSaveOptions());",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-2d677c",
+            "CLM-3d-f9b8e1",
+            "CLM-3d-666b7b",
+            "CLM-3d-deee25",
+            "CLM-3d-06867c"
+          ],
+          "content": "The example loads an OBJ file, constructs a triangle mesh with three control points, attaches it as a child node, and exports the entire scene to binary STL format. This pattern is useful for generating procedural geometry in 3D Java game engines or custom 3D content pipelines.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Code Example",
+      "level": 2,
+      "section_id": "code_example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D -- Related features and documentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-f9b8e1",
+            "CLM-3d-deee25"
+          ],
+          "content": "Aspose.3D Aspose.3D supports STL (.stl) format for writing. The library supports creating meshes with control points and polygons, and adding them to scene nodes.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-2d677c",
+            "CLM-3d-f9b8e1",
+            "CLM-3d-2e0199",
+            "CLM-3d-f3ad07",
+            "CLM-3d-ffafd6"
+          ],
+          "content": "import com.aspose.threed.Scene;\n\n// Load a 3D file\nScene scene = new Scene(\"testdata/input/cube.obj\");\n\n// Save to another format\nscene.save(\"output.stl\");",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-c85c59",
+            "CLM-3d-286559",
+            "CLM-3d-d6d847",
+            "CLM-3d-445163",
+            "CLM-3d-7aa24b",
+            "CLM-3d-bfb409",
+            "CLM-3d-31a242",
+            "CLM-3d-ffafd6",
+            "CLM-3d-666b7b",
+            "CLM-3d-bff667",
+            "CLM-3d-06867c",
+            "CLM-3d-f9b8e1",
+            "CLM-3d-9be670",
+            "CLM-3d-1d7f4d",
+            "CLM-3d-a99a2d"
+          ],
+          "content": "import static org.junit.jupiter.api.Assertions.*;\nimport java.io.ByteArrayOutputStream;\nimport java.io.IOException;\nimport java.nio.file.Files;\nimport java.nio.file.Path;\nimport java.nio.file.[identifier omitted];\n\nScene scene = new Scene();\n        Mesh mesh = new Mesh(\"TestMesh\");\n\n        mesh.addControlPoint(0, 0, 0);\n        mesh.addControlPoint(1, 0, 0);\n        mesh.addControlPoint(0, 1, 0);\n\n        mesh.createPolygon(new int[]{0, 1, 2});\n\n        scene.getRootNode().createChildNode(\"TestNode\", mesh);\n\n        Path outputPath = Files.createTempFile(\"test_export_ascii\", \".stl\");\n        try {\n            StlSaveOptions options = new StlSaveOptions();\n            options.setContentType(FileContentType.ASCII);\n            scene.save(outputPath.toString(), options);\n\n            String content = Files.readString(outputPath);\n\n        } finally {\n            Files.deleteIfExists(outputPath);\n        }",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Explore Aspose.3D capabilities](/products.aspose.org/3d/_index/)",
+            "[Discover key 3D features](/blog.aspose.org/3d/java/3d-key-features/)",
+            "[Learn about transform translations](/blog.aspose.org/3d/java/introducing-3d-foss-java/)",
+            "[Load 3D files step by step](/docs.aspose.org/3d/java/developer-guide/model-loading/)",
+            "[Render 3D models effectively](/docs.aspose.org/3d/java/developer-guide/rendering/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Use Cases"
+}

@@ -1,30 +1,29 @@
 ---
 canonical: https://reference.aspose.org/cells/python/worksheet/
-canonical_import: aspose_cells_foss
-date: '2026-03-11T11:59:24Z'
-dateModified: '2026-03-11T11:59:24Z'
-datePublished: '2026-03-11T11:59:24Z'
-description: It provides methods to extract encryption metadata and the encrypted
-  package content for further processing.
+canonical_import: aspose.cells
+date: '2026-03-23T13:16:22Z'
+dateModified: '2026-03-23T13:16:22Z'
+datePublished: '2026-03-23T13:16:22Z'
+description: It is accessed through the `Cells` collection of a worksheet.
 display_name: Aspose.Cells FOSS
 family: cells
 keywords:
-- python
-- python openpyxl
-- openpyxl pandas
-- openpyxl in python
-- openpyxl documentation
-- install openpyxl
-- openpyxl cell
-- openpyxl pip
-lastmod: '2026-03-11T11:59:24Z'
+- cells python
+- python cells in excel
+- python cells vscode
+- cell python docx
+- cell python spyder
+- aspose cells python
+- code cells python
+- voronoi cells python
+lastmod: '2026-03-23T13:16:22Z'
 page_role: reference_object_page
 platform: python
 reading_time: 1
 robots: index, follow
-seoTitle: 'Cfbreader: Reads encrypted XLSX from CFB format | Guide'
+seoTitle: 'Cell: Represents a single cell in a worksheet | Guide'
 slug: worksheet
-title: 'Cfbreader: Reads encrypted XLSX from CFB format'
+title: 'Cell: Represents a single cell in a worksheet'
 type: reference_object_page
 url: /reference.aspose.org/cells/python/worksheet/
 weight: 22
@@ -32,105 +31,167 @@ weight: 22
 
 ## Overview
 
-The `CFBReader` class reads encrypted XLSX files stored in Compound File Binary (CFB) `format`. It provides methods to extract encryption metadata and the encrypted package content for further processing.
+The `Cell` class represents a single `cell` in a worksheet and provides methods to read or `modify` its `value`, `formula`, `style`, and `comment`. It is accessed through the `Cells` collection of a worksheet.
 
-| Name | Type | Description |
-|------|------|-------------|
-| read_encryption_info() | method | Reads encryption information from the CFB stream. |
-| read_encrypted_package() | method | Reads the encrypted package data from the CFB stream. |
-| `close()` | method | Closes the underlying CFB stream and releases resources. |
+```python
+from aspose.cells import Workbook
 
-The `ChartSeries` class represents a single chart series in a chart object, defining data points, formatting, and series-specific properties.
+workbook = Workbook()
+worksheet = workbook.worksheets[0]
+cell = worksheet.cells["A1"]
+cell.value = "Hello, World!"
+workbook.save("output.xlsx")
+```
+
+| Method | Description |
+|--------|-------------|
+| `is_empty()` | Checks if the `cell` is empty. |
+| `clear_value()` | Clears the `value` of the `cell` (sets it to None). |
+| `clear_formula()` | Clears the `formula` of the `cell`. |
+| `clear()` | Clears the `cell` (`value`, `formula`, `style`). |
+| `set_comment(text, author, width, height)` | Sets a `comment` on the `cell`. |
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `value` | Any | Gets or sets the `cell` `value`. |
+| `formula` | str | Gets or sets the `cell` `formula`. |
+| `style` | `Style` | Gets or sets the `cell` `style`. |
+| `comment` | Comment | Gets the `cell` `comment` (read-only). |
+| `data_type` | [identifier omitted] | Gets the `cell` data `type` (read-only). |
 
 ## Constructor
 
-The `CFBReader` class reads encrypted XLSX files stored in Compound File Binary (CFB) `format`. It provides methods to extract encryption metadata and the encrypted package. This class is used internally when loading password-protected XLSX files via `Workbook` constructors that accept a password.
-
-| Name | Type | Description |
-|------|------|-------------|
-| `CFBReader(file_path)` | Constructor | Initializes a new instance of `CFBReader` for the specified CFB file. |
-| `file_path` | str | Path to the CFB file (typically an encrypted .xlsx file). |
-
-```python
-from aspose.cells import CFBReader
-
-reader = CFBReader("encrypted.xlsx")
-info = reader.read_encryption_info()
-package = reader.read_encrypted_package()
-reader.close()
-```
-
-## Properties
-
-The `CFBReader` class provides read-only access to encrypted XLSX content stored in Compound File Binary (CFB) `format`. It exposes a small set of properties derived from its encryption metadata, which are accessible after calling read_encryption_info().
-
-| Name | Type | Description |
-|------|------|-------------|
-| encryption_info | object | Contains parsed encryption information after read_encryption_info() is called. Structure is internal and not part of public API. |
-| encrypted_package | bytes | Encrypted package data returned by read_encrypted_package(). |
-| is_encrypted | bool | Indicates whether the CFB stream contains encrypted content. Determined during read_encryption_info(). |
-| package_size | int | Size of the decrypted package in bytes, computed during read_encrypted_package(). |
-
-The `AutoFilter` class exposes read-only properties that reflect the current `filter` configuration in a worksheet. These properties are populated when the `filter` is loaded or applied and cannot be set directly.
-
-| Name | Type | Description |
-|------|------|-------------|
-| range | str | The `cell` range to which the auto `filter` is applied (e.g., "A1:D100"). Read-only. |
-| `filter_columns` | list | List of column `filter` definitions. Each entry specifies criteria for filtering that column. Read-only. |
-| sort_state | object | Contains sort configuration (ascending/descending, key column). Structure is internal. Read-only. |
-
-The `Cell` class provides read-only access to `core` `cell` attributes. Values and formulas are retrieved via properties after the `cell` is loaded or set via value() and `formula()` methods.
-
-| Name | Type | Description |
-|------|------|-------------|
-| value | str | The raw `cell` value as stored in the file. Read-only. |
-| `formula` | str | The `formula` string (e.g., "=SUM(A1:A10)"). Read-only. |
-| style | object | Reference to the `cell`'s style object. Structure is internal. Read-only. |
-| `comment` | str | Comment text attached to the `cell`, if any. Read-only. |
-| `data_type` | str | Indicates the type of data: 'b' (boolean), 'n' (number), 's' (string), 'd' (date), 'e' (`error`). Read-only. |
-
-## Methods
-
-The `CFBReader` class provides methods to extract encrypted XLSX content from a Compound File Binary (CFB) container. It supports reading encryption metadata and the encrypted package stream.
-
-| Method | Return Type | Description |
-|--------|-------------|-------------|
-| read_encryption_info() | str | Reads and returns the encryption info XML from the CFB stream. |
-| read_encrypted_package() | bytes | Reads and returns the encrypted package data as a byte string. |
-| `close()` | None | Closes the underlying CFB stream and releases resources. |
-
-The `MinimalCFBWriter` class provides a minimal implementation for writing encrypted Office documents in CFB `format`, as indicated by its docstring.
-
-| Method | Return Type | Description |
-|--------|-------------|-------------|
-| `write(file_path, encryption_info_xml, encrypted_package, package_size)` | None | Writes the encryption info XML and encrypted package to the specified file path in CFB `format`. |
-
-The `NSeries` class supports series management for `charts`, with methods for adding, counting, and copying series.
-
-| Method | Return Type | Description |
-|--------|-------------|-------------|
-| `add(series_string, category_data, name)` | int | Adds a new series to the series collection and returns its index. |
-| `Add(series_string, category_data, name)` | int | Alias for `add()`. Adds a new series and returns its index. |
-| `count()` | int | Returns the number of series in the collection. |
-| `copy(source_index, dest_index)` | None | Copies a series from the source index to the destination index. |
-
-## Example
-
-The following example demonstrates reading an encrypted XLSX file from a Compound File Binary (CFB) container using `CFBReader`. It loads encryption metadata and the encrypted package, then closes the reader. This workflow aligns with the `CFBReader` API surface and supports processing files encrypted with Agile encryption.
+The `Cell` class represents a single `cell` in a worksheet. Instantiate a `Cell` by accessing it through the `Cells` collection of a worksheet using 1-based row and column indices.
 
 ```python
 import aspose.cells
 
-reader = aspose.cells.CFBReader("encrypted.cfb")
-encryption_info = reader.read_encryption_info()
-encrypted_package = reader.read_encrypted_package()
-reader.close()
+wb = aspose.cells.Workbook()
+ws = wb.worksheets[0]
+cell = ws.cells.cell(1, 1)  # 1-based row, column
+cell.value = "Hello, World!"
+print(cell.value)
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| row | int | 1-based row index |
+| column | int | 1-based column index |
+| `cells` | `Cells` | Parent `Cells` collection |
+| worksheet | `Worksheet` | Parent worksheet |
+| workbook | `Workbook` | Parent workbook |
+
+## Properties
+
+The `Cell` class exposes `properties` that define its content, formatting, and metadata. These `properties` allow reading and writing `values`, formulas, styles, and comments. All property access is read-write except where explicitly marked as read-only.
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | object | The `cell` `value` (string, number, boolean, or None). |
+| `formula` | str | The `cell` `formula` (e.g., "=A1+B1"). |
+| `style` | `Style` | The `cell` `style` object. |
+| `comment` | str | The `cell` `comment` text (read-only). |
+| `data_type` | CellValueType | The data `type` of the `cell` `value` (read-only). |
+
+```python
+import aspose.cells
+
+wb = aspose.cells.Workbook()
+ws = wb.worksheets[0]
+cell = ws.cells["A1"]
+cell.value = 42
+cell.formula = "=A1*2"
+print(cell.data_type)
+```
+
+## Methods
+
+The `Cell` class provides methods to inspect and `modify` individual `cell` contents in a worksheet. Methods include checking emptiness, clearing `values` or formulas, and setting comments.
+
+| Method | Return Type | Description |
+|--------|-------------|-------------|
+| `is_empty()` | bool | Checks if the `cell` is empty. |
+| `clear_value()` | None | Clears the `value` of the `cell` (sets it to None). |
+| `clear_formula()` | None | Clears the `formula` of the `cell`. |
+| `clear()` | None | Clears the `value` and `formula` of the `cell`. |
+| `set_comment(text, author, width, height)` | None | Sets a `comment` on the `cell` with optional author, width, and height. |
+
+The `Chart` class supports adding data series and `axes` to `charts`. Use `add_series()` to plot data and `add_axis()` to define chart `axes`.
+
+| Method | Return Type | Description |
+|--------|-------------|-------------|
+| `add_series(values, category_data, name, chart_type, x_values)` | None | Convenience method to `add` a series to the chart. |
+| `add_axis(axis_type, axis_id)` | `ChartAxis` | Adds an axis to the chart and returns it. |
+| `copy()` | `Chart` | Copies the chart to a new instance. |
+
+The `JsonHandler` class enables exporting workbooks to JSON format. Use `save_json()` to write to a file or `save_json_to_dict()` to obtain a dictionary for further processing.
+
+| Method | Return Type | Description |
+|--------|-------------|-------------|
+| `save_json(workbook, file_path: str, options: Optional[JsonSaveOptions])` | None | Saves a workbook to a JSON file. |
+| `save_json_to_dict(workbook, options: Optional[JsonSaveOptions])` | Dict[str, Any] | Converts a workbook to a JSON-serializable dictionary. |
+
+```python
+import aspose.cells
+
+wb = aspose.cells.Workbook()
+ws = wb.worksheets[0]
+ws.cells['A1'].value = 'Hello'
+ws.cells['A2'].value = 'World'
+
+# Save to JSON file
+aspose.cells.JsonHandler.save_json(wb, 'output.json')
+
+# Convert to dictionary
+json_dict = aspose.cells.JsonHandler.save_json_to_dict(wb)
+print(json_dict['worksheets'][0]['name'])
+```
+
+## Example
+
+The following example demonstrates creating a workbook, adding data to a `cell`, and exporting the workbook to JSON using Aspose.Cells FOSS. It uses the canonical import path and covers both `JsonHandler.save_json_to_dict()` and `ChartAxis` functionality through related API surface.
+
+```python
+import aspose.cells
+
+# Create a new workbook
+wb = aspose.cells.Workbook()
+ws = wb.worksheets[0]
+
+# Add data to a cell
+ws.cells['A1'].value = 'Product'
+ws.cells['A2'].value = 'Sales'
+ws.cells['B1'].value = 'Q1'
+ws.cells['B2'].value = 1500
+
+# Export workbook to JSON dictionary
+json_dict = aspose.cells.JsonHandler.save_json_to_dict(wb)
+
+# Verify structure
+assert 'worksheets' in json_dict
+assert len(json_dict['worksheets']) > 0
+assert 'data' in json_dict['worksheets'][0]
+
+print('JSON export successful')
 ```
 
 ## See Also
 
-- [Access cell data and formulas](/reference.aspose.org/cells/python/cell/)
-- [Apply conditional formatting rules](/blog.aspose.org/cells/python/introducing-cells-foss-python/)
-- [Dynamic formatting with rules](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)
-- [Work with spreadsheet formulas](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)
-- [Perform core spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)
+The `Cell` class represents a single `cell` in a worksheet. Related classes include those for managing collections of `cells`, `charts`, and workbook-level operations.
+
+```python
+import aspose.cells
+
+# Create a new workbook and access a cell
+wb = aspose.cells.Workbook()
+ws = wb.worksheets[0]
+cell = ws.cells.cell(0, 0)  # 1-based indexing
+cell.value = "Hello, World!"
+print(cell.value)
+```
+
+- [Install and set up Cells FOSS](/blog.aspose.org/cells/python/introducing-cells-foss-python/)
+- [Create all chart types in spreadsheets](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)
+- [Work with formulas in spreadsheets](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)
+- [Perform spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)
+- [Convert file formats easily](/kb.aspose.org/cells/python/how-to-convert-csv-to-json-python/)

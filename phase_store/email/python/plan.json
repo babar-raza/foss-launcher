@@ -1,0 +1,1151 @@
+{
+  "claim_assignment_index": {
+    "CLM-email-084862": [
+      "reference/cfb-reader"
+    ],
+    "CLM-email-15641e": [
+      "reference/cfb-reader"
+    ],
+    "CLM-email-158c31": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-email-17ae35": [
+      "reference/mapi-message"
+    ],
+    "CLM-email-21db72": [
+      "reference/mapi-message"
+    ],
+    "CLM-email-2ce942": [
+      "reference/cfb-reader"
+    ],
+    "CLM-email-32314d": [
+      "reference/mapi-message"
+    ],
+    "CLM-email-41283c": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-email-419f18": [
+      "reference/api-overview",
+      "reference/mapi-message"
+    ],
+    "CLM-email-4251bf": [
+      "reference/cfb-reader"
+    ],
+    "CLM-email-4b4b61": [
+      "reference/api-overview"
+    ],
+    "CLM-email-500ec1": [
+      "reference/cfb-reader"
+    ],
+    "CLM-email-52c260": [
+      "reference/api-overview"
+    ],
+    "CLM-email-544710": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-email-5ebce4": [
+      "reference/cfb-reader"
+    ],
+    "CLM-email-617b19": [
+      "reference/api-overview",
+      "reference/cfb-reader"
+    ],
+    "CLM-email-711ad0": [
+      "reference/api-overview",
+      "reference/cfb-reader"
+    ],
+    "CLM-email-767c08": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-email-8994d8": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ],
+    "CLM-email-9696e0": [
+      "reference/api-overview",
+      "reference/mapi-message"
+    ],
+    "CLM-email-a0f03a": [
+      "reference/api-overview"
+    ],
+    "CLM-email-a6e94f": [
+      "reference/mapi-message"
+    ],
+    "CLM-email-a91a2c": [
+      "reference/mapi-message"
+    ],
+    "CLM-email-abcc46": [
+      "reference/api-overview",
+      "reference/mapi-message"
+    ],
+    "CLM-email-b28154": [
+      "products/_index",
+      "docs/installation"
+    ],
+    "CLM-email-b2e2c9": [
+      "reference/api-overview",
+      "reference/mapi-message"
+    ],
+    "CLM-email-c77072": [
+      "reference/cfb-reader"
+    ],
+    "CLM-email-dccfaf": [
+      "reference/api-overview",
+      "reference/cfb-reader"
+    ],
+    "CLM-email-e00487": [
+      "reference/api-overview",
+      "reference/cfb-reader"
+    ],
+    "CLM-email-e46683": [
+      "reference/api-overview",
+      "reference/mapi-message"
+    ],
+    "CLM-email-e9beee": [
+      "reference/mapi-message"
+    ],
+    "CLM-email-f27dab": [
+      "reference/cfb-reader"
+    ],
+    "CLM-email-fd5164": [
+      "reference/mapi-message"
+    ]
+  },
+  "pages": [
+    {
+      "assigned_claims": [
+        "CLM-email-b28154",
+        "CLM-email-41283c",
+        "CLM-email-158c31",
+        "CLM-email-544710"
+      ],
+      "assigned_snippets": [
+        0
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "products.aspose.org/email/_index",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "Aspose.Email FOSS for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "landing",
+        "platform": "python",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Aspose.Email FOSS",
+        "type": "landing",
+        "url": "/products.aspose.org/email/_index/",
+        "weight": 1
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "products/_index",
+      "page_role": "landing",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module",
+        "email python install",
+        "email python code",
+        "email python documentation",
+        "email python regex"
+      ],
+      "skeleton": [
+        "Overview",
+        "Key Features",
+        "Quick Start",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Aspose.Email FOSS"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/email/_index",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "Docs _Index for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "toc",
+        "platform": "python",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Docs _Index",
+        "type": "toc",
+        "url": "/docs.aspose.org/email/_index/",
+        "weight": 2
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "docs/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module",
+        "email python install",
+        "email python code",
+        "email python documentation",
+        "email python regex"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Docs _Index"
+    },
+    {
+      "assigned_claims": [
+        "CLM-email-767c08",
+        "CLM-email-b28154"
+      ],
+      "assigned_snippets": [
+        0
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/email/python/developer-guide/installation",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "Installation for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "workflow_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "installation",
+        "title": "Installation",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/email/python/developer-guide/installation/",
+        "weight": 3
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "docs/installation",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email",
+        "python",
+        "email python install",
+        "install aspose.email python",
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module"
+      ],
+      "skeleton": [
+        "System Requirements",
+        "Installation",
+        "Verify Installation",
+        "Quick Start",
+        "See Also"
+      ],
+      "skeleton_variant": "install",
+      "target_class": "",
+      "title": "Installation"
+    },
+    {
+      "assigned_claims": [
+        "CLM-email-767c08"
+      ],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/email/python/developer-guide/getting-started",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "Getting Started for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "workflow_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "getting-started",
+        "title": "Getting Started",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/email/python/developer-guide/getting-started/",
+        "weight": 4
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "docs/getting-started",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email",
+        "python",
+        "email python install",
+        "install aspose.email python",
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module"
+      ],
+      "skeleton": [
+        "Overview",
+        "Prerequisites",
+        "First Steps",
+        "Code Example",
+        "Next Steps",
+        "See Also"
+      ],
+      "skeleton_variant": "getting_started",
+      "target_class": "",
+      "title": "Getting Started"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/email/_index",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "Reference _Index for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "toc",
+        "platform": "python",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Reference _Index",
+        "type": "toc",
+        "url": "/reference.aspose.org/email/_index/",
+        "weight": 5
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "reference/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module",
+        "email python install",
+        "email python code",
+        "email python documentation",
+        "email python regex"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Reference _Index"
+    },
+    {
+      "assigned_claims": [
+        "CLM-email-419f18",
+        "CLM-email-b2e2c9",
+        "CLM-email-abcc46",
+        "CLM-email-9696e0",
+        "CLM-email-e46683",
+        "CLM-email-dccfaf",
+        "CLM-email-e00487",
+        "CLM-email-617b19",
+        "CLM-email-711ad0",
+        "CLM-email-4b4b61",
+        "CLM-email-52c260",
+        "CLM-email-a0f03a"
+      ],
+      "assigned_snippets": [
+        0
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/email/python/api-overview",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "Aspose.Email FOSS API Reference for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "api_reference",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "api-overview",
+        "title": "Aspose.Email FOSS API Reference",
+        "type": "api_reference",
+        "url": "/reference.aspose.org/email/python/api-overview/",
+        "weight": 6
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "reference/api-overview",
+      "page_role": "api_reference",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email",
+        "python",
+        "email python module",
+        "email python",
+        "email python library",
+        "email python package",
+        "email python install",
+        "email python code"
+      ],
+      "skeleton": [
+        "Overview",
+        "Public API",
+        "Common Patterns",
+        "See Also"
+      ],
+      "skeleton_variant": "index",
+      "target_class": "",
+      "title": "Aspose.Email FOSS API Reference"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/email/_index",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "Kb _Index for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "toc",
+        "platform": "python",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Kb _Index",
+        "type": "toc",
+        "url": "/kb.aspose.org/email/_index/",
+        "weight": 7
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module",
+        "email python install",
+        "email python code",
+        "email python documentation",
+        "email python regex"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Kb _Index"
+    },
+    {
+      "assigned_claims": [
+        "CLM-email-8994d8"
+      ],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/email/python/faq",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "Aspose.Email FOSS FAQ for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "faq",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "faq",
+        "title": "Aspose.Email FOSS FAQ",
+        "type": "faq",
+        "url": "/kb.aspose.org/email/python/faq/",
+        "weight": 8
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/faq",
+      "page_role": "faq",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email",
+        "python",
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module",
+        "email python install",
+        "email python code"
+      ],
+      "skeleton": [
+        "Frequently Asked Questions",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Aspose.Email FOSS FAQ"
+    },
+    {
+      "assigned_claims": [
+        "CLM-email-8994d8"
+      ],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/email/python/troubleshooting",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "Troubleshooting for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "troubleshooting",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "troubleshooting",
+        "title": "Troubleshooting",
+        "type": "troubleshooting",
+        "url": "/kb.aspose.org/email/python/troubleshooting/",
+        "weight": 9
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/troubleshooting",
+      "page_role": "troubleshooting",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email",
+        "python",
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module",
+        "email python install",
+        "email python code"
+      ],
+      "skeleton": [
+        "Common Issues",
+        "Error Messages",
+        "Getting Help",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Troubleshooting"
+    },
+    {
+      "assigned_claims": [
+        "CLM-email-41283c",
+        "CLM-email-158c31",
+        "CLM-email-544710"
+      ],
+      "assigned_snippets": [
+        0
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/email/python/developer-guide/use-cases",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "Use Cases for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "feature_showcase",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "use-cases",
+        "title": "Use Cases",
+        "type": "feature_showcase",
+        "url": "/kb.aspose.org/email/python/developer-guide/use-cases/",
+        "weight": 10
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/use-cases",
+      "page_role": "feature_showcase",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module",
+        "email python install",
+        "email python code",
+        "email python documentation",
+        "email python regex"
+      ],
+      "skeleton": [
+        "Overview",
+        "How It Works",
+        "Code Example",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Use Cases"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/email/python/how-to-load-files-python",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "How to Load Files with Aspose.Email FOSS for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "how-to-load-files-python",
+        "title": "How to Load Files with Aspose.Email FOSS",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/email/python/how-to-load-files-python/",
+        "weight": 11
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/how-to-load-files-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module",
+        "email python install",
+        "email python code",
+        "email python documentation",
+        "email python regex"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Loading the File",
+        "Code Example",
+        "Supported Formats",
+        "See Also"
+      ],
+      "skeleton_variant": "load_file",
+      "target_class": "",
+      "title": "How to Load Files with Aspose.Email FOSS"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/email/python/how-to-save-files-python",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "How to Save Files with Aspose.Email FOSS for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "how-to-save-files-python",
+        "title": "How to Save Files with Aspose.Email FOSS",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/email/python/how-to-save-files-python/",
+        "weight": 12
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/how-to-save-files-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module",
+        "email python install",
+        "email python code",
+        "email python documentation",
+        "email python regex"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Saving the File",
+        "Code Example",
+        "Output Options",
+        "See Also"
+      ],
+      "skeleton_variant": "save_file",
+      "target_class": "",
+      "title": "How to Save Files with Aspose.Email FOSS"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/email/python/how-to-convert-files-python",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "How to Convert File Formats with Aspose.Email FOSS for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "how-to-convert-files-python",
+        "title": "How to Convert File Formats with Aspose.Email FOSS",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/email/python/how-to-convert-files-python/",
+        "weight": 13
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/how-to-convert-files-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module",
+        "email python install",
+        "email python code",
+        "email python documentation",
+        "email python regex"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Conversion Steps",
+        "Code Example",
+        "Supported Formats",
+        "See Also"
+      ],
+      "skeleton_variant": "convert_formats",
+      "target_class": "",
+      "title": "How to Convert File Formats with Aspose.Email FOSS"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/email/python/how-to-fix-files-errors-python",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "How to Fix Common Errors with Aspose.Email FOSS for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "how-to-fix-files-errors-python",
+        "title": "How to Fix Common Errors with Aspose.Email FOSS",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/email/python/how-to-fix-files-errors-python/",
+        "weight": 14
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/how-to-fix-files-errors-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module",
+        "email python install",
+        "email python code",
+        "email python documentation",
+        "email python regex"
+      ],
+      "skeleton": [
+        "Problem",
+        "Symptoms",
+        "Root Cause",
+        "Solution Steps",
+        "Code Example",
+        "See Also"
+      ],
+      "skeleton_variant": "troubleshoot",
+      "target_class": "",
+      "title": "How to Fix Common Errors with Aspose.Email FOSS"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/email/python/how-to-optimize-files-python",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "How to Optimize Performance with Aspose.Email FOSS for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "howto_article",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "how-to-optimize-files-python",
+        "title": "How to Optimize Performance with Aspose.Email FOSS",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/email/python/how-to-optimize-files-python/",
+        "weight": 15
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/how-to-optimize-files-python",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module",
+        "email python install",
+        "email python code",
+        "email python documentation",
+        "email python regex"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Optimization Steps",
+        "Code Example",
+        "Benchmarks",
+        "See Also"
+      ],
+      "skeleton_variant": "optimize_performance",
+      "target_class": "",
+      "title": "How to Optimize Performance with Aspose.Email FOSS"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "blog.aspose.org/email/python/introducing-email-foss-python",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "Introducing Email Foss Python for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "blog_announcement",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "introducing-email-foss-python",
+        "title": "Introducing Email Foss Python",
+        "type": "blog_announcement",
+        "url": "/blog.aspose.org/email/python/introducing-email-foss-python/",
+        "weight": 16
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "blog/introducing-email-foss-python",
+      "page_role": "blog_announcement",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module",
+        "email python install",
+        "email python code",
+        "email python documentation",
+        "email python regex"
+      ],
+      "skeleton": [
+        "Introduction",
+        "Key Highlights",
+        "Getting Started",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Introducing Email Foss Python"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "blog.aspose.org/email/python/email-key-features",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "Email Key Features for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "feature_blog",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "email-key-features",
+        "title": "Email Key Features",
+        "type": "feature_blog",
+        "url": "/blog.aspose.org/email/python/email-key-features/",
+        "weight": 17
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "blog/email-key-features",
+      "page_role": "feature_blog",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module",
+        "email python install",
+        "email python code",
+        "email python documentation",
+        "email python regex"
+      ],
+      "skeleton": [
+        "Introduction",
+        "Key Highlights",
+        "Getting Started",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Email Key Features"
+    },
+    {
+      "assigned_claims": [
+        "CLM-email-21db72",
+        "CLM-email-a91a2c",
+        "CLM-email-17ae35",
+        "CLM-email-fd5164",
+        "CLM-email-32314d",
+        "CLM-email-e9beee",
+        "CLM-email-a6e94f",
+        "CLM-email-419f18",
+        "CLM-email-b2e2c9",
+        "CLM-email-abcc46",
+        "CLM-email-9696e0",
+        "CLM-email-e46683"
+      ],
+      "assigned_snippets": [
+        0
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/email/python/mapi-message",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "The MapiAttachment class supports creating file attachments from raw bytes us... for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "reference_object_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "mapi-message",
+        "title": "The MapiAttachment class supports creating file attachments from raw bytes us...",
+        "type": "reference_object_page",
+        "url": "/reference.aspose.org/email/python/mapi-message/",
+        "weight": 18
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": false,
+      "page_id": "reference/mapi-message",
+      "page_role": "reference_object_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module",
+        "email python install",
+        "email python code",
+        "email python documentation",
+        "email python regex"
+      ],
+      "skeleton": [
+        "Overview",
+        "Constructor",
+        "Properties",
+        "Methods",
+        "Example",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "MapiMessage",
+      "title": "The MapiAttachment class supports creating file attachments from raw bytes us..."
+    },
+    {
+      "assigned_claims": [
+        "CLM-email-5ebce4",
+        "CLM-email-15641e",
+        "CLM-email-500ec1",
+        "CLM-email-084862",
+        "CLM-email-4251bf",
+        "CLM-email-c77072",
+        "CLM-email-f27dab",
+        "CLM-email-2ce942",
+        "CLM-email-dccfaf",
+        "CLM-email-e00487",
+        "CLM-email-617b19",
+        "CLM-email-711ad0"
+      ],
+      "assigned_snippets": [
+        0
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/email/python/cfb-reader",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "aspose.email",
+        "code_import": "aspose.email",
+        "description": "The CFBDocument class represents a mutable Compound File Binary (CFB) documen... for Aspose.Email FOSS",
+        "display_name": "Aspose.Email FOSS",
+        "family": "email",
+        "page_role": "reference_object_page",
+        "platform": "python",
+        "robots": "index, follow",
+        "slug": "cfb-reader",
+        "title": "The CFBDocument class represents a mutable Compound File Binary (CFB) documen...",
+        "type": "reference_object_page",
+        "url": "/reference.aspose.org/email/python/cfb-reader/",
+        "weight": 19
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": false,
+      "page_id": "reference/cfb-reader",
+      "page_role": "reference_object_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "email python",
+        "email python library",
+        "email python package",
+        "email python module",
+        "email python install",
+        "email python code",
+        "email python documentation",
+        "email python regex"
+      ],
+      "skeleton": [
+        "Overview",
+        "Constructor",
+        "Properties",
+        "Methods",
+        "Example",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "CFBReader",
+      "title": "The CFBDocument class represents a mutable Compound File Binary (CFB) documen..."
+    }
+  ]
+}

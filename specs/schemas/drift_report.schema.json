@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drift_report.schema.json",
+  "title": "DriftReport",
+  "description": "Output of the Verify worker. Records drift between current repo state and the knowledge/ baseline. All detection is deterministic — no LLM calls.",
+  "type": "object",
+  "required": ["family", "platform", "verified_at", "drift_status"],
+  "properties": {
+    "family": {
+      "type": "string",
+      "description": "Product family identifier (e.g. '3d', 'cells', 'slides')"
+    },
+    "platform": {
+      "type": "string",
+      "description": "Platform identifier (e.g. 'python', 'java', 'dotnet')"
+    },
+    "verified_at": {
+      "type": "string",
+      "description": "ISO 8601 timestamp when the verify run completed"
+    },
+    "repo_sha_before": {
+      "type": "string",
+      "description": "Repo commit SHA recorded in the last drift_baseline.yaml; empty string when no baseline exists"
+    },
+    "repo_sha_after": {
+      "type": "string",
+      "description": "Current repo HEAD commit SHA from ScoutBundle"
+    },
+    "drift_status": {
+      "type": "string",
+      "enum": ["clean", "minor", "major", "new_product"],
+      "description": "clean: SHA unchanged, no drift possible. minor: only new capabilities found, no stale claims. major: stale claims or outdated code examples detected. new_product: no knowledge baseline exists yet."
+    },
+    "stale_claims": {
+      "type": "array",
+      "description": "Claims whose evidence anchors no longer hold in the current repo",
+      "items": {
+        "type": "object",
+        "required": ["claim_id", "reason"],
+        "properties": {
+          "claim_id": {
+            "type": "string",
+            "description": "Claim identifier from claims.json (e.g. 'CLM-3d-001')"
+          },
+          "reason": {
+            "type": "string",
+            "enum": ["source_deleted", "evidence_changed"],
+            "description": "source_deleted: the evidence source_file no longer exists. evidence_changed: the file exists but the anchor text has changed."
+          },
+          "affected_pages": {
+            "type": "array",
+            "description": "content_path strings of live pages that used this claim",
+            "items": {"type": "string"}
+          }
+        }
+      }
+    },
+    "new_capabilities": {
+      "type": "array",
+      "description": "API members, formats, or workflows present in the current repo but absent from the knowledge baseline",
+      "items": {
+        "type": "object",
+        "required": ["kind", "identifier"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["api_member", "format", "workflow"],
+            "description": "Category of new capability"
+          },
+          "identifier": {
+            "type": "string",
+            "description": "Class name, format name, or workflow label"
+          },
+          "source_file": {
+            "type": "string",
+            "description": "File in the repo where this capability was detected"
+          },
+          "suggested_page_roles": {
+            "type": "array",
+            "description": "Page roles where this capability is likely relevant",
+            "items": {"type": "string"}
+          }
+        }
+      }
+    },
+    "outdated_code_examples": {
+      "type": "array",
+      "description": "Live content pages that contain code using imports or API calls no longer in the current api_surface",
+      "items": {
+        "type": "object",
+        "required": ["content_path"],
+        "properties": {
+          "content_path": {
+            "type": "string",
+            "description": "content_path of the affected live page"
+          },
+          "page_role": {
+            "type": "string",
+            "description": "Page role from content_index.yaml"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["issue_type", "old_value"],
+              "properties": {
+                "issue_type": {
+                  "type": "string",
+                  "enum": ["outdated_import", "outdated_api_call"],
+                  "description": "outdated_import: import statement not in current allowlist. outdated_api_call: method/property not in current api_identifiers."
+                },
+                "old_value": {
+                  "type": "string",
+                  "description": "The import or API call as it appears in the content"
+                },
+                "new_value": {
+                  "type": "string",
+                  "description": "Suggested replacement (empty string if unknown)"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "page_drift_actions": {
+      "type": "object",
+      "description": "Per-page action recommendation keyed by content_path. Values: no-change | enhance | update | create",
+      "additionalProperties": {
+        "type": "string",
+        "enum": ["no-change", "enhance", "update", "create"]
+      }
+    }
+  }
+}

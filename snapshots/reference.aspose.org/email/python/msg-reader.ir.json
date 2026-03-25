@@ -1,0 +1,163 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/email/python/msg-reader/",
+    "canonical_import": "aspose.email_foss",
+    "date": "2026-03-19T15:03:00Z",
+    "dateModified": "2026-03-19T15:03:00Z",
+    "datePublished": "2026-03-19T15:03:00Z",
+    "description": "Aspose.Email FOSS: The MapiMessage class provides high-level APIs for creating, reading, editing, and saving Outlook MSG files.",
+    "display_name": "Aspose.Email FOSS",
+    "family": "email",
+    "keywords": [
+      "class",
+      "mapimessage",
+      "provides"
+    ],
+    "lastmod": "2026-03-19T15:03:00Z",
+    "page_role": "reference_object_page",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "The library provides low-level MSG parsing capabilities",
+    "slug": "msg-reader",
+    "title": "The library provides low-level MSG parsing capabilities through the MsgReader...",
+    "type": "reference_object_page",
+    "url": "/reference.aspose.org/email/python/msg-reader/",
+    "weight": 3
+  },
+  "page_id": "reference/msg-reader",
+  "page_role": "reference_object_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Normative top-level MSG containment and stream requirements for container traversal.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "| Name | Type | Read-only | Description |\n| --- | --- | --- | --- |\n| cfb_reader | CFBReader | Yes |  |\n| storage_layout | StorageLayout | Yes |  |\n| strict | bool | Yes |  |\n| validation_issues | Tuple[str, ...] | Yes |  |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "**from_file**(path) → 'MsgReader'",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "**close**() → None",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "**iter_top_level_fixed_length_properties**() → Iterator[PropertyEntryFixedLength]",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "**iter_recipient_storages**() → Iterator[DirectoryEntry]",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "**iter_attachment_storages**() → Iterator[DirectoryEntry]",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "**parse_message_property_stream**(storage_stream_id) → Tuple[PropertyStreamHeaderTopLevel, List[PropertyEntryFixedLength]]\n\nRead the property stream in the top level or an embedded-message storage.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "**parse_subobject_property_stream**(storage_stream_id) → Tuple[PropertyStreamHeaderSubobject, List[PropertyEntryFixedLength]]\n\nRead the property stream in recipient/attachment storage and decode fixed-length",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "**parse_top_level_property_stream**(data) → Tuple[PropertyStreamHeaderTopLevel, List[PropertyEntryFixedLength]]\n\nDecode top-level property stream header and fixed-length entries.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "**parse_subobject_property_stream_data**(data) → Tuple[PropertyStreamHeaderSubobject, List[PropertyEntryFixedLength]]\n\nDecode recipient/attachment property stream header and fixed-length entries.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Explore CFB parsing with CFBReader](/reference.aspose.org/email/python/cfb-reader/)",
+            "[Use MapiMessage for high-level operations](/reference.aspose.org/email/python/mapi-message/)",
+            "[Browse the full API reference](/reference.aspose.org/email/python/api-overview/)",
+            "[Learn how to load files](/kb.aspose.org/email/python/load-files-python/)",
+            "[Optimize performance techniques](/kb.aspose.org/email/python/optimize-files/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "The library provides low-level MSG parsing capabilities through the MsgReader..."
+}

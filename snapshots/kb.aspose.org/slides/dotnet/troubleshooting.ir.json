@@ -1,0 +1,213 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/slides/dotnet/troubleshooting/",
+    "canonical_import": "Aspose.Slides",
+    "code_import": "Aspose.Slides",
+    "date": "2026-03-24T17:07:48Z",
+    "dateModified": "2026-03-24T17:07:48Z",
+    "datePublished": "2026-03-24T17:07:48Z",
+    "description": "Check that the directory exists and no other process holds a write lock on the file. Replace the path with a valid, writable location and call Save() again.",
+    "display_name": "Aspose.Slides",
+    "family": "slides",
+    "keywords": [
+      "python slides",
+      "python slides for beginners",
+      "python slideshare",
+      "python slideshow",
+      "python slides ppt",
+      "python slides pdf",
+      "python slideshow py",
+      "python slideshow with transitions"
+    ],
+    "lastmod": "2026-03-24T17:07:48Z",
+    "page_role": "troubleshooting",
+    "platform": "dotnet",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Slides Troubleshooting",
+    "slug": "troubleshooting",
+    "title": "Troubleshooting",
+    "type": "troubleshooting",
+    "url": "/kb.aspose.org/slides/dotnet/troubleshooting/",
+    "weight": 9
+  },
+  "page_id": "kb/troubleshooting",
+  "page_role": "troubleshooting",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "If Save() throws [identifier omitted], the output path is invalid or the file is locked by another process. Check that the directory exists and no other process holds a write lock on the file. Replace the path with a valid, writable location and call Save() again.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "If `BulletFormat.Type()` returns an unexpected value, the bullet type was not explicitly set before reading it. Set the bullet type using `BulletFormat.Type()` with a valid enum value before querying it. Ensure you call Save() after modification to persist changes to the slide part.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "If `ColorFormat` changes do not appear in the saved presentation, the Save() method was not called on the parent slide part. After modifying `ColorFormat`, call Save() on the associated slidePart reference to persist changes. Verify the slidePart is not null before saving.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "If `CommentCollection.Count` returns zero despite adding comments, the comments were not added to the correct presentation instance. Ensure comments are added via `AddComment()` on the Presentation object and that Save() is called on the presentation to commit changes to the package.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "If `FillFormat` modifications are ignored, the fill element was not created before setting properties. Call `GetOrCreateFill(localName)` to ensure the fill element exists before modifying it. Then call Save() on the parent slide part to persist changes.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "If `GradientStopCollection.Add()` fails, the position value is out of the valid range (0.0 to 1.0). Validate that the position parameter is within this range before calling `AddCore()`. Use `Count()` to check current stops and avoid duplicates.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "If `DocumentProperties.Title` returns an empty string, the core properties part was not initialized. Call `EnsureCore()` before accessing Title to create the underlying XML structure. Then set the title and call Save() on the presentation package.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "If `EffectFormat` changes do not render, the effect list was not created before adding effects. Call `EnsureEffectLst()` to initialize the effect container before adding child effects. Call Save() on the slide part to persist changes.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "If `Camera` orientation does not update, `EnsureCamera()` was not called before modifying properties. Call `EnsureCamera()` to instantiate the camera element, then set orientation values and call Save() on the slide part.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-2e1aab"
+          ],
+          "content": "Aspose.Slides has known limitations: The following areas are not yet implemented. Review the README.md file for the full list of unsupported features before proceeding with complex scenarios.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Common Issues",
+      "level": 2,
+      "section_id": "common_issues"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-2e1aab"
+          ],
+          "content": "If you encounter an error while using Aspose.Slides, start by checking the exact exception name and the line where it occurs. Most errors stem from unsupported operations, file corruption, or incorrect usage of the API surface. Aspose.Slides has known limitations: the following areas are not yet implemented. Review the list of supported classes and methods to ensure your code uses only valid APIs.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-2e1aab"
+          ],
+          "content": "| Error | Cause | Fix |\n|-------|-------|-----|\n| [identifier omitted] thrown by InitInternal() | Attempting to use a feature not yet implemented in Aspose.Slides | Replace the unsupported operation with an equivalent method from the supported API surface; see known limitations |\n| NullReferenceException on Save() | Calling Save() on a component not properly initialized (e.g., missing slidePart) | Ensure all objects are constructed via public constructors or factory methods before calling Save() |\n| [identifier omitted] when loading `.pptx` | File is corrupted or not a valid Office Open XML presentation | Validate the file using PowerPoint first; if valid, report the issue with the file sample to Aspose support |\n| [identifier omitted] in `GradientStopCollection.Add()` | Position value is outside [0.0, 1.0] range | Clamp the position argument to the valid range before calling `AddCore()` |\n| NullReferenceException on Text() of `Comment` | `Comment` was not attached to a slide or author data is missing | Rebuild the comment using InitInternal() with valid data, commentsPart, and authorsPart objects |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Error Messages",
+      "level": 2,
+      "section_id": "error_messages"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-2e1aab"
+          ],
+          "content": "If you encounter an issue while using Aspose.Slides, first verify the error message and check whether it stems from a known limitation. The following areas are not yet implemented: [list specific unimplemented features if available in README.md].",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Report bugs or request features via GitHub Issues at https://github.com/aspose-slides/Aspose.Slides-for-.NET/issues",
+            "Browse the official documentation at ",
+            "Search or ask questions in the Aspose community forum at https://forum.aspose.com/c/slides/12"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [],
+          "content": "Ensure you are using the correct import: `using Aspose.Slides;`. Incorrect imports cause runtime failures and are not supported.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "callout"
+        }
+      ],
+      "heading": "Getting Help",
+      "level": 2,
+      "section_id": "getting_help"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Frequently asked questions](/kb.aspose.org/slides/dotnet/faq/)",
+            "[Complete API documentation](/reference.aspose.org/slides/dotnet/api-overview/)",
+            "[Step-by-step setup guide](/docs.aspose.org/slides/dotnet/developer-guide/getting-started/)",
+            "[Creating new presentations](/blog.aspose.org/slides/dotnet/introducing-slides-foss-dotnet/)",
+            "[Key features overview](/blog.aspose.org/slides/dotnet/slides-key-features/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Troubleshooting"
+}

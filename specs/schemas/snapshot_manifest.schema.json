@@ -8,7 +8,7 @@
   "properties": {
     "schema_version": {
       "type": "string",
-      "const": "1.0",
+      "enum": ["1.0", "1.1"],
       "description": "Schema version for migration detection."
     },
     "pages": {
@@ -27,11 +27,24 @@
       "minimum": 0,
       "description": "Cumulative IR slot count for the majority run (fast comparison value)."
     },
+    "majority_run_quality_score": {
+      "type": "number",
+      "minimum": 0,
+      "description": "TC-FIX-215: Quality-weighted score for the majority run (A=5, B=4, C=3, D=1, F=0 per page)."
+    },
     "run_ir_counts": {
       "type": "object",
       "description": "Cumulative IR slot count per run_id across all promotion calls. Used for correct majority tracking in backfill scenarios.",
       "additionalProperties": {
         "type": "integer",
+        "minimum": 0
+      }
+    },
+    "run_quality_scores": {
+      "type": "object",
+      "description": "TC-FIX-215: Cumulative quality score per run_id (grade-weighted). Primary majority-run selector.",
+      "additionalProperties": {
+        "type": "number",
         "minimum": 0
       }
     },

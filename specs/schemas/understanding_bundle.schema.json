@@ -207,6 +207,12 @@
               "items": { "type": "string" },
               "default": [],
               "description": "TC-4030: Script entrypoints from pyproject.toml [project].scripts"
+            },
+            "target_frameworks": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": [],
+              "description": "SR-12: .NET target frameworks from .csproj TargetFramework(s) element"
             }
           },
           "additionalProperties": false
@@ -505,15 +511,15 @@
           },
           "claim_source": {
             "type": "string",
-            "enum": ["llm", "deterministic", "docstring", "llm_fallback"],
-            "description": "TC-4057: How this claim was produced.",
+            "enum": ["llm", "deterministic", "docstring", "llm_fallback", "llm_sparse_grounding", "llm_corroborated"],
+            "description": "TC-4057/BBN-02/TC-UND-210: How this claim was produced. llm_sparse_grounding=sparse bounded-mode fallback (confidence=0.55). llm_corroborated=LLM claim promoted to 0.85 because same class is backed by a docstring claim.",
             "default": "llm"
           },
           "confidence": {
             "type": "number",
             "minimum": 0.0,
             "maximum": 1.0,
-            "description": "Evidence strength: 1.0=docstring, 0.75=llm, 0.5=deterministic, 0.35=llm_fallback [TC-HAL-06]"
+            "description": "Evidence strength: 1.0=docstring, 0.85=llm_corroborated, 0.75=llm, 0.65=deterministic, 0.55=llm_sparse_grounding, 0.35=llm_fallback [TC-HAL-06/TC-FIX-02/BBN-02/TC-5171/TC-UND-210]"
           }
         },
         "additionalProperties": false
@@ -552,7 +558,8 @@
             "items": {
               "type": "string"
             },
-            "description": "Claims this snippet supports."
+            "minItems": 1,
+            "description": "Claims this snippet supports. Non-empty in the finalized bundle (TC-5174)."
           },
           "source_file": {
             "type": "string",
@@ -568,6 +575,16 @@
             "type": ["integer", "null"],
             "default": null,
             "description": "TC-4063: Approximate end line (best-effort; null for fenced blocks)."
+          },
+          "snippet_id": {
+            "type": "string",
+            "default": "",
+            "description": "TC-FIX-217: Unique snippet identifier."
+          },
+          "syntax_valid": {
+            "type": "boolean",
+            "default": true,
+            "description": "TC-FIX-217: True if the snippet passes syntax validation."
           }
         },
         "additionalProperties": false
@@ -628,6 +645,11 @@
       "description": "Per-page-role evidence sufficiency scores (TC-4249)",
       "additionalProperties": {"$ref": "#/$defs/PageEvidenceScore"},
       "default": {}
+    },
+    "extraction_degraded": {
+      "type": "boolean",
+      "default": false,
+      "description": "TC-PLT-213: True when tree-sitter was unavailable or failed for one or more files during extraction. Signals that API surface may be incomplete."
     },
     "product_evidence": {
       "type": "object",
@@ -776,6 +798,11 @@
         }
       },
       "additionalProperties": false
+    },
+    "extraction_degraded": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when tree-sitter fallback was used for any source file during extraction."
     }
   },
   "additionalProperties": false,
@@ -992,6 +1019,11 @@
           "maximum": 1.0,
           "default": 1.0,
           "description": "Extraction confidence: 1.0 test file, 0.9 example file, 0.7 readme block."
+        },
+        "snippet_source_idx": {
+          "type": "integer",
+          "default": -1,
+          "description": "TC-FIX-217: Index into source Snippet list (-1 = unknown)."
         }
       },
       "additionalProperties": false

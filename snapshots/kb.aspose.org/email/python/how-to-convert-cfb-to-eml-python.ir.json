@@ -1,0 +1,106 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/email/python/convert-cfb-eml-python/",
+    "canonical_import": "aspose.email_foss",
+    "date": "2026-03-19T15:03:00Z",
+    "dateModified": "2026-03-19T15:03:00Z",
+    "datePublished": "2026-03-19T15:03:00Z",
+    "description": "The MapiMessage class enables programmatic creation, reading, editing, and saving of Outlook MSG files. The MsgWriter class provides methods to serialize...",
+    "display_name": "Aspose.Email FOSS",
+    "family": "email",
+    "keywords": [
+      "file",
+      "compound",
+      "binary"
+    ],
+    "lastmod": "2026-03-19T15:03:00Z",
+    "page_role": "howto_article",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "How to Convert File Formats with Aspose.Email FOSS | Guide",
+    "slug": "convert-cfb-eml-python",
+    "title": "How to Convert File Formats with Aspose.Email FOSS",
+    "type": "howto_article",
+    "url": "/kb.aspose.org/email/python/convert-cfb-eml-python/",
+    "weight": 17
+  },
+  "page_id": "kb/how-to-convert-cfb-to-eml-python",
+  "page_role": "howto_article",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Python 3.8 or later",
+            "Install the package using: `pip install aspose-email-foss`",
+            "Input files must be valid MSG (.msg) or EML (.eml) files"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-da7dbe"
+          ],
+          "content": "# source: snippet_0\nfrom aspose.email_foss.msg import MapiMessage\nfrom aspose.email_foss.cfb import CFBReader",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "# Prerequisites\nfrom aspose.email_foss.msg import MapiMessage\nfrom aspose.email_foss.cfb import CFBReader",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Explore the API reference](/reference.aspose.org/email/python/api-overview/)",
+            "[Frequently asked questions](/kb.aspose.org/email/python/frequently-asked-questions/)",
+            "[Low-level CFB parsing details](/reference.aspose.org/email/python/cfb-reader/)",
+            "[High-level MAPI message APIs](/reference.aspose.org/email/python/mapi-message/)",
+            "[Troubleshooting common issues](/kb.aspose.org/email/python/problem-solving/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The library supports writing Outlook MSG (.msg) files through the MapiMessage class.\n\nThe MapiMessage class enables programmatic creation, reading, editing, and saving of Outlook MSG files.\n\nThe MsgWriter class provides methods to serialize MAPI message documents to .msg files using to_bytes() and write_file().\n\nCFBDocument: Mutable Compound File Binary (CFB) document description.\n\nCFBError: Raised for malformed or unsupported Compound File Binary (CFB) content.\n\nCFBReader: Reusable reader for Compound File Binary (CFB) containers.\n\nCFBReader.iter_tree(): Yield a depth-first tree traversal as `(depth, entry)` tuples.\n\nCFBStorage: Mutable storage node used by the CFB writer.\n\nCFBStream: Mutable stream node used by the CFB writer.\n\nCFBWriter: Deterministic serializer for Compound File Binary (CFB) containers.\n\nDirectoryEntry: Fixed-size directory record for one storage/stream object and its tree links.\n\nHeader: Header record at file offset 0 defining Compound File Binary (CFB) geometry and allocation chain entry points.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Problem",
+      "level": 2,
+      "section_id": "problem"
+    }
+  ],
+  "title": "How to Convert File Formats with Aspose.Email FOSS"
+}

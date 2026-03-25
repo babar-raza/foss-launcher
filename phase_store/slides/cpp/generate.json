@@ -1,0 +1,1238 @@
+{
+  "api_fact_member_names": [],
+  "api_surface": {
+    "api_identifiers": [],
+    "class_briefs": [],
+    "confidence": "low",
+    "enums": [],
+    "format_matrix": [
+      {
+        "can_export": true,
+        "can_import": false,
+        "caveats": [],
+        "extension": ".pptx",
+        "name": "PPTX",
+        "source_evidence": "runs\\.clone_cache\\aspose_slides_cpp",
+        "test_count": 11
+      }
+    ],
+    "import_allowlist": [],
+    "public_classes": []
+  },
+  "cross_links": [
+    {
+      "anchor_text": "Explore real-world use cases",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "use-cases",
+      "url": "/kb.aspose.org/slides/cpp/developer-guide/use-cases/"
+    },
+    {
+      "anchor_text": "Discover visual effects capabilities",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "introducing-slides-foss-cpp",
+      "url": "/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/"
+    },
+    {
+      "anchor_text": "Key features for slide creation",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/cpp/slides-key-features/"
+    },
+    {
+      "anchor_text": "Create presentations step-by-step",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Work with slides efficiently",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Get started with Aspose.Slides FOSS for C++",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "getting-started",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/getting-started/"
+    },
+    {
+      "anchor_text": "Browse the full API reference",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/slides/cpp/api-overview/"
+    },
+    {
+      "anchor_text": "Discover visual effects support",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "introducing-slides-foss-cpp",
+      "url": "/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/"
+    },
+    {
+      "anchor_text": "Explore key presentation features",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/cpp/slides-key-features/"
+    },
+    {
+      "anchor_text": "Create presentations step by step",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Install the library",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "installation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/cpp/faq/"
+    },
+    {
+      "anchor_text": "API reference documentation",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/slides/cpp/api-overview/"
+    },
+    {
+      "anchor_text": "Visual effects overview",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "introducing-slides-foss-cpp",
+      "url": "/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/"
+    },
+    {
+      "anchor_text": "Key features of Slides",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/cpp/slides-key-features/"
+    },
+    {
+      "anchor_text": "Get started with Aspose.Slides FOSS for C++",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "getting-started",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/getting-started/"
+    },
+    {
+      "anchor_text": "Install the C++ library",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "installation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/cpp/faq/"
+    },
+    {
+      "anchor_text": "Explore visual effects support",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "introducing-slides-foss-cpp",
+      "url": "/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/"
+    },
+    {
+      "anchor_text": "Discover key features",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/cpp/slides-key-features/"
+    },
+    {
+      "anchor_text": "How to load files",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "how-to-load-presentations-cpp",
+      "url": "/kb.aspose.org/slides/cpp/how-to-load-presentations-cpp/"
+    },
+    {
+      "anchor_text": "How to convert file formats",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "how-to-convert-presentations-cpp",
+      "url": "/kb.aspose.org/slides/cpp/how-to-convert-presentations-cpp/"
+    },
+    {
+      "anchor_text": "How to fix common errors",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "how-to-fix-presentations-errors-cpp",
+      "url": "/kb.aspose.org/slides/cpp/how-to-fix-presentations-errors-cpp/"
+    },
+    {
+      "anchor_text": "How to optimize performance",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "how-to-optimize-presentations-cpp",
+      "url": "/kb.aspose.org/slides/cpp/how-to-optimize-presentations-cpp/"
+    },
+    {
+      "anchor_text": "How to Save Files with Aspose.Slides FOSS for C++",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "how-to-save-presentations-cpp",
+      "url": "/kb.aspose.org/slides/cpp/how-to-save-presentations-cpp/"
+    },
+    {
+      "anchor_text": "Overview of Aspose.Slides FOSS for C++",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "_index",
+      "url": "/products.aspose.org/slides/_index/"
+    },
+    {
+      "anchor_text": "Explore visual effects capabilities",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "introducing-slides-foss-cpp",
+      "url": "/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/"
+    },
+    {
+      "anchor_text": "Key features for presentation development",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/cpp/slides-key-features/"
+    },
+    {
+      "anchor_text": "Step-by-step presentation creation guide",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Essential slide manipulation techniques",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "how-to-load-presentations-cpp",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/cpp/faq/"
+    },
+    {
+      "anchor_text": "Visual effects capabilities",
+      "link_type": "see_also",
+      "source": "how-to-load-presentations-cpp",
+      "target": "introducing-slides-foss-cpp",
+      "url": "/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/"
+    },
+    {
+      "anchor_text": "Key features overview",
+      "link_type": "see_also",
+      "source": "how-to-load-presentations-cpp",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/cpp/slides-key-features/"
+    },
+    {
+      "anchor_text": "Create presentations from scratch",
+      "link_type": "see_also",
+      "source": "how-to-load-presentations-cpp",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Work with slides programmatically",
+      "link_type": "see_also",
+      "source": "how-to-load-presentations-cpp",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "how-to-save-presentations-cpp",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/cpp/faq/"
+    },
+    {
+      "anchor_text": "Visual effects capabilities",
+      "link_type": "see_also",
+      "source": "how-to-save-presentations-cpp",
+      "target": "introducing-slides-foss-cpp",
+      "url": "/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/"
+    },
+    {
+      "anchor_text": "Key features overview",
+      "link_type": "see_also",
+      "source": "how-to-save-presentations-cpp",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/cpp/slides-key-features/"
+    },
+    {
+      "anchor_text": "Create presentations from scratch",
+      "link_type": "see_also",
+      "source": "how-to-save-presentations-cpp",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Work with slides programmatically",
+      "link_type": "see_also",
+      "source": "how-to-save-presentations-cpp",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "how-to-convert-presentations-cpp",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/cpp/faq/"
+    },
+    {
+      "anchor_text": "Visual effects capabilities",
+      "link_type": "see_also",
+      "source": "how-to-convert-presentations-cpp",
+      "target": "introducing-slides-foss-cpp",
+      "url": "/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/"
+    },
+    {
+      "anchor_text": "Key features overview",
+      "link_type": "see_also",
+      "source": "how-to-convert-presentations-cpp",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/cpp/slides-key-features/"
+    },
+    {
+      "anchor_text": "Create presentations from scratch",
+      "link_type": "see_also",
+      "source": "how-to-convert-presentations-cpp",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Work with slides programmatically",
+      "link_type": "see_also",
+      "source": "how-to-convert-presentations-cpp",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions and solutions",
+      "link_type": "see_also",
+      "source": "how-to-fix-presentations-errors-cpp",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/cpp/faq/"
+    },
+    {
+      "anchor_text": "Explore visual effects capabilities",
+      "link_type": "see_also",
+      "source": "how-to-fix-presentations-errors-cpp",
+      "target": "introducing-slides-foss-cpp",
+      "url": "/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/"
+    },
+    {
+      "anchor_text": "Key features overview and benefits",
+      "link_type": "see_also",
+      "source": "how-to-fix-presentations-errors-cpp",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/cpp/slides-key-features/"
+    },
+    {
+      "anchor_text": "Step-by-step presentation creation guide",
+      "link_type": "see_also",
+      "source": "how-to-fix-presentations-errors-cpp",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Advanced slide manipulation techniques",
+      "link_type": "see_also",
+      "source": "how-to-fix-presentations-errors-cpp",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions and answers",
+      "link_type": "see_also",
+      "source": "how-to-optimize-presentations-cpp",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/cpp/faq/"
+    },
+    {
+      "anchor_text": "Explore visual effects capabilities",
+      "link_type": "see_also",
+      "source": "how-to-optimize-presentations-cpp",
+      "target": "introducing-slides-foss-cpp",
+      "url": "/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/"
+    },
+    {
+      "anchor_text": "Discover key presentation features",
+      "link_type": "see_also",
+      "source": "how-to-optimize-presentations-cpp",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/cpp/slides-key-features/"
+    },
+    {
+      "anchor_text": "Step-by-step presentation creation guide",
+      "link_type": "see_also",
+      "source": "how-to-optimize-presentations-cpp",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Advanced slide manipulation techniques",
+      "link_type": "see_also",
+      "source": "how-to-optimize-presentations-cpp",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Explore visual effects support",
+      "link_type": "see_also",
+      "source": "introducing-slides-foss-cpp",
+      "target": "_index",
+      "url": "/products.aspose.org/slides/_index/"
+    },
+    {
+      "anchor_text": "Discover key presentation features",
+      "link_type": "see_also",
+      "source": "introducing-slides-foss-cpp",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/cpp/slides-key-features/"
+    },
+    {
+      "anchor_text": "Create presentations programmatically",
+      "link_type": "see_also",
+      "source": "introducing-slides-foss-cpp",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Work with slides efficiently",
+      "link_type": "see_also",
+      "source": "introducing-slides-foss-cpp",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Convert file formats easily",
+      "link_type": "see_also",
+      "source": "introducing-slides-foss-cpp",
+      "target": "how-to-convert-presentations-cpp",
+      "url": "/kb.aspose.org/slides/cpp/how-to-convert-presentations-cpp/"
+    },
+    {
+      "anchor_text": "Explore visual effects support",
+      "link_type": "see_also",
+      "source": "slides-key-features",
+      "target": "introducing-slides-foss-cpp",
+      "url": "/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/"
+    },
+    {
+      "anchor_text": "Get started with presentations",
+      "link_type": "see_also",
+      "source": "slides-key-features",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Manage slides programmatically",
+      "link_type": "see_also",
+      "source": "slides-key-features",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Convert file formats easily",
+      "link_type": "see_also",
+      "source": "slides-key-features",
+      "target": "how-to-convert-presentations-cpp",
+      "url": "/kb.aspose.org/slides/cpp/how-to-convert-presentations-cpp/"
+    },
+    {
+      "anchor_text": "Resolve common errors",
+      "link_type": "see_also",
+      "source": "slides-key-features",
+      "target": "how-to-fix-presentations-errors-cpp",
+      "url": "/kb.aspose.org/slides/cpp/how-to-fix-presentations-errors-cpp/"
+    },
+    {
+      "anchor_text": "Explore visual effects support",
+      "link_type": "see_also",
+      "source": "presentation-creation",
+      "target": "introducing-slides-foss-cpp",
+      "url": "/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/"
+    },
+    {
+      "anchor_text": "Discover key slide features",
+      "link_type": "see_also",
+      "source": "presentation-creation",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/cpp/slides-key-features/"
+    },
+    {
+      "anchor_text": "Learn slide manipulation basics",
+      "link_type": "see_also",
+      "source": "presentation-creation",
+      "target": "slide-manipulation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/slide-manipulation/"
+    },
+    {
+      "anchor_text": "Convert files easily",
+      "link_type": "see_also",
+      "source": "presentation-creation",
+      "target": "how-to-convert-presentations-cpp",
+      "url": "/kb.aspose.org/slides/cpp/how-to-convert-presentations-cpp/"
+    },
+    {
+      "anchor_text": "Fix common errors",
+      "link_type": "see_also",
+      "source": "presentation-creation",
+      "target": "how-to-fix-presentations-errors-cpp",
+      "url": "/kb.aspose.org/slides/cpp/how-to-fix-presentations-errors-cpp/"
+    },
+    {
+      "anchor_text": "Explore visual effects support",
+      "link_type": "see_also",
+      "source": "slide-manipulation",
+      "target": "introducing-slides-foss-cpp",
+      "url": "/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/"
+    },
+    {
+      "anchor_text": "Discover key features overview",
+      "link_type": "see_also",
+      "source": "slide-manipulation",
+      "target": "slides-key-features",
+      "url": "/blog.aspose.org/slides/cpp/slides-key-features/"
+    },
+    {
+      "anchor_text": "Create presentations from scratch",
+      "link_type": "see_also",
+      "source": "slide-manipulation",
+      "target": "presentation-creation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/presentation-creation/"
+    },
+    {
+      "anchor_text": "Convert file formats easily",
+      "link_type": "see_also",
+      "source": "slide-manipulation",
+      "target": "how-to-convert-presentations-cpp",
+      "url": "/kb.aspose.org/slides/cpp/how-to-convert-presentations-cpp/"
+    },
+    {
+      "anchor_text": "Fix common errors and issues",
+      "link_type": "see_also",
+      "source": "slide-manipulation",
+      "target": "how-to-fix-presentations-errors-cpp",
+      "url": "/kb.aspose.org/slides/cpp/how-to-fix-presentations-errors-cpp/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "installation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Aspose.Slides FOSS for C++ FAQ",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/cpp/faq/"
+    },
+    {
+      "anchor_text": "Aspose.Slides FOSS for C++",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "_index",
+      "url": "/products.aspose.org/slides/_index/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "installation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Aspose.Slides FOSS for C++ FAQ",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/cpp/faq/"
+    },
+    {
+      "anchor_text": "Aspose.Slides FOSS for C++",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "_index",
+      "url": "/products.aspose.org/slides/_index/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "installation",
+      "url": "/docs.aspose.org/slides/cpp/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Aspose.Slides FOSS for C++ FAQ",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "faq",
+      "url": "/kb.aspose.org/slides/cpp/faq/"
+    },
+    {
+      "anchor_text": "Aspose.Slides FOSS for C++",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "_index",
+      "url": "/products.aspose.org/slides/_index/"
+    }
+  ],
+  "generation_stats": {
+    "duration_seconds": 1351.27,
+    "fallback_count": 9,
+    "llm_calls": 132,
+    "total_pages": 18
+  },
+  "page_evidence_index": {
+    "_index": {
+      "claim_count": 24,
+      "evidence_sufficient": true,
+      "format_evidence_complete": true,
+      "has_operation_snippets": false,
+      "missing": [],
+      "page_role": "_index",
+      "snippet_count": 9,
+      "verified_claim_count": 12
+    },
+    "api_reference": {
+      "claim_count": 24,
+      "evidence_sufficient": false,
+      "format_evidence_complete": false,
+      "has_operation_snippets": false,
+      "missing": [
+        "no_verified_claims",
+        "no_api_facts"
+      ],
+      "page_role": "api_reference",
+      "snippet_count": 9,
+      "verified_claim_count": 0
+    },
+    "feature_blog": {
+      "claim_count": 24,
+      "evidence_sufficient": true,
+      "format_evidence_complete": true,
+      "has_operation_snippets": false,
+      "missing": [],
+      "page_role": "feature_blog",
+      "snippet_count": 9,
+      "verified_claim_count": 12
+    },
+    "format_conversion": {
+      "claim_count": 24,
+      "evidence_sufficient": false,
+      "format_evidence_complete": true,
+      "has_operation_snippets": false,
+      "missing": [
+        "no_operation_examples"
+      ],
+      "page_role": "format_conversion",
+      "snippet_count": 9,
+      "verified_claim_count": 12
+    },
+    "howto_article": {
+      "claim_count": 24,
+      "evidence_sufficient": false,
+      "format_evidence_complete": false,
+      "has_operation_snippets": false,
+      "missing": [
+        "no_operation_examples"
+      ],
+      "page_role": "howto_article",
+      "snippet_count": 9,
+      "verified_claim_count": 12
+    },
+    "install_guide": {
+      "claim_count": 24,
+      "evidence_sufficient": true,
+      "format_evidence_complete": false,
+      "has_operation_snippets": false,
+      "missing": [],
+      "page_role": "install_guide",
+      "snippet_count": 9,
+      "verified_claim_count": 0
+    }
+  },
+  "pages": [
+    {
+      "assigned_claim_count": 15,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-slides-048efc",
+        "CLM-slides-f10545",
+        "CLM-slides-173051",
+        "CLM-slides-eaa0bd",
+        "CLM-slides-4cd55d",
+        "CLM-slides-6bdf02",
+        "CLM-slides-7dcb01",
+        "CLM-slides-fa8517",
+        "CLM-slides-d1979a",
+        "CLM-slides-5b9d7e",
+        "CLM-slides-fc2acf",
+        "CLM-slides-0f6637",
+        "CLM-slides-616b5e",
+        "CLM-slides-dec3e5",
+        "CLM-slides-8f2276"
+      ],
+      "claim_texts": [
+        "Install Aspose.Slides FOSS for C++ via: pip install aspose_slides_foss",
+        "Document properties including Core, app, and custom properties can be set and retrieved via Presentation::document_properties().",
+        "The library supports working with shapes including AutoShapes, PictureFrames, Tables, and Connectors.",
+        "Aspose.Slides FOSS for C++ supports exporting presentations to PPTX format with full round-trip fidelity.",
+        "3D shape properties including Bevel, camera, light rig, material, and extrusion depth are supported.",
+        "Example demonstrates saving files in PPTX format",
+        "Text formatting is supported through TextFrame, Paragraph, and Portion with character, paragraph, and text frame formatting including bullets.",
+        "Aspose.Slides FOSS for C++ supports PPTX (.pptx) format for writing",
+        "The library supports adding, removing, cloning, reordering, and iterating slides via the slides() collection on Presentation.",
+        "Threaded comments with authors, timestamps, and positions are supported via CommentAuthor and Comment collections.",
+        "Images can be embedded from file, bytes, or stream via PictureFrame and related APIs.",
+        "The library is distributed under the MIT License.",
+        "The library preserves unknown XML parts encountered during load and saves them verbatim, ensuring round-trip fidelity.",
+        "The library enables opening, creating, and saving .pptx files using the Presentation class and SaveFormat::PPTX.",
+        "Shape fill support includes Solid, gradient, pattern, and picture fills via FillFormat."
+      ],
+      "code_block_count": 5,
+      "content_path": "products.aspose.org/slides/_index",
+      "ir_path": "content_bundle\\pages\\products.aspose.org\\slides\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\products.aspose.org\\slides\\_index.md",
+      "page_role": "landing",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "",
+      "variant": "minimal",
+      "word_count": 673
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "docs.aspose.org/slides/_index",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\slides\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\slides\\_index.md",
+      "page_role": "toc",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\docs.aspose.org\\__FAMILY__\\_index.md",
+      "variant": "minimal",
+      "word_count": 498
+    },
+    {
+      "assigned_claim_count": 3,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-slides-6bdf02",
+        "CLM-slides-048efc",
+        "CLM-slides-3cfdab"
+      ],
+      "claim_texts": [
+        "Example demonstrates saving files in PPTX format",
+        "Install Aspose.Slides FOSS for C++ via: pip install aspose_slides_foss",
+        "The library uses C++20, CMake 3.20+, and automatically fetches dependencies pugixml v1.14, miniz 3.0.2, and GoogleTest v1.15.2 via CMake FetchContent."
+      ],
+      "code_block_count": 2,
+      "content_path": "docs.aspose.org/slides/cpp/developer-guide/installation",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\slides\\cpp\\developer-guide\\installation.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\slides\\cpp\\developer-guide\\installation.md",
+      "page_role": "workflow_page",
+      "section": "docs",
+      "slug": "installation",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\docs.aspose.org\\__FAMILY__\\__PLATFORM__\\developer-guide\\feature.variant-minimal.md",
+      "variant": "minimal",
+      "word_count": 437
+    },
+    {
+      "assigned_claim_count": 9,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-slides-048efc",
+        "CLM-slides-6bdf02",
+        "CLM-slides-eaa0bd",
+        "CLM-slides-7dcb01",
+        "CLM-slides-3cfdab",
+        "CLM-slides-fa8517",
+        "CLM-slides-d1979a",
+        "CLM-slides-dec3e5",
+        "CLM-slides-8f2276"
+      ],
+      "claim_texts": [
+        "Install Aspose.Slides FOSS for C++ via: pip install aspose_slides_foss",
+        "Example demonstrates saving files in PPTX format",
+        "Aspose.Slides FOSS for C++ supports exporting presentations to PPTX format with full round-trip fidelity.",
+        "Text formatting is supported through TextFrame, Paragraph, and Portion with character, paragraph, and text frame formatting including bullets.",
+        "The library uses C++20, CMake 3.20+, and automatically fetches dependencies pugixml v1.14, miniz 3.0.2, and GoogleTest v1.15.2 via CMake FetchContent.",
+        "Aspose.Slides FOSS for C++ supports PPTX (.pptx) format for writing",
+        "The library supports adding, removing, cloning, reordering, and iterating slides via the slides() collection on Presentation.",
+        "The library enables opening, creating, and saving .pptx files using the Presentation class and SaveFormat::PPTX.",
+        "Shape fill support includes Solid, gradient, pattern, and picture fills via FillFormat."
+      ],
+      "code_block_count": 5,
+      "content_path": "docs.aspose.org/slides/cpp/developer-guide/getting-started",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\slides\\cpp\\developer-guide\\getting-started.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\slides\\cpp\\developer-guide\\getting-started.md",
+      "page_role": "workflow_page",
+      "section": "docs/getting",
+      "slug": "getting-started",
+      "template_used": "",
+      "variant": "minimal",
+      "word_count": 712
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "reference.aspose.org/slides/_index",
+      "ir_path": "content_bundle\\pages\\reference.aspose.org\\slides\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\reference.aspose.org\\slides\\_index.md",
+      "page_role": "toc",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\docs.aspose.org\\__FAMILY__\\_index.md",
+      "variant": "minimal",
+      "word_count": 563
+    },
+    {
+      "assigned_claim_count": 4,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-slides-230286",
+        "CLM-slides-dec3e5",
+        "CLM-slides-c84ea3",
+        "CLM-slides-2913ec"
+      ],
+      "claim_texts": [
+        "The library provides a BaseCollection base class that delivers index-based random-access iterators, length(), begin(), end(), and contains() for collections.",
+        "The library enables opening, creating, and saving .pptx files using the Presentation class and SaveFormat::PPTX.",
+        "The library supports exporting presentations to file paths and streams via ExporterBase::export_to_path() and ExporterBase::export_to_stream().",
+        "The library uses an ExporterRegistry to manage format exporters dynamically via register_exporter<T>() and get_exporter(format) methods."
+      ],
+      "code_block_count": 9,
+      "content_path": "reference.aspose.org/slides/cpp/api-overview",
+      "ir_path": "content_bundle\\pages\\reference.aspose.org\\slides\\cpp\\api-overview.ir.json",
+      "md_path": "content_bundle\\pages\\reference.aspose.org\\slides\\cpp\\api-overview.md",
+      "page_role": "api_reference",
+      "section": "reference/api",
+      "slug": "api-overview",
+      "template_used": "",
+      "variant": "minimal",
+      "word_count": 1045
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "kb.aspose.org/slides/_index",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\_index.md",
+      "page_role": "toc",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\docs.aspose.org\\__FAMILY__\\_index.md",
+      "variant": "minimal",
+      "word_count": 532
+    },
+    {
+      "assigned_claim_count": 2,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-slides-0f6637",
+        "CLM-slides-3b715a"
+      ],
+      "claim_texts": [
+        "The library is distributed under the MIT License.",
+        "The following areas are has limitation: The following areas are not yet available:"
+      ],
+      "code_block_count": 0,
+      "content_path": "kb.aspose.org/slides/cpp/faq",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\cpp\\faq.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\cpp\\faq.md",
+      "page_role": "faq",
+      "section": "docs",
+      "slug": "faq",
+      "template_used": "",
+      "variant": "minimal",
+      "word_count": 493
+    },
+    {
+      "assigned_claim_count": 17,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-slides-048efc",
+        "CLM-slides-f10545",
+        "CLM-slides-173051",
+        "CLM-slides-eaa0bd",
+        "CLM-slides-4cd55d",
+        "CLM-slides-6bdf02",
+        "CLM-slides-ce8d15",
+        "CLM-slides-7dcb01",
+        "CLM-slides-a3ed81",
+        "CLM-slides-fa8517",
+        "CLM-slides-d1979a",
+        "CLM-slides-5b9d7e",
+        "CLM-slides-fc2acf",
+        "CLM-slides-bfee71",
+        "CLM-slides-616b5e",
+        "CLM-slides-dec3e5",
+        "CLM-slides-8f2276"
+      ],
+      "claim_texts": [
+        "Install Aspose.Slides FOSS for C++ via: pip install aspose_slides_foss",
+        "Document properties including Core, app, and custom properties can be set and retrieved via Presentation::document_properties().",
+        "The library supports working with shapes including AutoShapes, PictureFrames, Tables, and Connectors.",
+        "Aspose.Slides FOSS for C++ supports exporting presentations to PPTX format with full round-trip fidelity.",
+        "3D shape properties including Bevel, camera, light rig, material, and extrusion depth are supported.",
+        "Example demonstrates saving files in PPTX format",
+        "Line formatting is supported with width, dash style, arrows, join and alignment via shape stroke properties.",
+        "Text formatting is supported through TextFrame, Paragraph, and Portion with character, paragraph, and text frame formatting including bullets.",
+        "The library supports exporting to PPTX, PPTM, PPSX, PPSM, POTX, and POTM via the PptxExporter class.",
+        "Aspose.Slides FOSS for C++ supports PPTX (.pptx) format for writing",
+        "The library supports adding, removing, cloning, reordering, and iterating slides via the slides() collection on Presentation.",
+        "Threaded comments with authors, timestamps, and positions are supported via CommentAuthor and Comment collections.",
+        "Images can be embedded from file, bytes, or stream via PictureFrame and related APIs.",
+        "Speaker notes per slide are supported via NotesSlideManager and NotesSlide with header/footer management.",
+        "The library preserves unknown XML parts encountered during load and saves them verbatim, ensuring round-trip fidelity.",
+        "The library enables opening, creating, and saving .pptx files using the Presentation class and SaveFormat::PPTX.",
+        "Shape fill support includes Solid, gradient, pattern, and picture fills via FillFormat."
+      ],
+      "code_block_count": 17,
+      "content_path": "kb.aspose.org/slides/cpp/developer-guide/use-cases",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\cpp\\developer-guide\\use-cases.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\cpp\\developer-guide\\use-cases.md",
+      "page_role": "feature_showcase",
+      "section": "kb/use",
+      "slug": "use-cases",
+      "template_used": "",
+      "variant": "minimal",
+      "word_count": 713
+    },
+    {
+      "assigned_claim_count": 1,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-slides-3b715a"
+      ],
+      "claim_texts": [
+        "The following areas are has limitation: The following areas are not yet available:"
+      ],
+      "code_block_count": 3,
+      "content_path": "kb.aspose.org/slides/cpp/how-to-load-presentations-cpp",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\cpp\\how-to-load-presentations-cpp.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\cpp\\how-to-load-presentations-cpp.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "how-to-load-presentations-cpp",
+      "template_used": "",
+      "variant": "minimal",
+      "word_count": 905
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 6,
+      "content_path": "kb.aspose.org/slides/cpp/how-to-save-presentations-cpp",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\cpp\\how-to-save-presentations-cpp.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\cpp\\how-to-save-presentations-cpp.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "how-to-save-presentations-cpp",
+      "template_used": "",
+      "variant": "minimal",
+      "word_count": 861
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 5,
+      "content_path": "kb.aspose.org/slides/cpp/how-to-convert-presentations-cpp",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\cpp\\how-to-convert-presentations-cpp.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\cpp\\how-to-convert-presentations-cpp.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "how-to-convert-presentations-cpp",
+      "template_used": "",
+      "variant": "minimal",
+      "word_count": 796
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 4,
+      "content_path": "kb.aspose.org/slides/cpp/how-to-fix-presentations-errors-cpp",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\cpp\\how-to-fix-presentations-errors-cpp.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\cpp\\how-to-fix-presentations-errors-cpp.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "how-to-fix-presentations-errors-cpp",
+      "template_used": "",
+      "variant": "minimal",
+      "word_count": 1230
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 5,
+      "content_path": "kb.aspose.org/slides/cpp/how-to-optimize-presentations-cpp",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\slides\\cpp\\how-to-optimize-presentations-cpp.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\slides\\cpp\\how-to-optimize-presentations-cpp.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "how-to-optimize-presentations-cpp",
+      "template_used": "",
+      "variant": "minimal",
+      "word_count": 771
+    },
+    {
+      "assigned_claim_count": 1,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-slides-fde798"
+      ],
+      "claim_texts": [
+        "Visual effects such as Outer shadow, glow, soft edge, blur, reflection, and inner shadow are supported on shapes."
+      ],
+      "code_block_count": 2,
+      "content_path": "blog.aspose.org/slides/cpp/introducing-slides-foss-cpp",
+      "ir_path": "content_bundle\\pages\\blog.aspose.org\\slides\\cpp\\introducing-slides-foss-cpp.ir.json",
+      "md_path": "content_bundle\\pages\\blog.aspose.org\\slides\\cpp\\introducing-slides-foss-cpp.md",
+      "page_role": "blog_announcement",
+      "section": "blog/introducing",
+      "slug": "introducing-slides-foss-cpp",
+      "template_used": "",
+      "variant": "minimal",
+      "word_count": 643
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "blog.aspose.org/slides/cpp/slides-key-features",
+      "ir_path": "content_bundle\\pages\\blog.aspose.org\\slides\\cpp\\slides-key-features.ir.json",
+      "md_path": "content_bundle\\pages\\blog.aspose.org\\slides\\cpp\\slides-key-features.md",
+      "page_role": "feature_blog",
+      "section": "blog/slides",
+      "slug": "slides-key-features",
+      "template_used": "",
+      "variant": "minimal",
+      "word_count": 562
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 6,
+      "content_path": "docs.aspose.org/slides/cpp/developer-guide/presentation-creation",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\slides\\cpp\\developer-guide\\presentation-creation.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\slides\\cpp\\developer-guide\\presentation-creation.md",
+      "page_role": "workflow_page",
+      "section": "docs/presentation",
+      "slug": "presentation-creation",
+      "template_used": "",
+      "variant": "minimal",
+      "word_count": 982
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 3,
+      "content_path": "docs.aspose.org/slides/cpp/developer-guide/slide-manipulation",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\slides\\cpp\\developer-guide\\slide-manipulation.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\slides\\cpp\\developer-guide\\slide-manipulation.md",
+      "page_role": "workflow_page",
+      "section": "docs/slide",
+      "slug": "slide-manipulation",
+      "template_used": "",
+      "variant": "minimal",
+      "word_count": 654
+    }
+  ],
+  "product_evidence": {
+    "capabilities": [
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 33
+        },
+        "source": "readme",
+        "text": "**Presentation I/O** — Open, create, and save `.pptx` files with full round-trip fidelity"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 34
+        },
+        "source": "readme",
+        "text": "**Slides** — Add, remove, clone, reorder, and iterate slides"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 35
+        },
+        "source": "readme",
+        "text": "**Shapes** — AutoShapes, PictureFrames, Tables, Connectors"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 36
+        },
+        "source": "readme",
+        "text": "**Text** — TextFrame, Paragraph, Portion with character, paragraph, and text frame formatting (including bullets)"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 37
+        },
+        "source": "readme",
+        "text": "**Fill** — Solid, gradient, pattern, and picture fills"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 38
+        },
+        "source": "readme",
+        "text": "**Lines** — Width, dash style, arrows, join and alignment"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 39
+        },
+        "source": "readme",
+        "text": "**Effects** — Outer shadow, glow, soft edge, blur, reflection, inner shadow"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 40
+        },
+        "source": "readme",
+        "text": "**3D** — Bevel, camera, light rig, material, extrusion depth"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 41
+        },
+        "source": "readme",
+        "text": "**Document properties** — Core, app, and custom properties"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 42
+        },
+        "source": "readme",
+        "text": "**Notes slides** — Per-slide notes with header/footer management"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 43
+        },
+        "source": "readme",
+        "text": "**Comments** — Threaded comments with authors, timestamps, and positions"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 44
+        },
+        "source": "readme",
+        "text": "**Images** — Embed from file, bytes, or stream"
+      },
+      {
+        "evidence": {
+          "file": "src\\Aspose.Slides.Foss\\_internal\\pptx\\shape_type_mapping.cpp",
+          "line": 15
+        },
+        "source": "docstring:MappingEntry",
+        "text": "A single entry in the OOXML prst ↔ ShapeType name mapping."
+      }
+    ],
+    "confidence": {},
+    "conversion_pairs": [],
+    "format_evidence_source": "ast_verified",
+    "input_formats": [],
+    "install_recipe": {
+      "install_command": "pip install aspose_slides_foss",
+      "package_name": "aspose_slides_foss",
+      "source_file": "pyproject.toml (cached)",
+      "verification_code": "import Aspose::Slides\nprint('Installation successful')",
+      "version_constraint": ""
+    },
+    "limitations": [
+      {
+        "confidence": "doc_stated",
+        "constraint": "The following areas are not yet available:",
+        "context": "",
+        "feature": "The following areas are",
+        "quote": "The following areas are not yet available:",
+        "source_file": "README.md",
+        "source_line": 235,
+        "status": "warning"
+      }
+    ],
+    "missing_info": [],
+    "output_formats": [
+      "PPTX"
+    ],
+    "supported_formats": [
+      "PPTX"
+    ],
+    "workflow_examples": [],
+    "workflows": []
+  },
+  "richness_tier": ""
+}

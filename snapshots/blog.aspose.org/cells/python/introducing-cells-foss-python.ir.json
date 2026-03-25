@@ -1,33 +1,33 @@
 {
   "frontmatter": {
-    "canonical": "https://blog.aspose.org/cells/python/cells-foss-python/",
-    "canonical_import": "aspose_cells_foss",
-    "date": "2026-03-09T14:16:52Z",
-    "dateModified": "2026-03-09T14:38:38Z",
-    "datePublished": "2026-03-09T14:16:52Z",
-    "description": "This independence simplifies deployment across servers, containers, and cloud environments where desktop office suites are unavailable or unsupported.",
-    "display_name": "Aspose.Cells",
+    "canonical": "https://blog.aspose.org/cells/python/introducing-cells-foss-python/",
+    "canonical_import": "aspose.cells",
+    "date": "2026-03-23T13:16:22Z",
+    "dateModified": "2026-03-23T13:16:22Z",
+    "datePublished": "2026-03-23T13:16:22Z",
+    "description": "It provides a clean, object-oriented API for creating, editing, and converting spreadsheet data without requiring Microsoft Excel. The library centers on...",
+    "display_name": "Aspose.Cells FOSS",
     "family": "cells",
     "keywords": [
-      "python",
-      "python openpyxl",
-      "openpyxl pandas",
-      "openpyxl in python",
-      "openpyxl documentation",
-      "install openpyxl",
-      "openpyxl cell",
-      "openpyxl pip"
+      "cells python",
+      "python cells in excel",
+      "python cells vscode",
+      "cell python docx",
+      "cell python spyder",
+      "aspose cells python",
+      "code cells python",
+      "voronoi cells python"
     ],
-    "lastmod": "2026-03-09T14:38:38Z",
+    "lastmod": "2026-03-23T13:16:22Z",
     "page_role": "blog_announcement",
     "platform": "python",
     "reading_time": 1,
     "robots": "index, follow",
-    "seoTitle": "Your machine does not need to have Microsoft Excel | Guide",
-    "slug": "cells-foss-python",
-    "title": "Your machine does not need to have Microsoft Excel",
+    "seoTitle": "Aspose.Cells FOSS Introducing Cells Foss Python",
+    "slug": "introducing-cells-foss-python",
+    "title": "Introducing Cells Foss Python",
     "type": "blog_announcement",
-    "url": "/blog.aspose.org/cells/python/cells-foss-python/",
+    "url": "/blog.aspose.org/cells/python/introducing-cells-foss-python/",
     "weight": 16
   },
   "page_id": "blog/introducing-cells-foss-python",
@@ -36,35 +36,20 @@
     {
       "blocks": [
         {
-          "claim_ids": [
-            "CLM-cells-f7157f"
-          ],
-          "content": "Aspose.Cells for Python via .NET enables developers to create, edit, and convert spreadsheet files without requiring Microsoft Excel® or OpenOffice® on the machine. This independence simplifies deployment across servers, containers, and cloud environments where desktop office suites are unavailable or unsupported.",
+          "claim_ids": [],
+          "content": "Aspose.Cells FOSS brings robust Excel file handling to Python developers. It provides a clean, object-oriented API for creating, editing, and converting spreadsheet data without requiring Microsoft Excel. The library centers on core classes like `Workbook`, `Worksheet`, and `Cell`, enabling programmatic control over spreadsheets in environments such as VS Code, Spyder, or any Python IDE.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
         },
         {
-          "claim_ids": [
-            "CLM-cells-f7157f",
-            "CLM-cells-0d78e3"
-          ],
-          "content": "The library supports core spreadsheet operations such as opening files in multiple formats—including XLS, XLSX, CSV, Tab Delimited, and FODS—via file paths or streams. Developers can access named ranges, extract shape geometry (including non-primitive shapes), and convert workbooks to other formats like PDF or JSON. All operations run entirely in-process using the `aspose_cells_foss` package.",
+          "claim_ids": [],
+          "content": "Key capabilities include reading and writing `cell` `values` and formulas, managing multiple `worksheets`, and generating `charts` using supported types like LINE, BAR, PIE, and AREA. Export functionality covers CSV, JSON, and Markdown formats via dedicated handlers: `CSVHandler`, `JsonHandler`, and `MarkdownHandler`. This makes Aspose.Cells FOSS ideal for automation workflows involving data export, reporting, and integration with tools like pandas or Jupyter notebooks.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
-        },
-        {
-          "claim_ids": [
-            "CLM-cells-f7157f"
-          ],
-          "content": "import aspose_cells_foss\nfrom aspose_cells_foss import Workbook\n\nworkbook = Workbook(\"bookwithChart.xlsx\")\nworkbook.save(\"Convert.pdf\")",
-          "items": [],
-          "language": "python",
-          "level": null,
-          "type": "code"
         }
       ],
       "heading": "Introduction",
@@ -75,24 +60,21 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Cells for Python via .NET enables developers to process Excel files without requiring Microsoft Excel to be installed. The library integrates seamlessly into Python workflows and supports common spreadsheet operations such as reading, writing, converting, and styling Excel data. With support for popular formats like XLSX, PDF, and Markdown, it serves as a robust alternative to tools like openpyxl in production environments.",
+          "content": "Aspose.Cells FOSS delivers a focused, open-source Python API for working with spreadsheet data. Built around core classes like `Workbook`, `Worksheet`, `Cell`, and `Cells`, it enables developers to programmatically create, read, and `modify` Excel-compatible files using standard Python tooling such as VS Code or Spyder.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
         },
         {
-          "claim_ids": [
-            "CLM-cells-035dcf"
-          ],
+          "claim_ids": [],
           "content": "",
           "items": [
-            "Install via pip from PyPI: `pip install aspose-cells` — no Excel dependency required",
-            "Convert spreadsheets to Markdown format using built-in export support",
-            "Access and modify named ranges, including merging cells and applying styles",
-            "Read and write cell data programmatically using the `Workbook`, `Worksheet`, and `Cells` classes",
-            "Load workbooks and selectively handle visible sheets by clearing data from hidden worksheets",
-            "Access and update OLE object labels dynamically during workbook processing"
+            "The `Workbook` class provides programmatic control over Excel workbooks, supporting operations like adding, removing, and accessing worksheets via `add_worksheet()` and `get_worksheet()`.",
+            "Cell-level manipulation is handled by the `Cell` class, which exposes methods such as `is_empty()`, `clear_value()`, and `set_comment()` for granular data control.",
+            "The `Cells` collection offers convenient utilities like `column_index_from_string()` and `coordinate_from_string()` to translate between human-readable and programmatic cell references.",
+            "Export to modern data formats is supported via static handlers: `CSVHandler` for CSV I/O, `JsonHandler` for JSON export, and `MarkdownHandler` for Markdown output.",
+            "Chart creation and customization is available through the `ChartCollection` and `Chart` classes, supporting line, bar, pie, area, and scatter chart types via dedicated methods like `add_line()` and `add_bar()`."
           ],
           "language": null,
           "level": null,
@@ -106,20 +88,16 @@
     {
       "blocks": [
         {
-          "claim_ids": [
-            "CLM-cells-4dc773"
-          ],
-          "content": "Aspose.Cells for Python via .NET runs independently of Microsoft Excel®—no installation of Excel is required on your machine. To begin using it, install the package via pip from PyPI. Once installed, you can process spreadsheet files programmatically using pure Python, making it ideal for server-side or containerized environments where desktop applications like Excel are unavailable.",
+          "claim_ids": [],
+          "content": "Aspose.Cells FOSS enables programmatic Excel file handling in Python. Developers can create workbooks, manipulate `cells` via the `Workbook` and `Cell` classes, and export data to formats like CSV, JSON, and Markdown using dedicated handler classes.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
         },
         {
-          "claim_ids": [
-            "CLM-cells-424de0"
-          ],
-          "content": "import aspose_cells_foss\n\n# Load a spreadsheet file\nworkbook = aspose_cells_foss.Workbook(\"input.xlsx\")\n\n# Save it in Markdown format via stream\nworkbook.save(\"output.md\", aspose_cells_foss.SaveFormat.MD)",
+          "claim_ids": [],
+          "content": "import aspose.cells\n\n# Create a new workbook and add a worksheet\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\n\n# Write a value to cell A1\ncell = worksheet.cells.cell(0, 0)\ncell.value = \"Hello, Aspose.Cells FOSS!\"\n\n# Save to XLSX\nworkbook.save(\"output.xlsx\")",
           "items": [],
           "language": "python",
           "level": null,
@@ -134,21 +112,13 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Cells for Python via .NET enables spreadsheet processing without requiring Microsoft Excel. Developers can create, edit, and convert spreadsheets—including generating charts and exporting to JSON—entirely in Python. The library integrates cleanly with existing Python workflows, including those using openpyxl or pandas for data handling.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
           "content": "",
           "items": [
-            "[Learn the basics](/products.aspose.org/cells/_index/)",
-            "[Create charts in spreadsheets](/blog.aspose.org/cells/python/cells-key-features/)",
-            "[Convert to PDF format](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
-            "[Perform common spreadsheet tasks](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)",
-            "[Convert spreadsheets using Python](/kb.aspose.org/cells/python/convert-spreadsheets-python/)"
+            "[Create all chart types](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)",
+            "[Work with formulas](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
+            "[Perform spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)",
+            "[Convert file formats](/kb.aspose.org/cells/python/how-to-convert-csv-to-json-python/)",
+            "[Fix common errors](/kb.aspose.org/cells/python/how-to-fix-spreadsheets-errors-python/)"
           ],
           "language": null,
           "level": null,
@@ -160,5 +130,5 @@
       "section_id": "see_also"
     }
   ],
-  "title": "Your machine does not need to have Microsoft Excel&reg"
+  "title": "Introducing Cells Foss Python"
 }

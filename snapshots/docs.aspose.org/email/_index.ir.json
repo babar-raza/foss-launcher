@@ -1,0 +1,178 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/email/_index/",
+    "canonical_import": "aspose.email",
+    "code_import": "aspose.email",
+    "date": "2026-03-24T16:46:41Z",
+    "dateModified": "2026-03-24T16:46:41Z",
+    "datePublished": "2026-03-24T16:46:41Z",
+    "description": "It supports both structured access to internal storages and streams via `CFBReader`/`CFBWriter`, and high-level message handling through `MapiMessage`.",
+    "display_name": "Aspose.Email FOSS",
+    "family": "email",
+    "keywords": [
+      "email python",
+      "email python library",
+      "email python package",
+      "email python module",
+      "email python install",
+      "email python code",
+      "email python documentation",
+      "email python regex"
+    ],
+    "lastmod": "2026-03-24T16:46:41Z",
+    "page_role": "toc",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "noindex, follow",
+    "seoTitle": "Aspose.Email FOSS Docs _Index",
+    "slug": "_index",
+    "title": "Docs _Index",
+    "type": "toc",
+    "url": "/docs.aspose.org/email/_index/",
+    "weight": 2
+  },
+  "page_id": "docs/_index",
+  "page_role": "toc",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Email FOSS provides low- and high-level APIs for reading, writing, and manipulating Outlook MSG files and Compound File Binary (CFB) containers in Python. It supports both structured access to internal storages and streams via `CFBReader`/`CFBWriter`, and high-level message handling through `MapiMessage`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Read and parse MSG files using `MapiMessage.from_file()` and inspect properties like `subject`, `body`, and `message_class`",
+            "Convert between `MapiMessage` and Python's `email.message.EmailMessage` using `from_email_message()` and `to_email_message()`",
+            "Work with attachments, recipients, and embedded messages via `MapiAttachment` and `MapiMessage` properties",
+            "Inspect and modify CFB containers using `CFBReader`, `CFBDocument`, and `CFBWriter` for advanced scenarios"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Capabilities",
+      "level": 2,
+      "section_id": "capabilities"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "This section covers installation and setup for Aspose.Email FOSS, the Python API for reading, editing, and converting Outlook MSG files and Compound File Binary (CFB) containers.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "pip install aspose.email",
+          "items": [],
+          "language": "bash",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "After installation, verify the package is correctly installed by importing `aspose.email` and instantiating `MapiMessage` using a sample MSG file. Use `MapiMessage.from_file()` to confirm the library loads MSG content without errors.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Quick Install",
+      "level": 2,
+      "section_id": "quick_install"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "This section covers the Python API for reading, inspecting, and manipulating Outlook MSG files and Compound File Binary (CFB) containers using Aspose.Email FOSS. The library exposes low-level CFB parsing via `CFBReader`, `CFBDocument`, and `CFBWriter`, and high-level email message handling via `MapiMessage`, `MapiAttachment`, and related classes.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose.email\n\n# Load an MSG file and access its subject and body\nmsg = aspose.email.MapiMessage.from_file(\"message.msg\")\nprint(msg.subject)\nprint(msg.body)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Getting Started",
+      "level": 2,
+      "section_id": "getting_started"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "This section covers the Python API for reading, inspecting, and manipulating Outlook MSG files and Compound File Binary (CFB) containers using Aspose.Email FOSS. It focuses on core classes like `MapiMessage` for high-level message handling and `CFBReader`/`CFBWriter` for low-level file structure access.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Use `MapiMessage.from_file()` to load MSG files and access properties like `subject`, `body`, and `message_class`. Convert between `MapiMessage` and `email.message.[identifier omitted]` using `from_email_message()` and `to_email_message()` (implied by API surface). For raw CFB inspection, instantiate `CFBReader.from_file()` to enumerate storages and streams via `iter_storages()` and `get_stream_data()`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Load and inspect MSG files with `MapiMessage` and `MsgReader`",
+            "Parse CFB containers using `CFBReader`, `CFBDocument`, and `DirectoryEntry`",
+            "Create or modify messages via `MapiMessage.create()` and `MapiAttachment`",
+            "Work with named properties using `MapiNamedProperty` and `CommonMessagePropertyId`"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Developer Guide",
+      "level": 2,
+      "section_id": "developer_guide"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Read MSG files and inspect MAPI properties using `MapiMessage` and `MsgReader`",
+            "Parse CFB containers and navigate directory entries with `CFBReader` and `DirectoryEntry`",
+            "Convert between `MapiMessage` and Python's `email.message.EmailMessage`",
+            "Work with attachments, recipients, and embedded messages via `MapiAttachment` and `MapiRecipient`",
+            "Write and serialize CFB documents using `CFBWriter` and `CFBStorage`"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Docs _Index"
+}

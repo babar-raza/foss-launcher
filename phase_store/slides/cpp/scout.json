@@ -1,0 +1,22 @@
+{
+  "budget_log_overflow_count": 0,
+  "build_systems": [
+    "cmake"
+  ],
+  "by_category": {
+    "asset": 6,
+    "config": 2,
+    "doc": 1,
+    "source": 354,
+    "test": 114
+  },
+  "content_used_bytes": 1988943,
+  "files_enumerated": 477,
+  "files_read": 475,
+  "has_ci": false,
+  "has_docs_folder": false,
+  "has_examples_folder": false,
+  "has_tests": true,
+  "package_name": "aspose_slides_foss",
+  "primary_language": "c"
+}

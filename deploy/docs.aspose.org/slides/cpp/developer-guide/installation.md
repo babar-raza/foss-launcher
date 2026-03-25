@@ -1,0 +1,93 @@
+---
+canonical: https://docs.aspose.org/slides/cpp/developer-guide/installation/
+canonical_import: Aspose::Slides
+code_import: Aspose::Slides
+date: '2026-03-24T16:29:46Z'
+dateModified: '2026-03-24T16:29:46Z'
+datePublished: '2026-03-24T16:29:46Z'
+description: The library supports full round-trip handling of .pptx files and integrates
+  cleanly into C++20 projects using CMake 3.20+.
+display_name: Aspose.Slides FOSS for C++
+family: slides
+keywords:
+- cppcon slides
+- cpp slides
+- cppnow slides
+- cppcon slides 2025
+- aspose slides cpp
+- meeting cpp slides
+- python slides
+- python slides for beginners
+lastmod: '2026-03-24T16:29:46Z'
+page_role: workflow_page
+platform: cpp
+reading_time: 1
+robots: index, follow
+seoTitle: Aspose.Slides FOSS Installation
+slug: installation
+summary: ''
+title: Installation
+type: workflow_page
+url: /docs.aspose.org/slides/cpp/developer-guide/installation/
+weight: 3
+---
+
+## Overview
+
+This guide walks you through installing and verifying Aspose.Slides FOSS for C++, enabling you to create, edit, and convert PowerPoint presentations in C++ applications. The library supports full round-trip handling of .pptx files and integrates cleanly into C++20 projects using CMake 3.20+.
+
+First, install the package via pip: `pip install aspose_slides_foss`. Then configure your CMakeLists.txt to fetch Aspose.Slides and its dependencies—pugixml v1.14, miniz 3.0.2, and [identifier omitted] v1.15.2—automatically via CMake [identifier omitted]. This ensures a reproducible build without manual dependency management.
+
+```cpp
+#include <Aspose::Slides>
+#include <iostream>
+
+int main() {
+    // Create a new presentation
+    auto pres = System::[identifier omitted]<Aspose::Slides::Presentation>();
+
+    // Save it in PPTX format
+    pres->Save(u"output.pptx", Aspose::Slides::[identifier omitted]::Pptx);
+
+    std::cout << "Presentation created and saved as output.pptx" << std::endl;
+    return 0;
+}
+```
+
+- Use this approach when generating reports or slide decks programmatically.
+- Ideal for CI/CD pipelines that produce presentation assets from data sources.
+- Validates your installation by confirming PPTX output fidelity.
+
+## Code Example
+
+This guide walks you through creating a simple PowerPoint presentation with a colored rectangle and saving it as PPTX using Aspose.Slides FOSS for C++. The input is a newly constructed `Presentation` object; the output is a valid `fill.pptx` file with a solid blue shape.
+
+```cpp
+#include <Aspose::Slides>
+#include <Aspose::Slides/Foss/shape_type.h>
+#include <Aspose::Slides/Foss/auto_shape.h>
+#include <Aspose::Slides/Foss/fill_type.h>
+#include <Aspose::Slides/Foss/drawing/color.h>
+#include <Aspose::Slides/Foss/export/save_format.h>
+
+Presentation pres;
+auto& shape = pres.slides()[0].shapes().add_auto_shape(
+    [identifier omitted]::RECTANGLE, 50, 50, 300, 150);
+shape.fill_format().set_fill_type([identifier omitted]::SOLID);
+shape.fill_format().solid_fill_color().set_color(Color::from_argb(255, 30, 120, 200));
+pres.save("fill.pptx", [identifier omitted]::PPTX);
+```
+
+- Use this approach when generating branded slide templates with consistent corporate colors.
+- Apply solid fills to highlight key data points in dashboards or infographics.
+- Combine with `add_auto_shape()` to build custom diagrams without external assets.
+
+To run this example, first install Aspose.Slides FOSS for C++ using `pip install aspose_slides_foss`. The library requires C++20, CMake 3.20+, and fetches dependencies like pugixml and miniz automatically via CMake [identifier omitted].
+
+## See Also
+
+- [Get started with Aspose.Slides FOSS for C++](/docs.aspose.org/slides/cpp/developer-guide/getting-started/)
+- [Browse the full API reference](/reference.aspose.org/slides/cpp/api-overview/)
+- [Discover visual effects support](/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/)
+- [Explore key presentation features](/blog.aspose.org/slides/cpp/slides-key-features/)
+- [Create presentations step by step](/docs.aspose.org/slides/cpp/developer-guide/presentation-creation/)

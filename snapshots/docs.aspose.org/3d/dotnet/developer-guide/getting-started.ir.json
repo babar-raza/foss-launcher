@@ -1,0 +1,266 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/3d/dotnet/developer-guide/getting-started/",
+    "canonical_import": "Aspose.ThreeD",
+    "code_import": "Aspose.ThreeD",
+    "date": "2026-03-24T16:49:31Z",
+    "dateModified": "2026-03-24T16:49:31Z",
+    "datePublished": "2026-03-24T16:49:31Z",
+    "description": "You will install the library, configure your environment, and prepare to work with common 3D formats like OBJ, STL, FBX, and GLTF using the canonical `using...",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "dotnet 3d",
+      "dotnet 3d engine",
+      "dotnet 3d library",
+      "is .net 3.5 safe",
+      "shapr 3d cost",
+      "difference between dotnet and dotnet framework",
+      "3d symptoms",
+      "python 3d logo"
+    ],
+    "lastmod": "2026-03-24T16:49:31Z",
+    "page_role": "workflow_page",
+    "platform": "dotnet",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D Getting Started",
+    "slug": "getting-started",
+    "title": "Getting Started",
+    "type": "workflow_page",
+    "url": "/docs.aspose.org/3d/dotnet/developer-guide/getting-started/",
+    "weight": 4
+  },
+  "page_id": "docs/getting-started",
+  "page_role": "workflow_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D -- What the reader will build or achieve by the end of this guide.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-e47922"
+          ],
+          "content": "Aspose.3D Code example demonstrates usage of LambertMaterial.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-d28f80"
+          ],
+          "content": "This guide walks you through setting up Aspose.3D for .NET to load, manipulate, and convert 3D models. You will install the library, configure your environment, and prepare to work with common 3D formats like OBJ, STL, FBX, and GLTF using the canonical `using Aspose.3D;` import.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Install the Aspose.3D NuGet package: `dotnet add package Aspose.3D`",
+            "Target .NET Standard 2.0 or later (compatible with .NET Core 2.0+, .NET 5+, and .NET Framework 4.6.1+)",
+            "Ensure your project references System.Drawing.Common only if rendering to images (optional)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-38c5e3",
+            "CLM-3d-e47922",
+            "CLM-3d-767c08",
+            "CLM-3d-140841",
+            "CLM-3d-8e73a1",
+            "CLM-3d-d28f80"
+          ],
+          "content": "Aspose.3D supports loading and saving multiple 3D formats through the `FileFormat` static methods and `Scene` class. For example, you can detect a file’s format using `FileFormat.ObjFormat()` or `FileFormat.StlFormat()`, then load it into a `Scene` object and save it in another format. The library also supports material definitions like `PhongMaterial` and `LambertMaterial` for realistic rendering.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D -- Minimal step-by-step walkthrough to create something useful — load a file, produce output, or call a core API.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-767c08"
+          ],
+          "content": "Aspose.3D Example demonstrates loading OBJ files.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "First Steps",
+      "level": 2,
+      "section_id": "first_steps"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-140841",
+            "CLM-3d-38c5e3",
+            "CLM-3d-8e73a1",
+            "CLM-3d-d28f80"
+          ],
+          "content": "This guide walks you through loading a 3D model in STL format, applying a `PhongMaterial`, and saving it as OBJ using Aspose.3D for .NET. The workflow demonstrates format detection, material assignment, and cross-format conversion in a single runnable example.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-140841",
+            "CLM-3d-38c5e3",
+            "CLM-3d-8e73a1",
+            "CLM-3d-d28f80"
+          ],
+          "content": "using Aspose.[identifier omitted];\n\n// Load an STL file using format detection\nvar scene = new Scene();\nvar format = FileFormat.StlFormat();\nscene.Open(\"input.stl\", format.CreateLoadOptions());\n\n// Assign PhongMaterial to the first node's entity\nvar node = scene.RootNode.ChildNodes[0];\nvar entity = node.Entity as Entity;\nif (entity != null)\n{\n    entity.Material = new PhongMaterial() { DiffuseColor = new Vector3(0.8f, 0.2f, 0.2f) };\n}\n\n// Save as OBJ format\nscene.Save(\"output.obj\", FileFormat.ObjFormat().CreateSaveOptions());",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Use this approach when converting STL scan data to OBJ for use in CAD tools that require material support.",
+            "Apply PhongMaterial when you need realistic lighting simulation for visualization before export.",
+            "Leverage FileFormat.StlFormat().CreateLoadOptions() to ensure correct parsing of binary or ASCII STL variants."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-767c08",
+            "CLM-3d-d28f80"
+          ],
+          "content": "The example also supports OBJ input via `FileFormat`.`ObjFormat`() and can output to FBX, GLTF, or Collada using their respective format classes. The `Scene`.`Save` method automatically selects the correct exporter based on the target extension and provided save options.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-d28f80"
+          ],
+          "content": "For advanced workflows, you can detect the format of an unknown file using `FileFormat`.`Detect`(stream) and then load it accordingly. This ensures robust handling of mixed-format input pipelines.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-d28f80"
+          ],
+          "content": "Note: The library supports conversion between OBJ, STL, FBX, GLTF, PLY, Collada, and 3DS formats via the `FileFormat`.`Detect` and `Scene`.`Save` APIs.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "callout"
+        }
+      ],
+      "heading": "Code Example",
+      "level": 2,
+      "section_id": "code_example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-8e73a1"
+          ],
+          "content": "This guide walks you through loading, processing, and saving 3D models using Aspose.3D in a .NET environment. After completing the Getting Started workflow, explore these next steps to deepen your understanding of the library’s core capabilities.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-767c08",
+            "CLM-3d-8e73a1",
+            "CLM-3d-e47922",
+            "CLM-3d-38c5e3",
+            "CLM-3d-d28f80"
+          ],
+          "content": "",
+          "items": [
+            "Learn how to load and parse OBJ files using `Scene` and `FileFormat.ObjFormat()` for mesh reconstruction.",
+            "Discover how to save scenes to OBJ format using `Scene.Save()` and verify output with `ObjFormat` detection.",
+            "Explore material assignment with `LambertMaterial` and `PhongMaterial` to enhance rendered visuals.",
+            "Review the converter tool workflow that supports round-trip conversion across OBJ, STL, FBX, GLTF, PLY, Collada, and 3DS formats using `FileFormat.Detect` and `Scene.Save`."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Next Steps",
+      "level": 2,
+      "section_id": "next_steps"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Install Aspose.3D](/docs.aspose.org/3d/dotnet/developer-guide/installation/)",
+            "[Frequently asked questions](/kb.aspose.org/3d/dotnet/faq/)",
+            "[Troubleshooting common issues](/kb.aspose.org/3d/dotnet/troubleshooting/)",
+            "[API reference documentation](/reference.aspose.org/3d/dotnet/api-overview/)",
+            "[Key 3D features overview](/blog.aspose.org/3d/dotnet/3d-key-features/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Getting Started"
+}

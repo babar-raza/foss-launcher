@@ -104,6 +104,8 @@ platforms:
     doc_comment: "javadoc"
     ast_parser: "tree_sitter"
     import_stmt_tpl: "import {import_path}.{class};"
+    canonical_import_overrides:
+      3d: "com.aspose.threed"
   dotnet:
     import_tpl: "Aspose.{Family}"
     install_cmd: "dotnet add package Aspose.{Family}"
@@ -112,6 +114,8 @@ platforms:
     doc_comment: "xmldoc"
     ast_parser: "tree_sitter"
     import_stmt_tpl: "using {import_path};"
+    canonical_import_overrides:
+      3d: "Aspose.ThreeD"
   node:
     import_tpl: "@aspose/{family}"
     install_cmd: "npm install @aspose/{family}"
@@ -160,6 +164,8 @@ platforms:
     doc_comment: "phpdoc"
     ast_parser: "tree_sitter"
     import_stmt_tpl: "use {import_path}\\{class};"
+    canonical_import_overrides:
+      3d: "Aspose\\ThreeD"
   ruby:
     import_tpl: "aspose_{family}"
     install_cmd: "gem install aspose_{family}"
@@ -176,6 +182,8 @@ platforms:
     doc_comment: "kdoc"
     ast_parser: "tree_sitter"
     import_stmt_tpl: "import {import_path}.{class}"
+    canonical_import_overrides:
+      3d: "com.aspose.threed"
   swift:
     import_tpl: "Aspose{Family}"
     install_cmd: ".package(url: \"https://github.com/aspose-{family}/aspose-{family}-swift\", from: \"1.0.0\")"
@@ -184,6 +192,8 @@ platforms:
     doc_comment: "swift_markup"
     ast_parser: "tree_sitter"
     import_stmt_tpl: "import {import_path}"
+    canonical_import_overrides:
+      3d: "AsposeThreeD"
   cpp:
     import_tpl: "Aspose::{Family}"
     install_cmd: "vcpkg install aspose-{family}"
@@ -192,3 +202,5 @@ platforms:
     doc_comment: "doxygen"
     ast_parser: "tree_sitter"
     import_stmt_tpl: "#include \"{import_path}.h\""
+    canonical_import_overrides:
+      3d: "Aspose::ThreeD"

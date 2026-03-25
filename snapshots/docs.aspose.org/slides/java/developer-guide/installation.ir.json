@@ -1,0 +1,374 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/slides/java/developer-guide/installation/",
+    "canonical_import": "com.aspose.slides",
+    "code_import": "com.aspose.slides",
+    "date": "2026-03-24T17:06:48Z",
+    "dateModified": "2026-03-24T17:06:48Z",
+    "datePublished": "2026-03-24T17:06:48Z",
+    "description": "Aspose.Slides FOSS for Java: Code example demonstrates usage of AdjustValue",
+    "display_name": "Aspose.Slides FOSS for Java",
+    "family": "slides",
+    "keywords": [
+      "slides javascript",
+      "slides java",
+      "slides javascript library",
+      "slideshow javascript",
+      "javascript slides pdf",
+      "java slides pdf",
+      "slideshow javascript library",
+      "java slides ppt"
+    ],
+    "lastmod": "2026-03-24T17:06:48Z",
+    "page_role": "workflow_page",
+    "platform": "java",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Slides FOSS Installation",
+    "slug": "installation",
+    "summary": "",
+    "title": "Installation",
+    "type": "workflow_page",
+    "url": "/docs.aspose.org/slides/java/developer-guide/installation/",
+    "weight": 3
+  },
+  "page_id": "docs/installation",
+  "page_role": "workflow_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides FOSS for Java -- Introductory overview: explain what the library does, its primary use cases, and what readers will accomplish. Mention the product name in the first sentence..",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-e0db87"
+          ],
+          "content": "Aspose.Slides FOSS for Java Code example demonstrates usage of AdjustValue.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-6e8f83",
+            "CLM-slides-f24a3d",
+            "CLM-slides-e0db87"
+          ],
+          "content": "import org.w3c.dom.Document;\nimport org.w3c.dom.Element;\nimport javax.xml.parsers.DocumentBuilderFactory;\nimport java.util.concurrent.atomic.AtomicBoolean;\nimport static org.assertj.core.api.Assertions.assertThat;\n\nElement gd = createGdElement(\"adj1\", \"val 50000\");\n        var adj = new AdjustValue(gd, null);",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-f24a3d",
+            "CLM-slides-e0db87"
+          ],
+          "content": "import org.w3c.dom.Document;\nimport org.w3c.dom.Element;\nimport javax.xml.parsers.DocumentBuilderFactory;\nimport java.util.concurrent.atomic.AtomicBoolean;\nimport static org.assertj.core.api.Assertions.assertThat;\n\nElement gd = doc.createElementNS(NS_A, \"a:gd\");\n        doc.appendChild(gd);\n        var adj = new AdjustValue(gd, null);",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides FOSS for Java enables developers to generate, modify, and convert PowerPoint presentations programmatically using pure Java. This section outlines the core capabilities you’ll use daily when building presentation automation workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-31272d",
+            "CLM-slides-e0db87",
+            "CLM-slides-57449d",
+            "CLM-slides-da1cfd"
+          ],
+          "content": "",
+          "items": [
+            "Apply solid, gradient, pattern, and picture fills to shapes using `FillFormat` to enhance visual appeal and branding consistency.",
+            "Adjust shape geometry dynamically with `AdjustValue` to fine-tune effects like corner rounding or arrowhead size without manual editing.",
+            "Add realistic lighting and depth effects using `PresetShadow` to create professional slide elements with minimal code.",
+            "Combine multiple visual layers using `FillOverlay` to blend fills for advanced styling while preserving source integrity.",
+            "Create and manipulate tables with precise cell, row, and column control for structured data presentation.",
+            "Format text at the portion, paragraph, and text frame levels using `BasePortionFormat` and `BulletFormat` for consistent typography."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Key Features",
+      "level": 2,
+      "section_id": "key_features"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides FOSS for Java -- Required setup and dependencies.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-866602",
+            "CLM-slides-da1cfd",
+            "CLM-slides-7980dd",
+            "CLM-slides-21e1b4"
+          ],
+          "content": "import org.aspose.slides.foss.FillBlendMode;\nimport org.aspose.slides.foss.FillType;\nimport org.aspose.slides.foss.IPresentationComponent;\nimport org.w3c.dom.Document;\nimport org.w3c.dom.Element;\nimport javax.xml.parsers.DocumentBuilderFactory;\nimport java.util.concurrent.atomic.AtomicInteger;\nimport static org.assertj.core.api.Assertions.assertThat;\n\nvar fo = new FillOverlay(fillOverlayElement, null);\n        IImageTransformOperation result = fo.asIImageTransformOperation();",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-866602",
+            "CLM-slides-7980dd",
+            "CLM-slides-da1cfd",
+            "CLM-slides-21e1b4"
+          ],
+          "content": "import org.aspose.slides.foss.FillBlendMode;\nimport org.aspose.slides.foss.FillType;\nimport org.aspose.slides.foss.IPresentationComponent;\nimport org.w3c.dom.Document;\nimport org.w3c.dom.Element;\nimport javax.xml.parsers.DocumentBuilderFactory;\nimport java.util.concurrent.atomic.AtomicInteger;\nimport static org.assertj.core.api.Assertions.assertThat;\n\nvar fo = new FillOverlay(fillOverlayElement, null);\n        IPresentationComponent result = fo.asIPresentationComponent();",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-57449d"
+          ],
+          "content": "This guide walks you through installing Aspose.Slides FOSS for Java and applying visual effects to shapes in a presentation. You will install the library using Maven, create a new presentation, add a rectangle shape, and apply three image transform operations: `AdjustValue`, `FillOverlay`, and `PresetShadow`. Each operation modifies how the shape appears when rendered.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-57449d"
+          ],
+          "content": "import com.aspose.slides.*;\nimport com.aspose.slides.foss.drawing.Color;\nimport com.aspose.slides.foss.export.SaveFormat;\nimport com.aspose.slides.foss.effects.PresetShadowType;\nimport org.w3c.dom.Element;\nimport javax.xml.parsers.DocumentBuilderFactory;\n\ntry (Presentation prs = new Presentation()) {\n    IAutoShape shape = prs.getSlides().get(0).getShapes()\n            .addAutoShape(ShapeType.RECTANGLE, 50, 50, 300, 150);\n    \n    // Apply solid fill\n    shape.getFillFormat().setFillType(FillType.SOLID);\n    shape.getFillFormat().getSolidFillColor().setColor(Color.fromArgb(255, 100, 150, 200));\n    \n    // Add shadow effect\n    var shadow = new PresetShadow(shape.getEffectFormat().getEffectLayers().add(), null);\n    shadow.setPreset(PresetShadowType.BOTTOM_RIGHT_DROP_SHADOW);\n    \n    // Add fill overlay\n    var fo = new FillOverlay(shape.getEffectFormat().getEffectLayers().add(), null);\n    fo.setBlend(FillBlendMode.MULTIPLY);\n    \n    // Add adjust value (e.g., for shape geometry modification)\n    var adj = new AdjustValue(shape.getEffectFormat().getEffectLayers().add(), null);\n    adj.setValue(50000);\n    \n    prs.save(\"effects.pptx\", SaveFormat.PPTX);\n}",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-57449d"
+          ],
+          "content": "",
+          "items": [
+            "Use `AdjustValue` when you need to programmatically adjust shape geometry parameters such as corner rounding or arrowhead size.",
+            "Apply `FillOverlay` to blend multiple fills using modes like MULTIPLY or OVERLAY for advanced visual effects.",
+            "Set `PresetShadow` to add standardized drop shadows that match PowerPoint's built-in shadow styles."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [],
+          "content": "The Maven command installs the FOSS artifact directly into your local repository. After installation, the example above creates a new presentation, adds a rectangle, and applies three image transform operations using the `EffectFormat` API. Each operation is added to the effect layer collection and configured with specific parameters.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Ensure your project uses the canonical import path `com.aspose.slides.*`. Avoid .NET-style `using` directives or incorrect package names.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "callout"
+        }
+      ],
+      "heading": "Code Examples",
+      "level": 2,
+      "section_id": "code_examples"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-731913"
+          ],
+          "content": "This section outlines best practices for using Aspose.Slides FOSS for Java in production workflows. Always install the library using the official Maven artifact to ensure compatibility and access to verified APIs.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-731913",
+            "CLM-slides-31272d",
+            "CLM-slides-e0db87",
+            "CLM-slides-da1cfd",
+            "CLM-slides-57449d"
+          ],
+          "content": "",
+          "items": [
+            "Use `import com.aspose.slides.*;` — never use alternative package paths or .NET-style directives.",
+            "Apply `FillFormat` and `FillOverlay` only after confirming shape type supports fill effects (e.g., `AutoShape`, `PictureFrame`).",
+            "Validate `AdjustValue` parameters before applying to avoid runtime exceptions; values must be within the expected 0–100,000 range.",
+            "Use `PresetShadow` with `PresetShadowType` constants only; custom shadow definitions are not supported in this FOSS version."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-57449d",
+            "CLM-slides-da1cfd"
+          ],
+          "content": "When applying visual effects like shadows or overlays, always test output fidelity across platforms. The `PresetShadow` class supports only predefined shadow types, and `FillOverlay` blending requires compatible fill types on both base and overlay layers.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-31272d",
+            "CLM-slides-e0db87"
+          ],
+          "content": "For text formatting, chain `FillFormat` and `PortionFormat` calls only after confirming the `TextFrame` and `Paragraph` objects exist. Use `AdjustValue` to control shape-specific parameters like aspect ratio or corner rounding, but validate input values before assignment.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Best Practices",
+      "level": 2,
+      "section_id": "best_practices"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides FOSS for Java -- Common issues and solutions.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "For details on troubleshooting, see the Aspose.Slides FOSS for Java documentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Troubleshooting",
+      "level": 2,
+      "section_id": "troubleshooting"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides FOSS for Java -- Section content.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "FAQ",
+      "level": 2,
+      "section_id": "faq"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides FOSS for Java -- Section content.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "For details on api reference summary, see the Aspose.Slides FOSS for Java documentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "API Reference Summary",
+      "level": 2,
+      "section_id": "api_reference_summary"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-e0db87",
+            "CLM-slides-31272d",
+            "CLM-slides-da1cfd",
+            "CLM-slides-57449d"
+          ],
+          "content": "To deepen your understanding of Aspose.Slides FOSS for Java, explore how core formatting and effect classes like `AdjustValue`, `FillFormat`, `FillOverlay`, and `PresetShadow` integrate into real workflows. Each class is designed for precise XML-backed manipulation of slide content, as demonstrated in the test examples.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Learn the basics and first steps](/docs.aspose.org/slides/java/developer-guide/started/)",
+            "[Browse the complete API reference](/reference.aspose.org/slides/java/api/)",
+            "[See how to open existing presentations](/blog.aspose.org/slides/java/slides-foss-java/)",
+            "[Discover key features and capabilities](/blog.aspose.org/slides/java/slides-features/)",
+            "[Step-by-step guide to create presentations](/docs.aspose.org/slides/java/developer-guide/presentation-creation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Installation"
+}

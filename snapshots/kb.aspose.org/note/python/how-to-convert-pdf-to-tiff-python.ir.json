@@ -1,0 +1,372 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/note/python/how-to-convert-pdf-to-tiff-python/",
+    "canonical_import": "aspose.note",
+    "code_import": "aspose.note",
+    "date": "2026-03-24T16:57:01Z",
+    "dateModified": "2026-03-24T16:57:01Z",
+    "datePublished": "2026-03-24T16:57:01Z",
+    "description": "Aspose.Note supports reading `.one` files and exporting to PDF only; other formats are not implemented.",
+    "display_name": "Aspose.Note",
+    "family": "note",
+    "keywords": [
+      "note python",
+      "note python code",
+      "note python google",
+      "python note pdf",
+      "python note pad",
+      "python note taking app",
+      "python note syntax",
+      "python note for professional"
+    ],
+    "lastmod": "2026-03-24T16:57:01Z",
+    "page_role": "howto_article",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "How to Convert File Formats with Aspose.Note | Guide",
+    "slug": "how-to-convert-pdf-to-tiff-python",
+    "title": "How to Convert File Formats with Aspose.Note",
+    "type": "howto_article",
+    "url": "/kb.aspose.org/note/python/how-to-convert-pdf-to-tiff-python/",
+    "weight": 13
+  },
+  "page_id": "kb/how-to-convert-pdf-to-tiff-python",
+  "page_role": "howto_article",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "You will load a OneNote (.one) file using the `Document` class and convert it to PDF using the `Save` method with `SaveFormat.Pdf`. Aspose.Note supports reading `.one` files and exporting to PDF only; other formats are not implemented.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Install the `aspose.note` package via pip",
+            "Ensure input files are unencrypted `.one` files (encrypted files raise `IncorrectPasswordException`)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Problem",
+      "level": 2,
+      "section_id": "problem"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Install Python 3.8 or later.",
+            "Run `pip install aspose.note` to install the library.",
+            "Ensure your input file is a valid `.one` file (OneNote 2007–2010 or OneNote Online format)."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "You will convert a Microsoft OneNote (.one) file to PDF using the `Document` class and its `Save` method with `SaveFormat.Pdf`. This operation reads the source file into memory and writes the output in PDF format.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Aspose.Note for Python is installed and accessible via `import aspose.note`",
+            "You have a valid `.one` file path and write permissions for the output directory"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [],
+          "content": "Step 1: Load the OneNote source file",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Instantiate the `Document` class with the path to your `.one` file. This loads the document structure into memory for further processing.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose.note\n\ndoc = aspose.note.Document(\"input.one\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "The `Document` object now holds the parsed content of the OneNote file.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Step 2: `Save` the document as PDF",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Call the `Save` method on the `Document` instance, specifying the output path and `SaveFormat.Pdf` to generate a PDF version.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "doc.save(\"output.pdf\", aspose.note.SaveFormat.Pdf)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "This writes the converted PDF file to disk. The `FileFormat` property of the loaded document is read-only and reflects the original format.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Code Breakdown",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "The `Document` constructor parses the `.one` file and builds the internal DOM. The `Save` method supports writing to a file path or stream, and accepts `SaveFormat.Pdf` as the only implemented output format.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Error Handling",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Handle `FileCorruptedException` for malformed input files and `IncorrectPasswordException` if the file is encrypted (password-protected files are not supported). Wrap operations in try-except blocks to catch `AsposeNoteError` for general library errors.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "try:\n    doc = aspose.note.Document(\"input.one\")\n    doc.save(\"output.pdf\", aspose.note.SaveFormat.Pdf)\nexcept aspose.note.FileCorruptedException as e:\n    print(f\"File corruption detected: {e}\")\nexcept aspose.note.IncorrectPasswordException as e:\n    print(f\"Password-protected files are not supported: {e}\")\nexcept aspose.note.AsposeNoteError as e:\n    print(f\"General error: {e}\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Conversion Steps",
+      "level": 2,
+      "section_id": "conversion_steps"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "You will load a OneNote document and save it as a PDF using the `Document` class and its `Save` method. This example demonstrates the only supported export format in Aspose.Note for Python.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Aspose.Note for Python installed (`pip install aspose-note`)",
+            "A valid `.one` file available locally"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [],
+          "content": "Load and `Save` a OneNote `Document` as PDF",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Step 1: Import the library and load the `.one` file using the `Document` class. Call `Save` with a target path and `SaveFormat.Pdf` to export the document.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose.note\n\ndoc = aspose.note.Document(\"input.one\")\ndoc.save(\"output.pdf\", aspose.note.SaveFormat.Pdf)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "This produces a PDF file named `output.pdf` in the current working directory. The `SaveFormat.Pdf` enum value is the only export format currently implemented in Aspose.Note.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Error Handling for Common Failures",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Handle `FileCorruptedException` if the input file is malformed, and `IncorrectPasswordException` if the file is encrypted (password-protected files are not supported). Wrap the operation in a try-except block to catch these explicitly.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "try:\n    doc = aspose.note.Document(\"input.one\")\n    doc.save(\"output.pdf\", aspose.note.SaveFormat.Pdf)\nexcept aspose.note.FileCorruptedException as e:\n    print(f\"File corruption detected: {e}\")\nexcept aspose.note.IncorrectPasswordException as e:\n    print(f\"Encrypted files are not supported: {e}\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "The `Document.FileFormat` property returns the detected format (OneNote2007, OneNote2010, or OneNoteOnline) and is read-only. Use `DetectLayoutChanges()` before saving if layout consistency is critical.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Code Example",
+      "level": 2,
+      "section_id": "code_example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "You will convert OneNote documents to PDF using Aspose.Note. The library supports reading `.one` files and saving them as PDF via the `Document` class and `SaveFormat.Pdf`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Format | Extension | Notes |\n|--------|-----------|-------|\n| OneNote 2010 | .one | Read-only; use `Document` to load |\n| PDF | .pdf | Write-only; use `SaveFormat.Pdf` with `Document.save()` |\n| OneNote Online | .one | Read-only; use `Document` to load |\n| OneNote 2007 | .one | Read-only; use `Document` to load |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [],
+          "content": "Only the `.one` format is supported for input, and only PDF is supported for output. Other formats like HTML, images, or round-trip `.one` saving are not implemented.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose.note\nfrom aspose.note import Document, SaveFormat\n\ndoc = Document(\"input.one\")\ndoc.save(\"output.pdf\", SaveFormat.PDF)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Supported Formats",
+      "level": 2,
+      "section_id": "supported_formats"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "You will explore related conversion workflows and format documentation for Aspose.Note, focusing on supported operations like loading .one files and exporting to PDF. This section points to essential resources for developers building note-taking applications in Python.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Frequently asked questions](/kb.aspose.org/note/python/frequently-asked-questions/)",
+            "[Export notebooks to PDF](/blog.aspose.org/note/python/export-pdf-notebooks/)",
+            "[Introducing Note Foss Python](/blog.aspose.org/note/python/note-foss/)",
+            "[Convert file formats step-by-step](/docs.aspose.org/note/python/developer-guide/document-conversion/)",
+            "[Manage notebooks programmatically](/docs.aspose.org/note/python/developer-guide/notebook-manipulation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "How to Convert File Formats with Aspose.Note"
+}

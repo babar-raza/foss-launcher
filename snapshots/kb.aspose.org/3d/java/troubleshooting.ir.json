@@ -1,0 +1,264 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/3d/java/troubleshooting/",
+    "canonical_import": "com.aspose.threed",
+    "code_import": "com.aspose.threed",
+    "date": "2026-03-24T16:56:25Z",
+    "dateModified": "2026-03-24T16:56:25Z",
+    "datePublished": "2026-03-24T16:56:25Z",
+    "description": "This occurs because several formats (e.g., USD) have no importer implementation yet, as confirmed in FILE_FORMATS.md.",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "3d javascript",
+      "3d javascript library",
+      "3d java",
+      "3d java skins",
+      "3d javascript game engine",
+      "3d javascript game",
+      "3d javascript framework",
+      "3d java game engine"
+    ],
+    "lastmod": "2026-03-24T16:56:25Z",
+    "page_role": "troubleshooting",
+    "platform": "java",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D Troubleshooting",
+    "slug": "troubleshooting",
+    "title": "Troubleshooting",
+    "type": "troubleshooting",
+    "url": "/kb.aspose.org/3d/java/troubleshooting/",
+    "weight": 9
+  },
+  "page_id": "kb/troubleshooting",
+  "page_role": "troubleshooting",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-ffdcdf",
+            "CLM-3d-4102db"
+          ],
+          "content": "If `load()` throws `ImportException` with a message indicating the format is not supported, the file format lacks import support in Aspose.3D. This occurs because several formats (e.g., USD) have no importer implementation yet, as confirmed in FILE_FORMATS.md.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-3e3a3d",
+            "CLM-3d-34a7f7"
+          ],
+          "content": "If you attempt to `export` an OBJ file with MTL references, the `export` completes but the MTL file is not generated. This is expected behavior because MTL `export` is not yet implemented in Aspose.3D, per FILE_FORMATS.md.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-fcd570",
+            "CLM-3d-48f914"
+          ],
+          "content": "If you `load` an FBX file containing animations or constraints and expect them to be preserved, they will be ignored during import or `export`. Aspose.3D does not yet support advanced FBX features such as animations and constraints, as stated in FILE_FORMATS.md.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-110d1c"
+          ],
+          "content": "If you `export` to ASCII FBX format and observe unexpected binary output or an error, this is because ASCII FBX format is not yet implemented in Aspose.3D.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-a579a8",
+            "CLM-3d-bfb409"
+          ],
+          "content": "If you `export` an STL file and notice duplicated vertices or increased file `size`, this is due to the lack of vertex deduplication: Aspose.3D uses separate vertices for each face instead of sharing them.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-ffdcdf",
+            "CLM-3d-4102db"
+          ],
+          "content": "import com.aspose.threed.*;\n\ntry {\n    Scene scene = new Scene();\n    // Attempting to load an unsupported format like USD will throw ImportException\n    scene.open(\"model.usd\");\n} catch (ImportException e) {\n    System.err.println(\"Format not supported: \" + e.getMessage());\n}",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Common Issues",
+      "level": 2,
+      "section_id": "common_issues"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-ffdcdf",
+            "CLM-3d-e2b66a"
+          ],
+          "content": "If `Scene` throws `ImportException` when loading a file, the format may be unsupported or the file may be corrupted. Check the file extension and verify support in `FileFormat.getFormatByExtension()`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-cbd338"
+          ],
+          "content": "If `FbxExporter` throws `ExportException` during `export`, FBX `export` is not yet implemented — only a stub exists. Use `FileFormat.getCanExport()` to confirm support before calling `export`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-34a7f7",
+            "CLM-3d-3e3a3d"
+          ],
+          "content": "If OBJ `export` produces no MTL file, this is expected behavior: MTL `export` is not yet implemented for OBJ files per current limitations.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-4102db",
+            "CLM-3d-fcd570",
+            "CLM-3d-a579a8",
+            "CLM-3d-bfb409",
+            "CLM-3d-48f914",
+            "CLM-3d-34a7f7"
+          ],
+          "content": "| Error | Cause | Fix |\n|-------|-------|-----|\n| `ImportException` on USD file `load` | USD import is not implemented | Use a supported format like FBX or GLTF |\n| `ExportException` when calling `FbxExporter.export()` | FBX `export` stub exists but is non-functional | Avoid FBX `export` until full implementation |\n| Missing MTL file after OBJ `export` | MTL `export` not yet implemented | Manually generate MTL or use alternative formats |\n| Unexpected geometry duplication in STL | Vertex deduplication not implemented | Expect separate vertices per face; deduplicate post-`export` if needed |\n| `ImportException` on ASCII FBX | ASCII FBX format not yet supported | Use binary FBX format instead |\n| Animation data lost in FBX round-trip | Advanced FBX features (animations, constraints) not implemented | Avoid relying on animation data until supported |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [],
+          "content": "This is a work-in-progress port. Check FILE_FORMATS.md for current format support status and TODO.md for implementation progress.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "callout"
+        }
+      ],
+      "heading": "Error Messages",
+      "level": 2,
+      "section_id": "error_messages"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-4102db"
+          ],
+          "content": "If `Scene` throws `ImportException` when loading a USD file, the format is not implemented — Aspose.3D does not yet support USD (.usd, .usda, .usdc).",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-48f914",
+            "CLM-3d-fcd570"
+          ],
+          "content": "If FBX animations or constraints fail to `load` correctly, this is expected — advanced FBX features are not implemented. The library only supports basic FBX geometry and scene hierarchy.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-110d1c"
+          ],
+          "content": "If ASCII FBX files cause errors, check the file encoding — the library only supports binary FBX; ASCII FBX format is not yet implemented.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Report bugs or request features at https://github.com/aspose-3d/Aspose.3D.Java/issues",
+            "Review format support status in FILE_FORMATS.md",
+            "Check TODO.md for current implementation progress"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Getting Help",
+      "level": 2,
+      "section_id": "getting_help"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-cbd338"
+          ],
+          "content": "If `FbxExporter` throws `ExportException` during `export`, the operation is not implemented — only a stub exists. Check the `export` target format and verify it is supported before calling `export()`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-bfb409"
+          ],
+          "content": "When exporting STL files, expect larger file sizes because vertex deduplication is not implemented — each face uses separate vertices. This behavior is by design per the current implementation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Frequently asked questions](/kb.aspose.org/3d/java/faq/)",
+            "[API reference documentation](/reference.aspose.org/3d/java/api-overview/)",
+            "[Getting started guide](/docs.aspose.org/3d/java/developer-guide/getting-started/)",
+            "[Key features overview](/blog.aspose.org/3d/java/3d-key-features/)",
+            "[Translation transform support](/blog.aspose.org/3d/java/introducing-3d-foss-java/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Troubleshooting"
+}

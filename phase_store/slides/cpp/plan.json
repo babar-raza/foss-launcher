@@ -1,0 +1,1085 @@
+{
+  "claim_assignment_index": {
+    "CLM-slides-048efc": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-slides-0f6637": [
+      "products/_index",
+      "kb/faq"
+    ],
+    "CLM-slides-173051": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-230286": [
+      "reference/api-overview"
+    ],
+    "CLM-slides-2913ec": [
+      "reference/api-overview"
+    ],
+    "CLM-slides-3b715a": [
+      "kb/faq",
+      "kb/how-to-load-presentations-cpp"
+    ],
+    "CLM-slides-3cfdab": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-slides-4cd55d": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-5b9d7e": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-616b5e": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-6bdf02": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-slides-7dcb01": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-8f2276": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-a3ed81": [
+      "kb/use-cases"
+    ],
+    "CLM-slides-c84ea3": [
+      "reference/api-overview"
+    ],
+    "CLM-slides-ce8d15": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-d1979a": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-dec3e5": [
+      "reference/api-overview"
+    ],
+    "CLM-slides-eaa0bd": [
+      "kb/use-cases"
+    ],
+    "CLM-slides-f10545": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-fc2acf": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-slides-fde798": [
+      "products/_index",
+      "blog/introducing-slides-foss-cpp"
+    ]
+  },
+  "pages": [
+    {
+      "assigned_claims": [
+        "CLM-slides-4cd55d",
+        "CLM-slides-f10545",
+        "CLM-slides-fc2acf",
+        "CLM-slides-ce8d15",
+        "CLM-slides-8f2276",
+        "CLM-slides-7dcb01",
+        "CLM-slides-0f6637",
+        "CLM-slides-616b5e",
+        "CLM-slides-d1979a",
+        "CLM-slides-173051",
+        "CLM-slides-5b9d7e",
+        "CLM-slides-fde798"
+      ],
+      "assigned_snippets": [
+        6,
+        7,
+        8,
+        2,
+        5,
+        0,
+        1,
+        3,
+        4
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "products.aspose.org/slides/_index",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "Aspose.Slides FOSS for C++ for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "landing",
+        "platform": "cpp",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Aspose.Slides FOSS for C++",
+        "type": "landing",
+        "url": "/products.aspose.org/slides/_index/",
+        "weight": 1
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "products/_index",
+      "page_role": "landing",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp",
+        "meeting cpp slides",
+        "python slides",
+        "python slides for beginners"
+      ],
+      "skeleton": [
+        "Overview",
+        "Key Features",
+        "Quick Start",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Aspose.Slides FOSS for C++"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/slides/_index",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "Docs _Index for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "toc",
+        "platform": "cpp",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Docs _Index",
+        "type": "toc",
+        "url": "/docs.aspose.org/slides/_index/",
+        "weight": 2
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "docs/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp",
+        "meeting cpp slides",
+        "python slides",
+        "python slides for beginners"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Docs _Index"
+    },
+    {
+      "assigned_claims": [
+        "CLM-slides-3cfdab",
+        "CLM-slides-6bdf02",
+        "CLM-slides-048efc"
+      ],
+      "assigned_snippets": [
+        3,
+        4,
+        5,
+        0,
+        1,
+        2
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/slides/cpp/developer-guide/installation",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "Installation for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "workflow_page",
+        "platform": "cpp",
+        "robots": "index, follow",
+        "slug": "installation",
+        "title": "Installation",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/slides/cpp/developer-guide/installation/",
+        "weight": 3
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "docs/installation",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides",
+        "cpp",
+        "install aspose slides c++",
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp"
+      ],
+      "skeleton": [
+        "System Requirements",
+        "Installation",
+        "Verify Installation",
+        "Quick Start",
+        "See Also"
+      ],
+      "skeleton_variant": "install",
+      "target_class": "",
+      "title": "Installation"
+    },
+    {
+      "assigned_claims": [
+        "CLM-slides-3cfdab",
+        "CLM-slides-6bdf02",
+        "CLM-slides-048efc"
+      ],
+      "assigned_snippets": [
+        3,
+        4,
+        5,
+        0,
+        1,
+        2
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/slides/cpp/developer-guide/getting-started",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "Getting Started for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "workflow_page",
+        "platform": "cpp",
+        "robots": "index, follow",
+        "slug": "getting-started",
+        "title": "Getting Started",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/slides/cpp/developer-guide/getting-started/",
+        "weight": 4
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "docs/getting-started",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides",
+        "cpp",
+        "install aspose slides c++",
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp"
+      ],
+      "skeleton": [
+        "Overview",
+        "Prerequisites",
+        "First Steps",
+        "Code Example",
+        "Next Steps",
+        "See Also"
+      ],
+      "skeleton_variant": "getting_started",
+      "target_class": "",
+      "title": "Getting Started"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/slides/_index",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "Reference _Index for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "toc",
+        "platform": "cpp",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Reference _Index",
+        "type": "toc",
+        "url": "/reference.aspose.org/slides/_index/",
+        "weight": 5
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "reference/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp",
+        "meeting cpp slides",
+        "python slides",
+        "python slides for beginners"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Reference _Index"
+    },
+    {
+      "assigned_claims": [
+        "CLM-slides-dec3e5",
+        "CLM-slides-230286",
+        "CLM-slides-c84ea3",
+        "CLM-slides-2913ec"
+      ],
+      "assigned_snippets": [
+        0,
+        1,
+        2
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/slides/cpp/api-overview",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "Aspose.Slides FOSS for C++ API Reference for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "api_reference",
+        "platform": "cpp",
+        "robots": "index, follow",
+        "slug": "api-overview",
+        "title": "Aspose.Slides FOSS for C++ API Reference",
+        "type": "api_reference",
+        "url": "/reference.aspose.org/slides/cpp/api-overview/",
+        "weight": 6
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "reference/api-overview",
+      "page_role": "api_reference",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides",
+        "cpp",
+        "aspose slides c++ api documentation",
+        "free c++ powerpoint api",
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025"
+      ],
+      "skeleton": [
+        "Overview",
+        "Constructors",
+        "Properties",
+        "Methods",
+        "Code Examples",
+        "Remarks",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Aspose.Slides FOSS for C++ API Reference"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/_index",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "Kb _Index for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "toc",
+        "platform": "cpp",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Kb _Index",
+        "type": "toc",
+        "url": "/kb.aspose.org/slides/_index/",
+        "weight": 7
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp",
+        "meeting cpp slides",
+        "python slides",
+        "python slides for beginners"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Kb _Index"
+    },
+    {
+      "assigned_claims": [
+        "CLM-slides-0f6637",
+        "CLM-slides-3b715a"
+      ],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/cpp/faq",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "Aspose.Slides FOSS for C++ FAQ for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "faq",
+        "platform": "cpp",
+        "robots": "index, follow",
+        "slug": "faq",
+        "title": "Aspose.Slides FOSS for C++ FAQ",
+        "type": "faq",
+        "url": "/kb.aspose.org/slides/cpp/faq/",
+        "weight": 8
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/faq",
+      "page_role": "faq",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "slides",
+        "cpp",
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp",
+        "meeting cpp slides"
+      ],
+      "skeleton": [
+        "Frequently Asked Questions",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Aspose.Slides FOSS for C++ FAQ"
+    },
+    {
+      "assigned_claims": [
+        "CLM-slides-4cd55d",
+        "CLM-slides-eaa0bd",
+        "CLM-slides-f10545",
+        "CLM-slides-fc2acf",
+        "CLM-slides-ce8d15",
+        "CLM-slides-8f2276",
+        "CLM-slides-7dcb01",
+        "CLM-slides-616b5e",
+        "CLM-slides-d1979a",
+        "CLM-slides-a3ed81",
+        "CLM-slides-173051",
+        "CLM-slides-5b9d7e"
+      ],
+      "assigned_snippets": [
+        0,
+        1,
+        2,
+        6,
+        7,
+        8,
+        5,
+        3,
+        4
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/cpp/developer-guide/use-cases",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "Use Cases for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "feature_showcase",
+        "platform": "cpp",
+        "robots": "index, follow",
+        "slug": "use-cases",
+        "title": "Use Cases",
+        "type": "feature_showcase",
+        "url": "/kb.aspose.org/slides/cpp/developer-guide/use-cases/",
+        "weight": 9
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/use-cases",
+      "page_role": "feature_showcase",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp",
+        "meeting cpp slides",
+        "python slides",
+        "python slides for beginners"
+      ],
+      "skeleton": [
+        "Overview",
+        "How It Works",
+        "Code Example",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Use Cases"
+    },
+    {
+      "assigned_claims": [
+        "CLM-slides-3b715a"
+      ],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/cpp/how-to-load-presentations-cpp",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "How to Load Files with Aspose.Slides FOSS for C++ for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "howto_article",
+        "platform": "cpp",
+        "robots": "index, follow",
+        "slug": "how-to-load-presentations-cpp",
+        "title": "How to Load Files with Aspose.Slides FOSS for C++",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/slides/cpp/how-to-load-presentations-cpp/",
+        "weight": 10
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/how-to-load-presentations-cpp",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp",
+        "meeting cpp slides",
+        "python slides",
+        "python slides for beginners"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Loading the File",
+        "Code Example",
+        "Supported Formats",
+        "See Also"
+      ],
+      "skeleton_variant": "load_file",
+      "target_class": "",
+      "title": "How to Load Files with Aspose.Slides FOSS for C++"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/cpp/how-to-save-presentations-cpp",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "How to Save Files with Aspose.Slides FOSS for C++ for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "howto_article",
+        "platform": "cpp",
+        "robots": "index, follow",
+        "slug": "how-to-save-presentations-cpp",
+        "title": "How to Save Files with Aspose.Slides FOSS for C++",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/slides/cpp/how-to-save-presentations-cpp/",
+        "weight": 11
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/how-to-save-presentations-cpp",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp",
+        "meeting cpp slides",
+        "python slides",
+        "python slides for beginners"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Saving the File",
+        "Code Example",
+        "Output Options",
+        "See Also"
+      ],
+      "skeleton_variant": "save_file",
+      "target_class": "",
+      "title": "How to Save Files with Aspose.Slides FOSS for C++"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/cpp/how-to-convert-presentations-cpp",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "How to Convert File Formats with Aspose.Slides FOSS for C++ for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "howto_article",
+        "platform": "cpp",
+        "robots": "index, follow",
+        "slug": "how-to-convert-presentations-cpp",
+        "title": "How to Convert File Formats with Aspose.Slides FOSS for C++",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/slides/cpp/how-to-convert-presentations-cpp/",
+        "weight": 12
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/how-to-convert-presentations-cpp",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp",
+        "meeting cpp slides",
+        "python slides",
+        "python slides for beginners"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Conversion Steps",
+        "Code Example",
+        "Supported Formats",
+        "See Also"
+      ],
+      "skeleton_variant": "convert_formats",
+      "target_class": "",
+      "title": "How to Convert File Formats with Aspose.Slides FOSS for C++"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/cpp/how-to-fix-presentations-errors-cpp",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "How to Fix Common Errors with Aspose.Slides FOSS for C++ for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "howto_article",
+        "platform": "cpp",
+        "robots": "index, follow",
+        "slug": "how-to-fix-presentations-errors-cpp",
+        "title": "How to Fix Common Errors with Aspose.Slides FOSS for C++",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/slides/cpp/how-to-fix-presentations-errors-cpp/",
+        "weight": 13
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/how-to-fix-presentations-errors-cpp",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp",
+        "meeting cpp slides",
+        "python slides",
+        "python slides for beginners"
+      ],
+      "skeleton": [
+        "Problem",
+        "Symptoms",
+        "Root Cause",
+        "Solution Steps",
+        "Code Example",
+        "See Also"
+      ],
+      "skeleton_variant": "troubleshoot",
+      "target_class": "",
+      "title": "How to Fix Common Errors with Aspose.Slides FOSS for C++"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/slides/cpp/how-to-optimize-presentations-cpp",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "How to Optimize Performance with Aspose.Slides FOSS for C++ for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "howto_article",
+        "platform": "cpp",
+        "robots": "index, follow",
+        "slug": "how-to-optimize-presentations-cpp",
+        "title": "How to Optimize Performance with Aspose.Slides FOSS for C++",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/slides/cpp/how-to-optimize-presentations-cpp/",
+        "weight": 14
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/how-to-optimize-presentations-cpp",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp",
+        "meeting cpp slides",
+        "python slides",
+        "python slides for beginners"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Optimization Steps",
+        "Code Example",
+        "Benchmarks",
+        "See Also"
+      ],
+      "skeleton_variant": "optimize_performance",
+      "target_class": "",
+      "title": "How to Optimize Performance with Aspose.Slides FOSS for C++"
+    },
+    {
+      "assigned_claims": [
+        "CLM-slides-fde798"
+      ],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "blog.aspose.org/slides/cpp/introducing-slides-foss-cpp",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "Visual effects such as Outer shadow, glow, soft edge, blur, reflection, and i... for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "blog_announcement",
+        "platform": "cpp",
+        "robots": "index, follow",
+        "slug": "introducing-slides-foss-cpp",
+        "title": "Visual effects such as Outer shadow, glow, soft edge, blur, reflection, and i...",
+        "type": "blog_announcement",
+        "url": "/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/",
+        "weight": 15
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "blog/introducing-slides-foss-cpp",
+      "page_role": "blog_announcement",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp",
+        "meeting cpp slides",
+        "python slides",
+        "python slides for beginners"
+      ],
+      "skeleton": [
+        "Introduction",
+        "Key Highlights",
+        "Getting Started",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Visual effects such as Outer shadow, glow, soft edge, blur, reflection, and i..."
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "blog.aspose.org/slides/cpp/slides-key-features",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "Slides Key Features for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "feature_blog",
+        "platform": "cpp",
+        "robots": "index, follow",
+        "slug": "slides-key-features",
+        "title": "Slides Key Features",
+        "type": "feature_blog",
+        "url": "/blog.aspose.org/slides/cpp/slides-key-features/",
+        "weight": 16
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "blog/slides-key-features",
+      "page_role": "feature_blog",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp",
+        "meeting cpp slides",
+        "python slides",
+        "python slides for beginners"
+      ],
+      "skeleton": [
+        "Introduction",
+        "Key Highlights",
+        "Getting Started",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Slides Key Features"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/slides/cpp/developer-guide/presentation-creation",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "Create Presentations with Aspose.Slides FOSS for C++ for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "workflow_page",
+        "platform": "cpp",
+        "robots": "index, follow",
+        "slug": "presentation-creation",
+        "title": "Create Presentations with Aspose.Slides FOSS for C++",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/slides/cpp/developer-guide/presentation-creation/",
+        "weight": 17
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "docs/presentation-creation",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp",
+        "meeting cpp slides",
+        "python slides",
+        "python slides for beginners"
+      ],
+      "skeleton": [
+        "Overview",
+        "Working with Data",
+        "Code Examples",
+        "Notes and Best Practices",
+        "See Also"
+      ],
+      "skeleton_variant": "data_operations",
+      "target_class": "",
+      "title": "Create Presentations with Aspose.Slides FOSS for C++"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/slides/cpp/developer-guide/slide-manipulation",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "Aspose::Slides",
+        "code_import": "Aspose::Slides",
+        "description": "Work with Slides with Aspose.Slides FOSS for C++ for Aspose.Slides FOSS for C++",
+        "display_name": "Aspose.Slides FOSS for C++",
+        "family": "slides",
+        "page_role": "workflow_page",
+        "platform": "cpp",
+        "robots": "index, follow",
+        "slug": "slide-manipulation",
+        "title": "Work with Slides with Aspose.Slides FOSS for C++",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/slides/cpp/developer-guide/slide-manipulation/",
+        "weight": 18
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "docs/slide-manipulation",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp",
+        "meeting cpp slides",
+        "python slides",
+        "python slides for beginners"
+      ],
+      "skeleton": [
+        "Overview",
+        "Working with Data",
+        "Code Examples",
+        "Notes and Best Practices",
+        "See Also"
+      ],
+      "skeleton_variant": "data_operations",
+      "target_class": "",
+      "title": "Work with Slides with Aspose.Slides FOSS for C++"
+    }
+  ]
+}

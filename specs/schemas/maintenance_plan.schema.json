@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "maintenance_plan.schema.json",
+  "title": "MaintenancePlan",
+  "description": "TC-5168: Per-page action decisions emitted by the maintenance planner. Consumed by Generate worker in maintain mode.",
+  "type": "object",
+  "required": ["family", "platform", "planned_at", "actions"],
+  "additionalProperties": false,
+  "properties": {
+    "family": {
+      "type": "string",
+      "description": "Product family identifier (e.g. '3d', 'cells', 'email')."
+    },
+    "platform": {
+      "type": "string",
+      "description": "Platform identifier (e.g. 'python', 'dotnet', 'java')."
+    },
+    "planned_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the maintenance plan was computed."
+    },
+    "actions": {
+      "type": "array",
+      "description": "Per-page action decisions.",
+      "items": {
+        "$ref": "#/$defs/PageAction"
+      }
+    }
+  },
+  "$defs": {
+    "PageAction": {
+      "type": "object",
+      "description": "Action decision for a single content page.",
+      "required": ["content_path", "action"],
+      "additionalProperties": false,
+      "properties": {
+        "content_path": {
+          "type": "string",
+          "description": "Content path string without .md suffix (e.g. 'kb.aspose.org/3d/python/howto')."
+        },
+        "action": {
+          "type": "string",
+          "enum": ["create", "update", "enhance", "no-change"],
+          "description": "create: page missing; update: factual errors must regenerate; enhance: new capabilities append-only; no-change: skip."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Human-readable explanation of why this action was chosen."
+        }
+      }
+    }
+  }
+}

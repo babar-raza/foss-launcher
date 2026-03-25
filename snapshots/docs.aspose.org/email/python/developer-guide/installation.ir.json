@@ -1,0 +1,586 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/email/python/developer-guide/installation/",
+    "canonical_import": "aspose.email",
+    "code_import": "aspose.email",
+    "date": "2026-03-24T16:46:41Z",
+    "dateModified": "2026-03-24T16:46:41Z",
+    "datePublished": "2026-03-24T16:46:41Z",
+    "description": "This guide walks you through installing the library and loading an MSG file to inspect its structure and content using the `MapiMessage` class.",
+    "display_name": "Aspose.Email FOSS",
+    "family": "email",
+    "keywords": [
+      "email python",
+      "email python library",
+      "email python package",
+      "email python module",
+      "email python install",
+      "email python code",
+      "email python documentation",
+      "email python regex"
+    ],
+    "lastmod": "2026-03-24T16:46:41Z",
+    "page_role": "workflow_page",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Email FOSS Installation",
+    "slug": "installation",
+    "summary": "",
+    "title": "Installation",
+    "type": "workflow_page",
+    "url": "/docs.aspose.org/email/python/developer-guide/installation/",
+    "weight": 3
+  },
+  "page_id": "docs/installation",
+  "page_role": "workflow_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-email-b28154"
+          ],
+          "content": "Aspose.Email FOSS enables reading, writing, and manipulating Outlook MSG files and Compound File Binary (CFB) containers in Python. This guide walks you through installing the library and loading an MSG file to inspect its structure and content using the `MapiMessage` class.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-767c08"
+          ],
+          "content": "from aspose.email import MapiMessage\nfrom pathlib import Path\n\n# Load an MSG file into a MapiMessage object\nmsg_path = Path(\"sample.msg\")\nmessage = MapiMessage.from_file(msg_path)\n\n# Access core message properties\nsubject = message.subject\nbody = message.body\nmessage_class = message.message_class",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Use this approach when reading Outlook message files for archival or migration.",
+            "Access `message.subject`, `message.body`, and `message.message_class` to extract core metadata.",
+            "Inspect `message.validation_issues` to detect structural anomalies in the MSG file."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-email-b28154"
+          ],
+          "content": "This guide walks you through installing and using Aspose.Email FOSS to process Outlook MSG files in Python. The library enables reading, inspecting, and manipulating email messages and their low-level CFB (Compound File Binary) structure using only documented APIs.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-b28154"
+          ],
+          "content": "pip install aspose-email-foss>=26.3",
+          "items": [],
+          "language": "bash",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-767c08"
+          ],
+          "content": "After installation, import the core modules to begin working with MSG files. The `aspose.email.msg` module provides high-level message handling via `MapiMessage`, while `aspose.email.cfb` exposes low-level CFB parsing through `CFBReader`. These components support end-to-end workflows from raw file input to structured message inspection or conversion.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-767c08"
+          ],
+          "content": "from aspose.email import MapiMessage\nfrom aspose.email import CFBReader",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-767c08"
+          ],
+          "content": "",
+          "items": [
+            "Use `MapiMessage.from_file()` to load MSG files and access subject, body, and headers.",
+            "Inspect low-level CFB structure with `CFBReader` to debug malformed files or extract embedded content.",
+            "Convert between `MapiMessage` and Python’s `email.message.EmailMessage` for integration with standard email tooling."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Key Features",
+      "level": 2,
+      "section_id": "key_features"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-email-b28154"
+          ],
+          "content": "This guide walks you through installing and setting up Aspose.Email FOSS for Python to process Outlook MSG files and Compound File Binary (CFB) containers. You will install the package, verify the environment, and load an MSG file using the `MapiMessage` class.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-b28154"
+          ],
+          "content": "",
+          "items": [
+            "Python 3.8 or later installed on your system",
+            "pip package manager available (included with Python)",
+            "Aspose.Email FOSS installed via: `pip install aspose-email-foss>=26.3`"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-767c08"
+          ],
+          "content": "from aspose.email import MapiMessage\nfrom pathlib import Path\n\n# Load an MSG file into a MapiMessage object\nmsg_path = Path(\"example.msg\")\nmessage = MapiMessage.from_file(msg_path)\n\n# Access core message properties\nsubject = message.subject\nbody = message.body\nmessage_class = message.message_class",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-767c08"
+          ],
+          "content": "",
+          "items": [
+            "- Use this approach when reading Outlook MSG files for archival or migration.",
+            "- Access `subject`, `body`, and `message_class` to validate message metadata before processing.",
+            "- The `from_file()` method supports both absolute and relative paths to MSG files."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-email-b28154",
+            "CLM-email-767c08"
+          ],
+          "content": "This guide walks you through loading and inspecting Outlook MSG files using Aspose.Email FOSS. You start by installing the package, then load an MSG file into a `MapiMessage` object, and finally inspect its low-level CFB structure using `CFBReader`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-767c08",
+            "CLM-email-b28154"
+          ],
+          "content": "import aspose.email\nfrom aspose.email import MapiMessage\nfrom aspose.email import CFBReader\n\n# Load an MSG file into a MapiMessage object\nmsg_path = \"example.msg\"\nmessage = MapiMessage.from_file(msg_path)\n\n# Access low-level CFB structure via the message's msg_reader\nreader = message.msg_reader\n\n# Inspect CFB header properties\nprint(f\"Sector size: {reader.sector_size}\")\nprint(f\"Major version: {reader.major_version}\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-767c08"
+          ],
+          "content": "",
+          "items": [
+            "Use this approach when reading Outlook MSG files for archival or migration.",
+            "Use `MapiMessage.from_file()` to load .msg files without external dependencies.",
+            "Access `msg_reader` to inspect raw CFB container geometry for forensic analysis."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-767c08"
+          ],
+          "content": "Next, extract and inspect individual directory entries from the CFB container. This reveals how storages and streams are organized inside the MSG file.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-767c08"
+          ],
+          "content": "import aspose.email\nfrom aspose.email import CFBReader\nfrom pathlib import Path\n\n# Reuse the same MSG file path\nmsg_path = Path(\"example.msg\")\nreader = CFBReader.from_file(msg_path)\n\n# Iterate over storages in the CFB container\nfor storage in reader.iter_storages():\n    if storage.is_storage():\n        print(f\"Storage name: {storage.name}\")\n        # List contained streams\n        for entry in reader.iter_storages():\n            if entry.is_stream():\n                print(f\"  Stream: {entry.name}\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-767c08"
+          ],
+          "content": "",
+          "items": [
+            "Use `iter_storages()` to enumerate all storages and streams in the MSG container.",
+            "Check `is_storage()` and `is_stream()` to distinguish between container types.",
+            "This pattern supports custom MSG parsing for compliance or data extraction workflows."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-b28154"
+          ],
+          "content": "To install Aspose.Email FOSS, run the following command. Ensure your environment meets the minimum version requirement of 26.3 or later.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-b28154"
+          ],
+          "content": "pip install aspose-email-foss>=26.3",
+          "items": [],
+          "language": "shell",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-b28154"
+          ],
+          "content": "The canonical import for Aspose.Email FOSS is `import aspose.email`. Do not use `aspose.cells` or other Aspose submodules.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "callout"
+        }
+      ],
+      "heading": "Code Examples",
+      "level": 2,
+      "section_id": "code_examples"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-email-b28154"
+          ],
+          "content": "This section outlines best practices for using Aspose.Email FOSS in Python projects, focusing on correct installation, import usage, and safe handling of email containers. Always install the package using the official FOSS distribution and import it strictly via `aspose.email` to avoid conflicts with other Aspose libraries.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-b28154"
+          ],
+          "content": "",
+          "items": [
+            "Install Aspose.Email FOSS using `pip install aspose-email-foss>=26.3` to ensure compatibility with the documented API surface.",
+            "Use `import aspose.email` exclusively—never `aspose.cells`, `aspose.pydrawing`, or any other dotted path.",
+            "When reading MSG files, prefer `MsgReader` for direct message access and `MsgStorage` for container-level inspection.",
+            "Validate file integrity before processing by catching `MsgError` or `CFBError` exceptions during reader initialization."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-767c08"
+          ],
+          "content": "The example in `examples/msg_reader.py` demonstrates loading and inspecting MSG files using `MsgReader`, aligning with the documented workflow for reading Outlook message containers. Always verify that the input file is a valid MSG or CFB stream before attempting to parse it, especially when processing user-uploaded content.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Best Practices",
+      "level": 2,
+      "section_id": "best_practices"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-email-b28154"
+          ],
+          "content": "This section helps you resolve common issues when installing and using Aspose.Email FOSS in Python. The library installs via pip and supports reading, inspecting, and converting Outlook MSG files and Compound File Binary (CFB) containers through a consistent API surface.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-b28154"
+          ],
+          "content": "pip install aspose-email-foss>=26.3",
+          "items": [],
+          "language": "bash",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "Ensure you use the correct import path: `import aspose.email`. Using incorrect paths like `aspose.cells` or aspose_email_foss will raise ModuleNotFoundError because Aspose.Email FOSS is a standalone package with no dependency on other Aspose libraries.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "If you encounter `ModuleNotFoundError: No module named 'aspose.email'`, verify your Python environment matches the one used during installation. Virtual environments, conda environments, or system-wide installs may cause path mismatches.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "If you see `ImportError: cannot import name 'MapiMessage' from 'aspose.email.msg'`, confirm that your installed version is at least 26.3. Older versions lack the `aspose.email.msg` module structure.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "When processing MSG files, `MsgError` or `CFBError` may be raised for malformed or unsupported files. These exceptions indicate structural issues in the underlying Compound File Binary container.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-767c08"
+          ],
+          "content": "from aspose.email import MapiMessage\nfrom aspose.email import CFBReader\n\ntry:\n    msg = MapiMessage.from_file(\"sample.msg\")\n    reader = CFBReader.from_file(\"sample.msg\")\n    print(f\"Subject: {msg.subject}\")\n    print(f\"CFB major version: {reader.major_version}\")\nexcept (MsgError, CFBError) as e:\n    print(f\"File parsing error: {e}\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-767c08"
+          ],
+          "content": "",
+          "items": [
+            "Use this pattern when validating MSG files before batch processing.",
+            "Handle `MsgError` for corrupted or non-MSG files.",
+            "Inspect `CFBReader.major_version` to confirm file format compatibility."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [],
+          "content": "If `MapiMessage.from_file()` returns a message with `None` for `subject` or `body`, the MSG file may lack standard MAPI properties. Use `iter_properties()` to inspect all available properties and identify missing ones.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "When embedding messages as attachments, ensure the embedded `MapiMessage` is fully constructed before calling `MapiAttachment.from_embedded_message()`. Passing incomplete objects raises ValueError.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Troubleshooting",
+      "level": 2,
+      "section_id": "troubleshooting"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Frequently Asked Questions",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-b28154"
+          ],
+          "content": "This section answers common questions about installing and using Aspose.Email FOSS for processing email files in Python.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-email-767c08"
+          ],
+          "content": "Aspose.Email FOSS is a pure Python library for reading, writing, and manipulating Outlook MSG files and their underlying Compound File Binary (CFB) structure.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "How do I install Aspose.Email FOSS?",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Install the package using pip with the exact version constraint required by the library: `pip install aspose-email-foss>=26.3`. This ensures compatibility with the documented API surface and example workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "What is the correct import statement for Aspose.Email FOSS?",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Always use `import aspose.email` as the canonical import path. Submodules such as `aspose.email.msg` and `aspose.email.cfb` are accessed via dot notation after this import. Never use `aspose.cells` or any other Aspose product's import path.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Can I use Aspose.Email FOSS to convert email formats?",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Yes. The `MapiMessage` class supports conversion between MSG files and Python's `email.message.[identifier omitted]` objects. Use `MapiMessage.from_file()` to load an MSG, then convert to [identifier omitted] as needed for integration with standard Python email tooling.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Does Aspose.Email FOSS support reading embedded messages?",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Yes. Attachments can represent embedded messages, and `MapiAttachment` provides the `is_embedded_message` property to identify them. Use `MapiAttachment.from_embedded_message()` to construct or inspect such attachments programmatically.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "FAQ",
+      "level": 2,
+      "section_id": "faq"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Email FOSS -- Section content.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "For details on api reference summary, see the Aspose.Email FOSS documentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "API Reference Summary",
+      "level": 2,
+      "section_id": "api_reference_summary"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Get started with Aspose.Email FOSS](/docs.aspose.org/email/python/developer-guide/getting-started/)",
+            "[View the complete API reference](/reference.aspose.org/email/python/api-overview/)",
+            "[Discover key email features](/blog.aspose.org/email/python/email-key-features/)",
+            "[Read about the Python FOSS release](/blog.aspose.org/email/python/introducing-email-foss-python/)",
+            "[Learn file format conversion steps](/kb.aspose.org/email/python/how-to-convert-files-python/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Installation"
+}

@@ -1,31 +1,31 @@
 {
   "frontmatter": {
     "canonical": "https://kb.aspose.org/cells/python/faq/",
-    "canonical_import": "aspose_cells_foss",
-    "date": "2026-03-09T18:00:06Z",
-    "dateModified": "2026-03-09T18:00:06Z",
-    "datePublished": "2026-03-09T18:00:06Z",
-    "description": "It provides the `Workbook` class to load, create, and manipulate Excel files in formats such as XLSX, XLS, and CSV.",
-    "display_name": "Aspose.Cells",
+    "canonical_import": "aspose.cells",
+    "date": "2026-03-23T13:16:22Z",
+    "dateModified": "2026-03-23T13:16:22Z",
+    "datePublished": "2026-03-23T13:16:22Z",
+    "description": "Attempting to create or `save` other chart types such as scatter, combo, waterfall, or treemap will raise a NotImplementedError with the message 'Only line,...",
+    "display_name": "Aspose.Cells FOSS",
     "family": "cells",
     "keywords": [
-      "python",
-      "python openpyxl",
-      "openpyxl pandas",
-      "openpyxl in python",
-      "openpyxl documentation",
-      "install openpyxl",
-      "openpyxl cell",
-      "openpyxl pip"
+      "cells python",
+      "python cells in excel",
+      "python cells vscode",
+      "cell python docx",
+      "cell python spyder",
+      "aspose cells python",
+      "code cells python",
+      "voronoi cells python"
     ],
-    "lastmod": "2026-03-09T18:00:06Z",
+    "lastmod": "2026-03-23T13:16:22Z",
     "page_role": "faq",
     "platform": "python",
     "reading_time": 1,
     "robots": "index, follow",
-    "seoTitle": "Aspose.Cells Faq",
+    "seoTitle": "Aspose.Cells FOSS FAQ | Guide",
     "slug": "faq",
-    "title": "Faq",
+    "title": "Aspose.Cells FOSS FAQ",
     "type": "faq",
     "url": "/kb.aspose.org/cells/python/faq/",
     "weight": 8
@@ -36,84 +36,78 @@
     {
       "blocks": [
         {
-          "claim_ids": [],
-          "content": "What is Aspose.Cells for Python?",
+          "claim_ids": [
+            "CLM-cells-c25edf"
+          ],
+          "content": "What chart types can I create and `save` with Aspose.Cells FOSS?",
           "items": [],
           "language": null,
-          "level": 3,
+          "level": null,
           "type": "heading"
         },
         {
           "claim_ids": [],
-          "content": "Aspose.Cells is a Python library for working with spreadsheet files without requiring Microsoft Excel. It provides the `Workbook` class to load, create, and manipulate Excel files in formats such as XLSX, XLS, and CSV.",
+          "content": "Aspose.Cells FOSS currently supports only line, bar, pie, area, and stock chart types for creation and saving. Attempting to create or `save` other chart types such as scatter, combo, waterfall, or treemap will raise a NotImplementedError with the message 'Only line, bar, pie, area and stock `charts` are currently supported'. This limitation applies to both new chart creation and saving existing workbooks containing unsupported chart types. Developers should verify their chart requirements align with these supported types before integrating the library into production workflows.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
         },
         {
-          "claim_ids": [],
-          "content": "How do I install Aspose.Cells for Python?",
+          "claim_ids": [
+            "CLM-cells-20f3a9"
+          ],
+          "content": "Which encryption methods does Aspose.Cells FOSS support?",
           "items": [],
           "language": null,
-          "level": 3,
+          "level": null,
           "type": "heading"
         },
         {
           "claim_ids": [],
-          "content": "Install Aspose.Cells for Python using pip: `pip install aspose_cells_foss`. This installs the `aspose_cells_foss` package, which contains the core classes for spreadsheet processing.",
+          "content": "Aspose.Cells FOSS only supports Agile encryption (ECMA-376 Part 2, Section 4) for protecting Excel workbooks. Standard encryption methods are not implemented and will raise a NotImplementedError if attempted. When saving a protected workbook, you must use the `AgileEncryptionParameters` class to configure encryption settings. This restriction ensures compatibility with modern Excel versions while limiting the library's scope to a single, well-defined encryption standard.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
         },
         {
-          "claim_ids": [],
-          "content": "Can I use Aspose.Cells with openpyxl or pandas?",
+          "claim_ids": [
+            "CLM-cells-92cd28"
+          ],
+          "content": "What is the license for Aspose.Cells FOSS?",
           "items": [],
           "language": null,
-          "level": 3,
+          "level": null,
           "type": "heading"
         },
         {
           "claim_ids": [],
-          "content": "Aspose.Cells for Python operates independently of `openpyxl` and `pandas`. While `openpyxl` and `pandas` are popular Python libraries for Excel and data manipulation, Aspose.Cells provides its own API surface for spreadsheet operations and does not depend on them.",
+          "content": "Aspose.Cells FOSS is distributed under the MIT License, a permissive open-source license that allows free use, modification, and distribution of the software for both personal and commercial purposes. The license requires only that the original copyright notice and permission notice be included in all copies or substantial portions of the software. This licensing model supports integration into proprietary applications without requiring source code disclosure.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
         },
         {
-          "claim_ids": [],
-          "content": "Does Aspose.Cells support reading and writing XLSX files?",
-          "items": [],
-          "language": null,
-          "level": 3,
-          "type": "heading"
-        },
-        {
-          "claim_ids": [],
-          "content": "Yes, Aspose.Cells supports reading and writing XLSX files through the `Workbook` class. You can load an existing XLSX file or create a new one and save it in XLSX format using the appropriate methods.",
+          "claim_ids": [
+            "CLM-cells-c25edf"
+          ],
+          "content": "How do I create a supported chart in a workbook?",
           "items": [],
           "language": null,
           "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "Is Aspose.Cells a drop-in replacement for openpyxl?",
-          "items": [],
-          "language": null,
-          "level": 3,
           "type": "heading"
         },
         {
-          "claim_ids": [],
-          "content": "No, Aspose.Cells is not a drop-in replacement for `openpyxl`. It is a separate library with its own API surface and functionality. Developers must adapt their code to use Aspose.Cells classes and methods instead of those provided by `openpyxl`.",
+          "claim_ids": [
+            "CLM-cells-c25edf"
+          ],
+          "content": "import aspose.cells\n\n# Create a new workbook and access the first worksheet\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\n\n# Add sample data for the chart\ncells = worksheet.cells\ncells[\"A1\"].value = \"Category\"\ncells[\"B1\"].value = \"Value\"\ncells[\"A2\"].value = \"A\"\ncells[\"B2\"].value = 10\ncells[\"A3\"].value = \"B\"\ncells[\"B3\"].value = 20\ncells[\"A4\"].value = \"C\"\ncells[\"B4\"].value = 30\n\n# Add a line chart to the worksheet\nchart_collection = worksheet.charts\nchart_index = chart_collection.add_line(5, 0, 20, 8)\nchart = chart_collection[chart_index]\n\n# Save the workbook\nworkbook.save(\"output.xlsx\")",
           "items": [],
-          "language": null,
+          "language": "python",
           "level": null,
-          "type": "paragraph"
+          "type": "code"
         }
       ],
       "heading": "Frequently Asked Questions",
@@ -123,8 +117,10 @@
     {
       "blocks": [
         {
-          "claim_ids": [],
-          "content": "Aspose.Cells provides robust Excel file handling capabilities in Python. Developers working with spreadsheet data can explore related guides covering core operations and integrations.",
+          "claim_ids": [
+            "CLM-cells-20f3a9"
+          ],
+          "content": "Aspose.Cells FOSS supports Agile encryption for Excel files, but standard encryption is not yet implemented. When saving encrypted workbooks, use `AgileEncryptionParameters` to configure encryption settings. This limitation is enforced by the `xlsx_encryptor.py` module, which raises NotImplementedError for non-Agile encryption attempts.",
           "items": [],
           "language": null,
           "level": null,
@@ -134,11 +130,11 @@
           "claim_ids": [],
           "content": "",
           "items": [
-            "[How to Convert Spreadsheets Python](/kb.aspose.org/cells/python/convert-spreadsheets-python/)",
-            "[How to Fix Spreadsheets Errors Python](/kb.aspose.org/cells/python/fix-spreadsheets-errors-python/)",
-            "[How to Load Spreadsheets Python](/kb.aspose.org/cells/python/load-spreadsheets-python/)",
-            "[How to Optimize Spreadsheets Python](/kb.aspose.org/cells/python/optimize-spreadsheets-python/)",
-            "[How to Save Spreadsheets Python](/kb.aspose.org/cells/python/save-spreadsheets-python/)"
+            "[Troubleshooting common issues](/kb.aspose.org/cells/python/troubleshooting/)",
+            "[Convert file formats step-by-step](/kb.aspose.org/cells/python/how-to-convert-csv-to-json-python/)",
+            "[Fix common errors effectively](/kb.aspose.org/cells/python/how-to-fix-spreadsheets-errors-python/)",
+            "[Load files correctly and efficiently](/kb.aspose.org/cells/python/how-to-load-spreadsheets-python/)",
+            "[Optimize performance tips](/kb.aspose.org/cells/python/how-to-optimize-spreadsheets-python/)"
           ],
           "language": null,
           "level": null,
@@ -150,5 +146,5 @@
       "section_id": "see_also"
     }
   ],
-  "title": "Faq"
+  "title": "Aspose.Cells FOSS FAQ"
 }

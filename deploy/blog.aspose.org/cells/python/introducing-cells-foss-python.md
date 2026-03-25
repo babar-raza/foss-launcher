@@ -1,31 +1,30 @@
 ---
 canonical: https://blog.aspose.org/cells/python/introducing-cells-foss-python/
-canonical_import: aspose_cells_foss
-date: '2026-03-11T21:00:43Z'
-dateModified: '2026-03-11T21:00:43Z'
-datePublished: '2026-03-11T21:00:43Z'
-description: This feature enhances data documentation and collaboration by allowing
-  comments to include formatted text and identify their author, making it easier to...
+canonical_import: aspose.cells
+date: '2026-03-23T13:16:22Z'
+dateModified: '2026-03-23T13:16:22Z'
+datePublished: '2026-03-23T13:16:22Z'
+description: It provides a clean, object-oriented API for creating, editing, and converting
+  spreadsheet data without requiring Microsoft Excel. The library centers on...
 display_name: Aspose.Cells FOSS
 family: cells
 keywords:
-- python
-- python openpyxl
-- openpyxl pandas
-- openpyxl in python
-- openpyxl documentation
-- install openpyxl
-- openpyxl cell
-- openpyxl pip
-lastmod: '2026-03-11T21:00:43Z'
+- cells python
+- python cells in excel
+- python cells vscode
+- cell python docx
+- cell python spyder
+- aspose cells python
+- code cells python
+- voronoi cells python
+lastmod: '2026-03-23T13:16:22Z'
 page_role: blog_announcement
 platform: python
 reading_time: 1
 robots: index, follow
-seoTitle: The library supports adding and managing cell comments with
+seoTitle: Aspose.Cells FOSS Introducing Cells Foss Python
 slug: introducing-cells-foss-python
-title: The library supports adding and managing cell comments with author and rich
-  text
+title: Introducing Cells Foss Python
 type: blog_announcement
 url: /blog.aspose.org/cells/python/introducing-cells-foss-python/
 weight: 16
@@ -33,93 +32,43 @@ weight: 16
 
 ## Introduction
 
-Aspose.Cells FOSS now supports adding and managing cell comments with author and rich text, enabling developers to embed detailed annotations directly in spreadsheets. This feature enhances data documentation and collaboration by allowing comments to include formatted text and identify their author, making it easier to track feedback and context within Excel files.
+Aspose.Cells FOSS brings robust Excel file handling to Python developers. It provides a clean, object-oriented API for creating, editing, and converting spreadsheet data without requiring Microsoft Excel. The library centers on core classes like `Workbook`, `Worksheet`, and `Cell`, enabling programmatic control over spreadsheets in environments such as VS Code, Spyder, or any Python IDE.
 
-In addition to cell comments, the library provides robust workbook and worksheet protection capabilities, including password-based security for both workbook structure and individual sheets. It also supports merging and unmerging cells, a common operation for creating professional report layouts and organizing data visually.
-
-```python
-from aspose_cells_foss import Workbook
-
-wb = Workbook()
-ws = wb.worksheets[0]
-ws.cells.merge(0, 0, 1, 3)          # merge 1 row × 3 cols from A1
-ws.cells.unmerge(0, 0, 1, 3)
-
-wb.save("merged_cells.xlsx")
-```
+Key capabilities include reading and writing `cell` `values` and formulas, managing multiple `worksheets`, and generating `charts` using supported types like LINE, BAR, PIE, and AREA. Export functionality covers CSV, JSON, and Markdown formats via dedicated handlers: `CSVHandler`, `JsonHandler`, and `MarkdownHandler`. This makes Aspose.Cells FOSS ideal for automation workflows involving data export, reporting, and integration with tools like pandas or Jupyter notebooks.
 
 ## Key Highlights
 
-- Add and manage cell comments with author and rich text formatting using the `Cell.comment` property.
-- Create hyperlinks to URLs, email addresses, local files, and internal worksheet references via `Worksheet.hyperlinks.add()`.
-- Apply auto-filters to data ranges using the `AutoFilter` class to sort and filter rows interactively.
-- Embed sparklines (LINE, COLUMN, WIN_LOSS) directly into cells to visualize trends without full charts.
-- Define print areas and insert manual page breaks to control layout for printing.
-- Protect workbooks and worksheets with passwords, and merge/unmerge cells for flexible layout design.
+Aspose.Cells FOSS delivers a focused, open-source Python API for working with spreadsheet data. Built around core classes like `Workbook`, `Worksheet`, `Cell`, and `Cells`, it enables developers to programmatically create, read, and `modify` Excel-compatible files using standard Python tooling such as VS Code or Spyder.
 
-```python
-from aspose.cells import Workbook, Worksheet
-
-# Create workbook and access worksheet
-workbook = Workbook()
-worksheet = workbook.worksheets[0]
-
-# Add hyperlink to URL
-worksheet.hyperlinks.add("A1", "https://example.com")
-
-# Add sparkline group
-from aspose.cells import SparklineType
-group = worksheet.sparkline_groups.add(
-    sparkline_type=SparklineType.LINE,
-    data_range="B2:D2",
-    is_vertical=False,
-    location_range="E2"
-)
-
-# Set print area
-worksheet.page_setup.print_area = "A1:H40"
-
-# Save the workbook
-workbook.save("output.xlsx")
-```
+- The `Workbook` class provides programmatic control over Excel workbooks, supporting operations like adding, removing, and accessing worksheets via `add_worksheet()` and `get_worksheet()`.
+- Cell-level manipulation is handled by the `Cell` class, which exposes methods such as `is_empty()`, `clear_value()`, and `set_comment()` for granular data control.
+- The `Cells` collection offers convenient utilities like `column_index_from_string()` and `coordinate_from_string()` to translate between human-readable and programmatic cell references.
+- Export to modern data formats is supported via static handlers: `CSVHandler` for CSV I/O, `JsonHandler` for JSON export, and `MarkdownHandler` for Markdown output.
+- Chart creation and customization is available through the `ChartCollection` and `Chart` classes, supporting line, bar, pie, area, and scatter chart types via dedicated methods like `add_line()` and `add_bar()`.
 
 ## Getting Started
 
-Aspose.Cells FOSS enables Python developers to programmatically create, edit, and protect Excel workbooks with minimal code. You can apply auto-filters to data ranges, embed images between cells, and secure files with workbook or worksheet password protection—all using the canonical `aspose.cells` API. The library integrates cleanly into existing Python workflows, including those built around openpyxl or pandas.
+Aspose.Cells FOSS enables programmatic Excel file handling in Python. Developers can create workbooks, manipulate `cells` via the `Workbook` and `Cell` classes, and export data to formats like CSV, JSON, and Markdown using dedicated handler classes.
 
 ```python
-from aspose.cells import Workbook
+import aspose.cells
 
-# Create a new workbook and access the first worksheet
-wb = Workbook()
-ws = wb.worksheets[0]
+# Create a new workbook and add a worksheet
+workbook = aspose.cells.Workbook()
+worksheet = workbook.worksheets[0]
 
-# Apply auto-filter to A1:C10 range
-ws.auto_filter.range("A1:C10")
+# Write a value to cell A1
+cell = worksheet.cells.cell(0, 0)
+cell.value = "Hello, Aspose.Cells FOSS!"
 
-# Embed an image between cells B2 and D4
-ws.shapes.add_picture_between_cells("image.png", "B2", "D4")
-
-# Protect workbook structure and the worksheet with a password
-wb.settings.protect(password="pw")
-ws.protect(password="pw")
-
-# Save the protected workbook
-wb.save("output.xlsx")
+# Save to XLSX
+workbook.save("output.xlsx")
 ```
 
 ## See Also
 
-Aspose.Cells FOSS provides robust spreadsheet capabilities for Python developers. It supports document properties like title, author, and subject as shown in the code example below. The library also enables manual page breaks, conditional formatting, and cell comment management with author and rich text support. [identifier omitted] features make it a strong alternative to openpyxl in python workflows, especially for projects requiring programmatic Excel generation and editing without external dependencies.
-
-```python
-wb.document_properties.title = "My [identifier omitted]"
-wb.document_properties.author = "[identifier omitted] [identifier omitted]"
-wb.document_properties.subject = "Q4 [identifier omitted]"
-```
-
-- [Protect workbooks and worksheets](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)
-- [Get started with Aspose.Cells FOSS](/products.aspose.org/cells/_index/)
+- [Create all chart types](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)
 - [Work with formulas](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)
-- [Core spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)
+- [Perform spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)
 - [Convert file formats](/kb.aspose.org/cells/python/how-to-convert-csv-to-json-python/)
+- [Fix common errors](/kb.aspose.org/cells/python/how-to-fix-spreadsheets-errors-python/)

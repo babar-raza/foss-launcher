@@ -1,11 +1,12 @@
 {
   "frontmatter": {
     "canonical": "https://kb.aspose.org/slides/python/faq/",
-    "canonical_import": "aspose_slides_foss",
-    "date": "2026-03-09T18:44:29Z",
-    "dateModified": "2026-03-09T18:44:29Z",
-    "datePublished": "2026-03-09T18:44:29Z",
-    "description": "It supports common formats such as PPTX, PPT, PDF, and images, making it suitable for developers building slides python automation tools, generating...",
+    "canonical_import": "aspose.slides",
+    "code_import": "aspose.slides",
+    "date": "2026-03-24T16:56:57Z",
+    "dateModified": "2026-03-24T16:56:57Z",
+    "datePublished": "2026-03-24T16:56:57Z",
+    "description": "This permissive open-source license allows you to use, modify, and distribute the library in both personal and commercial projects without restriction,...",
     "display_name": "Aspose.Slides",
     "family": "slides",
     "keywords": [
@@ -18,14 +19,14 @@
       "python slides library",
       "python slides github"
     ],
-    "lastmod": "2026-03-09T18:44:29Z",
+    "lastmod": "2026-03-24T16:56:57Z",
     "page_role": "faq",
     "platform": "python",
     "reading_time": 1,
     "robots": "index, follow",
-    "seoTitle": "Aspose.Slides Faq",
+    "seoTitle": "Aspose.Slides FAQ | Guide",
     "slug": "faq",
-    "title": "Faq",
+    "title": "Aspose.Slides FAQ",
     "type": "faq",
     "url": "/kb.aspose.org/slides/python/faq/",
     "weight": 8
@@ -36,36 +37,10 @@
     {
       "blocks": [
         {
-          "claim_ids": [],
-          "content": "What is Aspose.Slides for Python?",
-          "items": [],
-          "language": null,
-          "level": 3,
-          "type": "heading"
-        },
-        {
-          "claim_ids": [],
-          "content": "Aspose.Slides is a Python library for creating, editing, and converting PowerPoint presentations without requiring Microsoft PowerPoint. It supports common formats such as PPTX, PPT, PDF, and images, making it suitable for developers building slides python automation tools, generating reports, or creating educational content for kids.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
           "claim_ids": [
             "CLM-slides-0f6637"
           ],
-          "content": "Is Aspose.Slides free to use?",
-          "items": [],
-          "language": null,
-          "level": 3,
-          "type": "heading"
-        },
-        {
-          "claim_ids": [
-            "CLM-slides-0f6637"
-          ],
-          "content": "Yes, Aspose.Slides for Python is distributed under the MIT License, which allows free use, modification, and distribution for both personal and commercial projects. The full license text is available in the project’s repository.",
+          "content": "Aspose.Slides for Python is distributed under the MIT License. This permissive open-source license allows you to use, modify, and distribute the library in both personal and commercial projects without restriction, provided the original copyright notice and license text are included.",
           "items": [],
           "language": null,
           "level": null,
@@ -73,15 +48,7 @@
         },
         {
           "claim_ids": [],
-          "content": "Can I convert slides to PDF using Aspose.Slides?",
-          "items": [],
-          "language": null,
-          "level": 3,
-          "type": "heading"
-        },
-        {
-          "claim_ids": [],
-          "content": "Yes, Aspose.Slides supports converting slides to PDF format. Developers can load a PPTX or PPT file and save it as a PDF document using the library’s API. This makes it ideal for generating python slides pdf reports or sharing presentations in a universally viewable format.",
+          "content": "Yes, you can create and manipulate PowerPoint (.pptx) files using Aspose.Slides for Python. The library supports full round-trip fidelity for .pptx files, enabling you to open existing presentations, modify slides and shapes, and save the updated file.",
           "items": [],
           "language": null,
           "level": null,
@@ -89,15 +56,15 @@
         },
         {
           "claim_ids": [],
-          "content": "Does Aspose.Slides support PPTX files?",
+          "content": "import aspose.slides\n\npresentation = aspose.slides.Presentation()\npresentation.save(\"output.pptx\")",
           "items": [],
-          "language": null,
-          "level": 3,
-          "type": "heading"
+          "language": "python",
+          "level": null,
+          "type": "code"
         },
         {
           "claim_ids": [],
-          "content": "Yes, Aspose.Slides fully supports reading, writing, and modifying PPTX files—the modern PowerPoint format. This includes working with slides, text, shapes, and other presentation elements in slide python pptx workflows.",
+          "content": "To `add` text to `a` slide, create `a` new slide, `add` an `AutoShape`, and set its text content using the text_frame property. The `AutoShape` class provides the `add_text_frame()` method to initialize `a` text container, and you can then populate it with paragraphs and portions.",
           "items": [],
           "language": null,
           "level": null,
@@ -105,15 +72,15 @@
         },
         {
           "claim_ids": [],
-          "content": "Is Aspose.Slides suitable for beginners?",
+          "content": "Aspose.Slides supports exporting presentations to PDF, `images`, and other formats via the save() method on the `Presentation` class. Pass `a` file path and `a` format enum (e.`g`., `SaveFormat.PDF`) to control the output type.",
           "items": [],
           "language": null,
-          "level": 3,
-          "type": "heading"
+          "level": null,
+          "type": "paragraph"
         },
         {
           "claim_ids": [],
-          "content": "Yes, Aspose.Slides is designed to be approachable for python slides for beginners while also offering robust functionality for experienced developers. Its clean API and comprehensive documentation help users quickly get started with python slides ppt tasks like creating presentations or converting formats.",
+          "content": "The `Presentation` class is the main entry point for working with PowerPoint files. It provides access to slides, `masters`, layout slides, and document properties. Call save() to persist changes and `dispose()` to release resources when finished.",
           "items": [],
           "language": null,
           "level": null,
@@ -127,24 +94,14 @@
     {
       "blocks": [
         {
-          "claim_ids": [
-            "CLM-slides-0f6637"
-          ],
-          "content": "Aspose.Slides for Python (via .NET) is distributed under the MIT License, enabling open-source use and modification. Developers new to Python slides can explore foundational concepts like creating, editing, and exporting presentations in formats such as PPTX and PDF.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
           "claim_ids": [],
           "content": "",
           "items": [
-            "[Convert presentations with Python](/kb.aspose.org/slides/python/how-to-convert-presentations-python/)",
-            "[Fix presentation errors in Python](/kb.aspose.org/slides/python/how-to-fix-presentations-errors-python/)",
-            "[Load presentations using Python](/kb.aspose.org/slides/python/how-to-load-presentations-python/)",
-            "[Optimize presentations in Python](/kb.aspose.org/slides/python/how-to-optimize-presentations-python/)",
-            "[How to Save Presentations Python](/kb.aspose.org/slides/python/how-to-save-presentations-python/)"
+            "[Convert file formats](/kb.aspose.org/slides/python/how-to-convert-png-to-pptx-python/)",
+            "[Fix common errors](/kb.aspose.org/slides/python/how-to-fix-presentations-errors-python/)",
+            "[Load files](/kb.aspose.org/slides/python/how-to-load-presentations-python/)",
+            "[Optimize performance](/kb.aspose.org/slides/python/how-to-optimize-presentations-python/)",
+            "[Save files](/kb.aspose.org/slides/python/how-to-save-presentations-python/)"
           ],
           "language": null,
           "level": null,
@@ -156,5 +113,5 @@
       "section_id": "see_also"
     }
   ],
-  "title": "Faq"
+  "title": "Aspose.Slides FAQ"
 }

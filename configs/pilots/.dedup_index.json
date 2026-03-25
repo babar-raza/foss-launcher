@@ -3,5 +3,7 @@
   "https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-TypeScript": "aspose-3d-foss-typescript",
   "https://github.com/aspose-cells/Aspose.Cells-for-Python-via-.NET": "aspose-cells-foss-python",
   "https://github.com/aspose-note/Aspose.Note-for-Python-via-.NET": "aspose-note-foss-python",
+  "https://github.com/aspose-slides-foss/Aspose.Slides-FOSS-for-.NET": "aspose-slides-foss-dotnet",
+  "https://github.com/aspose-slides-foss/Aspose.Slides-FOSS-for-Java": "aspose-slides-foss-java",
   "https://github.com/aspose-slides-foss/Aspose.Slides-FOSS-for-Python": "aspose-slides-foss-python"
 }

@@ -1,0 +1,207 @@
+{
+  "3d/dotnet": {
+    "snippets": 2,
+    "claims": 218,
+    "formats": [
+      "COLLADA",
+      "FBX",
+      "GLTF",
+      "OBJ",
+      "PLY",
+      "STL",
+      "XML"
+    ],
+    "format_source": "ast_verified",
+    "page_evidence": {
+      "_index": true,
+      "api_reference": true,
+      "blog_announcement": true,
+      "faq": false,
+      "feature_blog": true,
+      "feature_showcase": true,
+      "format_conversion": true,
+      "howto_article": true,
+      "install_guide": true,
+      "landing": true,
+      "toc": true,
+      "troubleshooting": false,
+      "workflow_page": true
+    },
+    "insufficient_details": {
+      "faq": [
+        "no_verified_claims"
+      ],
+      "troubleshooting": [
+        "no_troubleshoot_claims"
+      ]
+    }
+  },
+  "3d/java": {
+    "snippets": 15,
+    "claims": 224,
+    "formats": [
+      "FBX",
+      "GLTF",
+      "OBJ",
+      "STL"
+    ],
+    "format_source": "ast_verified",
+    "page_evidence": {
+      "_index": true,
+      "api_reference": true,
+      "blog_announcement": true,
+      "faq": true,
+      "feature_blog": true,
+      "feature_showcase": true,
+      "format_conversion": true,
+      "howto_article": true,
+      "install_guide": true,
+      "landing": true,
+      "toc": true,
+      "troubleshooting": true,
+      "workflow_page": true
+    },
+    "insufficient_details": {}
+  },
+  "3d/python": {
+    "snippets": 12,
+    "claims": 14,
+    "formats": [
+      "COLLADA",
+      "FBX",
+      "GLTF",
+      "OBJ",
+      "STL"
+    ],
+    "format_source": "ast_verified",
+    "page_evidence": {
+      "_index": true,
+      "api_reference": true,
+      "feature_blog": true,
+      "format_conversion": true,
+      "howto_article": true,
+      "install_guide": true
+    },
+    "insufficient_details": {}
+  },
+  "3d/typescript": {
+    "snippets": 22,
+    "claims": 180,
+    "formats": [
+      "OBJ"
+    ],
+    "format_source": "ast_verified",
+    "page_evidence": {
+      "_index": true,
+      "api_reference": true,
+      "feature_blog": true,
+      "format_conversion": true,
+      "howto_article": true,
+      "install_guide": true
+    },
+    "insufficient_details": {}
+  },
+  "cells/python": {
+    "snippets": 36,
+    "claims": 148,
+    "formats": [
+      "CFB",
+      "CSV",
+      "JSON",
+      "MARKDOWN",
+      "TSV",
+      "TXT",
+      "XLSX",
+      "XML"
+    ],
+    "format_source": "ast_verified",
+    "page_evidence": {
+      "_index": true,
+      "api_reference": true,
+      "blog_announcement": true,
+      "faq": true,
+      "feature_blog": true,
+      "feature_showcase": true,
+      "format_conversion": true,
+      "howto_article": true,
+      "install_guide": true,
+      "landing": true,
+      "toc": true,
+      "troubleshooting": true,
+      "workflow_page": true
+    },
+    "insufficient_details": {}
+  },
+  "email/python": {
+    "snippets": 4,
+    "claims": 65,
+    "formats": [
+      "CFB",
+      "EML",
+      "MAPI",
+      "MSG"
+    ],
+    "format_source": "ast_verified",
+    "page_evidence": {
+      "_index": true,
+      "api_reference": true,
+      "blog_announcement": true,
+      "faq": true,
+      "feature_blog": true,
+      "feature_showcase": true,
+      "format_conversion": true,
+      "howto_article": true,
+      "install_guide": true,
+      "landing": true,
+      "toc": true,
+      "troubleshooting": true,
+      "workflow_page": true
+    },
+    "insufficient_details": {}
+  },
+  "note/python": {
+    "snippets": 37,
+    "claims": 165,
+    "formats": [
+      "HTML",
+      "ONE",
+      "PDF",
+      "TIFF"
+    ],
+    "format_source": "ast_verified",
+    "page_evidence": {
+      "_index": true,
+      "api_reference": true,
+      "feature_blog": true,
+      "format_conversion": true,
+      "howto_article": true,
+      "install_guide": true
+    },
+    "insufficient_details": {}
+  },
+  "slides/python": {
+    "snippets": 40,
+    "claims": 225,
+    "formats": [
+      "PNG",
+      "PPTX"
+    ],
+    "format_source": "ast_verified",
+    "page_evidence": {
+      "_index": true,
+      "api_reference": true,
+      "blog_announcement": true,
+      "faq": true,
+      "feature_blog": true,
+      "feature_showcase": true,
+      "format_conversion": true,
+      "howto_article": true,
+      "install_guide": true,
+      "landing": true,
+      "toc": true,
+      "troubleshooting": true,
+      "workflow_page": true
+    },
+    "insufficient_details": {}
+  }
+}

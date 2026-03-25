@@ -1,0 +1,22 @@
+{
+  "budget_log_overflow_count": 0,
+  "build_systems": [
+    "npm"
+  ],
+  "by_category": {
+    "asset": 3,
+    "config": 3,
+    "doc": 2,
+    "source": 152,
+    "test": 33
+  },
+  "content_used_bytes": 473001,
+  "files_enumerated": 193,
+  "files_read": 192,
+  "has_ci": false,
+  "has_docs_folder": false,
+  "has_examples_folder": false,
+  "has_tests": true,
+  "package_name": "@aspose/3d",
+  "primary_language": "typescript"
+}

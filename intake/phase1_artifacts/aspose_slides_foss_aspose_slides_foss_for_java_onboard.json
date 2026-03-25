@@ -1,0 +1,1082 @@
+{
+  "acquisition": {
+    "acquisition_confidence": "low",
+    "canonical_import": "com.aspose.slides",
+    "clone_cache_hit": true,
+    "discovered_at": "2026-03-21T13:33:09.336235+00:00",
+    "display_name": "Aspose.Slides FOSS for Java",
+    "failure_state": "",
+    "family": "slides",
+    "field_provenance": {
+      "canonical_import": "families_yaml",
+      "display_name": "families_yaml",
+      "runtime_import": "inferred_default"
+    },
+    "is_fresh_clone": false,
+    "launch_tier": "core",
+    "phase": "phase1_acquisition",
+    "platform": "java",
+    "repo_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\intake\\.clone_cache\\po_slides_java",
+    "repo_sha": "44597f1a09feb16ed1b6f29a1c6b939df4415863",
+    "repo_signals": {
+      "detected_manifest_files": [
+        "pom.xml"
+      ],
+      "files_estimated": 11,
+      "inferred_language": "java",
+      "is_empty_clone": false,
+      "readme_present": true
+    },
+    "repo_url": "https://github.com/aspose-slides-foss/Aspose.Slides-FOSS-for-Java",
+    "runtime_import": ""
+  },
+  "canonical_import": "com.aspose.slides",
+  "classification": {
+    "decision": "eligible",
+    "full_name": "aspose-slides-foss/Aspose.Slides-FOSS-for-Java",
+    "reasons": [
+      "source-grounded phase1 inspection passed"
+    ]
+  },
+  "display_name": "Aspose.Slides FOSS for Java",
+  "family": "slides",
+  "phase": "phase1_inspection",
+  "platform": "java",
+  "repo": {
+    "archived": false,
+    "created_at": "2026-03-18T15:39:39Z",
+    "default_branch": "main",
+    "description": "The official open-source Java library by Aspose.Slides for creating, reading, and editing PowerPoint (`.pptx`) presentations.",
+    "fork": false,
+    "full_name": "aspose-slides-foss/Aspose.Slides-FOSS-for-Java",
+    "html_url": "https://github.com/aspose-slides-foss/Aspose.Slides-FOSS-for-Java",
+    "id": 1185448261,
+    "is_template": false,
+    "language": "Java",
+    "license": {
+      "name": "MIT License",
+      "spdx_id": "MIT"
+    },
+    "name": "Aspose.Slides-FOSS-for-Java",
+    "owner": {
+      "login": "aspose-slides-foss",
+      "type": "Organization"
+    },
+    "pushed_at": "2026-03-18T18:57:06Z",
+    "size": 563,
+    "stargazers_count": 0,
+    "topics": [
+      "pptx",
+      "presentation",
+      "slides"
+    ],
+    "updated_at": "2026-03-20T18:17:53Z"
+  },
+  "runtime_import": "",
+  "scout": {
+    "budget_log": [
+      {
+        "category": "doc",
+        "path": "AGENTS.md",
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 7254
+      },
+      {
+        "category": "source",
+        "path": "src/main/java/org/aspose/slides/foss/Shape.java",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 19413
+      },
+      {
+        "category": "source",
+        "path": "src/main/java/org/aspose/slides/foss/GeometryShape.java",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 20380
+      },
+      {
+        "category": "source",
+        "path": "src/main/java/org/aspose/slides/foss/TextFrameFormat.java",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 21690
+      },
+      {
+        "category": "source",
+        "path": "src/main/java/org/aspose/slides/foss/LineFormat.java",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 23064
+      },
+      {
+        "category": "source",
+        "path": "src/main/java/org/aspose/slides/foss/internal/pptx/CommentsPart.java",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 23246
+      },
+      {
+        "category": "source",
+        "path": "src/main/java/org/aspose/slides/foss/ShapeType.java",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 23868
+      },
+      {
+        "category": "source",
+        "path": "src/main/java/org/aspose/slides/foss/internal/pptx/NotesSlidePart.java",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 26866
+      },
+      {
+        "category": "source",
+        "path": "src/main/java/org/aspose/slides/foss/SlideCollection.java",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 27318
+      },
+      {
+        "category": "source",
+        "path": "src/main/java/org/aspose/slides/foss/Presentation.java",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 36393
+      },
+      {
+        "category": "source",
+        "path": "src/main/java/org/aspose/slides/foss/ShapeCollection.java",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 43105
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/NotesSizeTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 653
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/IMasterSlideCollectionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 773
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/SlideTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 1178
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/PortionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 1350
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ParagraphTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 1390
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/internal/pptx/TemplateTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 1660
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/LineDashStyleTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 1752
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/LineFormatColorWidthTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 1873
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/internal/pptx/ShapeTypeMappingTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 2186
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/MasterSlideTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 2364
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/TextEnumsTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 2536
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/FontDataTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 2609
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/internal/pptx/TableStyleMappingTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 2634
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/drawing/SizeFTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 2672
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/FillTypeTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 2784
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/LineEnumsTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 2831
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/drawing/PointFTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 2865
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/LineDashStyleIntegrationTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 2902
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/CellFormatBorderTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 2918
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/TableFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 2967
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ThreeDFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 3185
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/effects/GlowTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 3199
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/effects/SoftEdgeTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 3214
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/drawing/SizeTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 3265
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/NotesSlideTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 3436
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/FillFormatEnumsTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 3447
+      },
+      {
+        "category": "test",
+        "path": "tests/test_data/lotus.png",
+        "reason": "source_reserve",
+        "size_bytes": 3462
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ImagesTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 3725
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/GeometryShapeFrameTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 3755
+      },
+      {
+        "category": "test",
+        "path": "tests/integration/org/aspose/slides/foss/integration/DocumentPropertiesTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 3813
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/GradientStopTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 3826
+      },
+      {
+        "category": "test",
+        "path": "tests/integration/org/aspose/slides/foss/integration/NotesSlideTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 3877
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/PatternFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 3878
+      },
+      {
+        "category": "test",
+        "path": "tests/integration/org/aspose/slides/foss/integration/PresentationTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 3934
+      },
+      {
+        "category": "test",
+        "path": "tests/integration/org/aspose/slides/foss/integration/LineFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 3999
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ISlideCollectionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 4021
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/export/SaveFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 4025
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/IImageTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 4097
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ImageTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 4120
+      },
+      {
+        "category": "test",
+        "path": "tests/integration/org/aspose/slides/foss/integration/ImagesTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 4193
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/IGradientFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 4203
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/IParagraphCollectionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 4354
+      },
+      {
+        "category": "test",
+        "path": "tests/integration/org/aspose/slides/foss/integration/ThreeDFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 4356
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/effects/BlurTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 4512
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/MiscEnumsTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 4709
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/TestHelpers.java",
+        "reason": "source_reserve",
+        "size_bytes": 4845
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/IAutoShapeTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 4904
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/internal/opc/OpcPackageTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 4940
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/CommentCollectionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 5026
+      },
+      {
+        "category": "test",
+        "path": "tests/integration/org/aspose/slides/foss/integration/TextTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 5040
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/IShapeFrameTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 5117
+      },
+      {
+        "category": "test",
+        "path": "tests/integration/org/aspose/slides/foss/integration/SlidesTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 5237
+      },
+      {
+        "category": "test",
+        "path": "tests/integration/org/aspose/slides/foss/integration/EffectFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 5330
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/CommentAuthorCollectionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 5419
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/effects/FillOverlayTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 5449
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ILineFillFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 5471
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/IShapeBevelTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 5540
+      },
+      {
+        "category": "test",
+        "path": "tests/integration/org/aspose/slides/foss/integration/FillFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 5596
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/AdjustValueTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 5690
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/internal/opc/ContentTypesManagerTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 5782
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/AdjustValueCollectionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 5822
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/IPortionCollectionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 5844
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/LightRigTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 5873
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/BaseSlideConnectorTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6036
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/PictureTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6047
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/PPImageTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6052
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/NotesSlideHeaderFooterManagerTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6098
+      },
+      {
+        "category": "test",
+        "path": "tests/integration/org/aspose/slides/foss/integration/ConnectorTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6172
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ITextFrameTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6252
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/CameraTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6256
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/LineFormatEnumsTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6265
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/effects/InnerShadowTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6334
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/effects/PresetShadowTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6419
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/IPresentationTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6588
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/EnumsContractTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6613
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/IPPImageTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6658
+      },
+      {
+        "category": "test",
+        "path": "tests/integration/org/aspose/slides/foss/integration/TextFormattingTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6711
+      },
+      {
+        "category": "test",
+        "path": "tests/integration/org/aspose/slides/foss/integration/ShapesTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6722
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/internal/pptx/LayoutSlidePartTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6827
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/drawing/ColorTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 6979
+      },
+      {
+        "category": "test",
+        "path": "tests/integration/org/aspose/slides/foss/integration/CommentsTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 7023
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ITableTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 7146
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ImageCollectionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 7177
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ShapeBevelTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 7230
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/PictureFillFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 7381
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/CommentTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 7449
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/EffectFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 7542
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/CellCollectionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 7677
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ColumnTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 7926
+      },
+      {
+        "category": "test",
+        "path": "tests/integration/org/aspose/slides/foss/integration/TableTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 8429
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/GradientStopCollectionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 8636
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/RowTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 8805
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/internal/opc/RelationshipsManagerTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 8868
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/PortionCollectionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 8891
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/IShapeTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 9048
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/IRowCollectionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 9204
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/IGeometryShapeTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 9609
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ParagraphCollectionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 9648
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/TextFrameFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 10014
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/FillFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 11112
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/PictureFrameTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 12311
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ColumnCollectionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 13071
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/effects/OuterShadowTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 13555
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/IPictureFillFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 13703
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ShapeTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 14132
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ShapeTypeTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 14177
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ColorFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 14281
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/IShapeCollectionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 14648
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ParagraphFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 14661
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/ConnectorTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 15316
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/LineFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 15844
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/AutoShapeTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 16289
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/CellTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 16458
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/BulletFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 17898
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/effects/ReflectionTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 18974
+      },
+      {
+        "category": "test",
+        "path": "src/test/java/org/aspose/slides/foss/BasePortionFormatTest.java",
+        "reason": "source_reserve",
+        "size_bytes": 20335
+      },
+      {
+        "category": "test",
+        "path": "tests/test_data/image_example.jpg",
+        "reason": "source_reserve",
+        "size_bytes": 140425
+      },
+      {
+        "category": "asset",
+        "path": "LICENSE",
+        "reason": "source_reserve",
+        "size_bytes": 1090
+      },
+      {
+        "category": "asset",
+        "path": ".clone_timestamp",
+        "reason": "source_reserve",
+        "size_bytes": 32
+      },
+      {
+        "category": "asset",
+        "path": ".clone_sha",
+        "reason": "source_reserve",
+        "size_bytes": 40
+      },
+      {
+        "category": "asset",
+        "path": ".clone_url",
+        "reason": "source_reserve",
+        "size_bytes": 65
+      },
+      {
+        "category": "asset",
+        "path": "src/main/resources/org/aspose/slides/foss/internal/pptx/Template.pptx",
+        "reason": "source_reserve",
+        "size_bytes": 528
+      }
+    ],
+    "budget_log_overflow_count": 0,
+    "by_category": {
+      "asset": 5,
+      "config": 2,
+      "doc": 2,
+      "source": 277,
+      "test": 117
+    },
+    "content_used_bytes": 986401,
+    "doc_paths": [
+      "README.md"
+    ],
+    "doc_selection": [
+      {
+        "decision": "kept",
+        "importance_rank": 7,
+        "language": "",
+        "path": "README.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 6753
+      },
+      {
+        "decision": "skipped",
+        "importance_rank": 4,
+        "language": "",
+        "path": "AGENTS.md",
+        "readable_in_repo_content": false,
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 7254
+      }
+    ],
+    "example_paths": [],
+    "example_selection": [],
+    "files_enumerated": 403,
+    "files_read": 270,
+    "selected_doc_count": 1,
+    "selected_example_count": 0,
+    "skip_counts_approximate": false,
+    "skip_reason_counts": {
+      "doc_ineligible_meta": 1,
+      "file_too_large_for_remaining_budget": 10,
+      "source_reserve": 122
+    },
+    "skipped_paths": [
+      "AGENTS.md",
+      "src/main/java/org/aspose/slides/foss/Shape.java",
+      "src/main/java/org/aspose/slides/foss/GeometryShape.java",
+      "src/main/java/org/aspose/slides/foss/TextFrameFormat.java",
+      "src/main/java/org/aspose/slides/foss/LineFormat.java",
+      "src/main/java/org/aspose/slides/foss/internal/pptx/CommentsPart.java",
+      "src/main/java/org/aspose/slides/foss/ShapeType.java",
+      "src/main/java/org/aspose/slides/foss/internal/pptx/NotesSlidePart.java",
+      "src/main/java/org/aspose/slides/foss/SlideCollection.java",
+      "src/main/java/org/aspose/slides/foss/Presentation.java",
+      "src/main/java/org/aspose/slides/foss/ShapeCollection.java",
+      "src/test/java/org/aspose/slides/foss/NotesSizeTest.java",
+      "src/test/java/org/aspose/slides/foss/IMasterSlideCollectionTest.java",
+      "src/test/java/org/aspose/slides/foss/SlideTest.java",
+      "src/test/java/org/aspose/slides/foss/PortionTest.java",
+      "src/test/java/org/aspose/slides/foss/ParagraphTest.java",
+      "src/test/java/org/aspose/slides/foss/internal/pptx/TemplateTest.java",
+      "src/test/java/org/aspose/slides/foss/LineDashStyleTest.java",
+      "src/test/java/org/aspose/slides/foss/LineFormatColorWidthTest.java",
+      "src/test/java/org/aspose/slides/foss/internal/pptx/ShapeTypeMappingTest.java",
+      "src/test/java/org/aspose/slides/foss/MasterSlideTest.java",
+      "src/test/java/org/aspose/slides/foss/TextEnumsTest.java",
+      "src/test/java/org/aspose/slides/foss/FontDataTest.java",
+      "src/test/java/org/aspose/slides/foss/internal/pptx/TableStyleMappingTest.java",
+      "src/test/java/org/aspose/slides/foss/drawing/SizeFTest.java",
+      "src/test/java/org/aspose/slides/foss/FillTypeTest.java",
+      "src/test/java/org/aspose/slides/foss/LineEnumsTest.java",
+      "src/test/java/org/aspose/slides/foss/drawing/PointFTest.java",
+      "src/test/java/org/aspose/slides/foss/LineDashStyleIntegrationTest.java",
+      "src/test/java/org/aspose/slides/foss/CellFormatBorderTest.java",
+      "src/test/java/org/aspose/slides/foss/TableFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/ThreeDFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/effects/GlowTest.java",
+      "src/test/java/org/aspose/slides/foss/effects/SoftEdgeTest.java",
+      "src/test/java/org/aspose/slides/foss/drawing/SizeTest.java",
+      "src/test/java/org/aspose/slides/foss/NotesSlideTest.java",
+      "src/test/java/org/aspose/slides/foss/FillFormatEnumsTest.java",
+      "tests/test_data/lotus.png",
+      "src/test/java/org/aspose/slides/foss/ImagesTest.java",
+      "src/test/java/org/aspose/slides/foss/GeometryShapeFrameTest.java",
+      "tests/integration/org/aspose/slides/foss/integration/DocumentPropertiesTest.java",
+      "src/test/java/org/aspose/slides/foss/GradientStopTest.java",
+      "tests/integration/org/aspose/slides/foss/integration/NotesSlideTest.java",
+      "src/test/java/org/aspose/slides/foss/PatternFormatTest.java",
+      "tests/integration/org/aspose/slides/foss/integration/PresentationTest.java",
+      "tests/integration/org/aspose/slides/foss/integration/LineFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/ISlideCollectionTest.java",
+      "src/test/java/org/aspose/slides/foss/export/SaveFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/IImageTest.java",
+      "src/test/java/org/aspose/slides/foss/ImageTest.java",
+      "tests/integration/org/aspose/slides/foss/integration/ImagesTest.java",
+      "src/test/java/org/aspose/slides/foss/IGradientFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/IParagraphCollectionTest.java",
+      "tests/integration/org/aspose/slides/foss/integration/ThreeDFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/effects/BlurTest.java",
+      "src/test/java/org/aspose/slides/foss/MiscEnumsTest.java",
+      "src/test/java/org/aspose/slides/foss/TestHelpers.java",
+      "src/test/java/org/aspose/slides/foss/IAutoShapeTest.java",
+      "src/test/java/org/aspose/slides/foss/internal/opc/OpcPackageTest.java",
+      "src/test/java/org/aspose/slides/foss/CommentCollectionTest.java",
+      "tests/integration/org/aspose/slides/foss/integration/TextTest.java",
+      "src/test/java/org/aspose/slides/foss/IShapeFrameTest.java",
+      "tests/integration/org/aspose/slides/foss/integration/SlidesTest.java",
+      "tests/integration/org/aspose/slides/foss/integration/EffectFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/CommentAuthorCollectionTest.java",
+      "src/test/java/org/aspose/slides/foss/effects/FillOverlayTest.java",
+      "src/test/java/org/aspose/slides/foss/ILineFillFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/IShapeBevelTest.java",
+      "tests/integration/org/aspose/slides/foss/integration/FillFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/AdjustValueTest.java",
+      "src/test/java/org/aspose/slides/foss/internal/opc/ContentTypesManagerTest.java",
+      "src/test/java/org/aspose/slides/foss/AdjustValueCollectionTest.java",
+      "src/test/java/org/aspose/slides/foss/IPortionCollectionTest.java",
+      "src/test/java/org/aspose/slides/foss/LightRigTest.java",
+      "src/test/java/org/aspose/slides/foss/BaseSlideConnectorTest.java",
+      "src/test/java/org/aspose/slides/foss/PictureTest.java",
+      "src/test/java/org/aspose/slides/foss/PPImageTest.java",
+      "src/test/java/org/aspose/slides/foss/NotesSlideHeaderFooterManagerTest.java",
+      "tests/integration/org/aspose/slides/foss/integration/ConnectorTest.java",
+      "src/test/java/org/aspose/slides/foss/ITextFrameTest.java",
+      "src/test/java/org/aspose/slides/foss/CameraTest.java",
+      "src/test/java/org/aspose/slides/foss/LineFormatEnumsTest.java",
+      "src/test/java/org/aspose/slides/foss/effects/InnerShadowTest.java",
+      "src/test/java/org/aspose/slides/foss/effects/PresetShadowTest.java",
+      "src/test/java/org/aspose/slides/foss/IPresentationTest.java",
+      "src/test/java/org/aspose/slides/foss/EnumsContractTest.java",
+      "src/test/java/org/aspose/slides/foss/IPPImageTest.java",
+      "tests/integration/org/aspose/slides/foss/integration/TextFormattingTest.java",
+      "tests/integration/org/aspose/slides/foss/integration/ShapesTest.java",
+      "src/test/java/org/aspose/slides/foss/internal/pptx/LayoutSlidePartTest.java",
+      "src/test/java/org/aspose/slides/foss/drawing/ColorTest.java",
+      "tests/integration/org/aspose/slides/foss/integration/CommentsTest.java",
+      "src/test/java/org/aspose/slides/foss/ITableTest.java",
+      "src/test/java/org/aspose/slides/foss/ImageCollectionTest.java",
+      "src/test/java/org/aspose/slides/foss/ShapeBevelTest.java",
+      "src/test/java/org/aspose/slides/foss/PictureFillFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/CommentTest.java",
+      "src/test/java/org/aspose/slides/foss/EffectFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/CellCollectionTest.java",
+      "src/test/java/org/aspose/slides/foss/ColumnTest.java",
+      "tests/integration/org/aspose/slides/foss/integration/TableTest.java",
+      "src/test/java/org/aspose/slides/foss/GradientStopCollectionTest.java",
+      "src/test/java/org/aspose/slides/foss/RowTest.java",
+      "src/test/java/org/aspose/slides/foss/internal/opc/RelationshipsManagerTest.java",
+      "src/test/java/org/aspose/slides/foss/PortionCollectionTest.java",
+      "src/test/java/org/aspose/slides/foss/IShapeTest.java",
+      "src/test/java/org/aspose/slides/foss/IRowCollectionTest.java",
+      "src/test/java/org/aspose/slides/foss/IGeometryShapeTest.java",
+      "src/test/java/org/aspose/slides/foss/ParagraphCollectionTest.java",
+      "src/test/java/org/aspose/slides/foss/TextFrameFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/FillFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/PictureFrameTest.java",
+      "src/test/java/org/aspose/slides/foss/ColumnCollectionTest.java",
+      "src/test/java/org/aspose/slides/foss/effects/OuterShadowTest.java",
+      "src/test/java/org/aspose/slides/foss/IPictureFillFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/ShapeTest.java",
+      "src/test/java/org/aspose/slides/foss/ShapeTypeTest.java",
+      "src/test/java/org/aspose/slides/foss/ColorFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/IShapeCollectionTest.java",
+      "src/test/java/org/aspose/slides/foss/ParagraphFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/ConnectorTest.java",
+      "src/test/java/org/aspose/slides/foss/LineFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/AutoShapeTest.java",
+      "src/test/java/org/aspose/slides/foss/CellTest.java",
+      "src/test/java/org/aspose/slides/foss/BulletFormatTest.java",
+      "src/test/java/org/aspose/slides/foss/effects/ReflectionTest.java",
+      "src/test/java/org/aspose/slides/foss/BasePortionFormatTest.java",
+      "tests/test_data/image_example.jpg",
+      "LICENSE",
+      ".clone_timestamp",
+      ".clone_sha",
+      ".clone_url",
+      "src/main/resources/org/aspose/slides/foss/internal/pptx/Template.pptx"
+    ],
+    "truncated_files": []
+  },
+  "shared_facts": {
+    "build_systems": [
+      "maven"
+    ],
+    "dependencies": [
+      "org.junit.jupiter:junit-jupiter-api",
+      "org.junit.jupiter:junit-jupiter-engine",
+      "org.junit.jupiter:junit-jupiter-params",
+      "org.assertj:assertj-core"
+    ],
+    "description": "Open-source Java library for creating, reading, and editing PowerPoint (.pptx) presentations.",
+    "entrypoints": [],
+    "has_ci": false,
+    "has_docs_folder": false,
+    "has_examples_folder": false,
+    "has_tests": true,
+    "install_command": "mvn dependency:get -Dartifact=org.aspose.slides.foss:aspose-slides-foss",
+    "license_type": "MIT License",
+    "module_path": "",
+    "package_name": "org.aspose.slides.foss:aspose-slides-foss",
+    "primary_language": "java",
+    "python_requires": "",
+    "version": "1.0.0"
+  }
+}

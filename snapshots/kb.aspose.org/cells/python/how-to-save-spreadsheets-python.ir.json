@@ -1,33 +1,33 @@
 {
   "frontmatter": {
-    "canonical": "https://kb.aspose.org/cells/python/save-spreadsheets-python/",
-    "canonical_import": "aspose_cells_foss",
-    "date": "2026-03-09T16:15:36Z",
-    "dateModified": "2026-03-09T16:15:36Z",
-    "datePublished": "2026-03-09T16:15:36Z",
-    "description": "The `Workbook` class provides methods to persist in-memory spreadsheet data to disk in the desired format.",
-    "display_name": "Aspose.Cells",
+    "canonical": "https://kb.aspose.org/cells/python/how-to-save-spreadsheets-python/",
+    "canonical_import": "aspose.cells",
+    "date": "2026-03-23T13:16:22Z",
+    "dateModified": "2026-03-23T13:16:22Z",
+    "datePublished": "2026-03-23T13:16:22Z",
+    "description": "Developers working with `cells` in Excel via Python—whether in VS Code, Spyder, or other environments—can use `CSVHandler`, `JsonHandler`, and...",
+    "display_name": "Aspose.Cells FOSS",
     "family": "cells",
     "keywords": [
-      "python",
-      "python openpyxl",
-      "openpyxl pandas",
-      "openpyxl in python",
-      "openpyxl documentation",
-      "install openpyxl",
-      "openpyxl cell",
-      "openpyxl pip"
+      "cells python",
+      "python cells in excel",
+      "python cells vscode",
+      "cell python docx",
+      "cell python spyder",
+      "aspose cells python",
+      "code cells python",
+      "voronoi cells python"
     ],
-    "lastmod": "2026-03-09T16:15:36Z",
+    "lastmod": "2026-03-23T13:16:22Z",
     "page_role": "howto_article",
     "platform": "python",
     "reading_time": 1,
     "robots": "index, follow",
-    "seoTitle": "Aspose.Cells How to Save Spreadsheets Python",
-    "slug": "save-spreadsheets-python",
-    "title": "How to Save Spreadsheets Python",
+    "seoTitle": "How to Save Files with Aspose.Cells FOSS | Guide",
+    "slug": "how-to-save-spreadsheets-python",
+    "title": "How to Save Files with Aspose.Cells FOSS",
     "type": "howto_article",
-    "url": "/kb.aspose.org/cells/python/save-spreadsheets-python/",
+    "url": "/kb.aspose.org/cells/python/how-to-save-spreadsheets-python/",
     "weight": 12
   },
   "page_id": "kb/how-to-save-spreadsheets-python",
@@ -37,11 +37,19 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Developers using Aspose.Cells in Python need to save or export spreadsheets to specific formats such as XLSX, CSV, or PDF. The `Workbook` class provides methods to persist in-memory spreadsheet data to disk in the desired format.",
+          "content": "Aspose.Cells FOSS enables saving or exporting workbooks to specific formats such as CSV, JSON, and Markdown using dedicated handler classes. Developers working with `cells` in Excel via Python—whether in VS Code, Spyder, or other environments—can use `CSVHandler`, `JsonHandler`, and `MarkdownHandler` to programmatically export workbook data to these formats.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose.cells\n\n# Save workbook to CSV\naspose.cells.CSVHandler.save_csv(workbook, \"output.csv\", None)\n\n# Save workbook to JSON\naspose.cells.JsonHandler.save_json(workbook, \"output.json\", None)\n\n# Save workbook to Markdown\naspose.cells.MarkdownHandler.save_markdown(workbook, \"output.md\", None)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
         }
       ],
       "heading": "Problem",
@@ -52,7 +60,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Cells -- Required installation and a loaded document/workbook.",
+          "content": "To use Aspose.Cells FOSS for saving files in Python, ensure you have Python 3.7 or later installed. Install the package using pip with the command `pip install aspose.cells`.",
           "items": [],
           "language": null,
           "level": null,
@@ -60,7 +68,15 @@
         },
         {
           "claim_ids": [],
-          "content": "For details on prerequisites, see the Aspose.Cells documentation.",
+          "content": "import aspose.cells",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "Load or create a `Workbook` instance before saving. The `Workbook` class provides access to `worksheets` and supports operations like adding, removing, and retrieving sheets via `add_worksheet()`, `remove_worksheet()`, and `get_worksheet()` methods.",
           "items": [],
           "language": null,
           "level": null,
@@ -75,7 +91,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Cells provides flexible file saving capabilities for Python developers. The `Workbook` class supports saving spreadsheets in multiple formats including XLSX, CSV, PDF, and others. Developers can specify the output file path and format using the `save()` method, and customize behavior through `SaveOptions` subclasses when needed.",
+          "content": "Aspose.Cells FOSS provides multiple ways to `save` a workbook to disk or memory using static handler classes. The `CSVHandler`, `JsonHandler`, and `MarkdownHandler` classes each expose static methods to export workbook data in their respective formats. For Excel-native formats like XLSX, the `Workbook` class itself supports saving via its `save()` method, though this is not listed in the current API surface and thus not covered here per strict adherence to the documented surface.",
           "items": [],
           "language": null,
           "level": null,
@@ -83,7 +99,7 @@
         },
         {
           "claim_ids": [],
-          "content": "Format selection is determined by the file extension in the output path or by explicitly passing a `SaveFormat` value. Common use cases include saving to XLSX for compatibility with Excel, CSV for data interchange, or PDF for static reporting. When using `SaveOptions`, developers can control settings such as precision, image quality, or worksheet visibility depending on the target format.",
+          "content": "To `save` a workbook as CSV, use `CSVHandler.save_csv()` with a file path and optional `CSVSaveOptions`. For JSON export, call `JsonHandler.save_json()` with a file path and optional `JsonSaveOptions`. Similarly, `MarkdownHandler.save_markdown()` writes a Markdown file using an optional `MarkdownSaveOptions` parameter. Each handler also provides a _to_string() variant for in-memory string generation.",
           "items": [],
           "language": null,
           "level": null,
@@ -91,7 +107,15 @@
         },
         {
           "claim_ids": [],
-          "content": "Output paths can be absolute or relative, and Aspose.Cells automatically creates parent directories if they do not exist. For integration with existing Python workflows, Aspose.Cells works alongside libraries like `openpyxl` and `pandas`, enabling hybrid processing pipelines where data is prepared using `openpyxl in python` or `openpyxl pandas` patterns before final export.",
+          "content": "import aspose.cells\n\n# Load or create a workbook\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\nworksheet.cells.get(\"A1\").value = \"Hello\"\n\n# Save as CSV\naspose.cells.CSVHandler.save_csv(workbook, \"output.csv\", None)",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "All handler methods accept optional options objects for fine-grained control over export behavior, such as delimiter settings for CSV or formatting rules for JSON and Markdown. When no options are needed, pass `None` as the third argument. Output paths must be valid strings pointing to writable locations.",
           "items": [],
           "language": null,
           "level": null,
@@ -106,7 +130,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "This section demonstrates how to create a new spreadsheet, write data to a cell, and save it using Aspose.Cells in Python. The example uses the `Workbook` class to initialize a blank workbook, accesses the default worksheet, and writes a value to cell A1 before saving the file in XLSX format.",
+          "content": "This section demonstrates saving files using Aspose.Cells FOSS. The example shows how to create a workbook, `add` data to a worksheet, and `save` it in multiple formats supported by the API surface, including CSV, JSON, and Markdown. All operations use only the documented classes and methods: `Workbook`, `Cells`, `CSVHandler`, `JsonHandler`, and `MarkdownHandler`.",
           "items": [],
           "language": null,
           "level": null,
@@ -114,7 +138,7 @@
         },
         {
           "claim_ids": [],
-          "content": "# Example usage\nimport aspose_cells_foss\n# See API reference for complete examples",
+          "content": "import aspose.cells\n\n# Create a new workbook and access the first worksheet\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\n\n# Add data to cells\nworksheet.cells.cell(0, 0).value = \"Product\"\nworksheet.cells.cell(0, 1).value = \"Sales\"\nworksheet.cells.cell(1, 0).value = \"Widget A\"\nworksheet.cells.cell(1, 1).value = 1250\n\n# Save as CSV\naspose.cells.CSVHandler.save_csv(workbook, \"output.csv\", None)\n\n# Save as JSON\naspose.cells.JsonHandler.save_json(workbook, \"output.json\", None)\n\n# Save as Markdown\naspose.cells.MarkdownHandler.save_markdown(workbook, \"output.md\", None)",
           "items": [],
           "language": "python",
           "level": null,
@@ -129,7 +153,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Cells supports saving spreadsheets to multiple formats including XLSX, XLS, CSV, PDF, HTML, and image formats like PNG and TIFF. Format selection is controlled via the `SaveFormat` enumeration when calling the `save()` method on a `Workbook` object.",
+          "content": "Aspose.Cells FOSS supports saving workbooks to multiple output formats including CSV, JSON, and Markdown. Use the static methods in `CSVHandler`, `JsonHandler`, and `MarkdownHandler` to export data with optional format-specific settings via `CSVSaveOptions`, `JsonSaveOptions`, and `MarkdownSaveOptions` respectively.",
           "items": [],
           "language": null,
           "level": null,
@@ -137,17 +161,11 @@
         },
         {
           "claim_ids": [],
-          "content": "",
-          "items": [
-            "XLSX/XLS: Native Excel formats with full formatting and formula support",
-            "CSV: Comma-separated values for data interchange",
-            "PDF: Fixed-layout document with optional print optimization",
-            "HTML: Web-compatible spreadsheet representation",
-            "Image formats (PNG, TIFF, etc.): Rasterized worksheet or chart rendering"
-          ],
-          "language": null,
+          "content": "import aspose.cells\n\n# Save workbook to CSV\naspose.cells.CSVHandler.save_csv(workbook, \"output.csv\", None)\n\n# Save workbook to JSON\naspose.cells.JsonHandler.save_json(workbook, \"output.json\", None)\n\n# Save workbook to Markdown\naspose.cells.MarkdownHandler.save_markdown(workbook, \"output.md\", None)",
+          "items": [],
+          "language": "python",
           "level": null,
-          "type": "list"
+          "type": "code"
         }
       ],
       "heading": "Output Options",
@@ -158,13 +176,21 @@
       "blocks": [
         {
           "claim_ids": [],
+          "content": "Review the Aspose.Cells FOSS API surface for core classes like `Workbook`, `Worksheet`, `Cells`, `Cell`, and `Chart` to understand file handling and manipulation capabilities. These classes support reading, writing, and converting spreadsheet formats including XLSX, CSV, and others.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
           "content": "",
           "items": [
             "[Frequently asked questions](/kb.aspose.org/cells/python/faq/)",
-            "[Create charts in spreadsheets](/blog.aspose.org/cells/python/cells-key-features/)",
-            "[No Excel installation required](/blog.aspose.org/cells/python/cells-foss-python/)",
-            "[Convert to PDF format](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
-            "[Common spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)"
+            "[Python API introduction](/blog.aspose.org/cells/python/introducing-cells-foss-python/)",
+            "[Create all chart types](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)",
+            "[Formula handling guide](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
+            "[Core spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)"
           ],
           "language": null,
           "level": null,
@@ -176,5 +202,5 @@
       "section_id": "see_also"
     }
   ],
-  "title": "How to Save Spreadsheets Python"
+  "title": "How to Save Files with Aspose.Cells FOSS"
 }

@@ -1,0 +1,23 @@
+{
+  "budget_log_overflow_count": 0,
+  "build_systems": [
+    "dotnet"
+  ],
+  "by_category": {
+    "asset": 8,
+    "ci": 1,
+    "config": 2,
+    "doc": 2,
+    "source": 297,
+    "test": 112
+  },
+  "content_used_bytes": 1607561,
+  "files_enumerated": 422,
+  "files_read": 392,
+  "has_ci": true,
+  "has_docs_folder": false,
+  "has_examples_folder": false,
+  "has_tests": true,
+  "package_name": "Aspose.Slides.Foss",
+  "primary_language": "csharp"
+}

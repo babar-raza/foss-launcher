@@ -1,0 +1,313 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/slides/dotnet/developer-guide/slide-manipulation/",
+    "canonical_import": "Aspose.Slides",
+    "code_import": "Aspose.Slides",
+    "date": "2026-03-24T17:07:48Z",
+    "dateModified": "2026-03-24T17:07:48Z",
+    "datePublished": "2026-03-24T17:07:48Z",
+    "description": "The workflow starts with a `.pptx` file as input and ends with a modified `.pptx` file as output, using core slide and shape management capabilities.",
+    "display_name": "Aspose.Slides",
+    "family": "slides",
+    "keywords": [
+      "python slides",
+      "python slides for beginners",
+      "python slideshare",
+      "python slideshow",
+      "python slides ppt",
+      "python slides pdf",
+      "python slideshow py",
+      "python slideshow with transitions"
+    ],
+    "lastmod": "2026-03-24T17:07:48Z",
+    "page_role": "workflow_page",
+    "platform": "dotnet",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Work with Slides with Aspose.Slides | Guide",
+    "slug": "slide-manipulation",
+    "title": "Work with Slides with Aspose.Slides",
+    "type": "workflow_page",
+    "url": "/docs.aspose.org/slides/dotnet/developer-guide/slide-manipulation/",
+    "weight": 19
+  },
+  "page_id": "docs/slide-manipulation",
+  "page_role": "workflow_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "This guide walks you through working with slides in Aspose.Slides for .NET—loading a presentation, accessing its slides, and saving changes. The workflow starts with a `.pptx` file as input and ends with a modified `.pptx` file as output, using core slide and shape management capabilities.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "using Aspose.Slides;\n\n// Load an existing presentation\nusing var presentation = new Presentation(\"input.pptx\");\n\n// Access the first slide\nvar slide = presentation.Slides[0];\n\n// Save the modified presentation\npresentation.Save(\"output.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Use this approach when updating slide content in batch processing pipelines.",
+            "Apply when cloning slides between presentations for template reuse.",
+            "Use this pattern when iterating slides to inspect or modify shapes and text."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "This guide walks you through reading, writing, and modifying data elements in Aspose.Slides presentations. You start with a `.pptx` file, extract or update structured content such as text, fills, and formatting, and save the modified presentation—enabling programmatic control over slide data for reporting, automation, or integration workflows.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides exposes core data manipulation capabilities through classes like `BasePortionFormat`, `BulletFormat`, `FillFormat`, `ColorFormat`, and GradientStopCollection. These allow you to inspect and adjust formatting attributes, bullet styles, and color properties directly on slide elements.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "using Aspose.Slides;\n\nvar presentation = new Presentation(\"input.pptx\");\nvar slide = presentation.Slides[0];\nvar shape = slide.Shapes[0] as AutoShape;\nvar textFrame = shape.TextFrame;\nvar portion = textFrame.Paragraphs[0].Portions[0];\nvar format = portion.PortionFormat;\nformat.FillFormat.FillType = FillType.Solid;\nformat.FillFormat.SolidFillColor.Color = System.Drawing.Color.Red;\npresentation.Save(\"output.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Use this approach when applying consistent branding colors to text across multiple slides.",
+            "Apply dynamic fill updates to shapes based on data-driven conditions (e.g., status indicators).",
+            "Modify portion formatting before exporting to PDF or image formats to ensure visual fidelity."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [],
+          "content": "To read bullet formatting, access the `BulletFormat` object from a paragraph. The Type() method returns the bullet style (e.g., Symbol, Numbered, or `None`), and InsertPprChild() lets you add missing XML elements for bullet configuration.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "using Aspose.Slides;\n\nvar presentation = new Presentation(\"input.pptx\");\nvar slide = presentation.Slides[0];\nvar shape = slide.Shapes[0] as AutoShape;\nvar textFrame = shape.TextFrame;\nvar paragraph = textFrame.Paragraphs[0];\nvar bullet = paragraph.ParagraphFormat.Bullet;\nvar bulletType = bullet.Type();\nif (bulletType == BulletType.Symbol)\n{\n    bullet.InsertPprChild(\"buChar\");\n}\npresentation.Save(\"output.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Use this to detect and normalize bullet styles before generating standardized reports.",
+            "Rebuild missing bullet XML nodes when importing presentations with malformed formatting.",
+            "Convert numbered lists to symbolic ones for localization or accessibility compliance."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [],
+          "content": "Gradient fills are managed via GradientStopCollection, which holds color stops and their positions. `Add` new stops using `Add(position, color)` and persist changes with Save() on the parent slide part.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "using Aspose.Slides;\n\nvar presentation = new Presentation(\"input.pptx\");\nvar slide = presentation.Slides[0];\nvar shape = slide.Shapes[0] as AutoShape;\nvar fillFormat = shape.FillFormat;\nvar gradientStops = fillFormat.GradientStops;\ngradientStops.Add(0.0f, System.Drawing.Color.Blue);\ngradientStops.Add(1.0f, System.Drawing.Color.Yellow);\nfillFormat.Save();\npresentation.Save(\"output.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Apply multi-stop gradients to highlight key sections in marketing decks.",
+            "Dynamically generate gradient fills based on data ranges (e.g., heatmaps).",
+            "Ensure gradient fidelity when converting to image formats for web use."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Working with Data",
+      "level": 2,
+      "section_id": "working_with_data"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "This guide walks you through creating and manipulating slides in a PowerPoint presentation using Aspose.Slides for .NET. You start by loading or creating a presentation, then add a new slide, insert a shape, and save the result — all using only the documented API surface.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "using Aspose.Slides;\n\nvar presentation = new Presentation();\nvar slide = presentation.Slides.AddEmptySlide(presentation.LayoutSlides[0]);\nvar autoShape = slide.Shapes.AddAutoShape(ShapeType.Rectangle, 100, 100, 300, 150);\nautoShape.FillFormat.FillType = FillType.Solid;\nautoShape.FillFormat.SolidFillColor.Color = Color.Red;\npresentation.Save(\"output.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Use `AddEmptySlide()` to insert a new slide based on a layout slide.",
+            "Apply `AddAutoShape()` to place a rectangle with defined position and dimensions.",
+            "Set `FillType` and SolidFillColor to configure the shape’s fill appearance."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [],
+          "content": "Next, add text to the shape using the TextFrame and Portion objects. The TextFrame holds paragraphs, and each Paragraph contains one or more Portion objects with formatting. Only documented methods from the API surface are used.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "var textFrame = autoShape.TextFrame;\nvar paragraph = textFrame.Paragraphs.Add();\nvar portion = paragraph.Portions.Add();\nportion.Text = \"Hello, Aspose.Slides!\";\nportion.PortionFormat.FontHeight = 24;\nportion.PortionFormat.FillFormat.FillType = FillType.Solid;\nportion.PortionFormat.FillFormat.SolidFillColor.Color = Color.White;\npresentation.Save(\"output_with_text.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Use `TextFrame.Paragraphs.Add()` to create a new paragraph inside the shape.",
+            "Call `Portions.Add()` to add a text portion and set its content via Text.",
+            "Apply font size and fill color using PortionFormat properties."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [],
+          "content": "Finally, attach a comment to the slide using the `Comments` collection. Each comment includes author, timestamp, and text — all accessible through the IComment interface.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "var commentAuthor = presentation.Comments.AddAuthor(\"John Doe\", \"JD\");\nvar comment = presentation.Comments.AddComment(slide, new PointF(200, 200), \"Review this shape.\", commentAuthor, DateTime.Now);\ncomment.Text = \"Please verify dimensions.\";\npresentation.Save(\"output_with_comment.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Call `AddAuthor()` to register a comment author before adding comments.",
+            "Use `AddComment()` to attach a comment to a specific slide at a given point.",
+            "Modify the comment text via the Text() method on the IComment instance."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Code Examples",
+      "level": 2,
+      "section_id": "code_examples"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "When working with Aspose.Slides in .NET, managing memory efficiently and avoiding common pitfalls ensures stable performance during slide processing. Always dispose of Presentation objects after use to release unmanaged resources, especially when processing large presentations or running batch operations.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Call `Presentation.Dispose()` or wrap Presentation in a using block to prevent memory leaks during repeated slide operations.",
+            "Avoid holding multiple Presentation instances open simultaneously—close or dispose each after saving or modifying.",
+            "Prefer `AddEmptySlide()` over cloning when creating new slides from scratch to reduce memory overhead.",
+            "When iterating slides, use foreach with `Presentation.Slides` directly instead of caching slide collections in large loops."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Notes and Best Practices",
+      "level": 2,
+      "section_id": "notes_and_best_practices"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Create new presentations from scratch](/blog.aspose.org/slides/dotnet/introducing-slides-foss-dotnet/)",
+            "[Explore core slide capabilities](/blog.aspose.org/slides/dotnet/slides-key-features/)",
+            "[Build presentations step by step](/docs.aspose.org/slides/dotnet/developer-guide/presentation-creation/)",
+            "[Convert between presentation formats](/kb.aspose.org/slides/dotnet/how-to-convert-png-to-pptx-dotnet/)",
+            "[Resolve frequent issues and errors](/kb.aspose.org/slides/dotnet/how-to-fix-presentations-errors-dotnet/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Work with Slides with Aspose.Slides"
+}

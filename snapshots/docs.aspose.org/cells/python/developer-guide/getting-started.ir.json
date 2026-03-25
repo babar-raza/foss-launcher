@@ -1,24 +1,24 @@
 {
   "frontmatter": {
     "canonical": "https://docs.aspose.org/cells/python/developer-guide/getting-started/",
-    "canonical_import": "aspose_cells_foss",
-    "date": "2026-03-11T11:59:24Z",
-    "dateModified": "2026-03-11T11:59:24Z",
-    "datePublished": "2026-03-11T11:59:24Z",
-    "description": "By the end of this guide, you will be able to install the library and begin working with `core` spreadsheet features using Python 3.7 or higher.",
+    "canonical_import": "aspose.cells",
+    "date": "2026-03-24T12:06:36Z",
+    "dateModified": "2026-03-24T12:06:36Z",
+    "datePublished": "2026-03-24T12:06:36Z",
+    "description": "Aspose.Cells FOSS spreadsheets library: Getting Started",
     "display_name": "Aspose.Cells FOSS",
     "family": "cells",
     "keywords": [
-      "python",
-      "python openpyxl",
-      "openpyxl pandas",
-      "openpyxl in python",
-      "openpyxl documentation",
-      "install openpyxl",
-      "openpyxl cell",
-      "openpyxl pip"
+      "cells python",
+      "python cells in excel",
+      "python cells vscode",
+      "cell python docx",
+      "cell python spyder",
+      "aspose cells python",
+      "code cells python",
+      "voronoi cells python"
     ],
-    "lastmod": "2026-03-11T11:59:24Z",
+    "lastmod": "2026-03-24T12:06:36Z",
     "page_role": "workflow_page",
     "platform": "python",
     "reading_time": 1,
@@ -36,48 +36,20 @@
     {
       "blocks": [
         {
-          "claim_ids": [
-            "CLM-cells-dce86a"
-          ],
-          "content": "Aspose.Cells FOSS enables Python developers to read, write, and manipulate Excel files without requiring Microsoft Excel. By the end of this guide, you will be able to install the library and begin working with `core` spreadsheet features using Python 3.7 or higher.",
+          "claim_ids": [],
+          "content": "Aspose.Cells FOSS -- What the reader will build or achieve by the end of this guide.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
         },
         {
-          "claim_ids": [
-            "CLM-cells-0e9df9"
-          ],
-          "content": "The library supports key spreadsheet operations including `cell` value and `formula` handling, styling, auto filtering, and charting. For example, the `AutoFilter` class provides programmatic control over worksheet `filters`, with methods like range(), `filter_columns()`, and sort_state().",
+          "claim_ids": [],
+          "content": "For details on overview, see the Aspose.Cells FOSS documentation.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
-        },
-        {
-          "claim_ids": [
-            "CLM-cells-1fdb3a",
-            "CLM-cells-36d7b6",
-            "CLM-cells-0e9df9"
-          ],
-          "content": "pip install aspose-cells-foss>=26.3.1",
-          "items": [],
-          "language": "bash",
-          "level": null,
-          "type": "code"
-        },
-        {
-          "claim_ids": [
-            "CLM-cells-1fdb3a",
-            "CLM-cells-36d7b6",
-            "CLM-cells-0e9df9"
-          ],
-          "content": "import aspose.cells\nprint('Installation successful')",
-          "items": [],
-          "language": "python",
-          "level": null,
-          "type": "code"
         }
       ],
       "heading": "Overview",
@@ -87,10 +59,8 @@
     {
       "blocks": [
         {
-          "claim_ids": [
-            "CLM-cells-ef09fd"
-          ],
-          "content": "Aspose.Cells FOSS requires Python 3.7 or later. Install the package using pip with the command `pip install aspose-cells-foss>=26.3.1`. The library depends on `pycryptodome >= 3.15.0` for encryption-related operations.",
+          "claim_ids": [],
+          "content": "Aspose.Cells FOSS -- Required installation, environment setup, and prior knowledge.",
           "items": [],
           "language": null,
           "level": null,
@@ -98,29 +68,22 @@
         },
         {
           "claim_ids": [],
-          "content": "pip install aspose-cells-foss>=26.3.1",
-          "items": [],
-          "language": "bash",
+          "content": "",
+          "items": [
+            "Python 3.7+ (or the supported runtime for python)",
+            "Install via pip: `pip install aspose-cells-foss`"
+          ],
+          "language": null,
           "level": null,
-          "type": "code"
+          "type": "list"
         },
         {
           "claim_ids": [],
-          "content": "import aspose.cells\nprint('Installation successful')",
+          "content": "import aspose.cells",
           "items": [],
           "language": "python",
           "level": null,
           "type": "code"
-        },
-        {
-          "claim_ids": [
-            "CLM-cells-9aeb6b"
-          ],
-          "content": "After installation, verify the setup by importing `aspose.cells`. The `FilterColumn` class is part of the auto-filtering API and can be initialized to define filtering criteria for specific columns.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
         }
       ],
       "heading": "Prerequisites",
@@ -130,38 +93,8 @@
     {
       "blocks": [
         {
-          "claim_ids": [
-            "CLM-cells-1fdb3a"
-          ],
-          "content": "Install Aspose.Cells FOSS using pip to begin working with spreadsheet files in Python. The library provides a minimal, focused API for reading, writing, and manipulating Excel-compatible formats without external dependencies like openpyxl or pandas. After installation, verify the setup by importing the package and printing a success message.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [
-            "CLM-cells-1fdb3a"
-          ],
-          "content": "pip install aspose-cells-foss>=26.3.1",
-          "items": [],
-          "language": "bash",
-          "level": null,
-          "type": "code"
-        },
-        {
-          "claim_ids": [
-            "CLM-cells-1fdb3a"
-          ],
-          "content": "import aspose.cells\nprint('Installation successful')",
-          "items": [],
-          "language": "python",
-          "level": null,
-          "type": "code"
-        },
-        {
           "claim_ids": [],
-          "content": "Create a new workbook and access the first worksheet to begin editing. The `Workbook` class serves as the entry point, and `worksheets[0]` retrieves the default worksheet. This pattern mirrors common spreadsheet workflows where operations start on the first sheet.",
+          "content": "Aspose.Cells FOSS -- Minimal step-by-step walkthrough to create something useful — load a file, produce output, or call a core API.",
           "items": [],
           "language": null,
           "level": null,
@@ -169,43 +102,11 @@
         },
         {
           "claim_ids": [],
-          "content": "import aspose.cells\n\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]",
-          "items": [],
-          "language": "python",
-          "level": null,
-          "type": "code"
-        },
-        {
-          "claim_ids": [],
-          "content": "Set a `cell` value using the `Cell` class and assign it to a worksheet `cell` by `address`. The value() method writes data into the `cell`, and the `formula()` method can store Excel formulas. This demonstrates basic read-write interaction with the `core` `cell` model.",
+          "content": "For details on first steps, see the Aspose.Cells FOSS documentation.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "cell = aspose.cells.Cell(\"Hello, Aspose.Cells FOSS!\")\nworksheet.cells[\"A1\"] = cell",
-          "items": [],
-          "language": "python",
-          "level": null,
-          "type": "code"
-        },
-        {
-          "claim_ids": [],
-          "content": "Save the workbook to disk in XLSX `format`. The save() method writes the file using the library’s native XML-based engine, supporting standard Excel formats without requiring Microsoft Excel to be installed. This completes the simplest end-to-end workflow.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "workbook.save(\"output.xlsx\")",
-          "items": [],
-          "language": "python",
-          "level": null,
-          "type": "code"
         }
       ],
       "heading": "First Steps",
@@ -215,22 +116,24 @@
     {
       "blocks": [
         {
-          "claim_ids": [
-            "CLM-cells-a0637b",
-            "CLM-cells-ae529d"
-          ],
-          "content": "This example demonstrates reading and evaluating formulas in a spreadsheet using Aspose.Cells FOSS. It creates a workbook with `cells` containing basic formulas, then reads the computed values. The lightweight evaluator supports CONCATENATE, CONCAT, TEXT, and IF functions at read time for `cells` without cached values. It also shows how to retrieve `filter` values from an auto-filtered range.",
+          "claim_ids": [],
+          "content": "Aspose.Cells FOSS -- Complete runnable starter example the reader can copy and run.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
         },
         {
-          "claim_ids": [
-            "CLM-cells-a0637b",
-            "CLM-cells-ae529d"
-          ],
-          "content": "from aspose.cells import Workbook, Cell\n\n# Create a new workbook and get the first worksheet\nworkbook = Workbook()\nworksheet = workbook.worksheets[0]\n\n# Set up cells with formulas\nworksheet.cells[\"A1\"].value = \"Hello\"\nworksheet.cells[\"B1\"].value = \"World\"\nworksheet.cells[\"A2\"].formula = \"=CONCAT(A1, \\\" \\\", B1)\"\nworksheet.cells[\"B2\"].formula = \"=IF(A2=\\\"Hello World\\\", \\\"Match\\\", \\\"No Match\\\")\"\n\n# Force calculation to evaluate formulas\nworkbook.calculate_formula()\n\n# Read computed values\nconcat_result = worksheet.cells[\"A2\"].value\nif_result = worksheet.cells[\"B2\"].value\nprint(f\"CONCAT result: {concat_result}\")\nprint(f\"IF result: {if_result}\")\n\n# Apply auto filter and get filter values\nworksheet.auto_filter.range = \"A1:B2\"\nfilter_cols = worksheet.auto_filter.filter_columns\nprint(f\"Number of filtered columns: {len(filter_cols)}\")",
+          "claim_ids": [],
+          "content": "The following example demonstrates how to get started with Aspose.Cells FOSS.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose.cells\n\n# Initialize — see the aspose.cells API reference for available classes",
           "items": [],
           "language": "python",
           "level": null,
@@ -244,28 +147,12 @@
     {
       "blocks": [
         {
-          "claim_ids": [
-            "CLM-cells-52334f"
-          ],
-          "content": "Explore how Aspose.Cells FOSS processes formulas and `filters` in spreadsheets. A lightweight evaluator resolves `cell` references and defined names, and supports basic formulas like CONCATENATE, CONCAT, TEXT, and IF at read time for `cells` without cached values.",
+          "claim_ids": [],
+          "content": "Aspose.Cells FOSS -- Where to go from here: links to tutorials, guides, and API reference.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
-        },
-        {
-          "claim_ids": [
-            "CLM-cells-da2d47"
-          ],
-          "content": "",
-          "items": [
-            "Review the `AutoFilter` class to understand how to apply and inspect filter criteria, including retrieving custom filter lists via `filter_columns()`.",
-            "Study the `Cell` class to read and write cell values, formulas, and styles programmatically.",
-            "Consult the `CellValueHandler` class for parsing and formatting cell values per ECMA-376, including date conversion and error detection."
-          ],
-          "language": null,
-          "level": null,
-          "type": "list"
         }
       ],
       "heading": "Next Steps",
@@ -275,45 +162,22 @@
     {
       "blocks": [
         {
-          "claim_ids": [
-            "CLM-cells-36d7b6",
-            "CLM-cells-ee1ce9"
-          ],
-          "content": "Install Aspose.Cells FOSS for Python using pip to `get` started with spreadsheet processing. The library supports `core` Excel operations including `cell` manipulation, styling, and auto-filtering via the `AutoFilter` class. For encryption workflows, `AgileEncryptionParameters` and `CFBReader`/`CFBWriter` provide limited support for Agile encryption. Review the installation guide and full API reference to explore features like `CellValueHandler` for ECMA-376-compliant value parsing and formatting.",
+          "claim_ids": [],
+          "content": "Aspose.Cells FOSS -- Links to installation guide and documentation index.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
         },
         {
-          "claim_ids": [
-            "CLM-cells-36d7b6"
-          ],
-          "content": "pip install aspose-cells-foss>=26.3.1",
-          "items": [],
-          "language": "bash",
-          "level": null,
-          "type": "code"
-        },
-        {
-          "claim_ids": [
-            "CLM-cells-36d7b6"
-          ],
-          "content": "import aspose.cells\nprint('Installation successful')",
-          "items": [],
-          "language": "python",
-          "level": null,
-          "type": "code"
-        },
-        {
           "claim_ids": [],
           "content": "",
           "items": [
-            "[Install the library](/docs.aspose.org/cells/python/developer-guide/installation/)",
+            "[Install Aspose.Cells FOSS](/docs.aspose.org/cells/python/developer-guide/installation/)",
             "[Frequently asked questions](/kb.aspose.org/cells/python/faq/)",
-            "[Common issues and fixes](/kb.aspose.org/cells/python/troubleshooting/)",
-            "[Full API reference](/reference.aspose.org/cells/python/api-overview/)",
-            "[Conditional formatting guide](/blog.aspose.org/cells/python/introducing-cells-foss-python/)"
+            "[Troubleshooting common issues](/kb.aspose.org/cells/python/troubleshooting/)",
+            "[API reference documentation](/reference.aspose.org/cells/python/api-overview/)",
+            "[Introducing Cells FOSS Python](/blog.aspose.org/cells/python/cells-foss-python/)"
           ],
           "language": null,
           "level": null,

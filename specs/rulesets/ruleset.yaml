@@ -21,7 +21,7 @@ sections:
       - slug: installation
         page_role: workflow_page
       - slug: getting-started
-        page_role: workflow_page
+        page_role: getting_started
         folder_index: true
     optional_policies:
       - kind: topic_cluster

@@ -1,0 +1,310 @@
+{
+  "acquisition": {
+    "acquisition_confidence": "high",
+    "canonical_import": "aspose_note_foss",
+    "clone_cache_hit": true,
+    "discovered_at": "2026-03-21T13:33:04.914651+00:00",
+    "display_name": "Aspose.Note FOSS for Python",
+    "failure_state": "",
+    "family": "note",
+    "field_provenance": {
+      "canonical_import": "families_yaml",
+      "display_name": "families_yaml",
+      "runtime_import": "families_yaml"
+    },
+    "is_fresh_clone": false,
+    "launch_tier": "core",
+    "phase": "phase1_acquisition",
+    "platform": "python",
+    "repo_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\intake\\.clone_cache\\po_note_python",
+    "repo_sha": "dbccd2d1f271991556c25d4ca78442d9b9f3c962",
+    "repo_signals": {
+      "detected_manifest_files": [
+        "pyproject.toml"
+      ],
+      "files_estimated": 21,
+      "inferred_language": "python",
+      "is_empty_clone": false,
+      "readme_present": true
+    },
+    "repo_url": "https://github.com/aspose-note-foss/Aspose.Note-FOSS-for-Python",
+    "runtime_import": "aspose.note"
+  },
+  "canonical_import": "aspose_note_foss",
+  "classification": {
+    "decision": "eligible",
+    "full_name": "aspose-note-foss/Aspose.Note-FOSS-for-Python",
+    "reasons": [
+      "source-grounded phase1 inspection passed"
+    ]
+  },
+  "display_name": "Aspose.Note FOSS for Python",
+  "family": "note",
+  "phase": "phase1_inspection",
+  "platform": "python",
+  "repo": {
+    "archived": false,
+    "created_at": "2026-01-19T10:59:09Z",
+    "default_branch": "main",
+    "description": "Open Source Python API for reading Microsoft OneNote .one files (MS-ONE/OneStore parser + DOM traversal + PDF export). ",
+    "fork": false,
+    "full_name": "aspose-note-foss/Aspose.Note-FOSS-for-Python",
+    "html_url": "https://github.com/aspose-note-foss/Aspose.Note-FOSS-for-Python",
+    "id": 1137426093,
+    "is_template": false,
+    "language": "Python",
+    "license": {
+      "name": "MIT License",
+      "spdx_id": "MIT"
+    },
+    "name": "Aspose.Note-FOSS-for-Python",
+    "owner": {
+      "login": "aspose-note-foss",
+      "type": "Organization"
+    },
+    "pushed_at": "2026-03-19T19:04:01Z",
+    "size": 5658,
+    "stargazers_count": 2,
+    "topics": [],
+    "updated_at": "2026-03-19T19:04:05Z"
+  },
+  "runtime_import": "aspose.note",
+  "scout": {
+    "budget_log": [
+      {
+        "category": "asset",
+        "path": "[MS-ONE].pdf",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 3669895
+      },
+      {
+        "category": "asset",
+        "path": "[MS-ONESTORE].pdf",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 4140095
+      },
+      {
+        "original_size": 195350,
+        "path": "language-agnostic-plan/ms-onestore_structures_extract.txt",
+        "reason": "per_file_cap",
+        "truncated_to": 99999
+      },
+      {
+        "original_size": 308866,
+        "path": "language-agnostic-plan/ms-one_spec_structure.txt",
+        "reason": "per_file_cap",
+        "truncated_to": 99998
+      },
+      {
+        "category": "asset",
+        "path": "testfiles/OnePageWithFile.one",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 488600
+      },
+      {
+        "category": "asset",
+        "path": "testfiles/AttachedFileWithTag.one",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 497824
+      },
+      {
+        "category": "asset",
+        "path": "testfiles/TableWithTag.one",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 519488
+      },
+      {
+        "category": "asset",
+        "path": "testfiles/ImageWithTag.one",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 567968
+      },
+      {
+        "category": "asset",
+        "path": "testfiles/SimpleImageFromSeparateFile.one",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 726480
+      }
+    ],
+    "budget_log_overflow_count": 0,
+    "by_category": {
+      "asset": 23,
+      "ci": 2,
+      "config": 3,
+      "doc": 3,
+      "example": 8,
+      "source": 16,
+      "test": 27
+    },
+    "content_used_bytes": 645092,
+    "doc_paths": [
+      ".github/skills/add-pdf-golden-test/SKILL.md",
+      "README.md",
+      "THIRD_PARTY_NOTICES.md"
+    ],
+    "doc_selection": [
+      {
+        "decision": "kept",
+        "importance_rank": 7,
+        "language": "",
+        "path": "README.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 14577
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 4,
+        "language": "",
+        "path": "THIRD_PARTY_NOTICES.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 1985
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 2,
+        "language": "",
+        "path": ".github/skills/add-pdf-golden-test/SKILL.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 8024
+      }
+    ],
+    "example_paths": [
+      "examples/.gitignore",
+      "examples/export_pdf.py",
+      "examples/extract_text.py",
+      "examples/MANIFEST.in",
+      "examples/pyproject.toml",
+      "examples/README.md",
+      "examples/save_images.py",
+      "examples/THIRD_PARTY_NOTICES.md"
+    ],
+    "example_selection": [
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "",
+        "path": "examples/README.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 1165
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "",
+        "path": "examples/THIRD_PARTY_NOTICES.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 2115
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/extract_text.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 394
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "",
+        "path": "examples/pyproject.toml",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 457
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/save_images.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 352
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 0,
+        "language": "",
+        "path": "examples/.gitignore",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 51
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 0,
+        "language": "",
+        "path": "examples/MANIFEST.in",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 75
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 0,
+        "language": "python",
+        "path": "examples/export_pdf.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 133
+      }
+    ],
+    "files_enumerated": 82,
+    "files_read": 67,
+    "selected_doc_count": 3,
+    "selected_example_count": 8,
+    "skip_counts_approximate": false,
+    "skip_reason_counts": {
+      "file_too_large_for_remaining_budget": 7,
+      "per_file_cap": 2
+    },
+    "skipped_paths": [
+      "[MS-ONE].pdf",
+      "[MS-ONESTORE].pdf",
+      "testfiles/OnePageWithFile.one",
+      "testfiles/AttachedFileWithTag.one",
+      "testfiles/TableWithTag.one",
+      "testfiles/ImageWithTag.one",
+      "testfiles/SimpleImageFromSeparateFile.one"
+    ],
+    "truncated_files": [
+      {
+        "original_size": 195350,
+        "path": "language-agnostic-plan/ms-onestore_structures_extract.txt",
+        "reason": "per_file_cap",
+        "truncated_to": 99999
+      },
+      {
+        "original_size": 308866,
+        "path": "language-agnostic-plan/ms-one_spec_structure.txt",
+        "reason": "per_file_cap",
+        "truncated_to": 99998
+      }
+    ]
+  },
+  "shared_facts": {
+    "build_systems": [
+      "pyproject"
+    ],
+    "dependencies": [],
+    "description": "Aspose.Note-compatible Python API for reading OneNote (.one) files",
+    "entrypoints": [],
+    "has_ci": true,
+    "has_docs_folder": false,
+    "has_examples_folder": true,
+    "has_tests": true,
+    "install_command": "pip install aspose-note",
+    "license_type": "LicenseRef-Aspose-Split",
+    "module_path": "",
+    "package_name": "aspose-note",
+    "primary_language": "python",
+    "python_requires": ">=3.10",
+    "version": "26.3.1"
+  }
+}

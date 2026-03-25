@@ -1,0 +1,609 @@
+{
+  "acquisition": {
+    "acquisition_confidence": "high",
+    "canonical_import": "aspose_cells_foss",
+    "clone_cache_hit": true,
+    "discovered_at": "2026-03-21T13:33:02.563302+00:00",
+    "display_name": "Aspose.Cells FOSS for Python",
+    "failure_state": "",
+    "family": "cells",
+    "field_provenance": {
+      "canonical_import": "families_yaml",
+      "display_name": "families_yaml",
+      "runtime_import": "families_yaml"
+    },
+    "is_fresh_clone": false,
+    "launch_tier": "core",
+    "phase": "phase1_acquisition",
+    "platform": "python",
+    "repo_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\intake\\.clone_cache\\po_cells_python",
+    "repo_sha": "5b5b28eb372c28f4529928ea81696a0031b68d60",
+    "repo_signals": {
+      "detected_manifest_files": [
+        "pyproject.toml"
+      ],
+      "files_estimated": 12,
+      "inferred_language": "python",
+      "is_empty_clone": false,
+      "readme_present": true
+    },
+    "repo_url": "https://github.com/aspose-cells-foss/Aspose.Cells-FOSS-for-Python",
+    "runtime_import": "aspose.cells"
+  },
+  "canonical_import": "aspose_cells_foss",
+  "classification": {
+    "decision": "eligible",
+    "full_name": "aspose-cells-foss/Aspose.Cells-FOSS-for-Python",
+    "reasons": [
+      "source-grounded phase1 inspection passed"
+    ]
+  },
+  "display_name": "Aspose.Cells FOSS for Python",
+  "family": "cells",
+  "phase": "phase1_inspection",
+  "platform": "python",
+  "repo": {
+    "archived": false,
+    "created_at": "2025-08-14T12:32:52Z",
+    "default_branch": "main",
+    "description": "High-performance Python Excel processing library with advanced conversion capabilities",
+    "fork": false,
+    "full_name": "aspose-cells-foss/Aspose.Cells-FOSS-for-Python",
+    "html_url": "https://github.com/aspose-cells-foss/Aspose.Cells-FOSS-for-Python",
+    "id": 1037981320,
+    "is_template": false,
+    "language": "Python",
+    "license": null,
+    "name": "Aspose.Cells-FOSS-for-Python",
+    "owner": {
+      "login": "aspose-cells-foss",
+      "type": "Organization"
+    },
+    "pushed_at": "2026-03-11T01:32:39Z",
+    "size": 1363,
+    "stargazers_count": 8,
+    "topics": [
+      "docling",
+      "docling-excel",
+      "docling-plugin",
+      "docling-xlsx",
+      "excel-processing-sdk",
+      "excel-python-sdk",
+      "free-excel-sdk",
+      "markitdown",
+      "markitdown-excel",
+      "markitdown-plugin",
+      "markitdown-xlsx",
+      "open-source-excel-sdk"
+    ],
+    "updated_at": "2026-03-11T01:25:25Z"
+  },
+  "runtime_import": "aspose.cells",
+  "scout": {
+    "budget_log": [
+      {
+        "category": "doc",
+        "path": "AGENTS.md",
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 6292
+      },
+      {
+        "category": "doc",
+        "path": "llms.md",
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 8911
+      },
+      {
+        "category": "example",
+        "path": "examples/__init__.py",
+        "reason": "example_scaffold",
+        "size_bytes": 0
+      },
+      {
+        "category": "source",
+        "path": "aspose/cells_foss/data_validation.py",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 29790
+      },
+      {
+        "category": "source",
+        "path": "aspose/cells_foss/worksheet.py",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 31131
+      },
+      {
+        "category": "source",
+        "path": "aspose/cells_foss/style.py",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 33091
+      },
+      {
+        "category": "source",
+        "path": "aspose/cells_foss/worksheet_properties.py",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 33780
+      },
+      {
+        "category": "source",
+        "path": "aspose/cells_foss/conditional_format.py",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 34338
+      },
+      {
+        "category": "source",
+        "path": "aspose/cells_foss/cells.py",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 35451
+      },
+      {
+        "category": "source",
+        "path": "aspose/cells_foss/csv_handler.py",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 36761
+      },
+      {
+        "category": "source",
+        "path": "aspose/cells_foss/xml_chart_loader.py",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 44152
+      },
+      {
+        "category": "source",
+        "path": "aspose/cells_foss/chart.py",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 46432
+      },
+      {
+        "category": "source",
+        "path": "aspose/cells_foss/xml_loader.py",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 64166
+      },
+      {
+        "category": "source",
+        "path": "aspose/cells_foss/xml_chart_saver.py",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 109357
+      },
+      {
+        "category": "source",
+        "path": "aspose/cells_foss/xml_saver.py",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 116388
+      },
+      {
+        "category": "asset",
+        "path": ".clone_timestamp",
+        "reason": "source_reserve",
+        "size_bytes": 32
+      },
+      {
+        "category": "asset",
+        "path": ".clone_sha",
+        "reason": "source_reserve",
+        "size_bytes": 40
+      },
+      {
+        "category": "asset",
+        "path": ".clone_url",
+        "reason": "source_reserve",
+        "size_bytes": 65
+      },
+      {
+        "category": "asset",
+        "path": "License/LICENSE.txt",
+        "reason": "source_reserve",
+        "size_bytes": 1108
+      }
+    ],
+    "budget_log_overflow_count": 0,
+    "by_category": {
+      "asset": 4,
+      "config": 2,
+      "doc": 3,
+      "example": 31,
+      "source": 55
+    },
+    "content_used_bytes": 985438,
+    "doc_paths": [
+      "README.md"
+    ],
+    "doc_selection": [
+      {
+        "decision": "kept",
+        "importance_rank": 7,
+        "language": "",
+        "path": "README.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 4740
+      },
+      {
+        "decision": "skipped",
+        "importance_rank": 4,
+        "language": "",
+        "path": "AGENTS.md",
+        "readable_in_repo_content": false,
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 6292
+      },
+      {
+        "decision": "skipped",
+        "importance_rank": 4,
+        "language": "",
+        "path": "llms.md",
+        "readable_in_repo_content": false,
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 8911
+      }
+    ],
+    "example_paths": [
+      "examples/test_alignment_properties.py",
+      "examples/test_auto_filter.py",
+      "examples/test_border_settings.py",
+      "examples/test_cell_protection_locked.py",
+      "examples/test_cell_values.py",
+      "examples/test_comment_size.py",
+      "examples/test_comments.py",
+      "examples/test_conditional_formatting.py",
+      "examples/test_create_all_charts.py",
+      "examples/test_create_exceltable.py",
+      "examples/test_create_picture.py",
+      "examples/test_create_shape.py",
+      "examples/test_create_sparkline.py",
+      "examples/test_csv_import_export.py",
+      "examples/test_data_validation.py",
+      "examples/test_document_properties.py",
+      "examples/test_encryption.py",
+      "examples/test_fill_settings.py",
+      "examples/test_font_settings.py",
+      "examples/test_hyperlinks.py",
+      "examples/test_manual_page_breaks.py",
+      "examples/test_merge_cells.py",
+      "examples/test_number_formats.py",
+      "examples/test_print_area.py",
+      "examples/test_workbook_protection.py",
+      "examples/test_worksheet_management.py",
+      "examples/test_worksheet_properties.py",
+      "examples/test_worksheet_protection.py",
+      "examples/test_xlsx_to_json.py",
+      "examples/test_xlsx_to_markdown.py"
+    ],
+    "example_selection": [
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_alignment_properties.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 24189
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_auto_filter.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 17706
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_border_settings.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 12250
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_cell_protection_locked.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 9950
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_cell_values.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 9028
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_comment_size.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 6494
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_comments.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 15294
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_conditional_formatting.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 41327
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_create_all_charts.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 25682
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_create_exceltable.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 10033
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_create_picture.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 4226
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_create_shape.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 25198
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_create_sparkline.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 21570
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_data_validation.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 29106
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_document_properties.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 22927
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_encryption.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 19343
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_fill_settings.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 16000
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_font_settings.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 9645
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_hyperlinks.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 24905
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_manual_page_breaks.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 1669
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_merge_cells.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 2443
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_number_formats.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 22884
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_print_area.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 2170
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_workbook_protection.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 11334
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_worksheet_management.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 22497
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_worksheet_properties.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 20775
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_worksheet_protection.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 10989
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_xlsx_to_json.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 6764
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/test_xlsx_to_markdown.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 19812
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 0,
+        "language": "python",
+        "path": "examples/test_csv_import_export.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 51052
+      },
+      {
+        "decision": "skipped",
+        "importance_rank": 0,
+        "language": "python",
+        "path": "examples/__init__.py",
+        "readable_in_repo_content": false,
+        "reason": "example_scaffold",
+        "size_bytes": 0
+      }
+    ],
+    "files_enumerated": 95,
+    "files_read": 76,
+    "selected_doc_count": 1,
+    "selected_example_count": 30,
+    "skip_counts_approximate": false,
+    "skip_reason_counts": {
+      "doc_ineligible_meta": 2,
+      "example_scaffold": 1,
+      "file_too_large_for_remaining_budget": 12,
+      "source_reserve": 4
+    },
+    "skipped_paths": [
+      "AGENTS.md",
+      "llms.md",
+      "examples/__init__.py",
+      "aspose/cells_foss/data_validation.py",
+      "aspose/cells_foss/worksheet.py",
+      "aspose/cells_foss/style.py",
+      "aspose/cells_foss/worksheet_properties.py",
+      "aspose/cells_foss/conditional_format.py",
+      "aspose/cells_foss/cells.py",
+      "aspose/cells_foss/csv_handler.py",
+      "aspose/cells_foss/xml_chart_loader.py",
+      "aspose/cells_foss/chart.py",
+      "aspose/cells_foss/xml_loader.py",
+      "aspose/cells_foss/xml_chart_saver.py",
+      "aspose/cells_foss/xml_saver.py",
+      ".clone_timestamp",
+      ".clone_sha",
+      ".clone_url",
+      "License/LICENSE.txt"
+    ],
+    "truncated_files": []
+  },
+  "shared_facts": {
+    "build_systems": [
+      "pyproject"
+    ],
+    "dependencies": [
+      "pycryptodome>=3.15.0",
+      "olefile>=0.46"
+    ],
+    "description": "A Python library for creating, reading, and modifying Excel files (.xlsx format)",
+    "entrypoints": [],
+    "has_ci": false,
+    "has_docs_folder": false,
+    "has_examples_folder": true,
+    "has_tests": false,
+    "install_command": "pip install aspose-cells-foss",
+    "license_type": "MIT",
+    "module_path": "",
+    "package_name": "aspose-cells-foss",
+    "primary_language": "python",
+    "python_requires": ">=3.7",
+    "version": "26.3.1"
+  }
+}

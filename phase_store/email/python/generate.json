@@ -1,0 +1,3793 @@
+{
+  "api_fact_member_names": [],
+  "api_surface": {
+    "api_identifiers": [
+      "CFBDocument",
+      "CFBError",
+      "CFBReader",
+      "CFBStorage",
+      "CFBStream",
+      "CFBWriter",
+      "CommonMessagePropertyId",
+      "DirectoryColorFlag",
+      "DirectoryEntry",
+      "DirectoryObjectType",
+      "Header",
+      "MapiAttachment",
+      "MapiMessage",
+      "MapiNamedProperty",
+      "MapiProperty",
+      "MapiRecipient",
+      "MsgDocument",
+      "MsgError",
+      "MsgReader",
+      "MsgStorage",
+      "MsgStream",
+      "MsgWriter",
+      "PropertyEntryFixedLength",
+      "PropertyId",
+      "PropertyStreamHeaderSubobject",
+      "PropertyStreamHeaderTopLevel",
+      "PropertyTypeCode",
+      "SectorMarker",
+      "StorageLayout",
+      "add_attachment",
+      "add_embedded_message_attachment",
+      "add_recipient",
+      "add_storage",
+      "add_stream",
+      "body",
+      "body_html",
+      "cfb_reader",
+      "clear_raw",
+      "clone",
+      "close",
+      "compare_directory_entry_names",
+      "create",
+      "data_size",
+      "directory_entry_count",
+      "embedded_storage_name",
+      "fat_sector_count",
+      "file_size",
+      "find_child_by_name",
+      "find_storage",
+      "find_stream",
+      "from_bytes",
+      "from_email_message",
+      "from_embedded_message",
+      "from_file",
+      "from_msg_document",
+      "from_reader",
+      "get_entry",
+      "get_named_property",
+      "get_property",
+      "get_property_value",
+      "get_stream_data",
+      "is_embedded_message",
+      "is_mandatory",
+      "is_readable",
+      "is_root",
+      "is_storage",
+      "is_storage_attachment",
+      "is_stream",
+      "is_writable",
+      "iter_attachment_storages",
+      "iter_attachments_info",
+      "iter_children",
+      "iter_properties",
+      "iter_property_keys",
+      "iter_recipient_storages",
+      "iter_storages",
+      "iter_streams",
+      "iter_top_level_fixed_length_properties",
+      "iter_tree",
+      "major_version",
+      "materialized_stream_count",
+      "message_class",
+      "mini_sector_size",
+      "msg_reader",
+      "numeric",
+      "parse_message_property_stream",
+      "parse_subobject_property_stream",
+      "parse_subobject_property_stream_data",
+      "parse_top_level_property_stream",
+      "property_tag",
+      "resolve_path",
+      "save",
+      "sector_size",
+      "set_named_property",
+      "set_property",
+      "storage_layout",
+      "storage_name",
+      "strict",
+      "string",
+      "subject",
+      "to_bytes",
+      "to_cfb_document",
+      "to_email_bytes",
+      "to_email_message",
+      "to_email_string",
+      "to_msg_document",
+      "validation_issues",
+      "write_file"
+    ],
+    "class_briefs": [
+      {
+        "docstring_snippet": "Mutable high-level MSG object with MSG and EmailMessage conversion support.",
+        "enums": [],
+        "methods": [
+          "from_file",
+          "from_msg_document",
+          "from_email_message",
+          "create",
+          "iter_properties",
+          "iter_property_keys",
+          "set_property",
+          "get_property",
+          "get_property_value",
+          "set_named_property",
+          "get_named_property",
+          "add_recipient",
+          "add_attachment",
+          "add_embedded_message_attachment",
+          "save",
+          "to_bytes",
+          "to_email_message",
+          "to_email_bytes",
+          "to_email_string",
+          "iter_attachments_info",
+          "close",
+          "to_msg_document"
+        ],
+        "name": "MapiMessage",
+        "properties": [
+          "body",
+          "body_html",
+          "message_class",
+          "msg_reader",
+          "subject",
+          "validation_issues"
+        ],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "from_file",
+            "parameters": [
+              {
+                "name": "path",
+                "type_annotation": "Path | str"
+              }
+            ],
+            "return_type": "'MapiMessage'"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "from_msg_document",
+            "parameters": [
+              {
+                "name": "document",
+                "type_annotation": "MsgDocument"
+              }
+            ],
+            "return_type": "'MapiMessage'"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "from_email_message",
+            "parameters": [
+              {
+                "name": "email_message",
+                "type_annotation": "EmailMessage"
+              }
+            ],
+            "return_type": "'MapiMessage'"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "create",
+            "parameters": [
+              {
+                "name": "subject",
+                "type_annotation": "str"
+              },
+              {
+                "name": "body",
+                "type_annotation": "str"
+              }
+            ],
+            "return_type": "'MapiMessage'"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "iter_properties",
+            "parameters": [],
+            "return_type": "Iterator[MapiProperty]"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "iter_property_keys",
+            "parameters": [
+              {
+                "name": "storage_stream_id",
+                "type_annotation": "int"
+              }
+            ],
+            "return_type": "Iterator[tuple[int, int]]"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "set_property",
+            "parameters": [
+              {
+                "name": "property_id",
+                "type_annotation": "int | CommonMessagePropertyId | PropertyId"
+              },
+              {
+                "name": "property_type_or_value",
+                "type_annotation": "int | PropertyTypeCode | Any"
+              },
+              {
+                "name": "value",
+                "type_annotation": "Any"
+              }
+            ],
+            "return_type": "MapiProperty"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "get_property",
+            "parameters": [
+              {
+                "name": "property_id",
+                "type_annotation": "int | CommonMessagePropertyId | PropertyId"
+              },
+              {
+                "name": "property_type",
+                "type_annotation": "int | None"
+              }
+            ],
+            "return_type": "MapiProperty | Any | None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "get_property_value",
+            "parameters": [
+              {
+                "name": "property_id",
+                "type_annotation": "int | CommonMessagePropertyId | PropertyId"
+              },
+              {
+                "name": "property_type",
+                "type_annotation": "int | None"
+              }
+            ],
+            "return_type": "Any | None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "set_named_property",
+            "parameters": [
+              {
+                "name": "named_property",
+                "type_annotation": "MapiNamedProperty"
+              },
+              {
+                "name": "property_type",
+                "type_annotation": "int | PropertyTypeCode"
+              },
+              {
+                "name": "value",
+                "type_annotation": "Any"
+              }
+            ],
+            "return_type": "MapiProperty"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "get_named_property",
+            "parameters": [
+              {
+                "name": "named_property",
+                "type_annotation": "MapiNamedProperty"
+              },
+              {
+                "name": "property_type",
+                "type_annotation": "int | None"
+              }
+            ],
+            "return_type": "MapiProperty | None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "add_recipient",
+            "parameters": [
+              {
+                "name": "email_address",
+                "type_annotation": "str"
+              }
+            ],
+            "return_type": "MapiRecipient"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "add_attachment",
+            "parameters": [
+              {
+                "name": "filename",
+                "type_annotation": "str"
+              },
+              {
+                "name": "data",
+                "type_annotation": "bytes"
+              }
+            ],
+            "return_type": "MapiAttachment"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "add_embedded_message_attachment",
+            "parameters": [
+              {
+                "name": "message",
+                "type_annotation": "'MapiMessage'"
+              }
+            ],
+            "return_type": "MapiAttachment"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "save",
+            "parameters": [
+              {
+                "name": "path",
+                "type_annotation": "Path | str"
+              }
+            ],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "to_bytes",
+            "parameters": [],
+            "return_type": "bytes"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "to_email_message",
+            "parameters": [],
+            "return_type": "EmailMessage"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "to_email_bytes",
+            "parameters": [],
+            "return_type": "bytes"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "to_email_string",
+            "parameters": [],
+            "return_type": "str"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "iter_attachments_info",
+            "parameters": [],
+            "return_type": "Iterator[MapiAttachment]"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "close",
+            "parameters": [],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "to_msg_document",
+            "parameters": [],
+            "return_type": "MsgDocument"
+          }
+        ],
+        "typed_properties": [
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "msg_reader",
+            "type_annotation": "MsgReader"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "validation_issues",
+            "type_annotation": "tuple[str, ...]"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": false,
+            "name": "subject",
+            "type_annotation": "str | None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": false,
+            "name": "body",
+            "type_annotation": "str | None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": false,
+            "name": "message_class",
+            "type_annotation": "str | None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": false,
+            "name": "body_html",
+            "type_annotation": "str | None"
+          }
+        ]
+      },
+      {
+        "docstring_snippet": "Mutable Compound File Binary (CFB) document description.",
+        "enums": [],
+        "methods": [
+          "from_reader",
+          "from_file"
+        ],
+        "name": "CFBDocument",
+        "properties": [],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "from_reader",
+            "parameters": [
+              {
+                "name": "reader",
+                "type_annotation": "CFBReader"
+              }
+            ],
+            "return_type": "'CFBDocument'"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "from_file",
+            "parameters": [
+              {
+                "name": "path",
+                "type_annotation": "Path | str"
+              }
+            ],
+            "return_type": "'CFBDocument'"
+          }
+        ],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Raised for malformed or unsupported Compound File Binary (CFB) content.",
+        "enums": [],
+        "methods": [],
+        "name": "CFBError",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Reusable reader for Compound File Binary (CFB) containers.",
+        "enums": [],
+        "methods": [
+          "from_file",
+          "close",
+          "get_entry",
+          "get_stream_data",
+          "iter_storages",
+          "iter_streams",
+          "iter_children",
+          "iter_tree",
+          "find_child_by_name",
+          "resolve_path"
+        ],
+        "name": "CFBReader",
+        "properties": [
+          "data_size",
+          "directory_entry_count",
+          "fat_sector_count",
+          "file_size",
+          "major_version",
+          "materialized_stream_count",
+          "mini_sector_size",
+          "sector_size"
+        ],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "from_file",
+            "parameters": [
+              {
+                "name": "path",
+                "type_annotation": "Path | str"
+              }
+            ],
+            "return_type": "'CFBReader'"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "close",
+            "parameters": [],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "get_entry",
+            "parameters": [
+              {
+                "name": "stream_id",
+                "type_annotation": "StreamId"
+              }
+            ],
+            "return_type": "DirectoryEntry"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "get_stream_data",
+            "parameters": [
+              {
+                "name": "stream_id",
+                "type_annotation": "StreamId"
+              }
+            ],
+            "return_type": "bytes"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "iter_storages",
+            "parameters": [],
+            "return_type": "Iterator[DirectoryEntry]"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "iter_streams",
+            "parameters": [],
+            "return_type": "Iterator[DirectoryEntry]"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "iter_children",
+            "parameters": [
+              {
+                "name": "storage_stream_id",
+                "type_annotation": "StreamId"
+              }
+            ],
+            "return_type": "Iterator[DirectoryEntry]"
+          },
+          {
+            "docstring_snippet": "Yield a depth-first tree traversal as `(depth, entry)` tuples.",
+            "is_async": false,
+            "is_static": false,
+            "name": "iter_tree",
+            "parameters": [
+              {
+                "name": "start_stream_id",
+                "type_annotation": "StreamId"
+              }
+            ],
+            "return_type": "Iterator[Tuple[int, DirectoryEntry]]"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "find_child_by_name",
+            "parameters": [
+              {
+                "name": "storage_stream_id",
+                "type_annotation": "StreamId"
+              },
+              {
+                "name": "name",
+                "type_annotation": "str"
+              }
+            ],
+            "return_type": "Optional[DirectoryEntry]"
+          },
+          {
+            "docstring_snippet": "Resolve a storage/stream path by exact directory-entry names.",
+            "is_async": false,
+            "is_static": false,
+            "name": "resolve_path",
+            "parameters": [
+              {
+                "name": "names",
+                "type_annotation": "Iterable[str]"
+              },
+              {
+                "name": "start_stream_id",
+                "type_annotation": "StreamId"
+              }
+            ],
+            "return_type": "Optional[DirectoryEntry]"
+          }
+        ],
+        "typed_properties": [
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "data_size",
+            "type_annotation": "int"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "major_version",
+            "type_annotation": "int"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "sector_size",
+            "type_annotation": "int"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "mini_sector_size",
+            "type_annotation": "int"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "fat_sector_count",
+            "type_annotation": "int"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "directory_entry_count",
+            "type_annotation": "int"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "materialized_stream_count",
+            "type_annotation": "int"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "file_size",
+            "type_annotation": "int"
+          }
+        ]
+      },
+      {
+        "docstring_snippet": "Mutable storage node used by the CFB writer.",
+        "enums": [],
+        "methods": [
+          "add_storage",
+          "add_stream"
+        ],
+        "name": "CFBStorage",
+        "properties": [],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "add_storage",
+            "parameters": [
+              {
+                "name": "storage",
+                "type_annotation": "'CFBStorage'"
+              }
+            ],
+            "return_type": "'CFBStorage'"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "add_stream",
+            "parameters": [
+              {
+                "name": "stream",
+                "type_annotation": "CFBStream"
+              }
+            ],
+            "return_type": "CFBStream"
+          }
+        ],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Mutable stream node used by the CFB writer.",
+        "enums": [],
+        "methods": [],
+        "name": "CFBStream",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Deterministic serializer for Compound File Binary (CFB) containers.",
+        "enums": [],
+        "methods": [
+          "to_bytes",
+          "write_file"
+        ],
+        "name": "CFBWriter",
+        "properties": [],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "to_bytes",
+            "parameters": [
+              {
+                "name": "document",
+                "type_annotation": "CFBDocument"
+              }
+            ],
+            "return_type": "bytes"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "write_file",
+            "parameters": [
+              {
+                "name": "document",
+                "type_annotation": "CFBDocument"
+              },
+              {
+                "name": "path",
+                "type_annotation": "Path | str"
+              }
+            ],
+            "return_type": "None"
+          }
+        ],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Common MAPI property identifiers used by the MSG reader/writer for core message semantics.",
+        "enums": [
+          {
+            "docstring_snippet": "Common MAPI property identifiers used by the MSG reader/writer for core message semantics.",
+            "members": [
+              {
+                "name": "MESSAGE_CLASS",
+                "value": "26"
+              },
+              {
+                "name": "TRANSPORT_MESSAGE_HEADERS",
+                "value": "125"
+              },
+              {
+                "name": "SUBJECT",
+                "value": "55"
+              },
+              {
+                "name": "DISPLAY_TO",
+                "value": "3588"
+              },
+              {
+                "name": "DISPLAY_CC",
+                "value": "3587"
+              },
+              {
+                "name": "DISPLAY_BCC",
+                "value": "3586"
+              },
+              {
+                "name": "INTERNET_MESSAGE_ID",
+                "value": "4149"
+              },
+              {
+                "name": "MESSAGE_FLAGS",
+                "value": "3591"
+              },
+              {
+                "name": "INTERNET_CODEPAGE",
+                "value": "16350"
+              },
+              {
+                "name": "SENDER_NAME",
+                "value": "3098"
+              },
+              {
+                "name": "SENDER_ADDRESS_TYPE",
+                "value": "3102"
+              },
+              {
+                "name": "SENDER_EMAIL_ADDRESS",
+                "value": "3103"
+              },
+              {
+                "name": "MESSAGE_DELIVERY_TIME",
+                "value": "3590"
+              },
+              {
+                "name": "STORE_SUPPORT_MASK",
+                "value": "13325"
+              },
+              {
+                "name": "BODY",
+                "value": "4096"
+              },
+              {
+                "name": "BODY_HTML",
+                "value": "4115"
+              },
+              {
+                "name": "DISPLAY_NAME",
+                "value": "12289"
+              },
+              {
+                "name": "ATTACH_METHOD",
+                "value": "14085"
+              },
+              {
+                "name": "ATTACH_DATA_BINARY",
+                "value": "14081"
+              },
+              {
+                "name": "ATTACH_FILENAME",
+                "value": "14084"
+              },
+              {
+                "name": "ATTACH_LONG_FILENAME",
+                "value": "14087"
+              },
+              {
+                "name": "ATTACH_MIME_TAG",
+                "value": "14094"
+              },
+              {
+                "name": "ATTACH_CONTENT_ID",
+                "value": "14098"
+              },
+              {
+                "name": "SCHEDULE_INFO_DELEGATE_NAMES",
+                "value": "26692"
+              },
+              {
+                "name": "SCHEDULE_INFO_MONTHS_BUSY",
+                "value": "26707"
+              },
+              {
+                "name": "EXAMPLE_TAG_100A",
+                "value": "4106"
+              },
+              {
+                "name": "EXAMPLE_TAG_101D",
+                "value": "4125"
+              }
+            ],
+            "name": "CommonMessagePropertyId"
+          }
+        ],
+        "methods": [],
+        "name": "CommonMessagePropertyId",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Stores the red-black tree color used by directory sibling links.",
+        "enums": [
+          {
+            "docstring_snippet": "Stores the red-black tree color used by directory sibling links.",
+            "members": [
+              {
+                "name": "RED",
+                "value": "0"
+              },
+              {
+                "name": "BLACK",
+                "value": "1"
+              }
+            ],
+            "name": "DirectoryColorFlag"
+          }
+        ],
+        "methods": [],
+        "name": "DirectoryColorFlag",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Fixed-size directory record for one storage/stream object and its tree links.",
+        "enums": [],
+        "methods": [
+          "is_storage",
+          "is_stream",
+          "is_root"
+        ],
+        "name": "DirectoryEntry",
+        "properties": [],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "is_storage",
+            "parameters": [],
+            "return_type": "bool"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "is_stream",
+            "parameters": [],
+            "return_type": "bool"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "is_root",
+            "parameters": [],
+            "return_type": "bool"
+          }
+        ],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Classifies the directory entry payload as unallocated, storage, stream, or root storage.",
+        "enums": [
+          {
+            "docstring_snippet": "Classifies the directory entry payload as unallocated, storage, stream, or root storage.",
+            "members": [
+              {
+                "name": "UNKNOWN_OR_UNALLOCATED",
+                "value": "0"
+              },
+              {
+                "name": "STORAGE_OBJECT",
+                "value": "1"
+              },
+              {
+                "name": "STREAM_OBJECT",
+                "value": "2"
+              },
+              {
+                "name": "ROOT_STORAGE_OBJECT",
+                "value": "5"
+              }
+            ],
+            "name": "DirectoryObjectType"
+          }
+        ],
+        "methods": [],
+        "name": "DirectoryObjectType",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Header record at file offset 0 defining Compound File Binary (CFB) geometry and allocation chain entry points.",
+        "enums": [],
+        "methods": [],
+        "name": "Header",
+        "properties": [
+          "mini_sector_size",
+          "sector_size"
+        ],
+        "typed_methods": [],
+        "typed_properties": [
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "sector_size",
+            "type_annotation": "int"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "mini_sector_size",
+            "type_annotation": "int"
+          }
+        ]
+      },
+      {
+        "docstring_snippet": "Mutable attachment object.",
+        "enums": [],
+        "methods": [
+          "from_bytes",
+          "from_embedded_message",
+          "set_property"
+        ],
+        "name": "MapiAttachment",
+        "properties": [
+          "embedded_storage_name",
+          "is_embedded_message",
+          "is_storage_attachment",
+          "storage_name"
+        ],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "from_bytes",
+            "parameters": [
+              {
+                "name": "filename",
+                "type_annotation": "str"
+              },
+              {
+                "name": "data",
+                "type_annotation": "bytes"
+              }
+            ],
+            "return_type": "'MapiAttachment'"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "from_embedded_message",
+            "parameters": [
+              {
+                "name": "message",
+                "type_annotation": "'MapiMessage'"
+              }
+            ],
+            "return_type": "'MapiAttachment'"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "set_property",
+            "parameters": [
+              {
+                "name": "property_id",
+                "type_annotation": "int | CommonMessagePropertyId | PropertyId"
+              },
+              {
+                "name": "property_type_or_value",
+                "type_annotation": "int | PropertyTypeCode | Any"
+              },
+              {
+                "name": "value",
+                "type_annotation": "Any"
+              }
+            ],
+            "return_type": "MapiProperty"
+          }
+        ],
+        "typed_properties": [
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "storage_name",
+            "type_annotation": "str | None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "is_embedded_message",
+            "type_annotation": "bool"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "is_storage_attachment",
+            "type_annotation": "bool"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "embedded_storage_name",
+            "type_annotation": "str | None"
+          }
+        ]
+      },
+      {
+        "docstring_snippet": "Identifier for a named MAPI property.",
+        "enums": [],
+        "methods": [
+          "string",
+          "numeric"
+        ],
+        "name": "MapiNamedProperty",
+        "properties": [],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "string",
+            "parameters": [
+              {
+                "name": "name",
+                "type_annotation": "str"
+              },
+              {
+                "name": "property_set",
+                "type_annotation": "uuid.UUID | str"
+              }
+            ],
+            "return_type": "'MapiNamedProperty'"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "numeric",
+            "parameters": [
+              {
+                "name": "lid",
+                "type_annotation": "int"
+              },
+              {
+                "name": "property_set",
+                "type_annotation": "uuid.UUID | str"
+              }
+            ],
+            "return_type": "'MapiNamedProperty'"
+          }
+        ],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Logical MAPI property with optional named-property identity.",
+        "enums": [],
+        "methods": [
+          "clone",
+          "clear_raw"
+        ],
+        "name": "MapiProperty",
+        "properties": [
+          "property_tag"
+        ],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "clone",
+            "parameters": [],
+            "return_type": "'MapiProperty'"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "clear_raw",
+            "parameters": [],
+            "return_type": "None"
+          }
+        ],
+        "typed_properties": [
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "property_tag",
+            "type_annotation": "int"
+          }
+        ]
+      },
+      {
+        "docstring_snippet": "Mutable recipient object.",
+        "enums": [],
+        "methods": [
+          "set_property"
+        ],
+        "name": "MapiRecipient",
+        "properties": [],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "set_property",
+            "parameters": [
+              {
+                "name": "property_id",
+                "type_annotation": "int | CommonMessagePropertyId | PropertyId"
+              },
+              {
+                "name": "property_type_or_value",
+                "type_annotation": "int | PropertyTypeCode | Any"
+              },
+              {
+                "name": "value",
+                "type_annotation": "Any"
+              }
+            ],
+            "return_type": "MapiProperty"
+          }
+        ],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Mutable MSG document model that can be serialized through the CFB writer.",
+        "enums": [],
+        "methods": [
+          "from_reader",
+          "from_file",
+          "to_cfb_document"
+        ],
+        "name": "MsgDocument",
+        "properties": [],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "from_reader",
+            "parameters": [
+              {
+                "name": "reader",
+                "type_annotation": "MsgReader"
+              }
+            ],
+            "return_type": "'MsgDocument'"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "from_file",
+            "parameters": [
+              {
+                "name": "path",
+                "type_annotation": "Path | str"
+              }
+            ],
+            "return_type": "'MsgDocument'"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "to_cfb_document",
+            "parameters": [],
+            "return_type": "CFBDocument"
+          }
+        ],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Raised for malformed or unsupported MSG structures.",
+        "enums": [],
+        "methods": [],
+        "name": "MsgError",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Normative top-level MSG containment and stream requirements for container traversal.",
+        "enums": [],
+        "methods": [
+          "from_file",
+          "close",
+          "iter_top_level_fixed_length_properties",
+          "iter_recipient_storages",
+          "iter_attachment_storages",
+          "parse_message_property_stream",
+          "parse_subobject_property_stream",
+          "parse_top_level_property_stream",
+          "parse_subobject_property_stream_data"
+        ],
+        "name": "MsgReader",
+        "properties": [
+          "cfb_reader",
+          "storage_layout",
+          "strict",
+          "validation_issues"
+        ],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "from_file",
+            "parameters": [
+              {
+                "name": "path",
+                "type_annotation": "Path | str"
+              }
+            ],
+            "return_type": "'MsgReader'"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "close",
+            "parameters": [],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "iter_top_level_fixed_length_properties",
+            "parameters": [],
+            "return_type": "Iterator[PropertyEntryFixedLength]"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "iter_recipient_storages",
+            "parameters": [],
+            "return_type": "Iterator[DirectoryEntry]"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "iter_attachment_storages",
+            "parameters": [],
+            "return_type": "Iterator[DirectoryEntry]"
+          },
+          {
+            "docstring_snippet": "Read the property stream in the top level or an embedded-message storage.",
+            "is_async": false,
+            "is_static": false,
+            "name": "parse_message_property_stream",
+            "parameters": [
+              {
+                "name": "storage_stream_id",
+                "type_annotation": "int"
+              }
+            ],
+            "return_type": "Tuple[PropertyStreamHeaderTopLevel, List[PropertyEntryFixedLength]]"
+          },
+          {
+            "docstring_snippet": "Read the property stream in recipient/attachment storage and decode fixed-length",
+            "is_async": false,
+            "is_static": false,
+            "name": "parse_subobject_property_stream",
+            "parameters": [
+              {
+                "name": "storage_stream_id",
+                "type_annotation": "int"
+              }
+            ],
+            "return_type": "Tuple[PropertyStreamHeaderSubobject, List[PropertyEntryFixedLength]]"
+          },
+          {
+            "docstring_snippet": "Decode top-level property stream header and fixed-length entries.",
+            "is_async": false,
+            "is_static": false,
+            "name": "parse_top_level_property_stream",
+            "parameters": [
+              {
+                "name": "data",
+                "type_annotation": "bytes"
+              }
+            ],
+            "return_type": "Tuple[PropertyStreamHeaderTopLevel, List[PropertyEntryFixedLength]]"
+          },
+          {
+            "docstring_snippet": "Decode recipient/attachment property stream header and fixed-length entries.",
+            "is_async": false,
+            "is_static": false,
+            "name": "parse_subobject_property_stream_data",
+            "parameters": [
+              {
+                "name": "data",
+                "type_annotation": "bytes"
+              }
+            ],
+            "return_type": "Tuple[PropertyStreamHeaderSubobject, List[PropertyEntryFixedLength]]"
+          }
+        ],
+        "typed_properties": [
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "cfb_reader",
+            "type_annotation": "CFBReader"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "storage_layout",
+            "type_annotation": "StorageLayout"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "strict",
+            "type_annotation": "bool"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "validation_issues",
+            "type_annotation": "Tuple[str, ...]"
+          }
+        ]
+      },
+      {
+        "docstring_snippet": "Mutable MSG storage node with role classification and parsed property-stream metadata.",
+        "enums": [],
+        "methods": [
+          "add_stream",
+          "add_storage",
+          "iter_streams",
+          "iter_storages",
+          "find_stream",
+          "find_storage"
+        ],
+        "name": "MsgStorage",
+        "properties": [],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "add_stream",
+            "parameters": [
+              {
+                "name": "stream",
+                "type_annotation": "MsgStream"
+              }
+            ],
+            "return_type": "MsgStream"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "add_storage",
+            "parameters": [
+              {
+                "name": "storage",
+                "type_annotation": "'MsgStorage'"
+              }
+            ],
+            "return_type": "'MsgStorage'"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "iter_streams",
+            "parameters": [],
+            "return_type": "Iterator[MsgStream]"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "iter_storages",
+            "parameters": [],
+            "return_type": "Iterator['MsgStorage']"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "find_stream",
+            "parameters": [
+              {
+                "name": "name",
+                "type_annotation": "str"
+              }
+            ],
+            "return_type": "MsgStream | None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "find_storage",
+            "parameters": [
+              {
+                "name": "name",
+                "type_annotation": "str"
+              }
+            ],
+            "return_type": "'MsgStorage' | None"
+          }
+        ],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Mutable MSG stream node with raw bytes and CFB metadata.",
+        "enums": [],
+        "methods": [],
+        "name": "MsgStream",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Serializer that writes a MsgDocument into a CFB-backed .msg payload.",
+        "enums": [],
+        "methods": [
+          "to_bytes",
+          "write_file"
+        ],
+        "name": "MsgWriter",
+        "properties": [],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "to_bytes",
+            "parameters": [
+              {
+                "name": "document",
+                "type_annotation": "MsgDocument"
+              }
+            ],
+            "return_type": "bytes"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "write_file",
+            "parameters": [
+              {
+                "name": "document",
+                "type_annotation": "MsgDocument"
+              },
+              {
+                "name": "path",
+                "type_annotation": "Path | str"
+              }
+            ],
+            "return_type": "None"
+          }
+        ],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Fixed-length property stream entry containing property tag, flags, and inline 8-byte value payload.",
+        "enums": [],
+        "methods": [
+          "is_mandatory",
+          "is_readable",
+          "is_writable"
+        ],
+        "name": "PropertyEntryFixedLength",
+        "properties": [],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "is_mandatory",
+            "parameters": [],
+            "return_type": "bool"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "is_readable",
+            "parameters": [],
+            "return_type": "bool"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "is_writable",
+            "parameters": [],
+            "return_type": "bool"
+          }
+        ],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Common property identifiers paired with their default MAPI property types.",
+        "enums": [
+          {
+            "docstring_snippet": "Common property identifiers paired with their default MAPI property types.",
+            "members": [
+              {
+                "name": "MESSAGE_CLASS",
+                "value": ""
+              },
+              {
+                "name": "TRANSPORT_MESSAGE_HEADERS",
+                "value": ""
+              },
+              {
+                "name": "SUBJECT",
+                "value": ""
+              },
+              {
+                "name": "DISPLAY_TO",
+                "value": ""
+              },
+              {
+                "name": "DISPLAY_CC",
+                "value": ""
+              },
+              {
+                "name": "DISPLAY_BCC",
+                "value": ""
+              },
+              {
+                "name": "INTERNET_MESSAGE_ID",
+                "value": ""
+              },
+              {
+                "name": "MESSAGE_FLAGS",
+                "value": ""
+              },
+              {
+                "name": "INTERNET_CODEPAGE",
+                "value": ""
+              },
+              {
+                "name": "SENDER_NAME",
+                "value": ""
+              },
+              {
+                "name": "SENDER_ADDRESS_TYPE",
+                "value": ""
+              },
+              {
+                "name": "SENDER_EMAIL_ADDRESS",
+                "value": ""
+              },
+              {
+                "name": "MESSAGE_DELIVERY_TIME",
+                "value": ""
+              },
+              {
+                "name": "STORE_SUPPORT_MASK",
+                "value": ""
+              },
+              {
+                "name": "BODY",
+                "value": ""
+              },
+              {
+                "name": "BODY_HTML",
+                "value": ""
+              },
+              {
+                "name": "DISPLAY_NAME",
+                "value": ""
+              },
+              {
+                "name": "ATTACH_METHOD",
+                "value": ""
+              },
+              {
+                "name": "ATTACH_DATA_BINARY",
+                "value": ""
+              },
+              {
+                "name": "ATTACH_FILENAME",
+                "value": ""
+              },
+              {
+                "name": "ATTACH_LONG_FILENAME",
+                "value": ""
+              },
+              {
+                "name": "ATTACH_MIME_TAG",
+                "value": ""
+              },
+              {
+                "name": "ATTACH_CONTENT_ID",
+                "value": ""
+              },
+              {
+                "name": "SCHEDULE_INFO_DELEGATE_NAMES",
+                "value": ""
+              },
+              {
+                "name": "SCHEDULE_INFO_MONTHS_BUSY",
+                "value": ""
+              },
+              {
+                "name": "EXAMPLE_TAG_100A",
+                "value": ""
+              },
+              {
+                "name": "EXAMPLE_TAG_101D",
+                "value": ""
+              }
+            ],
+            "name": "PropertyId"
+          }
+        ],
+        "methods": [],
+        "name": "PropertyId",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Property stream header used in recipient and attachment storages, containing only reserved bytes.",
+        "enums": [],
+        "methods": [],
+        "name": "PropertyStreamHeaderSubobject",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Top-level property stream header containing next-id counters and counts for recipients and attachments.",
+        "enums": [],
+        "methods": [],
+        "name": "PropertyStreamHeaderTopLevel",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "MAPI property type codes used in MSG property tags and value stream names.",
+        "enums": [
+          {
+            "docstring_snippet": "MAPI property type codes used in MSG property tags and value stream names.",
+            "members": [
+              {
+                "name": "PTYP_INTEGER16",
+                "value": "2"
+              },
+              {
+                "name": "PTYP_INTEGER32",
+                "value": "3"
+              },
+              {
+                "name": "PTYP_FLOATING32",
+                "value": "4"
+              },
+              {
+                "name": "PTYP_FLOATING64",
+                "value": "5"
+              },
+              {
+                "name": "PTYP_CURRENCY",
+                "value": "6"
+              },
+              {
+                "name": "PTYP_FLOATINGTIME",
+                "value": "7"
+              },
+              {
+                "name": "PTYP_ERRORCODE",
+                "value": "10"
+              },
+              {
+                "name": "PTYP_BOOLEAN",
+                "value": "11"
+              },
+              {
+                "name": "PTYP_OBJECT",
+                "value": "13"
+              },
+              {
+                "name": "PTYP_INTEGER64",
+                "value": "20"
+              },
+              {
+                "name": "PTYP_STRING8",
+                "value": "30"
+              },
+              {
+                "name": "PTYP_STRING",
+                "value": "31"
+              },
+              {
+                "name": "PTYP_TIME",
+                "value": "64"
+              },
+              {
+                "name": "PTYP_GUID",
+                "value": "72"
+              },
+              {
+                "name": "PTYP_BINARY",
+                "value": "258"
+              },
+              {
+                "name": "PTYP_MULTIPLE_INTEGER16",
+                "value": "4098"
+              },
+              {
+                "name": "PTYP_MULTIPLE_INTEGER32",
+                "value": "4099"
+              },
+              {
+                "name": "PTYP_MULTIPLE_FLOATING32",
+                "value": "4100"
+              },
+              {
+                "name": "PTYP_MULTIPLE_FLOATING64",
+                "value": "4101"
+              },
+              {
+                "name": "PTYP_MULTIPLE_CURRENCY",
+                "value": "4102"
+              },
+              {
+                "name": "PTYP_MULTIPLE_FLOATINGTIME",
+                "value": "4103"
+              },
+              {
+                "name": "PTYP_MULTIPLE_INTEGER64",
+                "value": "4116"
+              },
+              {
+                "name": "PTYP_MULTIPLE_STRING8",
+                "value": "4126"
+              },
+              {
+                "name": "PTYP_MULTIPLE_STRING",
+                "value": "4127"
+              },
+              {
+                "name": "PTYP_MULTIPLE_TIME",
+                "value": "4160"
+              },
+              {
+                "name": "PTYP_MULTIPLE_GUID",
+                "value": "4168"
+              },
+              {
+                "name": "PTYP_MULTIPLE_BINARY",
+                "value": "4354"
+              }
+            ],
+            "name": "PropertyTypeCode"
+          }
+        ],
+        "methods": [],
+        "name": "PropertyTypeCode",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Special FAT marker values reserved for sector allocation metadata.",
+        "enums": [
+          {
+            "docstring_snippet": "Special FAT marker values reserved for sector allocation metadata.",
+            "members": [
+              {
+                "name": "DIFSECT",
+                "value": "4294967292"
+              },
+              {
+                "name": "FATSECT",
+                "value": "4294967293"
+              },
+              {
+                "name": "ENDOFCHAIN",
+                "value": "4294967294"
+              },
+              {
+                "name": "FREESECT",
+                "value": "4294967295"
+              }
+            ],
+            "name": "SectorMarker"
+          }
+        ],
+        "methods": [],
+        "name": "SectorMarker",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "Naming and containment rules for recipient, attachment, embedded message, and nameid storages.",
+        "enums": [],
+        "methods": [],
+        "name": "StorageLayout",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      }
+    ],
+    "confidence": "high",
+    "enums": [
+      {
+        "docstring_snippet": "Special FAT marker values reserved for sector allocation metadata.",
+        "members": [
+          {
+            "name": "DIFSECT",
+            "value": "4294967292"
+          },
+          {
+            "name": "FATSECT",
+            "value": "4294967293"
+          },
+          {
+            "name": "ENDOFCHAIN",
+            "value": "4294967294"
+          },
+          {
+            "name": "FREESECT",
+            "value": "4294967295"
+          }
+        ],
+        "name": "SectorMarker"
+      },
+      {
+        "docstring_snippet": "Classifies the directory entry payload as unallocated, storage, stream, or root storage.",
+        "members": [
+          {
+            "name": "UNKNOWN_OR_UNALLOCATED",
+            "value": "0"
+          },
+          {
+            "name": "STORAGE_OBJECT",
+            "value": "1"
+          },
+          {
+            "name": "STREAM_OBJECT",
+            "value": "2"
+          },
+          {
+            "name": "ROOT_STORAGE_OBJECT",
+            "value": "5"
+          }
+        ],
+        "name": "DirectoryObjectType"
+      },
+      {
+        "docstring_snippet": "Stores the red-black tree color used by directory sibling links.",
+        "members": [
+          {
+            "name": "RED",
+            "value": "0"
+          },
+          {
+            "name": "BLACK",
+            "value": "1"
+          }
+        ],
+        "name": "DirectoryColorFlag"
+      },
+      {
+        "docstring_snippet": "Common property identifiers paired with their default MAPI property types.",
+        "members": [
+          {
+            "name": "MESSAGE_CLASS",
+            "value": ""
+          },
+          {
+            "name": "TRANSPORT_MESSAGE_HEADERS",
+            "value": ""
+          },
+          {
+            "name": "SUBJECT",
+            "value": ""
+          },
+          {
+            "name": "DISPLAY_TO",
+            "value": ""
+          },
+          {
+            "name": "DISPLAY_CC",
+            "value": ""
+          },
+          {
+            "name": "DISPLAY_BCC",
+            "value": ""
+          },
+          {
+            "name": "INTERNET_MESSAGE_ID",
+            "value": ""
+          },
+          {
+            "name": "MESSAGE_FLAGS",
+            "value": ""
+          },
+          {
+            "name": "INTERNET_CODEPAGE",
+            "value": ""
+          },
+          {
+            "name": "SENDER_NAME",
+            "value": ""
+          },
+          {
+            "name": "SENDER_ADDRESS_TYPE",
+            "value": ""
+          },
+          {
+            "name": "SENDER_EMAIL_ADDRESS",
+            "value": ""
+          },
+          {
+            "name": "MESSAGE_DELIVERY_TIME",
+            "value": ""
+          },
+          {
+            "name": "STORE_SUPPORT_MASK",
+            "value": ""
+          },
+          {
+            "name": "BODY",
+            "value": ""
+          },
+          {
+            "name": "BODY_HTML",
+            "value": ""
+          },
+          {
+            "name": "DISPLAY_NAME",
+            "value": ""
+          },
+          {
+            "name": "ATTACH_METHOD",
+            "value": ""
+          },
+          {
+            "name": "ATTACH_DATA_BINARY",
+            "value": ""
+          },
+          {
+            "name": "ATTACH_FILENAME",
+            "value": ""
+          },
+          {
+            "name": "ATTACH_LONG_FILENAME",
+            "value": ""
+          },
+          {
+            "name": "ATTACH_MIME_TAG",
+            "value": ""
+          },
+          {
+            "name": "ATTACH_CONTENT_ID",
+            "value": ""
+          },
+          {
+            "name": "SCHEDULE_INFO_DELEGATE_NAMES",
+            "value": ""
+          },
+          {
+            "name": "SCHEDULE_INFO_MONTHS_BUSY",
+            "value": ""
+          },
+          {
+            "name": "EXAMPLE_TAG_100A",
+            "value": ""
+          },
+          {
+            "name": "EXAMPLE_TAG_101D",
+            "value": ""
+          }
+        ],
+        "name": "PropertyId"
+      },
+      {
+        "docstring_snippet": "Common MAPI property identifiers used by the MSG reader/writer for core message semantics.",
+        "members": [
+          {
+            "name": "MESSAGE_CLASS",
+            "value": "26"
+          },
+          {
+            "name": "TRANSPORT_MESSAGE_HEADERS",
+            "value": "125"
+          },
+          {
+            "name": "SUBJECT",
+            "value": "55"
+          },
+          {
+            "name": "DISPLAY_TO",
+            "value": "3588"
+          },
+          {
+            "name": "DISPLAY_CC",
+            "value": "3587"
+          },
+          {
+            "name": "DISPLAY_BCC",
+            "value": "3586"
+          },
+          {
+            "name": "INTERNET_MESSAGE_ID",
+            "value": "4149"
+          },
+          {
+            "name": "MESSAGE_FLAGS",
+            "value": "3591"
+          },
+          {
+            "name": "INTERNET_CODEPAGE",
+            "value": "16350"
+          },
+          {
+            "name": "SENDER_NAME",
+            "value": "3098"
+          },
+          {
+            "name": "SENDER_ADDRESS_TYPE",
+            "value": "3102"
+          },
+          {
+            "name": "SENDER_EMAIL_ADDRESS",
+            "value": "3103"
+          },
+          {
+            "name": "MESSAGE_DELIVERY_TIME",
+            "value": "3590"
+          },
+          {
+            "name": "STORE_SUPPORT_MASK",
+            "value": "13325"
+          },
+          {
+            "name": "BODY",
+            "value": "4096"
+          },
+          {
+            "name": "BODY_HTML",
+            "value": "4115"
+          },
+          {
+            "name": "DISPLAY_NAME",
+            "value": "12289"
+          },
+          {
+            "name": "ATTACH_METHOD",
+            "value": "14085"
+          },
+          {
+            "name": "ATTACH_DATA_BINARY",
+            "value": "14081"
+          },
+          {
+            "name": "ATTACH_FILENAME",
+            "value": "14084"
+          },
+          {
+            "name": "ATTACH_LONG_FILENAME",
+            "value": "14087"
+          },
+          {
+            "name": "ATTACH_MIME_TAG",
+            "value": "14094"
+          },
+          {
+            "name": "ATTACH_CONTENT_ID",
+            "value": "14098"
+          },
+          {
+            "name": "SCHEDULE_INFO_DELEGATE_NAMES",
+            "value": "26692"
+          },
+          {
+            "name": "SCHEDULE_INFO_MONTHS_BUSY",
+            "value": "26707"
+          },
+          {
+            "name": "EXAMPLE_TAG_100A",
+            "value": "4106"
+          },
+          {
+            "name": "EXAMPLE_TAG_101D",
+            "value": "4125"
+          }
+        ],
+        "name": "CommonMessagePropertyId"
+      },
+      {
+        "docstring_snippet": "MAPI property type codes used in MSG property tags and value stream names.",
+        "members": [
+          {
+            "name": "PTYP_INTEGER16",
+            "value": "2"
+          },
+          {
+            "name": "PTYP_INTEGER32",
+            "value": "3"
+          },
+          {
+            "name": "PTYP_FLOATING32",
+            "value": "4"
+          },
+          {
+            "name": "PTYP_FLOATING64",
+            "value": "5"
+          },
+          {
+            "name": "PTYP_CURRENCY",
+            "value": "6"
+          },
+          {
+            "name": "PTYP_FLOATINGTIME",
+            "value": "7"
+          },
+          {
+            "name": "PTYP_ERRORCODE",
+            "value": "10"
+          },
+          {
+            "name": "PTYP_BOOLEAN",
+            "value": "11"
+          },
+          {
+            "name": "PTYP_OBJECT",
+            "value": "13"
+          },
+          {
+            "name": "PTYP_INTEGER64",
+            "value": "20"
+          },
+          {
+            "name": "PTYP_STRING8",
+            "value": "30"
+          },
+          {
+            "name": "PTYP_STRING",
+            "value": "31"
+          },
+          {
+            "name": "PTYP_TIME",
+            "value": "64"
+          },
+          {
+            "name": "PTYP_GUID",
+            "value": "72"
+          },
+          {
+            "name": "PTYP_BINARY",
+            "value": "258"
+          },
+          {
+            "name": "PTYP_MULTIPLE_INTEGER16",
+            "value": "4098"
+          },
+          {
+            "name": "PTYP_MULTIPLE_INTEGER32",
+            "value": "4099"
+          },
+          {
+            "name": "PTYP_MULTIPLE_FLOATING32",
+            "value": "4100"
+          },
+          {
+            "name": "PTYP_MULTIPLE_FLOATING64",
+            "value": "4101"
+          },
+          {
+            "name": "PTYP_MULTIPLE_CURRENCY",
+            "value": "4102"
+          },
+          {
+            "name": "PTYP_MULTIPLE_FLOATINGTIME",
+            "value": "4103"
+          },
+          {
+            "name": "PTYP_MULTIPLE_INTEGER64",
+            "value": "4116"
+          },
+          {
+            "name": "PTYP_MULTIPLE_STRING8",
+            "value": "4126"
+          },
+          {
+            "name": "PTYP_MULTIPLE_STRING",
+            "value": "4127"
+          },
+          {
+            "name": "PTYP_MULTIPLE_TIME",
+            "value": "4160"
+          },
+          {
+            "name": "PTYP_MULTIPLE_GUID",
+            "value": "4168"
+          },
+          {
+            "name": "PTYP_MULTIPLE_BINARY",
+            "value": "4354"
+          }
+        ],
+        "name": "PropertyTypeCode"
+      }
+    ],
+    "format_matrix": [],
+    "import_allowlist": [
+      "aspose.email"
+    ],
+    "public_classes": [
+      "MapiMessage",
+      "CFBDocument",
+      "CFBError",
+      "CFBReader",
+      "CFBStorage",
+      "CFBStream",
+      "CFBWriter",
+      "CommonMessagePropertyId",
+      "DirectoryColorFlag",
+      "DirectoryEntry",
+      "DirectoryObjectType",
+      "Header",
+      "MapiAttachment",
+      "MapiNamedProperty",
+      "MapiProperty",
+      "MapiRecipient",
+      "MsgDocument",
+      "MsgError",
+      "MsgReader",
+      "MsgStorage",
+      "MsgStream",
+      "MsgWriter",
+      "PropertyEntryFixedLength",
+      "PropertyId",
+      "PropertyStreamHeaderSubobject",
+      "PropertyStreamHeaderTopLevel",
+      "PropertyTypeCode",
+      "SectorMarker",
+      "StorageLayout"
+    ]
+  },
+  "cross_links": [
+    {
+      "anchor_text": "Explore real-world use cases",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "use-cases",
+      "url": "/kb.aspose.org/email/python/developer-guide/use-cases/"
+    },
+    {
+      "anchor_text": "Discover core email capabilities",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "email-key-features",
+      "url": "/blog.aspose.org/email/python/email-key-features/"
+    },
+    {
+      "anchor_text": "Get started with Python integration",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "introducing-email-foss-python",
+      "url": "/blog.aspose.org/email/python/introducing-email-foss-python/"
+    },
+    {
+      "anchor_text": "Convert email file formats easily",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "how-to-convert-files-python",
+      "url": "/kb.aspose.org/email/python/how-to-convert-files-python/"
+    },
+    {
+      "anchor_text": "Resolve common Aspose.Email issues",
+      "link_type": "see_also",
+      "source": "_index",
+      "target": "how-to-fix-files-errors-python",
+      "url": "/kb.aspose.org/email/python/how-to-fix-files-errors-python/"
+    },
+    {
+      "anchor_text": "Get started with Aspose.Email FOSS",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "getting-started",
+      "url": "/docs.aspose.org/email/python/developer-guide/getting-started/"
+    },
+    {
+      "anchor_text": "View the complete API reference",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/email/python/api-overview/"
+    },
+    {
+      "anchor_text": "Discover key email features",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "email-key-features",
+      "url": "/blog.aspose.org/email/python/email-key-features/"
+    },
+    {
+      "anchor_text": "Read about the Python FOSS release",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "introducing-email-foss-python",
+      "url": "/blog.aspose.org/email/python/introducing-email-foss-python/"
+    },
+    {
+      "anchor_text": "Learn file format conversion steps",
+      "link_type": "see_also",
+      "source": "installation",
+      "target": "how-to-convert-files-python",
+      "url": "/kb.aspose.org/email/python/how-to-convert-files-python/"
+    },
+    {
+      "anchor_text": "Install Aspose.Email FOSS",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "installation",
+      "url": "/docs.aspose.org/email/python/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "faq",
+      "url": "/kb.aspose.org/email/python/faq/"
+    },
+    {
+      "anchor_text": "Resolve common issues",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "troubleshooting",
+      "url": "/kb.aspose.org/email/python/troubleshooting/"
+    },
+    {
+      "anchor_text": "Browse the full API reference",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/email/python/api-overview/"
+    },
+    {
+      "anchor_text": "Discover key email capabilities",
+      "link_type": "see_also",
+      "source": "getting-started",
+      "target": "email-key-features",
+      "url": "/blog.aspose.org/email/python/email-key-features/"
+    },
+    {
+      "anchor_text": "Create file attachments from raw bytes",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "mapi-message",
+      "url": "/reference.aspose.org/email/python/mapi-message/"
+    },
+    {
+      "anchor_text": "Mutable Compound File Binary representation",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "cfb-reader",
+      "url": "/reference.aspose.org/email/python/cfb-reader/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "faq",
+      "url": "/kb.aspose.org/email/python/faq/"
+    },
+    {
+      "anchor_text": "Common issues and solutions",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "troubleshooting",
+      "url": "/kb.aspose.org/email/python/troubleshooting/"
+    },
+    {
+      "anchor_text": "Initial setup and usage guide",
+      "link_type": "see_also",
+      "source": "api-overview",
+      "target": "getting-started",
+      "url": "/docs.aspose.org/email/python/developer-guide/getting-started/"
+    },
+    {
+      "anchor_text": "Troubleshooting common issues",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "troubleshooting",
+      "url": "/kb.aspose.org/email/python/troubleshooting/"
+    },
+    {
+      "anchor_text": "Convert email file formats",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "how-to-convert-files-python",
+      "url": "/kb.aspose.org/email/python/how-to-convert-files-python/"
+    },
+    {
+      "anchor_text": "Fix common errors",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "how-to-fix-files-errors-python",
+      "url": "/kb.aspose.org/email/python/how-to-fix-files-errors-python/"
+    },
+    {
+      "anchor_text": "Load email files",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "how-to-load-files-python",
+      "url": "/kb.aspose.org/email/python/how-to-load-files-python/"
+    },
+    {
+      "anchor_text": "Optimize performance",
+      "link_type": "see_also",
+      "source": "faq",
+      "target": "how-to-optimize-files-python",
+      "url": "/kb.aspose.org/email/python/how-to-optimize-files-python/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "troubleshooting",
+      "target": "faq",
+      "url": "/kb.aspose.org/email/python/faq/"
+    },
+    {
+      "anchor_text": "API reference documentation",
+      "link_type": "see_also",
+      "source": "troubleshooting",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/email/python/api-overview/"
+    },
+    {
+      "anchor_text": "Step-by-step setup guide",
+      "link_type": "see_also",
+      "source": "troubleshooting",
+      "target": "getting-started",
+      "url": "/docs.aspose.org/email/python/developer-guide/getting-started/"
+    },
+    {
+      "anchor_text": "Core email features overview",
+      "link_type": "see_also",
+      "source": "troubleshooting",
+      "target": "email-key-features",
+      "url": "/blog.aspose.org/email/python/email-key-features/"
+    },
+    {
+      "anchor_text": "Python library introduction",
+      "link_type": "see_also",
+      "source": "troubleshooting",
+      "target": "introducing-email-foss-python",
+      "url": "/blog.aspose.org/email/python/introducing-email-foss-python/"
+    },
+    {
+      "anchor_text": "Overview of Aspose.Email FOSS",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "_index",
+      "url": "/products.aspose.org/email/_index/"
+    },
+    {
+      "anchor_text": "Key capabilities and features",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "email-key-features",
+      "url": "/blog.aspose.org/email/python/email-key-features/"
+    },
+    {
+      "anchor_text": "Python library introduction",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "introducing-email-foss-python",
+      "url": "/blog.aspose.org/email/python/introducing-email-foss-python/"
+    },
+    {
+      "anchor_text": "File format conversion guide",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "how-to-convert-files-python",
+      "url": "/kb.aspose.org/email/python/how-to-convert-files-python/"
+    },
+    {
+      "anchor_text": "Resolving common errors",
+      "link_type": "see_also",
+      "source": "use-cases",
+      "target": "how-to-fix-files-errors-python",
+      "url": "/kb.aspose.org/email/python/how-to-fix-files-errors-python/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "how-to-load-files-python",
+      "target": "faq",
+      "url": "/kb.aspose.org/email/python/faq/"
+    },
+    {
+      "anchor_text": "Key capabilities overview",
+      "link_type": "see_also",
+      "source": "how-to-load-files-python",
+      "target": "email-key-features",
+      "url": "/blog.aspose.org/email/python/email-key-features/"
+    },
+    {
+      "anchor_text": "Python library introduction",
+      "link_type": "see_also",
+      "source": "how-to-load-files-python",
+      "target": "introducing-email-foss-python",
+      "url": "/blog.aspose.org/email/python/introducing-email-foss-python/"
+    },
+    {
+      "anchor_text": "Real-world application examples",
+      "link_type": "see_also",
+      "source": "how-to-load-files-python",
+      "target": "use-cases",
+      "url": "/kb.aspose.org/email/python/developer-guide/use-cases/"
+    },
+    {
+      "anchor_text": "Product overview and details",
+      "link_type": "see_also",
+      "source": "how-to-load-files-python",
+      "target": "_index",
+      "url": "/products.aspose.org/email/_index/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "how-to-save-files-python",
+      "target": "faq",
+      "url": "/kb.aspose.org/email/python/faq/"
+    },
+    {
+      "anchor_text": "Key capabilities overview",
+      "link_type": "see_also",
+      "source": "how-to-save-files-python",
+      "target": "email-key-features",
+      "url": "/blog.aspose.org/email/python/email-key-features/"
+    },
+    {
+      "anchor_text": "Python library introduction",
+      "link_type": "see_also",
+      "source": "how-to-save-files-python",
+      "target": "introducing-email-foss-python",
+      "url": "/blog.aspose.org/email/python/introducing-email-foss-python/"
+    },
+    {
+      "anchor_text": "Real-world application examples",
+      "link_type": "see_also",
+      "source": "how-to-save-files-python",
+      "target": "use-cases",
+      "url": "/kb.aspose.org/email/python/developer-guide/use-cases/"
+    },
+    {
+      "anchor_text": "Product overview and details",
+      "link_type": "see_also",
+      "source": "how-to-save-files-python",
+      "target": "_index",
+      "url": "/products.aspose.org/email/_index/"
+    },
+    {
+      "anchor_text": "Frequently asked questions",
+      "link_type": "see_also",
+      "source": "how-to-convert-files-python",
+      "target": "faq",
+      "url": "/kb.aspose.org/email/python/faq/"
+    },
+    {
+      "anchor_text": "Key capabilities overview",
+      "link_type": "see_also",
+      "source": "how-to-convert-files-python",
+      "target": "email-key-features",
+      "url": "/blog.aspose.org/email/python/email-key-features/"
+    },
+    {
+      "anchor_text": "Python library introduction",
+      "link_type": "see_also",
+      "source": "how-to-convert-files-python",
+      "target": "introducing-email-foss-python",
+      "url": "/blog.aspose.org/email/python/introducing-email-foss-python/"
+    },
+    {
+      "anchor_text": "Real-world application examples",
+      "link_type": "see_also",
+      "source": "how-to-convert-files-python",
+      "target": "use-cases",
+      "url": "/kb.aspose.org/email/python/developer-guide/use-cases/"
+    },
+    {
+      "anchor_text": "Product overview and details",
+      "link_type": "see_also",
+      "source": "how-to-convert-files-python",
+      "target": "_index",
+      "url": "/products.aspose.org/email/_index/"
+    },
+    {
+      "anchor_text": "Common error solutions and fixes",
+      "link_type": "see_also",
+      "source": "how-to-fix-files-errors-python",
+      "target": "faq",
+      "url": "/kb.aspose.org/email/python/faq/"
+    },
+    {
+      "anchor_text": "Core capabilities and features overview",
+      "link_type": "see_also",
+      "source": "how-to-fix-files-errors-python",
+      "target": "email-key-features",
+      "url": "/blog.aspose.org/email/python/email-key-features/"
+    },
+    {
+      "anchor_text": "Python library introduction and setup",
+      "link_type": "see_also",
+      "source": "how-to-fix-files-errors-python",
+      "target": "introducing-email-foss-python",
+      "url": "/blog.aspose.org/email/python/introducing-email-foss-python/"
+    },
+    {
+      "anchor_text": "Real-world application examples",
+      "link_type": "see_also",
+      "source": "how-to-fix-files-errors-python",
+      "target": "use-cases",
+      "url": "/kb.aspose.org/email/python/developer-guide/use-cases/"
+    },
+    {
+      "anchor_text": "Product overview and getting started",
+      "link_type": "see_also",
+      "source": "how-to-fix-files-errors-python",
+      "target": "_index",
+      "url": "/products.aspose.org/email/_index/"
+    },
+    {
+      "anchor_text": "Frequently asked questions and answers",
+      "link_type": "see_also",
+      "source": "how-to-optimize-files-python",
+      "target": "faq",
+      "url": "/kb.aspose.org/email/python/faq/"
+    },
+    {
+      "anchor_text": "Core capabilities and functionality overview",
+      "link_type": "see_also",
+      "source": "how-to-optimize-files-python",
+      "target": "email-key-features",
+      "url": "/blog.aspose.org/email/python/email-key-features/"
+    },
+    {
+      "anchor_text": "Python library introduction and setup guide",
+      "link_type": "see_also",
+      "source": "how-to-optimize-files-python",
+      "target": "introducing-email-foss-python",
+      "url": "/blog.aspose.org/email/python/introducing-email-foss-python/"
+    },
+    {
+      "anchor_text": "Real-world application scenarios and examples",
+      "link_type": "see_also",
+      "source": "how-to-optimize-files-python",
+      "target": "use-cases",
+      "url": "/kb.aspose.org/email/python/developer-guide/use-cases/"
+    },
+    {
+      "anchor_text": "Product overview and getting started",
+      "link_type": "see_also",
+      "source": "how-to-optimize-files-python",
+      "target": "_index",
+      "url": "/products.aspose.org/email/_index/"
+    },
+    {
+      "anchor_text": "Explore core capabilities",
+      "link_type": "see_also",
+      "source": "introducing-email-foss-python",
+      "target": "email-key-features",
+      "url": "/blog.aspose.org/email/python/email-key-features/"
+    },
+    {
+      "anchor_text": "Step-by-step file conversion guide",
+      "link_type": "see_also",
+      "source": "introducing-email-foss-python",
+      "target": "how-to-convert-files-python",
+      "url": "/kb.aspose.org/email/python/how-to-convert-files-python/"
+    },
+    {
+      "anchor_text": "Common error fixes and solutions",
+      "link_type": "see_also",
+      "source": "introducing-email-foss-python",
+      "target": "how-to-fix-files-errors-python",
+      "url": "/kb.aspose.org/email/python/how-to-fix-files-errors-python/"
+    },
+    {
+      "anchor_text": "Efficient file loading techniques",
+      "link_type": "see_also",
+      "source": "introducing-email-foss-python",
+      "target": "how-to-load-files-python",
+      "url": "/kb.aspose.org/email/python/how-to-load-files-python/"
+    },
+    {
+      "anchor_text": "Performance optimization strategies",
+      "link_type": "see_also",
+      "source": "introducing-email-foss-python",
+      "target": "how-to-optimize-files-python",
+      "url": "/kb.aspose.org/email/python/how-to-optimize-files-python/"
+    },
+    {
+      "anchor_text": "Explore the Python API",
+      "link_type": "see_also",
+      "source": "email-key-features",
+      "target": "introducing-email-foss-python",
+      "url": "/blog.aspose.org/email/python/introducing-email-foss-python/"
+    },
+    {
+      "anchor_text": "Convert email file formats",
+      "link_type": "see_also",
+      "source": "email-key-features",
+      "target": "how-to-convert-files-python",
+      "url": "/kb.aspose.org/email/python/how-to-convert-files-python/"
+    },
+    {
+      "anchor_text": "Fix common errors",
+      "link_type": "see_also",
+      "source": "email-key-features",
+      "target": "how-to-fix-files-errors-python",
+      "url": "/kb.aspose.org/email/python/how-to-fix-files-errors-python/"
+    },
+    {
+      "anchor_text": "Load files efficiently",
+      "link_type": "see_also",
+      "source": "email-key-features",
+      "target": "how-to-load-files-python",
+      "url": "/kb.aspose.org/email/python/how-to-load-files-python/"
+    },
+    {
+      "anchor_text": "Optimize performance",
+      "link_type": "see_also",
+      "source": "email-key-features",
+      "target": "how-to-optimize-files-python",
+      "url": "/kb.aspose.org/email/python/how-to-optimize-files-python/"
+    },
+    {
+      "anchor_text": "MapiAttachment class reference",
+      "link_type": "see_also",
+      "source": "mapi-message",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/email/python/api-overview/"
+    },
+    {
+      "anchor_text": "File attachment features",
+      "link_type": "see_also",
+      "source": "mapi-message",
+      "target": "email-key-features",
+      "url": "/blog.aspose.org/email/python/email-key-features/"
+    },
+    {
+      "anchor_text": "New MapiAttachment support",
+      "link_type": "see_also",
+      "source": "mapi-message",
+      "target": "introducing-email-foss-python",
+      "url": "/blog.aspose.org/email/python/introducing-email-foss-python/"
+    },
+    {
+      "anchor_text": "Convert files with attachments",
+      "link_type": "see_also",
+      "source": "mapi-message",
+      "target": "how-to-convert-files-python",
+      "url": "/kb.aspose.org/email/python/how-to-convert-files-python/"
+    },
+    {
+      "anchor_text": "Fix attachment-related errors",
+      "link_type": "see_also",
+      "source": "mapi-message",
+      "target": "how-to-fix-files-errors-python",
+      "url": "/kb.aspose.org/email/python/how-to-fix-files-errors-python/"
+    },
+    {
+      "anchor_text": "Aspose.Email FOSS API reference",
+      "link_type": "see_also",
+      "source": "cfb-reader",
+      "target": "api-overview",
+      "url": "/reference.aspose.org/email/python/api-overview/"
+    },
+    {
+      "anchor_text": "Key features overview",
+      "link_type": "see_also",
+      "source": "cfb-reader",
+      "target": "email-key-features",
+      "url": "/blog.aspose.org/email/python/email-key-features/"
+    },
+    {
+      "anchor_text": "Introducing Aspose.Email FOSS Python",
+      "link_type": "see_also",
+      "source": "cfb-reader",
+      "target": "introducing-email-foss-python",
+      "url": "/blog.aspose.org/email/python/introducing-email-foss-python/"
+    },
+    {
+      "anchor_text": "Convert file formats guide",
+      "link_type": "see_also",
+      "source": "cfb-reader",
+      "target": "how-to-convert-files-python",
+      "url": "/kb.aspose.org/email/python/how-to-convert-files-python/"
+    },
+    {
+      "anchor_text": "Fix common errors",
+      "link_type": "see_also",
+      "source": "cfb-reader",
+      "target": "how-to-fix-files-errors-python",
+      "url": "/kb.aspose.org/email/python/how-to-fix-files-errors-python/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "installation",
+      "url": "/docs.aspose.org/email/python/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Aspose.Email FOSS FAQ",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "faq",
+      "url": "/kb.aspose.org/email/python/faq/"
+    },
+    {
+      "anchor_text": "Troubleshooting",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "troubleshooting",
+      "url": "/kb.aspose.org/email/python/troubleshooting/"
+    },
+    {
+      "anchor_text": "Aspose.Email FOSS",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "_index",
+      "url": "/products.aspose.org/email/_index/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "installation",
+      "url": "/docs.aspose.org/email/python/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Aspose.Email FOSS FAQ",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "faq",
+      "url": "/kb.aspose.org/email/python/faq/"
+    },
+    {
+      "anchor_text": "Troubleshooting",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "troubleshooting",
+      "url": "/kb.aspose.org/email/python/troubleshooting/"
+    },
+    {
+      "anchor_text": "Aspose.Email FOSS",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "_index",
+      "url": "/products.aspose.org/email/_index/"
+    },
+    {
+      "anchor_text": "Installation",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "installation",
+      "url": "/docs.aspose.org/email/python/developer-guide/installation/"
+    },
+    {
+      "anchor_text": "Aspose.Email FOSS FAQ",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "faq",
+      "url": "/kb.aspose.org/email/python/faq/"
+    },
+    {
+      "anchor_text": "Troubleshooting",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "troubleshooting",
+      "url": "/kb.aspose.org/email/python/troubleshooting/"
+    },
+    {
+      "anchor_text": "Aspose.Email FOSS",
+      "link_type": "toc_child",
+      "source": "_index",
+      "target": "_index",
+      "url": "/products.aspose.org/email/_index/"
+    }
+  ],
+  "generation_stats": {
+    "duration_seconds": 2065.23,
+    "fallback_count": 7,
+    "llm_calls": 204,
+    "total_pages": 19
+  },
+  "page_evidence_index": {
+    "_index": {
+      "claim_count": 79,
+      "evidence_sufficient": true,
+      "format_evidence_complete": false,
+      "has_operation_snippets": false,
+      "missing": [],
+      "page_role": "_index",
+      "snippet_count": 1,
+      "verified_claim_count": 27
+    },
+    "api_reference": {
+      "claim_count": 79,
+      "evidence_sufficient": true,
+      "format_evidence_complete": false,
+      "has_operation_snippets": false,
+      "missing": [],
+      "page_role": "api_reference",
+      "snippet_count": 1,
+      "verified_claim_count": 25
+    },
+    "feature_blog": {
+      "claim_count": 79,
+      "evidence_sufficient": false,
+      "format_evidence_complete": false,
+      "has_operation_snippets": false,
+      "missing": [
+        "no_verified_claims"
+      ],
+      "page_role": "feature_blog",
+      "snippet_count": 1,
+      "verified_claim_count": 1
+    },
+    "format_conversion": {
+      "claim_count": 79,
+      "evidence_sufficient": false,
+      "format_evidence_complete": false,
+      "has_operation_snippets": false,
+      "missing": [
+        "no_format_evidence",
+        "no_operation_examples"
+      ],
+      "page_role": "format_conversion",
+      "snippet_count": 1,
+      "verified_claim_count": 27
+    },
+    "howto_article": {
+      "claim_count": 79,
+      "evidence_sufficient": false,
+      "format_evidence_complete": false,
+      "has_operation_snippets": false,
+      "missing": [
+        "no_operation_examples",
+        "insufficient_snippets"
+      ],
+      "page_role": "howto_article",
+      "snippet_count": 1,
+      "verified_claim_count": 8
+    },
+    "install_guide": {
+      "claim_count": 79,
+      "evidence_sufficient": true,
+      "format_evidence_complete": false,
+      "has_operation_snippets": false,
+      "missing": [],
+      "page_role": "install_guide",
+      "snippet_count": 1,
+      "verified_claim_count": 0
+    }
+  },
+  "pages": [
+    {
+      "assigned_claim_count": 24,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-email-767b1d",
+        "CLM-email-500ec1",
+        "CLM-email-abf8b3",
+        "CLM-email-f27dab",
+        "CLM-email-a6e94f",
+        "CLM-email-c77072",
+        "CLM-email-c462ed",
+        "CLM-email-41283c",
+        "CLM-email-fd5164",
+        "CLM-email-a91a2c",
+        "CLM-email-b28154",
+        "CLM-email-9696e0",
+        "CLM-email-544710",
+        "CLM-email-b1143c",
+        "CLM-email-8cbbb1",
+        "CLM-email-f034f5",
+        "CLM-email-5ebce4",
+        "CLM-email-158c31",
+        "CLM-email-084862",
+        "CLM-email-f42ca7",
+        "CLM-email-e9beee",
+        "CLM-email-2ce942",
+        "CLM-email-52c260",
+        "CLM-email-4251bf"
+      ],
+      "claim_texts": [
+        "MapiMessage: Mutable high-level MSG object with MSG and EmailMessage conversion support",
+        "The CFBReader class provides access to the CFB header via the header property, exposing sector_size, mini_sector_size, and major_version.",
+        "MsgWriter: Serializer that writes a MsgDocument into a CFB-backed .msg payload.",
+        "The CFBReader class supports reading stream data from CFB containers using get_stream_data() and resolving paths by name using resolve_path() and find_child_by_name().",
+        "MapiMessage.create() is part of the public API for Aspose.Email FOSS.",
+        "The CFBReader class supports opening CFB containers from files using the from_file() class method.",
+        "The CFBReader class exposes metadata about the CFB container including sector_size, mini_sector_size, fat_sector_count, directory_entry_count, and file_size.",
+        "The library supports reading Outlook .msg files through both high-level MapiMessage and low-level MsgReader APIs.",
+        "The MapiMessage class supports creating new messages programmatically using the static create() method and saving them as Outlook-compatible .msg files.",
+        "The MapiMessage class provides access to its internal MSG reader via the msg_reader property, enabling low-level inspection of property streams and container structure.",
+        "Install Aspose.Email FOSS via: pip install aspose-email-foss>=26.3",
+        "CFBReader: Reusable reader for Compound File Binary (CFB) containers.",
+        "The library supports writing Outlook .msg files through both high-level MapiMessage and low-level MsgWriter APIs.",
+        "MsgStream: Mutable MSG stream node with raw bytes and CFB metadata",
+        "MapiMessage: Mutable high-level MSG object with MSG and EmailMessage conversion support.",
+        "The MapiMessage class supports conversion between Outlook MSG and Python's email.message.EmailMessage via from_email_message() and to_email_message() methods.",
+        "The CFBDocument class represents a mutable Compound File Binary (CFB) document and can be constructed from a file or a CFBReader instance.",
+        "The library supports reading and writing Outlook MSG files through the high-level MapiMessage class.",
+        "The CFBReader class provides low-level access to Compound File Binary (CFB) containers, enabling inspection of storages, streams, and directory entries.",
+        "MsgStream: Mutable MSG stream node with raw bytes and CFB metadata.",
+        "The MapiMessage class supports opening MSG files from disk using the from_file() class method and provides context manager support via close().",
+        "CFBReader: Reusable reader for Compound File Binary (CFB) containers",
+        "MsgDocument: Mutable MSG document model that can be serialized through the CFB writer.",
+        "The CFBReader class provides methods to traverse the CFB directory tree, including iter_tree(), iter_storages(), iter_streams(), and iter_children(), enabling structured inspection of container contents."
+      ],
+      "code_block_count": 3,
+      "content_path": "products.aspose.org/email/_index",
+      "ir_path": "content_bundle\\pages\\products.aspose.org\\email\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\products.aspose.org\\email\\_index.md",
+      "page_role": "landing",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 485
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "docs.aspose.org/email/_index",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\email\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\email\\_index.md",
+      "page_role": "toc",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\docs.aspose.org\\__FAMILY__\\_index.md",
+      "variant": "standard",
+      "word_count": 506
+    },
+    {
+      "assigned_claim_count": 2,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-email-767c08",
+        "CLM-email-b28154"
+      ],
+      "claim_texts": [
+        "Example demonstrates loading OBJ files",
+        "Install Aspose.Email FOSS via: pip install aspose-email-foss>=26.3"
+      ],
+      "code_block_count": 9,
+      "content_path": "docs.aspose.org/email/python/developer-guide/installation",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\email\\python\\developer-guide\\installation.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\email\\python\\developer-guide\\installation.md",
+      "page_role": "workflow_page",
+      "section": "docs",
+      "slug": "installation",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\docs.aspose.org\\__FAMILY__\\__PLATFORM__\\developer-guide\\feature.variant-standard.md",
+      "variant": "standard",
+      "word_count": 1472
+    },
+    {
+      "assigned_claim_count": 1,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-email-767c08"
+      ],
+      "claim_texts": [
+        "Example demonstrates loading OBJ files"
+      ],
+      "code_block_count": 5,
+      "content_path": "docs.aspose.org/email/python/developer-guide/getting-started",
+      "ir_path": "content_bundle\\pages\\docs.aspose.org\\email\\python\\developer-guide\\getting-started.ir.json",
+      "md_path": "content_bundle\\pages\\docs.aspose.org\\email\\python\\developer-guide\\getting-started.md",
+      "page_role": "workflow_page",
+      "section": "docs/getting",
+      "slug": "getting-started",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 1036
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "reference.aspose.org/email/_index",
+      "ir_path": "content_bundle\\pages\\reference.aspose.org\\email\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\reference.aspose.org\\email\\_index.md",
+      "page_role": "toc",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\docs.aspose.org\\__FAMILY__\\_index.md",
+      "variant": "standard",
+      "word_count": 562
+    },
+    {
+      "assigned_claim_count": 33,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-email-767b1d",
+        "CLM-email-419f18",
+        "CLM-email-500ec1",
+        "CLM-email-abf8b3",
+        "CLM-email-f27dab",
+        "CLM-email-a6e94f",
+        "CLM-email-c77072",
+        "CLM-email-c462ed",
+        "CLM-email-41283c",
+        "CLM-email-fd5164",
+        "CLM-email-a91a2c",
+        "CLM-email-a0f03a",
+        "CLM-email-b28154",
+        "CLM-email-e00487",
+        "CLM-email-9696e0",
+        "CLM-email-544710",
+        "CLM-email-b1143c",
+        "CLM-email-8cbbb1",
+        "CLM-email-f034f5",
+        "CLM-email-5ebce4",
+        "CLM-email-158c31",
+        "CLM-email-084862",
+        "CLM-email-f42ca7",
+        "CLM-email-711ad0",
+        "CLM-email-e46683",
+        "CLM-email-e9beee",
+        "CLM-email-2ce942",
+        "CLM-email-dccfaf",
+        "CLM-email-52c260",
+        "CLM-email-4b4b61",
+        "CLM-email-abcc46",
+        "CLM-email-4251bf",
+        "CLM-email-b2e2c9"
+      ],
+      "claim_texts": [
+        "MapiMessage: Mutable high-level MSG object with MSG and EmailMessage conversion support",
+        "CFBDocument: Mutable Compound File Binary (CFB) document description.",
+        "The CFBReader class provides access to the CFB header via the header property, exposing sector_size, mini_sector_size, and major_version.",
+        "MsgWriter: Serializer that writes a MsgDocument into a CFB-backed .msg payload.",
+        "The CFBReader class supports reading stream data from CFB containers using get_stream_data() and resolving paths by name using resolve_path() and find_child_by_name().",
+        "MapiMessage.create() is part of the public API for Aspose.Email FOSS.",
+        "The CFBReader class supports opening CFB containers from files using the from_file() class method.",
+        "The CFBReader class exposes metadata about the CFB container including sector_size, mini_sector_size, fat_sector_count, directory_entry_count, and file_size.",
+        "The library supports reading Outlook .msg files through both high-level MapiMessage and low-level MsgReader APIs.",
+        "The MapiMessage class supports creating new messages programmatically using the static create() method and saving them as Outlook-compatible .msg files.",
+        "The MapiMessage class provides access to its internal MSG reader via the msg_reader property, enabling low-level inspection of property streams and container structure.",
+        "MsgError: Raised for malformed or unsupported MSG structures.",
+        "Install Aspose.Email FOSS via: pip install aspose-email-foss>=26.3",
+        "CFBWriter: Deterministic serializer for Compound File Binary (CFB) containers.",
+        "CFBReader: Reusable reader for Compound File Binary (CFB) containers.",
+        "The library supports writing Outlook .msg files through both high-level MapiMessage and low-level MsgWriter APIs.",
+        "MsgStream: Mutable MSG stream node with raw bytes and CFB metadata",
+        "MapiMessage: Mutable high-level MSG object with MSG and EmailMessage conversion support.",
+        "The MapiMessage class supports conversion between Outlook MSG and Python's email.message.EmailMessage via from_email_message() and to_email_message() methods.",
+        "The CFBDocument class represents a mutable Compound File Binary (CFB) document and can be constructed from a file or a CFBReader instance.",
+        "The library supports reading and writing Outlook MSG files through the high-level MapiMessage class.",
+        "The CFBReader class provides low-level access to Compound File Binary (CFB) containers, enabling inspection of storages, streams, and directory entries.",
+        "MsgStream: Mutable MSG stream node with raw bytes and CFB metadata.",
+        "Header: Header record at file offset 0 defining Compound File Binary (CFB) geometry and allocation chain entry points.",
+        "CFBStorage: Mutable storage node used by the CFB writer.",
+        "The MapiMessage class supports opening MSG files from disk using the from_file() class method and provides context manager support via close().",
+        "CFBReader: Reusable reader for Compound File Binary (CFB) containers",
+        "CFBStream: Mutable stream node used by the CFB writer.",
+        "MsgDocument: Mutable MSG document model that can be serialized through the CFB writer.",
+        "MapiProperty: Logical MAPI property with optional named-property identity.",
+        "CFBReader.iter_tree(): Yield a depth-first tree traversal as `(depth, entry)` tuples.",
+        "The CFBReader class provides methods to traverse the CFB directory tree, including iter_tree(), iter_storages(), iter_streams(), and iter_children(), enabling structured inspection of container contents.",
+        "CFBError: Raised for malformed or unsupported Compound File Binary (CFB) content."
+      ],
+      "code_block_count": 2,
+      "content_path": "reference.aspose.org/email/python/api-overview",
+      "ir_path": "content_bundle\\pages\\reference.aspose.org\\email\\python\\api-overview.ir.json",
+      "md_path": "content_bundle\\pages\\reference.aspose.org\\email\\python\\api-overview.md",
+      "page_role": "api_reference",
+      "section": "reference/api",
+      "slug": "api-overview",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 332
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "kb.aspose.org/email/_index",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\email\\_index.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\email\\_index.md",
+      "page_role": "toc",
+      "section": "docs",
+      "slug": "_index",
+      "template_used": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\specs\\templates\\docs.aspose.org\\__FAMILY__\\_index.md",
+      "variant": "standard",
+      "word_count": 561
+    },
+    {
+      "assigned_claim_count": 1,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-email-8994d8"
+      ],
+      "claim_texts": [
+        "The CFBError exception is raised when the library encounters malformed or unsupported Compound File Binary (CFB) content."
+      ],
+      "code_block_count": 1,
+      "content_path": "kb.aspose.org/email/python/faq",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\email\\python\\faq.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\email\\python\\faq.md",
+      "page_role": "faq",
+      "section": "docs",
+      "slug": "faq",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 496
+    },
+    {
+      "assigned_claim_count": 1,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-email-8994d8"
+      ],
+      "claim_texts": [
+        "The CFBError exception is raised when the library encounters malformed or unsupported Compound File Binary (CFB) content."
+      ],
+      "code_block_count": 3,
+      "content_path": "kb.aspose.org/email/python/troubleshooting",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\email\\python\\troubleshooting.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\email\\python\\troubleshooting.md",
+      "page_role": "troubleshooting",
+      "section": "docs",
+      "slug": "troubleshooting",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 635
+    },
+    {
+      "assigned_claim_count": 24,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-email-767b1d",
+        "CLM-email-500ec1",
+        "CLM-email-abf8b3",
+        "CLM-email-f27dab",
+        "CLM-email-a6e94f",
+        "CLM-email-c77072",
+        "CLM-email-c462ed",
+        "CLM-email-41283c",
+        "CLM-email-fd5164",
+        "CLM-email-a91a2c",
+        "CLM-email-b28154",
+        "CLM-email-9696e0",
+        "CLM-email-544710",
+        "CLM-email-b1143c",
+        "CLM-email-8cbbb1",
+        "CLM-email-f034f5",
+        "CLM-email-5ebce4",
+        "CLM-email-158c31",
+        "CLM-email-084862",
+        "CLM-email-f42ca7",
+        "CLM-email-e9beee",
+        "CLM-email-2ce942",
+        "CLM-email-52c260",
+        "CLM-email-4251bf"
+      ],
+      "claim_texts": [
+        "MapiMessage: Mutable high-level MSG object with MSG and EmailMessage conversion support",
+        "The CFBReader class provides access to the CFB header via the header property, exposing sector_size, mini_sector_size, and major_version.",
+        "MsgWriter: Serializer that writes a MsgDocument into a CFB-backed .msg payload.",
+        "The CFBReader class supports reading stream data from CFB containers using get_stream_data() and resolving paths by name using resolve_path() and find_child_by_name().",
+        "MapiMessage.create() is part of the public API for Aspose.Email FOSS.",
+        "The CFBReader class supports opening CFB containers from files using the from_file() class method.",
+        "The CFBReader class exposes metadata about the CFB container including sector_size, mini_sector_size, fat_sector_count, directory_entry_count, and file_size.",
+        "The library supports reading Outlook .msg files through both high-level MapiMessage and low-level MsgReader APIs.",
+        "The MapiMessage class supports creating new messages programmatically using the static create() method and saving them as Outlook-compatible .msg files.",
+        "The MapiMessage class provides access to its internal MSG reader via the msg_reader property, enabling low-level inspection of property streams and container structure.",
+        "Install Aspose.Email FOSS via: pip install aspose-email-foss>=26.3",
+        "CFBReader: Reusable reader for Compound File Binary (CFB) containers.",
+        "The library supports writing Outlook .msg files through both high-level MapiMessage and low-level MsgWriter APIs.",
+        "MsgStream: Mutable MSG stream node with raw bytes and CFB metadata",
+        "MapiMessage: Mutable high-level MSG object with MSG and EmailMessage conversion support.",
+        "The MapiMessage class supports conversion between Outlook MSG and Python's email.message.EmailMessage via from_email_message() and to_email_message() methods.",
+        "The CFBDocument class represents a mutable Compound File Binary (CFB) document and can be constructed from a file or a CFBReader instance.",
+        "The library supports reading and writing Outlook MSG files through the high-level MapiMessage class.",
+        "The CFBReader class provides low-level access to Compound File Binary (CFB) containers, enabling inspection of storages, streams, and directory entries.",
+        "MsgStream: Mutable MSG stream node with raw bytes and CFB metadata.",
+        "The MapiMessage class supports opening MSG files from disk using the from_file() class method and provides context manager support via close().",
+        "CFBReader: Reusable reader for Compound File Binary (CFB) containers",
+        "MsgDocument: Mutable MSG document model that can be serialized through the CFB writer.",
+        "The CFBReader class provides methods to traverse the CFB directory tree, including iter_tree(), iter_storages(), iter_streams(), and iter_children(), enabling structured inspection of container contents."
+      ],
+      "code_block_count": 6,
+      "content_path": "kb.aspose.org/email/python/developer-guide/use-cases",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\email\\python\\developer-guide\\use-cases.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\email\\python\\developer-guide\\use-cases.md",
+      "page_role": "feature_showcase",
+      "section": "kb/use",
+      "slug": "use-cases",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 604
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 6,
+      "content_path": "kb.aspose.org/email/python/how-to-load-files-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\email\\python\\how-to-load-files-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\email\\python\\how-to-load-files-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "how-to-load-files-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 765
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 7,
+      "content_path": "kb.aspose.org/email/python/how-to-save-files-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\email\\python\\how-to-save-files-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\email\\python\\how-to-save-files-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "how-to-save-files-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 886
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 7,
+      "content_path": "kb.aspose.org/email/python/how-to-convert-files-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\email\\python\\how-to-convert-files-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\email\\python\\how-to-convert-files-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "how-to-convert-files-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 841
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 8,
+      "content_path": "kb.aspose.org/email/python/how-to-fix-files-errors-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\email\\python\\how-to-fix-files-errors-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\email\\python\\how-to-fix-files-errors-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "how-to-fix-files-errors-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 1216
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 6,
+      "content_path": "kb.aspose.org/email/python/how-to-optimize-files-python",
+      "ir_path": "content_bundle\\pages\\kb.aspose.org\\email\\python\\how-to-optimize-files-python.ir.json",
+      "md_path": "content_bundle\\pages\\kb.aspose.org\\email\\python\\how-to-optimize-files-python.md",
+      "page_role": "howto_article",
+      "section": "kb/how",
+      "slug": "how-to-optimize-files-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 1001
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 1,
+      "content_path": "blog.aspose.org/email/python/introducing-email-foss-python",
+      "ir_path": "content_bundle\\pages\\blog.aspose.org\\email\\python\\introducing-email-foss-python.ir.json",
+      "md_path": "content_bundle\\pages\\blog.aspose.org\\email\\python\\introducing-email-foss-python.md",
+      "page_role": "blog_announcement",
+      "section": "blog/introducing",
+      "slug": "introducing-email-foss-python",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 512
+    },
+    {
+      "assigned_claim_count": 0,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [],
+      "claim_texts": [],
+      "code_block_count": 2,
+      "content_path": "blog.aspose.org/email/python/email-key-features",
+      "ir_path": "content_bundle\\pages\\blog.aspose.org\\email\\python\\email-key-features.ir.json",
+      "md_path": "content_bundle\\pages\\blog.aspose.org\\email\\python\\email-key-features.md",
+      "page_role": "feature_blog",
+      "section": "blog/email",
+      "slug": "email-key-features",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 743
+    },
+    {
+      "assigned_claim_count": 5,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-email-fd5164",
+        "CLM-email-a91a2c",
+        "CLM-email-17ae35",
+        "CLM-email-21db72",
+        "CLM-email-a6e94f"
+      ],
+      "claim_texts": [
+        "The MapiMessage class supports creating new messages programmatically using the static create() method and saving them as Outlook-compatible .msg files.",
+        "The MapiMessage class provides access to its internal MSG reader via the msg_reader property, enabling low-level inspection of property streams and container structure.",
+        "The MapiMessage class provides methods to add recipients (add_recipient), file attachments (add_attachment), and embedded message attachments (add_embedded_message_attachment).",
+        "The MapiAttachment class supports creating file attachments from raw bytes using from_bytes() and embedding entire MapiMessage objects as attachments using from_embedded_message().",
+        "MapiMessage.create() is part of the public API for Aspose.Email FOSS."
+      ],
+      "code_block_count": 4,
+      "content_path": "reference.aspose.org/email/python/mapi-message",
+      "ir_path": "content_bundle\\pages\\reference.aspose.org\\email\\python\\mapi-message.ir.json",
+      "md_path": "content_bundle\\pages\\reference.aspose.org\\email\\python\\mapi-message.md",
+      "page_role": "reference_object_page",
+      "section": "reference/mapi",
+      "slug": "mapi-message",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 791
+    },
+    {
+      "assigned_claim_count": 9,
+      "assigned_claim_ids": [],
+      "claim_ids_used": [
+        "CLM-email-5ebce4",
+        "CLM-email-500ec1",
+        "CLM-email-2ce942",
+        "CLM-email-15641e",
+        "CLM-email-f27dab",
+        "CLM-email-e00487",
+        "CLM-email-084862",
+        "CLM-email-711ad0",
+        "CLM-email-c77072"
+      ],
+      "claim_texts": [
+        "The CFBDocument class represents a mutable Compound File Binary (CFB) document and can be constructed from a file or a CFBReader instance.",
+        "The CFBReader class provides access to the CFB header via the header property, exposing sector_size, mini_sector_size, and major_version.",
+        "CFBReader: Reusable reader for Compound File Binary (CFB) containers",
+        "The CFBReader class provides access to directory entries via get_entry() and supports checking entry types using DirectoryEntry.is_storage(), is_stream(), and is_root() methods.",
+        "The CFBReader class supports reading stream data from CFB containers using get_stream_data() and resolving paths by name using resolve_path() and find_child_by_name().",
+        "CFBWriter: Deterministic serializer for Compound File Binary (CFB) containers.",
+        "The CFBReader class provides low-level access to Compound File Binary (CFB) containers, enabling inspection of storages, streams, and directory entries.",
+        "Header: Header record at file offset 0 defining Compound File Binary (CFB) geometry and allocation chain entry points.",
+        "The CFBReader class supports opening CFB containers from files using the from_file() class method."
+      ],
+      "code_block_count": 6,
+      "content_path": "reference.aspose.org/email/python/cfb-reader",
+      "ir_path": "content_bundle\\pages\\reference.aspose.org\\email\\python\\cfb-reader.ir.json",
+      "md_path": "content_bundle\\pages\\reference.aspose.org\\email\\python\\cfb-reader.md",
+      "page_role": "reference_object_page",
+      "section": "reference/cfb",
+      "slug": "cfb-reader",
+      "template_used": "",
+      "variant": "standard",
+      "word_count": 627
+    }
+  ],
+  "product_evidence": {
+    "capabilities": [
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 14
+        },
+        "source": "readme",
+        "text": "Read CFB and Outlook MSG containers"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 15
+        },
+        "source": "readme",
+        "text": "Inspect low-level storages, streams, and property bags"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 16
+        },
+        "source": "readme",
+        "text": "Read, edit, and write messages through `MapiMessage`"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 17
+        },
+        "source": "readme",
+        "text": "Work with recipients, attachments, and embedded messages"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 18
+        },
+        "source": "readme",
+        "text": "Convert between MSG and [`email.message.EmailMessage`](https://docs.python.org/3/library/email.message.html#email.message.EmailMessage)"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 19
+        },
+        "source": "readme",
+        "text": "Create new Outlook-compatible `.msg` files in pure Python"
+      },
+      {
+        "evidence": {
+          "file": "aspose/email_foss/cfb/writer.py",
+          "line": 58
+        },
+        "source": "docstring:CFBDocument",
+        "text": "Mutable Compound File Binary (CFB) document description."
+      },
+      {
+        "evidence": {
+          "file": "aspose/email_foss/cfb/reader.py",
+          "line": 117
+        },
+        "source": "docstring:CFBError",
+        "text": "Raised for malformed or unsupported Compound File Binary (CFB) content."
+      },
+      {
+        "evidence": {
+          "file": "aspose/email_foss/cfb/reader.py",
+          "line": 121
+        },
+        "source": "docstring:CFBReader",
+        "text": "Reusable reader for Compound File Binary (CFB) containers."
+      },
+      {
+        "evidence": {
+          "file": "aspose/email_foss/cfb/writer.py",
+          "line": 38
+        },
+        "source": "docstring:CFBStorage",
+        "text": "Mutable storage node used by the CFB writer."
+      },
+      {
+        "evidence": {
+          "file": "aspose/email_foss/cfb/writer.py",
+          "line": 26
+        },
+        "source": "docstring:CFBStream",
+        "text": "Mutable stream node used by the CFB writer."
+      },
+      {
+        "evidence": {
+          "file": "aspose/email_foss/cfb/writer.py",
+          "line": 123
+        },
+        "source": "docstring:CFBWriter",
+        "text": "Deterministic serializer for Compound File Binary (CFB) containers."
+      },
+      {
+        "evidence": {
+          "file": "aspose/email_foss/msg/property_tags.py",
+          "line": 6
+        },
+        "source": "docstring:CommonMessagePropertyId",
+        "text": "Common MAPI property identifiers used by the MSG reader/writer for core message semantics."
+      },
+      {
+        "evidence": {
+          "file": "aspose/email_foss/cfb/types.py",
+          "line": 56
+        },
+        "source": "docstring:DirectoryColorFlag",
+        "text": "Stores the red-black tree color used by directory sibling links."
+      },
+      {
+        "evidence": {
+          "file": "aspose/email_foss/cfb/reader.py",
+          "line": 75
+        },
+        "source": "docstring:DirectoryEntry",
+        "text": "Fixed-size directory record for one storage/stream object and its tree links."
+      },
+      {
+        "evidence": {
+          "file": "aspose/email_foss/cfb/types.py",
+          "line": 43
+        },
+        "source": "docstring:DirectoryObjectType",
+        "text": "Classifies the directory entry payload as unallocated, storage, stream, or root storage."
+      }
+    ],
+    "confidence": {},
+    "conversion_pairs": [],
+    "format_evidence_source": "absent",
+    "input_formats": [],
+    "install_recipe": {
+      "install_command": "pip install aspose-email-foss>=26.3",
+      "package_name": "aspose-email-foss",
+      "source_file": "pyproject.toml (cached)",
+      "verification_code": "import aspose_email_foss\nprint('Installation successful')",
+      "version_constraint": ">=26.3"
+    },
+    "limitations": [],
+    "missing_info": [],
+    "output_formats": [],
+    "supported_formats": [],
+    "workflow_examples": [],
+    "workflows": []
+  },
+  "richness_tier": ""
+}

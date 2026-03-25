@@ -1,31 +1,32 @@
 {
   "frontmatter": {
     "canonical": "https://reference.aspose.org/slides/_index/",
-    "canonical_import": "aspose_slides_foss",
-    "date": "2026-03-09T18:44:29Z",
-    "dateModified": "2026-03-09T18:44:29Z",
-    "datePublished": "2026-03-09T18:44:29Z",
-    "description": "Using the `aspose_slides_foss` package, you can work with slide decks, shapes, text, images, and animations without requiring Microsoft PowerPoint. This...",
+    "canonical_import": "Aspose.Slides",
+    "code_import": "Aspose.Slides",
+    "date": "2026-03-24T17:07:48Z",
+    "dateModified": "2026-03-24T17:07:48Z",
+    "datePublished": "2026-03-24T17:07:48Z",
+    "description": "Developers can create, load, and save PowerPoint files with fidelity, manage slide content, and apply formatting via classes like `BasePortionFormat`,...",
     "display_name": "Aspose.Slides",
     "family": "slides",
     "keywords": [
-      "slides python",
+      "python slides",
       "python slides for beginners",
+      "python slideshare",
+      "python slideshow",
       "python slides ppt",
       "python slides pdf",
-      "slide python pptx",
-      "python slides for kids",
-      "python slides library",
-      "python slides github"
+      "python slideshow py",
+      "python slideshow with transitions"
     ],
-    "lastmod": "2026-03-09T18:44:29Z",
+    "lastmod": "2026-03-24T17:07:48Z",
     "page_role": "toc",
-    "platform": "python",
+    "platform": "dotnet",
     "reading_time": 1,
     "robots": "noindex, follow",
-    "seoTitle": "Aspose.Slides Table of Contents",
+    "seoTitle": "Aspose.Slides Reference _Index",
     "slug": "_index",
-    "title": "Table of Contents",
+    "title": "Reference _Index",
     "type": "toc",
     "url": "/reference.aspose.org/slides/_index/",
     "weight": 5
@@ -37,7 +38,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Slides enables developers to create, manipulate, and convert PowerPoint files directly in Python. Using the `aspose_slides_foss` package, you can work with slide decks, shapes, text, images, and animations without requiring Microsoft PowerPoint. This makes it ideal for generating reports, automating presentations, or converting slides to PDF, PNG, or other formats in server-side or batch workflows.",
+          "content": "This section covers the core capabilities of Aspose.Slides for .NET, focusing on presentation file handling, slide manipulation, and shape/text formatting using the documented API surface. Developers can create, load, and save PowerPoint files with fidelity, manage slide content, and apply formatting via classes like `BasePortionFormat`, `BulletFormat`, `FillFormat`, and `ColorFormat`.",
           "items": [],
           "language": null,
           "level": null,
@@ -47,23 +48,16 @@
           "claim_ids": [],
           "content": "",
           "items": [
-            "Create new presentations from scratch or load existing `.pptx` files",
-            "Add, copy, and reorder slides programmatically",
-            "Insert and format text, shapes, charts, and images",
-            "Export presentations to PDF, images (PNG, JPEG), or HTML",
-            "Access and modify slide master layouts and themes"
+            "Load and save `.pptx` presentations with full round-trip support",
+            "Add, remove, clone, and reorder slides in a presentation",
+            "Create and format shapes including auto shapes, picture frames, tables, and connectors",
+            "Apply text formatting at portion, paragraph, and text frame levels using `BasePortionFormat` and `BulletFormat`",
+            "Configure fill and color properties via `FillFormat`, `ColorFormat`, and GradientStopCollection",
+            "Manage comments and document properties using `CommentCollection`, `Comment`, and `DocumentProperties`"
           ],
           "language": null,
           "level": null,
           "type": "list"
-        },
-        {
-          "claim_ids": [],
-          "content": "For example, a developer building a reporting tool can generate a slide deck with dynamic content and export it as a PDF for email distribution. Similarly, educators or trainers can automate slide creation for training modules using templates. The library supports common use cases like `python slides for beginners`, `python slides ppt`, and `python slides pdf`, and is available on GitHub for community contributions and examples.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
         }
       ],
       "heading": "Capabilities",
@@ -74,7 +68,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Install Aspose.Slides for Python via pip to access core PowerPoint processing capabilities. The package `aspose_slides_foss` provides the foundational classes for working with slides, presentations, and related objects in Python slides workflows.",
+          "content": "This section covers installation and setup for Aspose.Slides on .NET. Install the package via NuGet, then reference the library using the canonical import `using Aspose.Slides;`.",
           "items": [],
           "language": null,
           "level": null,
@@ -82,7 +76,7 @@
         },
         {
           "claim_ids": [],
-          "content": "pip install aspose_slides_foss",
+          "content": "dotnet add package Aspose.Slides",
           "items": [],
           "language": "bash",
           "level": null,
@@ -90,7 +84,7 @@
         },
         {
           "claim_ids": [],
-          "content": "After installation, verify the setup by importing the package and instantiating the `Presentation` class. This confirms the library loads correctly and is ready for use in slide python pptx, python slides pdf, or other python slides library operations.",
+          "content": "After installation, verify the setup by creating a new presentation, adding a slide, and saving it as a .pptx file. This confirms the core presentation I/O functionality is working correctly.",
           "items": [],
           "language": null,
           "level": null,
@@ -105,7 +99,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Slides for Python via .NET (Aspose.Slides) enables programmatic creation, manipulation, and conversion of PowerPoint files. Developers can work with slides, presentations, and related objects using a clean, object-oriented API designed for production use.",
+          "content": "This section covers the .NET API for presentation creation, reading, and manipulation using Aspose.Slides. It includes core classes such as `BasePortionFormat`, `BulletFormat`, `Camera`, `ColorFormat`, `Comment`, `CommentCollection`, `DocumentProperties`, `EffectFormat`, `FillFormat`, GradientStop, GradientStopCollection, IComment, IDocumentProperties, IImage, and Image.",
           "items": [],
           "language": null,
           "level": null,
@@ -113,9 +107,9 @@
         },
         {
           "claim_ids": [],
-          "content": "import aspose_slides_foss\n\n# Create a new presentation\npresentation = aspose_slides_foss.Presentation()\n\n# Save as PPTX\npresentation.save(\"output.pptx\", aspose_slides_foss.SaveFormat.Pptx)",
+          "content": "using Aspose.Slides;\n\nvar presentation = new Presentation();\npresentation.Save(\"output.pptx\", SaveFormat.Pptx);",
           "items": [],
-          "language": "python",
+          "language": "csharp",
           "level": null,
           "type": "code"
         }
@@ -128,7 +122,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Slides for Python via .NET (Aspose.Slides) enables programmatic creation, manipulation, and conversion of PowerPoint files. Developers can work with slide decks, text, shapes, images, and animations using a consistent object model aligned with the PowerPoint file format.",
+          "content": "This section covers the .NET API surface for Aspose.Slides, focusing on core classes used to manipulate presentation elements. Developers work directly with low-level XML-backed objects such as `BasePortionFormat`, `BulletFormat`, `ColorFormat`, `FillFormat`, and `EffectFormat` to read and write formatting attributes.",
           "items": [],
           "language": null,
           "level": null,
@@ -136,7 +130,7 @@
         },
         {
           "claim_ids": [],
-          "content": "Common tasks include converting slides to PDF or images, extracting text from presentations, and generating new slides from templates. The library supports .pptx, .ppt, and other major formats, making it suitable for reports, dashboards, and automated slide generation workflows.",
+          "content": "Key operations include accessing slide content via `Comment`, `CommentCollection`, and `DocumentProperties`, and managing visual properties through GradientStop, GradientStopCollection, and camera settings via `Camera`. All formatting changes are persisted using the Save() method on the respective element.",
           "items": [],
           "language": null,
           "level": null,
@@ -144,11 +138,15 @@
         },
         {
           "claim_ids": [],
-          "content": "For beginners, the python slides library offers intuitive entry points like `Presentation` to load or create slide decks. Existing examples on python slides github repositories demonstrate real-world usage patterns, including python slides for kids, python slides pdf, and slide python pptx automation.",
-          "items": [],
+          "content": "",
+          "items": [
+            "Formatting: `BasePortionFormat`, `BulletFormat`, `ColorFormat`, `FillFormat`, `EffectFormat`",
+            "Slide content: `Comment`, `CommentCollection`, `DocumentProperties`",
+            "3D and visual effects: `Camera`, GradientStop, GradientStopCollection"
+          ],
           "language": null,
           "level": null,
-          "type": "paragraph"
+          "type": "list"
         }
       ],
       "heading": "Developer Guide",
@@ -159,20 +157,13 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Slides provides a Python API for working with presentation files. Explore related topics such as creating, modifying, and converting slides using the `aspose_slides_foss` package.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
           "content": "",
           "items": [
-            "Python slides library overview",
-            "Convert slides to PDF in Python",
-            "Create PowerPoint files with Python",
-            "[Aspose.Slides for Python via .NET on GitHub](https://github.com/aspose-slides/Aspose.Slides-for-Python-via-NET)"
+            "Presentation I/O — open, create, and save `.pptx` files with full round-trip fidelity",
+            "Slides — add, remove, clone, reorder, and iterate slides",
+            "Shapes — auto shapes, picture frames, tables, connectors",
+            "Text — text frames, paragraphs, portions with character, paragraph, and text frame formatting (including bullets)",
+            "Fill — solid, gradient, pattern, and picture fills"
           ],
           "language": null,
           "level": null,
@@ -184,5 +175,5 @@
       "section_id": "see_also"
     }
   ],
-  "title": "Table of Contents"
+  "title": "Reference _Index"
 }

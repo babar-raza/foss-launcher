@@ -1,0 +1,231 @@
+{
+  "acquisition": {
+    "acquisition_confidence": "high",
+    "canonical_import": "aspose_email_foss",
+    "clone_cache_hit": true,
+    "discovered_at": "2026-03-21T13:33:03.744493+00:00",
+    "display_name": "Aspose.Email FOSS for Python",
+    "failure_state": "",
+    "family": "email",
+    "field_provenance": {
+      "canonical_import": "families_yaml",
+      "display_name": "families_yaml",
+      "runtime_import": "families_yaml"
+    },
+    "is_fresh_clone": false,
+    "launch_tier": "core",
+    "phase": "phase1_acquisition",
+    "platform": "python",
+    "repo_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\intake\\.clone_cache\\po_email_python",
+    "repo_sha": "c336fa7c1d6b90c6155ecf25a261477640c2b1b6",
+    "repo_signals": {
+      "detected_manifest_files": [
+        "pyproject.toml"
+      ],
+      "files_estimated": 20,
+      "inferred_language": "python",
+      "is_empty_clone": false,
+      "readme_present": true
+    },
+    "repo_url": "https://github.com/aspose-email-foss/Aspose.Email-FOSS-for-Python",
+    "runtime_import": "aspose.email"
+  },
+  "canonical_import": "aspose_email_foss",
+  "classification": {
+    "decision": "eligible",
+    "full_name": "aspose-email-foss/Aspose.Email-FOSS-for-Python",
+    "reasons": [
+      "source-grounded phase1 inspection passed"
+    ]
+  },
+  "display_name": "Aspose.Email FOSS for Python",
+  "family": "email",
+  "phase": "phase1_inspection",
+  "platform": "python",
+  "repo": {
+    "archived": false,
+    "created_at": "2026-03-16T16:53:44Z",
+    "default_branch": "master",
+    "description": "The official open-source Python library by Aspose.Email for creating, reading, and editing Microsoft Outlook files (.msg)",
+    "fork": false,
+    "full_name": "aspose-email-foss/Aspose.Email-FOSS-for-Python",
+    "html_url": "https://github.com/aspose-email-foss/Aspose.Email-FOSS-for-Python",
+    "id": 1183488768,
+    "is_template": false,
+    "language": "Python",
+    "license": {
+      "name": "MIT License",
+      "spdx_id": "MIT"
+    },
+    "name": "Aspose.Email-FOSS-for-Python",
+    "owner": {
+      "login": "aspose-email-foss",
+      "type": "Organization"
+    },
+    "pushed_at": "2026-03-16T18:19:33Z",
+    "size": 66,
+    "stargazers_count": 0,
+    "topics": [],
+    "updated_at": "2026-03-17T18:20:44Z"
+  },
+  "runtime_import": "aspose.email",
+  "scout": {
+    "budget_log": [
+      {
+        "category": "doc",
+        "path": "AGENTS.md",
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 5143
+      }
+    ],
+    "budget_log_overflow_count": 0,
+    "by_category": {
+      "asset": 7,
+      "ci": 2,
+      "config": 2,
+      "doc": 6,
+      "example": 4,
+      "source": 13,
+      "test": 2
+    },
+    "content_used_bytes": 238094,
+    "doc_paths": [
+      "CHANGELOG.md",
+      "CONTRIBUTING.md",
+      "PUBLIC_API.md",
+      "README.md",
+      "SECURITY.md"
+    ],
+    "doc_selection": [
+      {
+        "decision": "kept",
+        "importance_rank": 7,
+        "language": "",
+        "path": "CHANGELOG.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 705
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 7,
+        "language": "",
+        "path": "CONTRIBUTING.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 1185
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 7,
+        "language": "",
+        "path": "PUBLIC_API.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 3409
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 7,
+        "language": "",
+        "path": "README.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 4192
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 4,
+        "language": "",
+        "path": "SECURITY.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 719
+      },
+      {
+        "decision": "skipped",
+        "importance_rank": 4,
+        "language": "",
+        "path": "AGENTS.md",
+        "readable_in_repo_content": false,
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 5143
+      }
+    ],
+    "example_paths": [
+      "examples/create_msg_and_eml.py",
+      "examples/msg_reader.py",
+      "examples/msg_summary.py",
+      "examples/README.md"
+    ],
+    "example_selection": [
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "",
+        "path": "examples/README.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 2048
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/create_msg_and_eml.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 2991
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/msg_reader.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 5140
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 1,
+        "language": "python",
+        "path": "examples/msg_summary.py",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 4846
+      }
+    ],
+    "files_enumerated": 36,
+    "files_read": 35,
+    "selected_doc_count": 5,
+    "selected_example_count": 4,
+    "skip_counts_approximate": false,
+    "skip_reason_counts": {
+      "doc_ineligible_meta": 1
+    },
+    "skipped_paths": [
+      "AGENTS.md"
+    ],
+    "truncated_files": []
+  },
+  "shared_facts": {
+    "build_systems": [
+      "pyproject"
+    ],
+    "dependencies": [],
+    "description": "Pure Python CFB and Outlook MSG toolkit for reading, projecting, and writing message data.",
+    "entrypoints": [],
+    "has_ci": true,
+    "has_docs_folder": false,
+    "has_examples_folder": true,
+    "has_tests": true,
+    "install_command": "pip install aspose-email-foss",
+    "license_type": "MIT",
+    "module_path": "",
+    "package_name": "aspose-email-foss",
+    "primary_language": "python",
+    "python_requires": ">=3.10",
+    "version": "26.3"
+  }
+}

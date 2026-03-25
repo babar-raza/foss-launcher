@@ -1,0 +1,22 @@
+{
+  "budget_log_overflow_count": 0,
+  "build_systems": [
+    "pyproject"
+  ],
+  "by_category": {
+    "asset": 5,
+    "config": 2,
+    "doc": 2,
+    "source": 254,
+    "test": 18
+  },
+  "content_used_bytes": 922603,
+  "files_enumerated": 281,
+  "files_read": 257,
+  "has_ci": false,
+  "has_docs_folder": false,
+  "has_examples_folder": false,
+  "has_tests": true,
+  "package_name": "aspose-slides-foss",
+  "primary_language": "python"
+}

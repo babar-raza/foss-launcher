@@ -35,3 +35,4 @@ output:
   deploy_dir: "deploy/"
   content_repo_map:
     "aspose.org": "${ASPOSE_ORG_CONTENT_REPO}"
+pipeline_mode: create

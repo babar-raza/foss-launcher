@@ -1,0 +1,227 @@
+{
+  "acquisition": {
+    "acquisition_confidence": "high",
+    "canonical_import": "aspose_3d_foss",
+    "clone_cache_hit": true,
+    "discovered_at": "2026-03-21T13:32:57.923178+00:00",
+    "display_name": "Aspose.3D FOSS for Python",
+    "failure_state": "",
+    "family": "3d",
+    "field_provenance": {
+      "canonical_import": "families_yaml",
+      "display_name": "families_yaml",
+      "runtime_import": "families_yaml"
+    },
+    "is_fresh_clone": false,
+    "launch_tier": "core",
+    "phase": "phase1_acquisition",
+    "platform": "python",
+    "repo_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\intake\\.clone_cache\\po_3d_python",
+    "repo_sha": "37114723be16c9c9441c8fb93116b044ad1aa6b5",
+    "repo_signals": {
+      "detected_manifest_files": [
+        "setup.py"
+      ],
+      "files_estimated": 17,
+      "inferred_language": "python",
+      "is_empty_clone": false,
+      "readme_present": true
+    },
+    "repo_url": "https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-Python",
+    "runtime_import": "aspose.threed"
+  },
+  "canonical_import": "aspose_3d_foss",
+  "classification": {
+    "decision": "eligible",
+    "full_name": "aspose-3d-foss/Aspose.3D-FOSS-for-Python",
+    "reasons": [
+      "source-grounded phase1 inspection passed"
+    ]
+  },
+  "display_name": "Aspose.3D FOSS for Python",
+  "family": "3d",
+  "phase": "phase1_inspection",
+  "platform": "python",
+  "repo": {
+    "archived": false,
+    "created_at": "2026-01-20T15:15:16Z",
+    "default_branch": "master",
+    "description": "An open source version of Aspose.3D",
+    "fork": false,
+    "full_name": "aspose-3d-foss/Aspose.3D-FOSS-for-Python",
+    "html_url": "https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-Python",
+    "id": 1138357893,
+    "is_template": false,
+    "language": "Python",
+    "license": {
+      "name": "MIT License",
+      "spdx_id": "MIT"
+    },
+    "name": "Aspose.3D-FOSS-for-Python",
+    "owner": {
+      "login": "aspose-3d-foss",
+      "type": "Organization"
+    },
+    "pushed_at": "2026-01-29T02:04:13Z",
+    "size": 169,
+    "stargazers_count": 0,
+    "topics": [],
+    "updated_at": "2026-01-29T02:04:16Z"
+  },
+  "runtime_import": "aspose.threed",
+  "scout": {
+    "budget_log": [
+      {
+        "category": "doc",
+        "path": "FBX_IMPLEMENTATION_SUMMARY.md",
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 1777
+      },
+      {
+        "category": "doc",
+        "path": "AGENTS.md",
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 5029
+      },
+      {
+        "category": "doc",
+        "path": "PYPI_READINESS.md",
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 6137
+      },
+      {
+        "category": "doc",
+        "path": "OBJ_IMPORTER_IMPLEMENTATION.md",
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 6409
+      },
+      {
+        "category": "doc",
+        "path": "STL_IMPORT_IMPLEMENTATION.md",
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 8051
+      },
+      {
+        "category": "doc",
+        "path": "IMPLEMENTATION_SUMMARY.md",
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 9302
+      }
+    ],
+    "budget_log_overflow_count": 0,
+    "by_category": {
+      "asset": 5,
+      "config": 2,
+      "doc": 7,
+      "source": 126,
+      "test": 32
+    },
+    "content_used_bytes": 476663,
+    "doc_paths": [
+      "README.md"
+    ],
+    "doc_selection": [
+      {
+        "decision": "kept",
+        "importance_rank": 7,
+        "language": "",
+        "path": "README.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 4686
+      },
+      {
+        "decision": "skipped",
+        "importance_rank": 4,
+        "language": "",
+        "path": "AGENTS.md",
+        "readable_in_repo_content": false,
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 5029
+      },
+      {
+        "decision": "skipped",
+        "importance_rank": 4,
+        "language": "",
+        "path": "FBX_IMPLEMENTATION_SUMMARY.md",
+        "readable_in_repo_content": false,
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 1777
+      },
+      {
+        "decision": "skipped",
+        "importance_rank": 4,
+        "language": "",
+        "path": "IMPLEMENTATION_SUMMARY.md",
+        "readable_in_repo_content": false,
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 9302
+      },
+      {
+        "decision": "skipped",
+        "importance_rank": 4,
+        "language": "",
+        "path": "OBJ_IMPORTER_IMPLEMENTATION.md",
+        "readable_in_repo_content": false,
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 6409
+      },
+      {
+        "decision": "skipped",
+        "importance_rank": 4,
+        "language": "",
+        "path": "PYPI_READINESS.md",
+        "readable_in_repo_content": false,
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 6137
+      },
+      {
+        "decision": "skipped",
+        "importance_rank": 4,
+        "language": "",
+        "path": "STL_IMPORT_IMPLEMENTATION.md",
+        "readable_in_repo_content": false,
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 8051
+      }
+    ],
+    "example_paths": [],
+    "example_selection": [],
+    "files_enumerated": 172,
+    "files_read": 166,
+    "selected_doc_count": 1,
+    "selected_example_count": 0,
+    "skip_counts_approximate": false,
+    "skip_reason_counts": {
+      "doc_ineligible_meta": 6
+    },
+    "skipped_paths": [
+      "FBX_IMPLEMENTATION_SUMMARY.md",
+      "AGENTS.md",
+      "PYPI_READINESS.md",
+      "OBJ_IMPORTER_IMPLEMENTATION.md",
+      "STL_IMPORT_IMPLEMENTATION.md",
+      "IMPLEMENTATION_SUMMARY.md"
+    ],
+    "truncated_files": []
+  },
+  "shared_facts": {
+    "build_systems": [
+      "setuptools"
+    ],
+    "dependencies": [],
+    "description": "Aspose.3D FOSS for Python - An open-source 3D file format library",
+    "entrypoints": [],
+    "has_ci": false,
+    "has_docs_folder": false,
+    "has_examples_folder": false,
+    "has_tests": true,
+    "install_command": "pip install aspose-3d-foss",
+    "license_type": "",
+    "module_path": "",
+    "package_name": "aspose-3d-foss",
+    "primary_language": "python",
+    "python_requires": "",
+    "version": "26.1.0"
+  }
+}

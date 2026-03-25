@@ -1,0 +1,166 @@
+{
+  "acquisition": {
+    "acquisition_confidence": "low",
+    "canonical_import": "com.aspose.3d",
+    "clone_cache_hit": true,
+    "discovered_at": "2026-03-21T13:33:01.381565+00:00",
+    "display_name": "Aspose.3D FOSS for Java",
+    "failure_state": "",
+    "family": "3d",
+    "field_provenance": {
+      "canonical_import": "families_yaml",
+      "display_name": "families_yaml",
+      "runtime_import": "inferred_default"
+    },
+    "is_fresh_clone": false,
+    "launch_tier": "core",
+    "phase": "phase1_acquisition",
+    "platform": "java",
+    "repo_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\intake\\.clone_cache\\po_3d_java",
+    "repo_sha": "3f31eaaeb3e874d070138c39683c198e4f1d6bb2",
+    "repo_signals": {
+      "detected_manifest_files": [
+        "pom.xml"
+      ],
+      "files_estimated": 14,
+      "inferred_language": "java",
+      "is_empty_clone": false,
+      "readme_present": true
+    },
+    "repo_url": "https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-Java",
+    "runtime_import": ""
+  },
+  "canonical_import": "com.aspose.3d",
+  "classification": {
+    "decision": "ineligible",
+    "full_name": "aspose-3d-foss/Aspose.3D-FOSS-for-Java",
+    "reasons": [
+      "no license detected from metadata or manifests"
+    ]
+  },
+  "display_name": "Aspose.3D FOSS for Java",
+  "family": "3d",
+  "phase": "phase1_inspection",
+  "platform": "java",
+  "repo": {
+    "archived": false,
+    "created_at": "2026-03-11T12:21:57Z",
+    "default_branch": "main",
+    "description": "Aspose.3D FOSS for Java",
+    "fork": false,
+    "full_name": "aspose-3d-foss/Aspose.3D-FOSS-for-Java",
+    "html_url": "https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-Java",
+    "id": 1178837520,
+    "is_template": false,
+    "language": "Java",
+    "license": null,
+    "name": "Aspose.3D-FOSS-for-Java",
+    "owner": {
+      "login": "aspose-3d-foss",
+      "type": "Organization"
+    },
+    "pushed_at": "2026-03-12T13:30:14Z",
+    "size": 86,
+    "stargazers_count": 0,
+    "topics": [],
+    "updated_at": "2026-03-12T13:30:19Z"
+  },
+  "runtime_import": "",
+  "scout": {
+    "budget_log": [
+      {
+        "category": "doc",
+        "path": "AGENTS.md",
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 5085
+      }
+    ],
+    "budget_log_overflow_count": 0,
+    "by_category": {
+      "asset": 4,
+      "config": 2,
+      "doc": 4,
+      "source": 83,
+      "test": 4
+    },
+    "content_used_bytes": 235578,
+    "doc_paths": [
+      "FILE_FORMATS.md",
+      "README.md",
+      "TODO.md"
+    ],
+    "doc_selection": [
+      {
+        "decision": "kept",
+        "importance_rank": 7,
+        "language": "",
+        "path": "README.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 1473
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 4,
+        "language": "",
+        "path": "FILE_FORMATS.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 2184
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 4,
+        "language": "",
+        "path": "TODO.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 6634
+      },
+      {
+        "decision": "skipped",
+        "importance_rank": 4,
+        "language": "",
+        "path": "AGENTS.md",
+        "readable_in_repo_content": false,
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 5085
+      }
+    ],
+    "example_paths": [],
+    "example_selection": [],
+    "files_enumerated": 97,
+    "files_read": 96,
+    "selected_doc_count": 3,
+    "selected_example_count": 0,
+    "skip_counts_approximate": false,
+    "skip_reason_counts": {
+      "doc_ineligible_meta": 1
+    },
+    "skipped_paths": [
+      "AGENTS.md"
+    ],
+    "truncated_files": []
+  },
+  "shared_facts": {
+    "build_systems": [
+      "maven"
+    ],
+    "dependencies": [
+      "org.junit.jupiter:junit-jupiter"
+    ],
+    "description": "Free and Open Source implementation of Aspose.3D for Java",
+    "entrypoints": [],
+    "has_ci": false,
+    "has_docs_folder": false,
+    "has_examples_folder": false,
+    "has_tests": true,
+    "install_command": "mvn dependency:get -Dartifact=com.aspose:aspose-3d-foss",
+    "license_type": "",
+    "module_path": "",
+    "package_name": "com.aspose:aspose-3d-foss",
+    "primary_language": "java",
+    "python_requires": "",
+    "version": "26.1.0"
+  }
+}

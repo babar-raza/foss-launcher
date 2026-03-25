@@ -1,0 +1,76 @@
+---
+canonical: https://kb.aspose.org/3d/dotnet/how-to-save-3d-models-dotnet/
+canonical_import: Aspose.ThreeD
+date: '2026-03-22T15:30:08Z'
+dateModified: '2026-03-22T15:30:08Z'
+datePublished: '2026-03-22T15:30:08Z'
+description: The `Scene` class provides the core functionality to export 3D content,
+  and format-specific exporters like `StlFormat`, `ObjFormat`, `FbxFormat`,...
+display_name: Aspose.3D
+family: 3d
+keywords:
+- dotnet 3d
+- dotnet 3d engine
+- dotnet 3d library
+- is .net 3.5 safe
+- shapr 3d cost
+- difference between dotnet and dotnet framework
+- 3d symptoms
+- python 3d logo
+lastmod: '2026-03-22T15:30:08Z'
+page_role: howto_article
+platform: dotnet
+reading_time: 1
+robots: index, follow
+seoTitle: How to Save Files with Aspose.3D | Guide
+slug: how-to-save-3d-models-dotnet
+title: How to Save Files with Aspose.3D
+type: howto_article
+url: /kb.aspose.org/3d/dotnet/how-to-save-3d-models-dotnet/
+weight: 12
+---
+
+## Problem
+
+Developers using Aspose.3D need to save 3D scenes to specific file formats such as STL, OBJ, FBX, GLTF, or COLLADA. The `Scene` class provides the core functionality to export 3D content, and format-specific exporters like `StlFormat`, `ObjFormat`, `FbxFormat`, `GltfFormat`, and `ColladaFormat` enable targeted export operations.
+
+## Prerequisites
+
+To use Aspose.3D for saving 3D files in .NET, ensure you have .NET 6.0 or later installed. Install the Aspose.3D package via [identifier omitted] using the command `dotnet add package Aspose.3D`. The library supports core 3D operations through classes like `Scene`, `Node`, `Entity`, and format-specific exporters such as `FbxFormat`, `StlFormat`, and `GltfFormat`.
+
+## Saving the File
+
+Aspose.3D provides multiple ways to save 3D scenes using format-specific classes and the `Scene` class. Developers can select from supported formats like `FbxFormat`, `GltfFormat`, `ObjFormat`, `StlFormat`, and `ColladaFormat`, each offering dedicated `CreateSaveOptions()` methods for fine-tuning export behavior. Output paths and file content types (binary or ASCII) are controlled via the `FileFormat` static methods and save options.
+
+The `Scene.Save()` method accepts a file path and optional save options. Use `FbxFormat()`, `GltfFormat()`, `ObjFormat()`, `StlFormat()`, or `ColladaFormat()` to specify the target format, and call `CreateSaveOptions()` on the format instance to configure export settings. The `FileFormat` class exposes static methods for common formats, but format-specific classes are required to obtain valid save options.
+
+## Code Example
+
+This section demonstrates how to load a 3D scene, modify its structure using core entities, and save it to a supported format using Aspose.3D. The example uses the `Scene` class to manage the 3D content and the `Node` class to organize scene hierarchy.
+
+```python
+# Example usage
+import Aspose.[identifier omitted]
+# See API reference for complete examples
+```
+
+## Output Options
+
+Aspose.3D supports multiple 3D file formats through dedicated format classes and static methods on `FileFormat`. Each format provides `CreateSaveOptions()` and `CreateLoadOptions()` methods for configuring export and import behavior.
+
+- `ObjFormat` — Wavefront OBJ format with ASCII or binary support
+- `StlFormat` — Stereolithography format for 3D printing
+- `GltfFormat` — GL Transmission Format for web and runtime use
+- `FbxFormat` — Autodesk FBX format for cross-platform 3D pipelines
+- `ColladaFormat` — COLLADA XML-based interchange format
+- `PlyFormat` — Polygon File format for point cloud and mesh data
+
+## See Also
+
+Explore related Aspose.3D functionality for working with 3D files in .NET environments. The API surface supports core operations like loading, saving, and manipulating 3D scenes using classes such as `A3DObject`, `AnimationClip`, and `Mesh`.
+
+- [Save files in supported formats](/kb.aspose.org/3d/dotnet/faq/)
+- [Explore core 3D capabilities](/blog.aspose.org/3d/dotnet/3d-key-features/)
+- [New open-source .NET support](/blog.aspose.org/3d/dotnet/introducing-3d-foss-dotnet/)
+- [Load 3D files efficiently](/docs.aspose.org/3d/dotnet/developer-guide/model-loading/)
+- [Render 3D models to images](/docs.aspose.org/3d/dotnet/developer-guide/rendering/)

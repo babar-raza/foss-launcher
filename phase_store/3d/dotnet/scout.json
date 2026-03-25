@@ -1,0 +1,22 @@
+{
+  "budget_log_overflow_count": 0,
+  "build_systems": [
+    "dotnet"
+  ],
+  "by_category": {
+    "asset": 5,
+    "config": 1,
+    "doc": 2,
+    "source": 119,
+    "test": 6
+  },
+  "content_used_bytes": 538992,
+  "files_enumerated": 133,
+  "files_read": 132,
+  "has_ci": false,
+  "has_docs_folder": false,
+  "has_examples_folder": false,
+  "has_tests": true,
+  "package_name": "Aspose.3D",
+  "primary_language": "csharp"
+}

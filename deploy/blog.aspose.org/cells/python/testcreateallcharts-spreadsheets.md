@@ -1,78 +1,71 @@
 ---
-canonical: https://blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/
-canonical_import: aspose_cells_foss
-date: '2026-03-11T11:59:24Z'
-dateModified: '2026-03-11T11:59:24Z'
-datePublished: '2026-03-11T11:59:24Z'
-description: Aspose.Cells FOSS supports this feature natively in Python, allowing
-  you to define formatting rules such as color scales, data bars, and icon sets without...
+canonical: https://blog.aspose.org/cells/python/create-charts-spreadsheets/
+canonical_import: aspose.cells
+date: '2026-03-22T08:56:20Z'
+dateModified: '2026-03-22T08:56:20Z'
+datePublished: '2026-03-22T08:56:20Z'
+description: With support for core spreadsheet operations—including `cell` `value`
+  management, styling, and chart creation—it serves as a lightweight, open-source...
 display_name: Aspose.Cells FOSS
 family: cells
 keywords:
-- python
-- python openpyxl
-- openpyxl pandas
-- openpyxl in python
-- openpyxl documentation
-- install openpyxl
-- openpyxl cell
-- openpyxl pip
-lastmod: '2026-03-11T11:59:24Z'
+- cells python
+- python cells in excel
+- python cells vscode
+- cell python docx
+- cell python spyder
+- aspose cells python
+- code cells python
+- voronoi cells python
+lastmod: '2026-03-22T08:56:20Z'
 page_role: feature_blog
 platform: python
 reading_time: 1
 robots: index, follow
-seoTitle: '**conditional Formatting**: Apply rules-based formatting | Guide'
-slug: testcreateallcharts-spreadsheets
-title: '**conditional Formatting**: Apply rules-based formatting'
+seoTitle: Aspose.Cells FOSS Testcreateallcharts Spreadsheets
+slug: create-charts-spreadsheets
+title: Testcreateallcharts Spreadsheets
 type: feature_blog
-url: /blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/
+url: /blog.aspose.org/cells/python/create-charts-spreadsheets/
 weight: 17
 ---
 
 ## Introduction
 
-Conditional Formatting enables developers to apply rules-based formatting to Excel `cells` and ranges dynamically, enhancing data readability and visual analysis. Aspose.Cells FOSS supports this feature natively in Python, allowing you to define formatting rules such as color scales, data bars, and icon sets without manual intervention.
+Aspose.Cells FOSS enables developers to programmatically create and manipulate Excel workbooks and `worksheets` using Python. With support for core spreadsheet operations—including `cell` `value` management, styling, and chart creation—it serves as a lightweight, open-source solution for generating Excel-compatible files.
 
-This capability is essential for reporting, dashboards, and data validation workflows where visual cues improve decision-making. Developers can programmatically set conditions—like `cell` values exceeding thresholds—and automatically apply styles like `font` color, background `fill`, or icon indicators. For implementation details and working examples, refer to the [examples](https://github.com/aspose-cells-foss/aspose-cells-python/tree/main/examples) directory.
-
-To `get` started, install the library using `pip install aspose-cells-foss>=26.3.1`, then import `aspose.cells` and begin defining formatting rules on worksheet `cells`. The API follows intuitive Python conventions while maintaining compatibility with Excel’s native conditional formatting engine.
+The library exposes key classes like `Workbook`, `Worksheet`, `Cells`, `Cell`, and `ChartCollection`, allowing developers to build spreadsheets from scratch or `modify` existing ones. It supports input formats CSV and XLSX, and outputs CSV, JSON, and XLSX—making it suitable for data export, reporting, and automation workflows in environments such as VS Code, Spyder, or Jupyter.
 
 ## Key Highlights
 
-- Apply conditional formatting rules to cells using style and alignment properties to highlight trends and outliers dynamically
-- Export workbooks to CSV, JSON, and Markdown formats for seamless integration with data pipelines and documentation tools
-- Support for open development: contributions are welcome via GitHub Pull Requests to extend functionality
-- Report issues and track fixes directly through the official GitHub Issues repository
-- Use the `Workbook` and `Worksheet` classes to manage spreadsheet structure and content with intuitive Pythonic APIs
-- Modify cell styles—including font, fill, border, and alignment—via the `Style` object to enforce consistent visual themes
+Aspose.Cells FOSS enables developers to programmatically create, manipulate, and export spreadsheets in Python. With core classes like `Workbook`, `Worksheet`, `Cells`, and `Chart`, you can build robust spreadsheet workflows directly in your Python environment — from simple data exports to complex chart generation.
+
+- Full `Workbook` control: Create, manage, and protect workbooks with methods like `add_worksheet()`, `get_worksheet()`, and `unprotect()`.
+- Direct cell manipulation: Read and write cell values, formulas, and comments using the `Cell` and `Cells` classes with coordinate helpers like `coordinate_from_string()`.
+- Chart creation support: Generate line, bar, pie, area, and scatter charts via `ChartCollection` methods such as `add_line()`, `add_bar()`, and `add_pie()`.
+- Multi-format export: Save workbooks to CSV, JSON, and XLSX using `CSVHandler`, `JsonHandler`, and native workbook save capabilities.
+- Markdown and structured export: Export worksheet data to Markdown format using `MarkdownHandler.save_markdown()` for documentation or reporting pipelines.
 
 ## Getting Started
 
-Aspose.Cells FOSS is a pure-Python library for creating, reading, and modifying Excel `.xlsx` files without Microsoft Excel. Install it with `pip install aspose-cells-foss>=26.3.1` and import via `import aspose.cells`. The library supports opening and saving password-protected files using AES encryption via the password parameter.
+Aspose.Cells FOSS enables programmatic creation and manipulation of Excel workbooks in Python. Use the `Workbook` class to instantiate a new spreadsheet and the `ChartCollection` class to `add` `charts` like line, bar, pie, and area types directly to `worksheets`.
 
 ```python
-from aspose.cells import Workbook
+import aspose.cells
 
-# Create or open a workbook
-wb = Workbook()
-ws = wb.worksheets[0]
+# Create a new workbook and access the first worksheet
+workbook = aspose.cells.Workbook()
+worksheet = workbook.worksheets[0]
 
-# Write data and apply a formula
-ws.cells["A1"].put_value("Sales")
-ws.cells["A2"].put_value(100)
-ws.cells["A3"].formula = "=SUM(A2:A2)"
-
-# Save with AES encryption
-wb.save("output.xlsx", password="secret")
+# Add a line chart to the worksheet
+chart_index = worksheet.charts.add_line(5, 0, 20, 8)
+chart = worksheet.charts[chart_index]
 ```
 
 ## See Also
 
-To extend your spreadsheet automation beyond conditional formatting, explore workbook and worksheet protection features to secure your documents. Aspose.Cells FOSS mirrors the Aspose.`Cells` for .NET public API, simplifying migration from .NET to Python. After implementing features, commit changes using standard Git workflows.
-
-- [Apply rules-based formatting](/blog.aspose.org/cells/python/introducing-cells-foss-python/)
-- [Use formulas in spreadsheets](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)
-- [Perform spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)
-- [Convert file formats](/kb.aspose.org/cells/python/how-to-convert-csv-to-json-python/)
-- [Fix common errors](/kb.aspose.org/cells/python/how-to-fix-spreadsheets-errors-python/)
+- [Introducing Cells FOSS for Python](/blog.aspose.org/cells/python/cells-foss-python/)
+- [Working with spreadsheet formulas](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)
+- [Essential spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)
+- [Converting file formats easily](/kb.aspose.org/cells/python/convert-csv-json-python/)
+- [Fixing common errors quickly](/kb.aspose.org/cells/python/fix-spreadsheets-errors-python/)

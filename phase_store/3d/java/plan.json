@@ -1,0 +1,1398 @@
+{
+  "claim_assignment_index": {
+    "CLM-3d-06867c": [
+      "kb/use-cases"
+    ],
+    "CLM-3d-0c066d": [
+      "reference/a3-d-object"
+    ],
+    "CLM-3d-110d1c": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ],
+    "CLM-3d-18fd70": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-19bb27": [
+      "reference/a3-d-object"
+    ],
+    "CLM-3d-1d7f4d": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-1da53c": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-2d677c": [
+      "kb/use-cases"
+    ],
+    "CLM-3d-2e0199": [
+      "products/_index",
+      "docs/installation"
+    ],
+    "CLM-3d-31a242": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-3d-34a7f7": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ],
+    "CLM-3d-36d907": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-389f69": [
+      "reference/a3-d-object"
+    ],
+    "CLM-3d-3cc559": [
+      "kb/use-cases"
+    ],
+    "CLM-3d-3e3a3d": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ],
+    "CLM-3d-4102db": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ],
+    "CLM-3d-455b75": [
+      "reference/a3-d-object"
+    ],
+    "CLM-3d-48f914": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ],
+    "CLM-3d-5ea5c1": [
+      "reference/api-overview",
+      "reference/a3-d-object"
+    ],
+    "CLM-3d-666b7b": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-3d-6b4c7e": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-6d9e50": [
+      "reference/a3-d-object"
+    ],
+    "CLM-3d-6fda38": [
+      "products/_index",
+      "kb/faq"
+    ],
+    "CLM-3d-700151": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-74c1df": [
+      "reference/a3-d-object"
+    ],
+    "CLM-3d-8a0893": [
+      "reference/a3-d-object"
+    ],
+    "CLM-3d-8e73a1": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-3d-8e82ae": [
+      "reference/a3-d-object"
+    ],
+    "CLM-3d-94f071": [
+      "kb/use-cases"
+    ],
+    "CLM-3d-979537": [
+      "products/_index",
+      "blog/introducing-3d-foss-java"
+    ],
+    "CLM-3d-9be670": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-9f054c": [
+      "kb/use-cases"
+    ],
+    "CLM-3d-a579a8": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ],
+    "CLM-3d-a99a2d": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-affb76": [
+      "products/_index",
+      "docs/installation"
+    ],
+    "CLM-3d-bfb409": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ],
+    "CLM-3d-c12c83": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-c85c59": [
+      "docs/installation",
+      "docs/getting-started"
+    ],
+    "CLM-3d-cb0010": [
+      "kb/use-cases"
+    ],
+    "CLM-3d-cbd338": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ],
+    "CLM-3d-cc84ff": [
+      "products/_index",
+      "docs/installation"
+    ],
+    "CLM-3d-d63e38": [
+      "reference/a3-d-object"
+    ],
+    "CLM-3d-deee25": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-3d-e2b66a": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ],
+    "CLM-3d-e31595": [
+      "kb/use-cases"
+    ],
+    "CLM-3d-ef30f5": [
+      "reference/a3-d-object"
+    ],
+    "CLM-3d-f2ef04": [
+      "reference/a3-d-object"
+    ],
+    "CLM-3d-f3ad07": [
+      "reference/scene"
+    ],
+    "CLM-3d-f9b8e1": [
+      "kb/use-cases"
+    ],
+    "CLM-3d-fb47eb": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-fcd570": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ],
+    "CLM-3d-fd5504": [
+      "reference/api-overview",
+      "reference/scene"
+    ],
+    "CLM-3d-ffafd6": [
+      "products/_index",
+      "kb/use-cases"
+    ],
+    "CLM-3d-ffdcdf": [
+      "kb/faq",
+      "kb/troubleshooting"
+    ]
+  },
+  "pages": [
+    {
+      "assigned_claims": [
+        "CLM-3d-2e0199",
+        "CLM-3d-6fda38",
+        "CLM-3d-31a242",
+        "CLM-3d-ffafd6",
+        "CLM-3d-affb76",
+        "CLM-3d-cc84ff",
+        "CLM-3d-666b7b",
+        "CLM-3d-deee25",
+        "CLM-3d-979537"
+      ],
+      "assigned_snippets": [
+        0,
+        5,
+        6,
+        3,
+        4
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "products.aspose.org/3d/_index",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "Aspose.3D for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "landing",
+        "platform": "java",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Aspose.3D",
+        "type": "landing",
+        "url": "/products.aspose.org/3d/_index/",
+        "weight": 1
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "products/_index",
+      "page_role": "landing",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game",
+        "3d javascript framework",
+        "3d java game engine"
+      ],
+      "skeleton": [
+        "Overview",
+        "Key Features",
+        "Quick Start",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Aspose.3D"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/3d/_index",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "Docs _Index for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "toc",
+        "platform": "java",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Docs _Index",
+        "type": "toc",
+        "url": "/docs.aspose.org/3d/_index/",
+        "weight": 2
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "docs/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game",
+        "3d javascript framework",
+        "3d java game engine"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Docs _Index"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-8e73a1",
+        "CLM-3d-c85c59",
+        "CLM-3d-2e0199",
+        "CLM-3d-affb76",
+        "CLM-3d-cc84ff"
+      ],
+      "assigned_snippets": [
+        5,
+        6,
+        0
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/3d/java/developer-guide/installation",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "Installation for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "workflow_page",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "installation",
+        "title": "Installation",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/3d/java/developer-guide/installation/",
+        "weight": 3
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "docs/installation",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d",
+        "java",
+        "Aspose.3D Java setup guide",
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine"
+      ],
+      "skeleton": [
+        "System Requirements",
+        "Installation",
+        "Verify Installation",
+        "Quick Start",
+        "See Also"
+      ],
+      "skeleton_variant": "install",
+      "target_class": "",
+      "title": "Installation"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-8e73a1",
+        "CLM-3d-c85c59"
+      ],
+      "assigned_snippets": [
+        5,
+        6
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/3d/java/developer-guide/getting-started",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "Getting Started for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "workflow_page",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "getting-started",
+        "title": "Getting Started",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/3d/java/developer-guide/getting-started/",
+        "weight": 4
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "docs/getting-started",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d",
+        "java",
+        "Aspose.3D Java setup guide",
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine"
+      ],
+      "skeleton": [
+        "Overview",
+        "Prerequisites",
+        "First Steps",
+        "Code Example",
+        "Next Steps",
+        "See Also"
+      ],
+      "skeleton_variant": "getting_started",
+      "target_class": "",
+      "title": "Getting Started"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/3d/_index",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "Reference _Index for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "toc",
+        "platform": "java",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Reference _Index",
+        "type": "toc",
+        "url": "/reference.aspose.org/3d/_index/",
+        "weight": 5
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "reference/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game",
+        "3d javascript framework",
+        "3d java game engine"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Reference _Index"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-6b4c7e",
+        "CLM-3d-c12c83",
+        "CLM-3d-1da53c",
+        "CLM-3d-a99a2d",
+        "CLM-3d-1d7f4d",
+        "CLM-3d-9be670",
+        "CLM-3d-36d907",
+        "CLM-3d-fd5504",
+        "CLM-3d-18fd70",
+        "CLM-3d-fb47eb",
+        "CLM-3d-700151",
+        "CLM-3d-5ea5c1"
+      ],
+      "assigned_snippets": [
+        6
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/3d/java/api-overview",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "Aspose.3D API Reference for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "api_reference",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "api-overview",
+        "title": "Aspose.3D API Reference",
+        "type": "api_reference",
+        "url": "/reference.aspose.org/3d/java/api-overview/",
+        "weight": 6
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "reference/api-overview",
+      "page_role": "api_reference",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d",
+        "java",
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game"
+      ],
+      "skeleton": [
+        "Overview",
+        "Public API",
+        "Common Patterns",
+        "See Also"
+      ],
+      "skeleton_variant": "index",
+      "target_class": "",
+      "title": "Aspose.3D API Reference"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/_index",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "Kb _Index for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "toc",
+        "platform": "java",
+        "robots": "noindex, follow",
+        "slug": "_index",
+        "title": "Kb _Index",
+        "type": "toc",
+        "url": "/kb.aspose.org/3d/_index/",
+        "weight": 7
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/_index",
+      "page_role": "toc",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game",
+        "3d javascript framework",
+        "3d java game engine"
+      ],
+      "skeleton": [
+        "Overview",
+        "Pages in This Section",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Kb _Index"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-ffdcdf",
+        "CLM-3d-e2b66a",
+        "CLM-3d-48f914",
+        "CLM-3d-cbd338",
+        "CLM-3d-3e3a3d",
+        "CLM-3d-a579a8",
+        "CLM-3d-4102db",
+        "CLM-3d-bfb409",
+        "CLM-3d-fcd570",
+        "CLM-3d-6fda38",
+        "CLM-3d-34a7f7",
+        "CLM-3d-110d1c"
+      ],
+      "assigned_snippets": [
+        5,
+        6
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/java/faq",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "Aspose.3D FAQ for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "faq",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "faq",
+        "title": "Aspose.3D FAQ",
+        "type": "faq",
+        "url": "/kb.aspose.org/3d/java/faq/",
+        "weight": 8
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/faq",
+      "page_role": "faq",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d",
+        "java",
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game"
+      ],
+      "skeleton": [
+        "Frequently Asked Questions",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Aspose.3D FAQ"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-ffdcdf",
+        "CLM-3d-e2b66a",
+        "CLM-3d-48f914",
+        "CLM-3d-cbd338",
+        "CLM-3d-3e3a3d",
+        "CLM-3d-a579a8",
+        "CLM-3d-4102db",
+        "CLM-3d-bfb409",
+        "CLM-3d-fcd570",
+        "CLM-3d-34a7f7",
+        "CLM-3d-110d1c"
+      ],
+      "assigned_snippets": [
+        5,
+        6
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/java/troubleshooting",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "Troubleshooting for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "troubleshooting",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "troubleshooting",
+        "title": "Troubleshooting",
+        "type": "troubleshooting",
+        "url": "/kb.aspose.org/3d/java/troubleshooting/",
+        "weight": 9
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/troubleshooting",
+      "page_role": "troubleshooting",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d",
+        "java",
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game"
+      ],
+      "skeleton": [
+        "Common Issues",
+        "Error Messages",
+        "Getting Help",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Troubleshooting"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-9f054c",
+        "CLM-3d-cb0010",
+        "CLM-3d-2d677c",
+        "CLM-3d-f9b8e1",
+        "CLM-3d-31a242",
+        "CLM-3d-ffafd6",
+        "CLM-3d-666b7b",
+        "CLM-3d-deee25",
+        "CLM-3d-06867c",
+        "CLM-3d-3cc559",
+        "CLM-3d-94f071",
+        "CLM-3d-e31595"
+      ],
+      "assigned_snippets": [
+        0,
+        6,
+        5,
+        3
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/java/developer-guide/use-cases",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "Use Cases for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "feature_showcase",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "use-cases",
+        "title": "Use Cases",
+        "type": "feature_showcase",
+        "url": "/kb.aspose.org/3d/java/developer-guide/use-cases/",
+        "weight": 10
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/use-cases",
+      "page_role": "feature_showcase",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game",
+        "3d javascript framework",
+        "3d java game engine"
+      ],
+      "skeleton": [
+        "Overview",
+        "How It Works",
+        "Code Example",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "Use Cases"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/java/how-to-load-3d-models-java",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "How to Load Files with Aspose.3D for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "howto_article",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "how-to-load-3d-models-java",
+        "title": "How to Load Files with Aspose.3D",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/3d/java/how-to-load-3d-models-java/",
+        "weight": 11
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/how-to-load-3d-models-java",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game",
+        "3d javascript framework",
+        "3d java game engine"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Loading the File",
+        "Code Example",
+        "Supported Formats",
+        "See Also"
+      ],
+      "skeleton_variant": "load_file",
+      "target_class": "",
+      "title": "How to Load Files with Aspose.3D"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/java/how-to-save-3d-models-java",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "How to Save Files with Aspose.3D for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "howto_article",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "how-to-save-3d-models-java",
+        "title": "How to Save Files with Aspose.3D",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/3d/java/how-to-save-3d-models-java/",
+        "weight": 12
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/how-to-save-3d-models-java",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game",
+        "3d javascript framework",
+        "3d java game engine"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Saving the File",
+        "Code Example",
+        "Output Options",
+        "See Also"
+      ],
+      "skeleton_variant": "save_file",
+      "target_class": "",
+      "title": "How to Save Files with Aspose.3D"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/java/how-to-convert-fbx-to-gltf-java",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "How to Convert File Formats with Aspose.3D for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "howto_article",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "how-to-convert-fbx-to-gltf-java",
+        "title": "How to Convert File Formats with Aspose.3D",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/3d/java/how-to-convert-fbx-to-gltf-java/",
+        "weight": 13
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/how-to-convert-fbx-to-gltf-java",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game",
+        "3d javascript framework",
+        "3d java game engine"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Conversion Steps",
+        "Code Example",
+        "Supported Formats",
+        "See Also"
+      ],
+      "skeleton_variant": "convert_formats",
+      "target_class": "",
+      "title": "How to Convert File Formats with Aspose.3D"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/java/how-to-fix-3d-models-errors-java",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "How to Fix Common Errors with Aspose.3D for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "howto_article",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "how-to-fix-3d-models-errors-java",
+        "title": "How to Fix Common Errors with Aspose.3D",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/3d/java/how-to-fix-3d-models-errors-java/",
+        "weight": 14
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/how-to-fix-3d-models-errors-java",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game",
+        "3d javascript framework",
+        "3d java game engine"
+      ],
+      "skeleton": [
+        "Problem",
+        "Symptoms",
+        "Root Cause",
+        "Solution Steps",
+        "Code Example",
+        "See Also"
+      ],
+      "skeleton_variant": "troubleshoot",
+      "target_class": "",
+      "title": "How to Fix Common Errors with Aspose.3D"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "kb.aspose.org/3d/java/how-to-optimize-3d-models-java",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "How to Optimize Performance with Aspose.3D for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "howto_article",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "how-to-optimize-3d-models-java",
+        "title": "How to Optimize Performance with Aspose.3D",
+        "type": "howto_article",
+        "url": "/kb.aspose.org/3d/java/how-to-optimize-3d-models-java/",
+        "weight": 15
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "kb/how-to-optimize-3d-models-java",
+      "page_role": "howto_article",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game",
+        "3d javascript framework",
+        "3d java game engine"
+      ],
+      "skeleton": [
+        "Problem",
+        "Prerequisites",
+        "Optimization Steps",
+        "Code Example",
+        "Benchmarks",
+        "See Also"
+      ],
+      "skeleton_variant": "optimize_performance",
+      "target_class": "",
+      "title": "How to Optimize Performance with Aspose.3D"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-979537"
+      ],
+      "assigned_snippets": [
+        4
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "blog.aspose.org/3d/java/introducing-3d-foss-java",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "The library supports setting translation transforms on nodes using the Transf... for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "blog_announcement",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "introducing-3d-foss-java",
+        "title": "The library supports setting translation transforms on nodes using the Transf...",
+        "type": "blog_announcement",
+        "url": "/blog.aspose.org/3d/java/introducing-3d-foss-java/",
+        "weight": 16
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "blog/introducing-3d-foss-java",
+      "page_role": "blog_announcement",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game",
+        "3d javascript framework",
+        "3d java game engine"
+      ],
+      "skeleton": [
+        "Introduction",
+        "Key Highlights",
+        "Getting Started",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "The library supports setting translation transforms on nodes using the Transf..."
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "blog.aspose.org/3d/java/3d-key-features",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "3d Key Features for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "feature_blog",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "3d-key-features",
+        "title": "3d Key Features",
+        "type": "feature_blog",
+        "url": "/blog.aspose.org/3d/java/3d-key-features/",
+        "weight": 17
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "blog/3d-key-features",
+      "page_role": "feature_blog",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game",
+        "3d javascript framework",
+        "3d java game engine"
+      ],
+      "skeleton": [
+        "Introduction",
+        "Key Highlights",
+        "Getting Started",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "",
+      "title": "3d Key Features"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/3d/java/developer-guide/model-loading",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "Load Files with Aspose.3D for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "workflow_page",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "model-loading",
+        "title": "Load Files with Aspose.3D",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/3d/java/developer-guide/model-loading/",
+        "weight": 18
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "docs/model-loading",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game",
+        "3d javascript framework",
+        "3d java game engine"
+      ],
+      "skeleton": [
+        "Overview",
+        "Key Features",
+        "Prerequisites",
+        "Code Examples",
+        "Notes and Best Practices",
+        "See Also"
+      ],
+      "skeleton_variant": "load_file",
+      "target_class": "",
+      "title": "Load Files with Aspose.3D"
+    },
+    {
+      "assigned_claims": [],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "docs.aspose.org/3d/java/developer-guide/rendering",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "Render 3D Models with Aspose.3D for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "workflow_page",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "rendering",
+        "title": "Render 3D Models with Aspose.3D",
+        "type": "workflow_page",
+        "url": "/docs.aspose.org/3d/java/developer-guide/rendering/",
+        "weight": 19
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": true,
+      "page_id": "docs/rendering",
+      "page_role": "workflow_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game",
+        "3d javascript framework",
+        "3d java game engine"
+      ],
+      "skeleton": [
+        "Overview",
+        "Core Concepts",
+        "Implementation",
+        "Code Examples",
+        "See Also"
+      ],
+      "skeleton_variant": "computation",
+      "target_class": "",
+      "title": "Render 3D Models with Aspose.3D"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-f3ad07",
+        "CLM-3d-6b4c7e",
+        "CLM-3d-c12c83",
+        "CLM-3d-1da53c",
+        "CLM-3d-a99a2d",
+        "CLM-3d-1d7f4d",
+        "CLM-3d-9be670",
+        "CLM-3d-36d907",
+        "CLM-3d-fd5504",
+        "CLM-3d-18fd70",
+        "CLM-3d-fb47eb",
+        "CLM-3d-700151"
+      ],
+      "assigned_snippets": [
+        0,
+        3,
+        5,
+        6
+      ],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/3d/java/scene",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "Scene for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "reference_object_page",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "scene",
+        "title": "Scene",
+        "type": "reference_object_page",
+        "url": "/reference.aspose.org/3d/java/scene/",
+        "weight": 20
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": false,
+      "page_id": "reference/scene",
+      "page_role": "reference_object_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game",
+        "3d javascript framework",
+        "3d java game engine"
+      ],
+      "skeleton": [
+        "Overview",
+        "Constructor",
+        "Properties",
+        "Methods",
+        "Example",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "Scene",
+      "title": "Scene"
+    },
+    {
+      "assigned_claims": [
+        "CLM-3d-19bb27",
+        "CLM-3d-0c066d",
+        "CLM-3d-74c1df",
+        "CLM-3d-5ea5c1",
+        "CLM-3d-8a0893",
+        "CLM-3d-455b75",
+        "CLM-3d-f2ef04",
+        "CLM-3d-ef30f5",
+        "CLM-3d-d63e38",
+        "CLM-3d-8e82ae",
+        "CLM-3d-389f69",
+        "CLM-3d-6d9e50"
+      ],
+      "assigned_snippets": [],
+      "claim_saturation": 1.0,
+      "code_evidence_sparse": false,
+      "content_path": "reference.aspose.org/3d/java/a3-d-object",
+      "evidence_missing": [],
+      "evidence_score": 1.0,
+      "evidence_sufficient": true,
+      "frontmatter": {
+        "canonical_import": "com.aspose.threed",
+        "code_import": "com.aspose.threed",
+        "description": "The AnimationClip class provides a container for animation data and supports ... for Aspose.3D",
+        "display_name": "Aspose.3D",
+        "family": "3d",
+        "page_role": "reference_object_page",
+        "platform": "java",
+        "robots": "index, follow",
+        "slug": "a3-d-object",
+        "title": "The AnimationClip class provides a container for animation data and supports ...",
+        "type": "reference_object_page",
+        "url": "/reference.aspose.org/3d/java/a3-d-object/",
+        "weight": 21
+      },
+      "golden_unmatched_sections": [],
+      "maintenance_action": "",
+      "mandatory": false,
+      "page_id": "reference/a3-d-object",
+      "page_role": "reference_object_page",
+      "richness_tier": "A",
+      "seo_keywords": [
+        "3d javascript",
+        "3d javascript library",
+        "3d java",
+        "3d java skins",
+        "3d javascript game engine",
+        "3d javascript game",
+        "3d javascript framework",
+        "3d java game engine"
+      ],
+      "skeleton": [
+        "Overview",
+        "Constructor",
+        "Properties",
+        "Methods",
+        "Example",
+        "See Also"
+      ],
+      "skeleton_variant": "default",
+      "target_class": "A3DObject",
+      "title": "The AnimationClip class provides a container for animation data and supports ..."
+    }
+  ]
+}

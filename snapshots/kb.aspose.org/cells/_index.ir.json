@@ -1,31 +1,31 @@
 {
   "frontmatter": {
     "canonical": "https://kb.aspose.org/cells/_index/",
-    "canonical_import": "aspose_cells_foss",
-    "date": "2026-03-09T18:00:06Z",
-    "dateModified": "2026-03-09T18:00:06Z",
-    "datePublished": "2026-03-09T18:00:06Z",
-    "description": "It supports common formats such as XLSX, XLS, CSV, and ODS, making it a drop-in alternative to libraries like openpyxl for programmatic Excel operations in...",
-    "display_name": "Aspose.Cells",
+    "canonical_import": "aspose.cells",
+    "date": "2026-03-22T08:56:20Z",
+    "dateModified": "2026-03-22T08:56:20Z",
+    "datePublished": "2026-03-22T08:56:20Z",
+    "description": "The library centers around the `Workbook` class for file management and the `Worksheet`/`Cells`/`Cell` hierarchy for granular data operations.",
+    "display_name": "Aspose.Cells FOSS",
     "family": "cells",
     "keywords": [
-      "python",
-      "python openpyxl",
-      "openpyxl pandas",
-      "openpyxl in python",
-      "openpyxl documentation",
-      "install openpyxl",
-      "openpyxl cell",
-      "openpyxl pip"
+      "cells python",
+      "python cells in excel",
+      "python cells vscode",
+      "cell python docx",
+      "cell python spyder",
+      "aspose cells python",
+      "code cells python",
+      "voronoi cells python"
     ],
-    "lastmod": "2026-03-09T18:00:06Z",
+    "lastmod": "2026-03-22T08:56:20Z",
     "page_role": "toc",
     "platform": "python",
     "reading_time": 1,
     "robots": "noindex, follow",
-    "seoTitle": "Aspose.Cells Table of Contents",
+    "seoTitle": "Aspose.Cells FOSS Kb _Index",
     "slug": "_index",
-    "title": "Table of Contents",
+    "title": "Kb _Index",
     "type": "toc",
     "url": "/kb.aspose.org/cells/_index/",
     "weight": 7
@@ -37,7 +37,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Cells enables Python developers to read, write, and manipulate spreadsheet files without requiring Microsoft Excel. It supports common formats such as XLSX, XLS, CSV, and ODS, making it a drop-in alternative to libraries like openpyxl for programmatic Excel operations in production environments.",
+          "content": "Aspose.Cells FOSS provides core spreadsheet functionality for Python developers, enabling programmatic creation, manipulation, and export of Excel-compatible files. The library centers around the `Workbook` class for file management and the `Worksheet`/`Cells`/`Cell` hierarchy for granular data operations.",
           "items": [],
           "language": null,
           "level": null,
@@ -45,7 +45,7 @@
         },
         {
           "claim_ids": [],
-          "content": "The library provides core functionality for loading workbooks, accessing worksheets, and modifying cell data. Developers can work with ranges, formulas, styles, and charts using a consistent API surface. Unlike openpyxl in Python, Aspose.Cells offers cross-platform compatibility and does not depend on system-level Excel installations.",
+          "content": "Key capabilities include reading and writing `cell` `values` and formulas via the `Cell` class, managing multiple `worksheets` through `Workbook.worksheets`, and exporting data to CSV, JSON, and Markdown formats using `CSVHandler`, `JsonHandler`, and `MarkdownHandler`. `Chart` creation and customization are supported for line, bar, pie, area, and scatter chart types via the `ChartCollection` and `Chart` classes.",
           "items": [],
           "language": null,
           "level": null,
@@ -55,10 +55,10 @@
           "claim_ids": [],
           "content": "",
           "items": [
-            "Load and save Excel files in multiple formats (XLSX, XLS, CSV, ODS, etc.)",
-            "Read and write cell values, formulas, and styles",
-            "Create and modify worksheets, rows, and columns",
-            "Apply formatting, including fonts, borders, and number formats"
+            "Create and modify workbooks with `Workbook` and `Worksheet` objects",
+            "Read/write cell values, formulas, and comments using `Cell` and `Cells`",
+            "Export to CSV, JSON, and Markdown with static handler methods",
+            "Add and configure charts (line, bar, pie, area, scatter) via `ChartCollection`"
           ],
           "language": null,
           "level": null,
@@ -73,7 +73,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Install Aspose.Cells for Python via pip to access its spreadsheet processing capabilities. The package `aspose_cells_foss` provides core functionality for working with Excel files in Python environments.",
+          "content": "Install Aspose.Cells FOSS using pip to access core Excel file handling via the `Workbook`, `Cell`, `Cells`, `Chart`, and `CSVHandler` classes.",
           "items": [],
           "language": null,
           "level": null,
@@ -81,7 +81,7 @@
         },
         {
           "claim_ids": [],
-          "content": "pip install aspose_cells_foss",
+          "content": "pip install aspose.cells",
           "items": [],
           "language": "bash",
           "level": null,
@@ -89,11 +89,19 @@
         },
         {
           "claim_ids": [],
-          "content": "After installation, verify the setup by importing the package and instantiating the `Workbook` class to confirm basic functionality.",
+          "content": "After installation, verify the setup by importing the library and instantiating a `Workbook`. No additional configuration is required.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose.cells\n\nworkbook = aspose.cells.Workbook()",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
         }
       ],
       "heading": "Quick Install",
@@ -104,7 +112,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Cells enables programmatic spreadsheet creation, manipulation, and conversion in Python. Using the `aspose_cells_foss` package, developers can work with Excel files without requiring Microsoft Excel installation.",
+          "content": "Aspose.Cells FOSS provides core spreadsheet functionality for Python developers. Use the `Workbook` class to create and manipulate Excel files, and the `Cell` and `Cells` classes to access and `modify` individual `cells` or `ranges`. The library supports CSV, JSON, and Markdown export via `CSVHandler`, `JsonHandler`, and `MarkdownHandler`.",
           "items": [],
           "language": null,
           "level": null,
@@ -112,7 +120,7 @@
         },
         {
           "claim_ids": [],
-          "content": "import aspose_cells_foss\n\n# Load an existing Excel file\nworkbook = aspose_cells_foss.Workbook(\"input.xlsx\")\n\n# Save the workbook in a different format\nworkbook.save(\"output.pdf\")",
+          "content": "import aspose.cells\n\n# Create a new workbook\nworkbook = aspose.cells.Workbook()\n\n# Access the first worksheet and set a cell value\nworksheet = workbook.worksheets[0]\nworksheet.cells.cell(0, 0).value = \"Hello, Aspose.Cells FOSS!\"\n\n# Save as XLSX\nworkbook.save(\"output.xlsx\")",
           "items": [],
           "language": "python",
           "level": null,
@@ -127,7 +135,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Cells for Python via .NET (Aspose.Cells) enables developers to create, manipulate, and convert spreadsheet files without requiring Microsoft Excel. The library supports common operations such as reading Excel formats (XLS, XLSX), writing data, and saving to multiple output formats including PDF and HTML.",
+          "content": "The Developer Guide for Aspose.Cells FOSS covers core operations for working with Excel files in Python. Use the `Workbook` class to load, create, and manage spreadsheets, and access individual `Worksheet` objects via the `worksheets` collection. `Cell`-level manipulation is handled through the `Cells` collection and `Cell` class, supporting `value` assignment, `formula` evaluation, and `comment` management.",
           "items": [],
           "language": null,
           "level": null,
@@ -135,7 +143,7 @@
         },
         {
           "claim_ids": [],
-          "content": "Developers familiar with openpyxl in Python can transition to Aspose.Cells for enhanced performance and broader file format support. Unlike openpyxl, which focuses primarily on XLSX, Aspose.Cells handles legacy formats like XLS and advanced features such as charting and pivot tables. Installation via pip is straightforward: `pip install aspose_cells_foss`.",
+          "content": "Data interchange formats are supported via dedicated handler classes: `CSVHandler` for CSV import/export, `JsonHandler` for JSON export, and `MarkdownHandler` for Markdown export. `Chart` creation and modification use the `ChartCollection`, `Chart`, and `ChartSeries` classes, with supported types including LINE, BAR, PIE, AREA, and SCATTER. Encryption is limited to Agile mode using `AgileEncryptionParameters` and cipher algorithms like AES_128, AES_192, and AES_256.",
           "items": [],
           "language": null,
           "level": null,
@@ -143,11 +151,11 @@
         },
         {
           "claim_ids": [],
-          "content": "Core functionality centers around the `Workbook` class for loading and saving files, and the `Worksheet` class for accessing rows, columns, and cells. Operations like setting cell values, applying formatting, or iterating through data follow a consistent object model designed for Python developers.",
+          "content": "import aspose.cells\n\n# Create a new workbook and add a worksheet\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\n\n# Set a cell value and formula\ncell = worksheet.cells.cell(0, 0)\ncell.value = \"Total\"\ncell = worksheet.cells.cell(1, 0)\ncell.formula = \"=A1*2\"\n\n# Save to XLSX\nworkbook.save(\"output.xlsx\")",
           "items": [],
-          "language": null,
+          "language": "python",
           "level": null,
-          "type": "paragraph"
+          "type": "code"
         }
       ],
       "heading": "Developer Guide",
@@ -158,20 +166,12 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Cells provides a robust API for working with spreadsheet files in Python. Developers can leverage this library to create, manipulate, and convert Excel-compatible formats using core classes such as `Workbook`, `Worksheet`, and `Cells`.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
           "content": "",
           "items": [
-            "Aspose.Cells for Python via .NET documentation",
-            "[Install Aspose.Cells for Python](https://pypi.org/project/aspose-cells/)",
-            "OpenPyXL vs Aspose.Cells: Comparison Guide",
-            "Convert Excel files using Aspose.Cells"
+            "Learn how to use the [`Workbook`](#) class to create and manage Excel files in Python",
+            "Explore [`Cell`](#) and [`Cells`](#) operations for reading and writing data in spreadsheets",
+            "Review [`Chart`](#) and [`ChartCollection`](#) classes for visualizing data in Python cells",
+            "Understand [`CSVHandler`](#), [`JsonHandler`](#), and [`MarkdownHandler`](#) for exporting data to common formats"
           ],
           "language": null,
           "level": null,
@@ -183,5 +183,5 @@
       "section_id": "see_also"
     }
   ],
-  "title": "Table of Contents"
+  "title": "Kb _Index"
 }

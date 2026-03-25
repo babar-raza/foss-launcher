@@ -1,25 +1,25 @@
 ---
 canonical: https://products.aspose.org/3d/_index/
-canonical_import: aspose.threed
-date: '2026-03-12T16:32:05Z'
-dateModified: '2026-03-12T16:32:05Z'
-datePublished: '2026-03-12T16:32:05Z'
-description: The `library` exposes core classes like `Scene`, `Node`, `Entity`, `Geometry`,
-  and `AnimationClip` for reading, writing, and manipulating 3D content.
+canonical_import: Aspose.ThreeD
+date: '2026-03-21T18:15:13Z'
+dateModified: '2026-03-21T18:15:13Z'
+datePublished: '2026-03-21T18:15:13Z'
+description: It provides classes like `Scene`, `Node`, `Entity`, and `Group` to model
+  3D content, along with format-specific classes such as `FbxFormat`, `GltfFormat`,...
 display_name: Aspose.3D
 family: 3d
 keywords:
-- python 3d game
-- python 3d engine
-- python 3d visualization
-- 3d python
-- 3d python game
-- 3d python game engine
-- 3d python logo
-- 3d python library
-lastmod: '2026-03-12T16:32:05Z'
+- dotnet 3d
+- dotnet 3d engine
+- dotnet 3d library
+- is .net 3.5 safe
+- shapr 3d cost
+- difference between dotnet and dotnet framework
+- 3d symptoms
+- python 3d logo
+lastmod: '2026-03-21T18:15:13Z'
 page_role: landing
-platform: python
+platform: dotnet
 reading_time: 1
 robots: noindex, follow
 seoTitle: Aspose.3D | Guide
@@ -32,43 +32,41 @@ weight: 1
 
 ## Overview
 
-Aspose.3D enables Python developers to build 3D python game, visualization, and engine workflows by providing programmatic control over 3D scenes, `entities`, and `animations`. The `library` exposes core classes like `Scene`, `Node`, `Entity`, `Geometry`, and `AnimationClip` for reading, writing, and manipulating 3D content.
+Aspose.3D is a dotnet 3d library for working with 3D scenes, nodes, and entities. It provides classes like `Scene`, `Node`, `Entity`, and `Group` to model 3D content, along with format-specific classes such as `FbxFormat`, `GltfFormat`, `ObjFormat`, `StlFormat`, `ColladaFormat`, `PlyFormat`, and `TmfFormat` for import and export operations.
 
-With support for industry-standard `formats` including OBJ, GLTF, STL, and 3MF, Aspose.3D serves as a robust 3d python `library` for integrating 3d python game assets and visualization pipelines directly into Python applications. Developers use `import aspose.threed` to access the full API surface.
+Developers use `Aspose.[identifier omitted]` to load, manipulate, and save 3D files across common formats including FBX, GLTF, OBJ, STL, and DAE. The library supports coordinate system configuration, bounding box calculations, and scene graph traversal via methods like `GetBoundingBox()`, `ChildNodes()`, and `ParentNode()`.
 
 ## Key Features
 
-Aspose.3D enables Python developers to build 3D python game, visualization, and engine applications by providing native support for loading, manipulating, and saving 3D `formats`. The `library` exposes core classes like `Scene`, `Node`, `Entity`, and `AnimationClip` for programmatic 3D content creation and transformation.
+Aspose.3D is a dotnet 3d library for working with 3D scenes, nodes, and entities. It provides core classes like `Scene`, `Node`, `Entity`, and format-specific handlers such as `FbxFormat`, `GltfFormat`, and `StlFormat` to load, manipulate, and export 3D content.
 
-- Support for industry-standard 3D formats including OBJ, GLTF, STL, and 3MF with full material and texture handling for python 3d game and visualization projects.
-- Animation system with `AnimationClip`, `AnimationNode`, and `KeyframeSequence` to define and manipulate motion paths for 3D python game development.
-- Entity and geometry control via `Entity`, `Geometry`, and `Node` classes to build custom 3D scenes programmatically in python 3d engine workflows.
-- Property and metadata management through `A3DObject` and `AssetInfo` to embed titles, authors, and keywords into 3D assets for python 3d visualization.
-- Global transform access via `GlobalTransform` to read translation, rotation, and scale for precise 3D python logo or model positioning.
+- Supports multiple 3D formats including FBX, GLTF, STL, OBJ, and PLY through dedicated format classes like `FbxFormat` and `GltfFormat`.
+- Enables scene composition with `Scene`, `Node`, and `Entity` classes to build hierarchical 3D structures.
+- Provides bounding box calculations via `GetBoundingBox()` on `Entity` and `Group` for spatial analysis and culling.
+- Allows rendering configuration with `ImageRenderOptions` to control background color, shadows, and asset directories.
+- Supports coordinate system and axis definitions using `CoordinateSystem` and `Axis` enums for left- or right-handed conventions.
+- Includes exception types `ImportException` and `ExportException` for robust error handling during file I/O operations.
 
 ## Quick Start
 
-Aspose.3D enables Python developers to load, manipulate, and `save` 3D scenes using classes like `Scene`, `Node`, `Entity`, and `FileFormat`. The `library` supports major 3D `formats` including OBJ, GLTF, STL, and 3MF for use in python 3d visualization, python 3d game, and 3d python projects.
+Aspose.3D provides a lightweight .NET 3D engine for loading, saving, and manipulating 3D scenes. Use the `Scene` class to manage 3D content and `Node`, `Entity`, and format classes like `FbxFormat`, `GltfFormat`, and `StlFormat` to handle file I/O operations.
 
-```python
-import aspose.threed as a3d
+```csharp
+using Aspose.[identifier omitted];
 
-# Load a 3D scene
-scene = a3d.Scene()
-scene.open("model.fbx")
-
-# Access root node and its first child entity
-root = scene.root_node
-if root.child_nodes:
-    entity = root.child_nodes[0].entity
+var scene = new Scene();
+var node = new Node("MyNode");
+node.Entity = new Entity("MyEntity");
+scene.RootNode.ChildNodes.Add(node);
+scene.Save("output.fbx", FbxFormat.FbxFormat());
 ```
 
 ## See Also
 
-Aspose.3D provides core 3D `scene` manipulation capabilities in Python, supporting `formats` like OBJ, GLTF, STL, and 3MF. Key classes include `Scene`, `Node`, `Entity`, `Geometry`, and `AnimationClip` for building 3D python game engines and visualization tools.
+Aspose.3D provides a dotnet 3d engine for working with 3D scenes, nodes, and entities. The library supports core formats like `FbxFormat`, `GltfFormat`, `ObjFormat`, `StlFormat`, and `ColladaFormat`, with classes such as `Scene`, `Node`, `Entity`, and `Group` forming the foundational API surface.
 
-- [Explore key 3D features](/blog.aspose.org/3d/python/3d-key-features/)
-- [Introducing 3D FOSS Python](/blog.aspose.org/3d/python/3d-foss-python/)
-- [Load 3D files step-by-step](/docs.aspose.org/3d/python/developer-guide/model-loading/)
-- [Convert 3D file formats easily](/kb.aspose.org/3d/python/convert-collada-fbx-python/)
-- [Fix common 3D errors](/kb.aspose.org/3d/python/fix-3d-models-errors-python/)
+- [Explore key 3D features](/blog.aspose.org/3d/dotnet/3d-key-features/)
+- [Discover open-source .NET support](/blog.aspose.org/3d/dotnet/introducing-3d-foss-dotnet/)
+- [Load 3D files step-by-step](/docs.aspose.org/3d/dotnet/developer-guide/model-loading/)
+- [Convert 3D formats easily](/kb.aspose.org/3d/dotnet/how-to-convert-3d-models-dotnet/)
+- [Fix common 3D errors](/kb.aspose.org/3d/dotnet/how-to-fix-3d-models-errors-dotnet/)

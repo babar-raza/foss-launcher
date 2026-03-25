@@ -1,0 +1,174 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/3d/dotnet/exporter/",
+    "canonical_import": "Aspose.ThreeD",
+    "date": "2026-03-23T13:18:57Z",
+    "dateModified": "2026-03-23T13:18:57Z",
+    "datePublished": "2026-03-23T13:18:57Z",
+    "description": "It works in conjunction with format-specific classes like `FbxFormat`, `ObjFormat`, and `StlFormat` to serialize scene data.",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "dotnet 3d",
+      "dotnet 3d engine",
+      "dotnet 3d library",
+      "is .net 3.5 safe",
+      "shapr 3d cost",
+      "difference between dotnet and dotnet framework",
+      "3d symptoms",
+      "python 3d logo"
+    ],
+    "lastmod": "2026-03-23T13:18:57Z",
+    "page_role": "reference_object_page",
+    "platform": "dotnet",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D Exporter",
+    "slug": "exporter",
+    "title": "Exporter",
+    "type": "reference_object_page",
+    "url": "/reference.aspose.org/3d/dotnet/exporter/",
+    "weight": 21
+  },
+  "page_id": "reference/exporter",
+  "page_role": "reference_object_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The `Exporter` class in Aspose.3D enables programmatic export of 3D scenes to supported file formats. It works in conjunction with format-specific classes like `FbxFormat`, `ObjFormat`, and `StlFormat` to serialize scene data.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The `Exporter` class in Aspose.3D provides constructors to initialize instances for exporting 3D scenes to various formats. Constructor overloads support default initialization and configuration via format-specific options.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| Constructor | Parameters | Description |\n|-------------|------------|-------------|\n| `Exporter()` | None | Initializes a new instance of the `Exporter` class with default settings. |\n| `Exporter(FileFormat)` | format: `FileFormat` | Initializes a new instance of the `Exporter` class for the specified output format. |\n| `Exporter(FileFormat, SaveOptions)` | format: `FileFormat`, options: `SaveOptions` | Initializes a new instance of the `Exporter` class for the specified format and custom save options. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Constructor",
+      "level": 2,
+      "section_id": "constructor"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The `Exporter` class in Aspose.3D provides programmatic control over 3D export operations. It exposes properties that define export behavior, such as target format, coordinate system, and unit scaling. These properties are used in conjunction with the `Scene` and `FileFormat` classes to configure export pipelines for formats like `FbxFormat`, `GltfFormat`, `StlFormat`, and `ObjFormat`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "| `Name` | Type | Description |\n|------|------|-------------|\n| `Format` | `FileFormat` | Specifies the target file format for export. |\n| `CoordinateSystem` | `CoordinateSystem` | Defines the coordinate system used during export (LeftHanded or RightHanded). |\n| UnitScale | double | Sets the scaling factor applied to geometry units during export. |\n| `AxisSystem` | `AxisSystem` | Configures the primary axis orientation for the exported scene. |\n| `AssetDirectories` | `string[]` | Specifies directories where external assets (e.g., textures) are located. |\n| `EnableShadows` | `bool` | Enables or disables shadow rendering in the exported scene. |\n| `BackgroundColor` | `Color` | Sets the background color used when rendering the scene. |\n| `Name` | string | Assigns a display name to the exported asset. |\n| Visible | `bool` | Controls whether the exported entity is visible by default. |\n| `AssetInfo` | `AssetInfo` | Provides metadata about the exported asset, such as author and creation date. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D -- Method table: signature, return type, description.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "For details on methods, see the Aspose.3D documentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "This example demonstrates exporting a 3D scene to a supported format using Aspose.3D. It constructs a minimal scene with a node and entity, then saves it using a registered exporter from the `FileFormat` class.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import Aspose.[identifier omitted]\n\nscene = Aspose.[identifier omitted].Scene()\nnode = Aspose.[identifier omitted].Node()\nentity = Aspose.[identifier omitted].Entity(\"MyEntity\")\nnode.Entity = entity\nscene.RootNode.ChildNodes.Add(node)\nscene.Save(\"output.fbx\", Aspose.[identifier omitted].FbxFormat())",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Example",
+      "level": 2,
+      "section_id": "example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "The `Exporter` class in Aspose.3D enables programmatic export of 3D scenes to supported formats. Related classes include `Scene`, `Node`, and format-specific exporters like `FbxFormat`, `ObjFormat`, and `StlFormat`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Explore 3D key features](/blog.aspose.org/3d/dotnet/3d-key-features/)",
+            "[Introducing 3D FOSS .NET](/blog.aspose.org/3d/dotnet/introducing-3d-foss-dotnet/)",
+            "[Load files with Aspose.3D](/docs.aspose.org/3d/dotnet/developer-guide/model-loading/)",
+            "[Convert file formats](/kb.aspose.org/3d/dotnet/how-to-convert-3d-models-dotnet/)",
+            "[Fix common errors](/kb.aspose.org/3d/dotnet/how-to-fix-3d-models-errors-dotnet/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Exporter"
+}

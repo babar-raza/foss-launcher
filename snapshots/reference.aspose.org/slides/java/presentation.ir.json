@@ -1,0 +1,405 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/slides/java/presentation/",
+    "canonical_import": "com.aspose.slides",
+    "code_import": "com.aspose.slides",
+    "date": "2026-03-24T17:06:48Z",
+    "dateModified": "2026-03-24T17:06:48Z",
+    "datePublished": "2026-03-24T17:06:48Z",
+    "description": "It enables creation, loading, and saving of `.pptx` files with full round-trip fidelity.",
+    "display_name": "Aspose.Slides FOSS for Java",
+    "family": "slides",
+    "keywords": [
+      "slides javascript",
+      "slides java",
+      "slides javascript library",
+      "slideshow javascript",
+      "javascript slides pdf",
+      "java slides pdf",
+      "slideshow javascript library",
+      "java slides ppt"
+    ],
+    "lastmod": "2026-03-24T17:06:48Z",
+    "page_role": "reference_object_page",
+    "platform": "java",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "The Presentation class provides access to slides via the",
+    "slug": "presentation",
+    "title": "The Presentation class provides access to slides via the getSlides() method",
+    "type": "reference_object_page",
+    "url": "/reference.aspose.org/slides/java/presentation/",
+    "weight": 21
+  },
+  "page_id": "reference/presentation",
+  "page_role": "reference_object_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-cd1222"
+          ],
+          "content": "The `Presentation` class provides access to slides via the getSlides() method and serves as the entry point for working with slide decks in Aspose.Slides FOSS for Java. It enables creation, loading, and saving of `.pptx` files with full round-trip fidelity.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-cd1222"
+          ],
+          "content": "import com.aspose.slides.*;\n\ntry (var pres = new Presentation()) {\n    var slides = pres.getSlides();\n    var slide = slides.addEmptySlide(slides.getLayoutSlides().get(0));\n    pres.save(\"output.pptx\", SaveFormat.PPTX);\n}",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-bc91e3",
+            "CLM-slides-3f635e"
+          ],
+          "content": "| Class | Description | Source Claim |\n|-------|-------------|--------------|\n| `BaseSlide` | Represents common data for all slide types | CLM-slides-bc91e3 |\n| `CellCollection` | Represents `a` collection of cells | CLM-slides-3f635e |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-cd1222"
+          ],
+          "content": "The `Presentation` class provides access to slides via the getSlides() method. It supports creating new presentations and loading existing `.pptx` files with full round-trip fidelity.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-cd1222"
+          ],
+          "content": "| Constructor | Parameters | Description |\n|-------------|------------|-------------|\n| `Presentation()` | — | Creates `a` new empty `Presentation` instance. |\n| `Presentation(String fileName)` | fileName: `String` — Path to an existing `.pptx` file | Loads `a` `Presentation` from the specified file. |\n| `Presentation(InputStream stream)` | stream: InputStream — Input stream containing `a` `.pptx` file | Loads `a` `Presentation` from the provided stream. |\n| `Presentation(String fileName, LoadOptions loadOptions)` | fileName: `String`, loadOptions: LoadOptions | Loads `a` `Presentation` from `a` file using specified load options. |\n| `Presentation(InputStream stream, LoadOptions loadOptions)` | stream: InputStream, loadOptions: LoadOptions | Loads `a` `Presentation` from `a` stream using specified load options. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-cd1222",
+            "CLM-slides-a85223"
+          ],
+          "content": "import com.aspose.slides.*;\n\ntry (Presentation pres = new Presentation()) {\n    IAutoShape shape = pres.getSlides().get(0).getShapes()\n            .addAutoShape(ShapeType.RECTANGLE, 50, 50, 300, 150);\n    shape.getFillFormat().setFillType(FillType.SOLID);\n    pres.save(\"output.pptx\", SaveFormat.PPTX);\n}",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Constructor",
+      "level": 2,
+      "section_id": "constructor"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-cd1222",
+            "CLM-slides-bc91e3"
+          ],
+          "content": "The `Presentation` class exposes slide collections and document metadata through its properties. This section lists key properties defined on `Presentation` and related objects, with full API surface coverage per claims.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-cd1222",
+            "CLM-slides-bc91e3"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| getSlides() | `ISlideCollection` | Returns the collection of slides in the presentation. |\n| getDocumentProperties() | `IDocumentProperties` | Returns the document properties (built-in and custom). |\n| `getComments()` | `ICommentCollection` | Returns the collection of comments attached to slides. |\n| getAuthors() | `ICommentAuthorCollection` | Returns the collection of comment authors. |\n| getSlideSize() | ISlideSize | Returns the slide size and margins configuration. |\n| getTheme() | ITheme | Returns the master theme applied to the presentation. |\n| getSlideShowSettings() | ISlideShowSettings | Returns the slide show configuration. |\n| getSlideMaster() | `IMasterSlide` | Returns the first slide master (if present). |\n| getNotesMaster() | INotesMaster | Returns the notes master (if present). |\n| getHandoutMaster() | IHandoutNotesMaster | Returns the handout master (if present). |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-e99531",
+            "CLM-slides-7c20d0"
+          ],
+          "content": "The `BulletFormat` class exposes paragraph bullet formatting properties. Its properties define bullet appearance and behavior.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-e99531",
+            "CLM-slides-7c20d0"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| getType() | `BulletType` | Returns or sets the bullet type (e.`g`., NONE, SYMBOL, NUMBERED, PICTURE). |\n| `getChar()` | char | Returns or sets the character used for symbol bullets. |\n| getNumberStyle() | NumberStyle | Returns or sets the number style for numbered bullets. |\n| getStartNumber() | `int` | Returns or sets the starting number for numbered bullets. |\n| getPicture() | `IPictureFrame` | Returns or sets the picture used for picture bullets. |\n| getBulletColor() | `IColorFormat` | Returns the color format of the bullet. |\n| getBulletFontSize() | `float` | Returns or sets the font size of the bullet. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-63f06b"
+          ],
+          "content": "The `Color` class is an immutable value type representing an ARGB color. It is used throughout the API for fill, line, and text color definitions.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-63f06b"
+          ],
+          "content": "import com.aspose.slides.*;\n\nvar color = new Color(0, 128, 255);\nint a = color.getA();\nint r = color.getR();\nint g = color.getG();\nint b = color.getB();",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides FOSS for Java -- Method table: signature, return type, description.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-7c20d0",
+            "CLM-slides-0bece1"
+          ],
+          "content": "| Item | Description |\n| --- | --- |\n| BulletType: Represents the type of the extended bullets |  |\n| ColorFormat.createChildElement() is part of the public API for Aspose.Slides FOSS for Java. |  |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-9d44be",
+            "CLM-slides-ccae0f",
+            "CLM-slides-8145aa",
+            "CLM-slides-6b24e8",
+            "CLM-slides-e1d52a",
+            "CLM-slides-15c08b",
+            "CLM-slides-3ddc25",
+            "CLM-slides-9e5b38",
+            "CLM-slides-a852f3",
+            "CLM-slides-b676f1",
+            "CLM-slides-f5771f",
+            "CLM-slides-5401c7",
+            "CLM-slides-fb90a4",
+            "CLM-slides-329e6f",
+            "CLM-slides-7c2dd9",
+            "CLM-slides-b9f6c1",
+            "CLM-slides-0bece1",
+            "CLM-slides-1591c7",
+            "CLM-slides-7706e4",
+            "CLM-slides-b37638",
+            "CLM-slides-465a41",
+            "CLM-slides-731913",
+            "CLM-slides-7d755a",
+            "CLM-slides-7e1adb",
+            "CLM-slides-cd2c1d",
+            "CLM-slides-b09926",
+            "CLM-slides-93c845",
+            "CLM-slides-cd1222",
+            "CLM-slides-9fa048"
+          ],
+          "content": "import org.aspose.slides.foss.Presentation;\nimport org.aspose.slides.foss.export.SaveFormat;\n\n// Open an existing presentation\ntry (Presentation prs = new Presentation(\"input.pptx\")) {\n    System.out.println(\"Slides: \" + prs.getSlides().size());\n    prs.save(\"output.pptx\", SaveFormat.PPTX);\n}\n\n// Create a new presentation\ntry (Presentation prs = new Presentation()) {\n    var slide = prs.getSlides().get(0);\n    prs.save(\"new.pptx\", SaveFormat.PPTX);\n}",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-9d44be",
+            "CLM-slides-ccae0f",
+            "CLM-slides-8145aa",
+            "CLM-slides-6b24e8",
+            "CLM-slides-e1d52a",
+            "CLM-slides-15c08b",
+            "CLM-slides-3ddc25",
+            "CLM-slides-9e5b38",
+            "CLM-slides-a852f3",
+            "CLM-slides-b676f1",
+            "CLM-slides-f5771f",
+            "CLM-slides-5401c7",
+            "CLM-slides-fb90a4",
+            "CLM-slides-329e6f",
+            "CLM-slides-7c2dd9",
+            "CLM-slides-b9f6c1",
+            "CLM-slides-0bece1",
+            "CLM-slides-1591c7",
+            "CLM-slides-7706e4",
+            "CLM-slides-b37638",
+            "CLM-slides-d4cb6e",
+            "CLM-slides-465a41",
+            "CLM-slides-731913",
+            "CLM-slides-7d755a",
+            "CLM-slides-7e1adb",
+            "CLM-slides-cd2c1d",
+            "CLM-slides-b09926",
+            "CLM-slides-cd1222",
+            "CLM-slides-9fa048",
+            "CLM-slides-5187f6"
+          ],
+          "content": "import org.aspose.slides.foss.Presentation;\nimport org.aspose.slides.foss.ShapeType;\nimport org.aspose.slides.foss.IAutoShape;\nimport org.aspose.slides.foss.ISlide;\nimport org.aspose.slides.foss.export.SaveFormat;\n\ntry (Presentation prs = new Presentation()) {\n    ISlide slide = prs.getSlides().get(0);\n    IAutoShape shape = slide.getShapes().addAutoShape(ShapeType.RECTANGLE, 50, 50, 300, 100);\n    shape.addTextFrame(\"Hello, world!\");\n    prs.save(\"shapes.pptx\", SaveFormat.PPTX);\n}",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-76c1ff",
+            "CLM-slides-9d44be",
+            "CLM-slides-ccae0f",
+            "CLM-slides-8145aa",
+            "CLM-slides-6b24e8",
+            "CLM-slides-e1d52a",
+            "CLM-slides-15c08b",
+            "CLM-slides-3ddc25",
+            "CLM-slides-9e5b38",
+            "CLM-slides-a852f3",
+            "CLM-slides-b676f1",
+            "CLM-slides-f5771f",
+            "CLM-slides-5401c7",
+            "CLM-slides-fb90a4",
+            "CLM-slides-329e6f",
+            "CLM-slides-7c2dd9",
+            "CLM-slides-b9f6c1",
+            "CLM-slides-0bece1",
+            "CLM-slides-d537ea",
+            "CLM-slides-1591c7",
+            "CLM-slides-b37638",
+            "CLM-slides-465a41",
+            "CLM-slides-731913",
+            "CLM-slides-7d755a",
+            "CLM-slides-7e1adb",
+            "CLM-slides-cd2c1d",
+            "CLM-slides-b09926",
+            "CLM-slides-8964aa",
+            "CLM-slides-cd1222",
+            "CLM-slides-9fa048",
+            "CLM-slides-ca5fb2"
+          ],
+          "content": "import org.aspose.slides.foss.*;\nimport org.aspose.slides.foss.drawing.Color;\nimport org.aspose.slides.foss.export.SaveFormat;\n\ntry (Presentation prs = new Presentation()) {\n    IAutoShape shape = prs.getSlides().get(0).getShapes()\n            .addAutoShape(ShapeType.RECTANGLE, 50, 50, 400, 150);\n    shape.addTextFrame(\"Formatted text\");\n    IPortionFormat fmt = shape.getTextFrame().getParagraphs().get(0)\n            .getPortions().get(0).getPortionFormat();\n    fmt.setFontHeight(24);\n    fmt.setFontBold(NullableBool.TRUE);\n    fmt.getFillFormat().setFillType(FillType.SOLID);\n    fmt.getFillFormat().getSolidFillColor().setColor(Color.fromArgb(255, 0, 70, 127));\n    prs.save(\"text.pptx\", SaveFormat.PPTX);\n}",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-cd1222",
+            "CLM-slides-d537ea",
+            "CLM-slides-6a7676"
+          ],
+          "content": "The `Presentation` class provides access to slides via the getSlides() method, enabling iteration and manipulation of slide content. This example demonstrates creating `a` presentation, adding `a` rectangle shape with formatted text, and saving it as `a` PPTX file using the canonical import path.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-cd1222",
+            "CLM-slides-d537ea",
+            "CLM-slides-6a7676"
+          ],
+          "content": "import com.aspose.slides.*;\nimport com.aspose.slides.drawing.Color;\nimport com.aspose.slides.export.SaveFormat;\n\ntry (Presentation prs = new Presentation()) {\n    IAutoShape shape = prs.getSlides().get(0).getShapes()\n            .addAutoShape(ShapeType.RECTANGLE, 50, 50, 400, 150);\n    shape.addTextFrame(\"Formatted text\");\n    IPortionFormat fmt = shape.getTextFrame().getParagraphs().get(0)\n            .getPortions().get(0).getPortionFormat();\n    fmt.setFontHeight(24);\n    fmt.setFontBold(NullableBool.TRUE);\n    fmt.getFillFormat().setFillType(FillType.SOLID);\n    fmt.getFillFormat().getSolidFillColor().setColor(Color.fromArgb(255, 0, 70, 127));\n    prs.save(\"text.pptx\", SaveFormat.PPTX);\n}",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Example",
+      "level": 2,
+      "section_id": "example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-cd1222",
+            "CLM-slides-bc91e3",
+            "CLM-slides-308664",
+            "CLM-slides-e99531",
+            "CLM-slides-d537ea"
+          ],
+          "content": "The `Presentation` class provides access to slides via the getSlides() method. Related core classes include `BaseSlide`, `Cell`, `BulletFormat`, and `ColorFormat`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-cd1222"
+          ],
+          "content": "import com.aspose.slides.*;\n\ntry (Presentation prs = new Presentation()) {\n    ISlide slide = prs.getSlides().get(0);\n    System.out.println(\"Slides: \" + prs.getSlides().size());\n}\n",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Access slide columns](/reference.aspose.org/slides/java/column/)",
+            "[Open existing presentations](/blog.aspose.org/slides/java/slides-foss-java/)",
+            "[Key features overview](/blog.aspose.org/slides/java/slides-features/)",
+            "[Create new presentations](/docs.aspose.org/slides/java/developer-guide/presentation-creation/)",
+            "[Work with slides](/docs.aspose.org/slides/java/developer-guide/slide-manipulation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "The Presentation class provides access to slides via the getSlides() method"
+}

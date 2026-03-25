@@ -1,0 +1,116 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/cells/python/chart/",
+    "canonical_import": "aspose.cells_foss",
+    "date": "2026-03-19T15:07:33Z",
+    "dateModified": "2026-03-19T15:07:33Z",
+    "datePublished": "2026-03-19T15:07:33Z",
+    "description": "Aspose.Cells FOSS: Cells.cell(): Accesses a cell by row and column (1-based).",
+    "display_name": "Aspose.Cells FOSS",
+    "family": "cells",
+    "keywords": [
+      "chart",
+      "worksheet",
+      "adds",
+      "spreadsheets"
+    ],
+    "lastmod": "2026-03-19T15:07:33Z",
+    "page_role": "reference_object_page",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Cells FOSS Chart: Represents a chart in a worksheet",
+    "slug": "chart",
+    "title": "Chart: Represents a chart in a worksheet",
+    "type": "reference_object_page",
+    "url": "/reference.aspose.org/cells/python/chart/",
+    "weight": 3
+  },
+  "page_id": "reference/chart",
+  "page_role": "reference_object_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Represents a chart in a worksheet.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "| Name | Type | Read-only | Description |\n| --- | --- | --- | --- |\n| type |  | Yes |  |\n| title |  | No |  |\n| category_data |  | No |  |\n| show_legend |  | No |  |\n| legend_position |  | No |  |\n| smooth |  | No |  |\n| n_series |  | Yes |  |\n| NSeries |  | Yes | PascalCase alias of n_series. |\n| grouping |  | No |  |\n| bar_direction |  | No |  |\n| gap_width |  | No |  |\n| overlap |  | No |  |\n| vary_colors |  | No |  |\n| first_slice_angle |  | No |  |\n| is_of_pie |  | No |  |\n| of_pie_type |  | No |  |\n| second_pie_size |  | No |  |\n| quartile_method |  | No |  |\n| box_show_mean_line |  | No |  |\n| box_show_mean_marker |  | No |  |\n| box_show_inner_points |  | No |  |\n| box_show_outlier_points |  | No |  |\n| box_gap_width |  | No |  |\n| is_3d |  | No |  |\n| gap_depth |  | No |  |\n| view_3d |  | Yes |  |\n| View3D |  | Yes | PascalCase alias of view_3d. |\n| show_connector_lines |  | No |  |\n| has_subtotals |  | No |  |\n| sub_charts |  | Yes | List of sub-chart descriptors for combo charts. |\n| axes |  | Yes | List of ChartAxis objects defining all axes for the chart. |\n| scatter_style |  | No |  |\n| wireframe |  | No | Whether the surface chart uses wireframe display mode (<c:wireframe val='1'/>). |\n| radar_style |  | No | Radar chart style: 'standard', 'marker', or 'filled'. |\n| histogram_bin_count |  | No | Number of bins for count-based binning (int or None for auto/size-based). |\n| histogram_bin_size |  | No | Bin width for size-based binning (float or None for auto/count-based). |\n| histogram_interval_closed |  | No | Which side of each bin interval is closed: 'r' (right) or 'l' (left). |\n| histogram_overflow |  | No | Overflow bin boundary value (float or None). |\n| histogram_underflow |  | No | Underflow bin boundary value (float or None). |\n| disp_blanks_as |  | No |  |\n| stock_style |  | No |  |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "**add_series**(values, category_data, name, chart_type, x_values)\n\nConvenience method to add a series.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "**add_axis**(axis_type, axis_id) → ChartAxis\n\nAdds an axis to the chart and returns it.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "**copy**()",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Aspose.Cells FOSS API reference](/reference.aspose.org/cells/python/api-overview/)",
+            "[Workbook class overview](/blog.aspose.org/cells/python/introducing-cells-foss-python/)",
+            "[Hyperlink support details](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)",
+            "[Formula handling guide](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
+            "[Spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Chart: Represents a chart in a worksheet"
+}

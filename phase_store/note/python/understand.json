@@ -1,0 +1,6138 @@
+{
+  "api_surface": {
+    "api_identifiers": [
+      "Accept",
+      "Alignment",
+      "Append",
+      "AppendChildFirst",
+      "AppendChildLast",
+      "AppendFront",
+      "AsposeNoteError",
+      "AttachedFile",
+      "Clear",
+      "Clone",
+      "CompositeNode",
+      "Count",
+      "CreateYellowStar",
+      "Default",
+      "DefaultMsOneNoteTitleDateStyle",
+      "DefaultMsOneNoteTitleTextStyle",
+      "DefaultMsOneNoteTitleTimeStyle",
+      "DetectLayoutChanges",
+      "Document",
+      "DocumentVisitor",
+      "FileCorruptedException",
+      "FileFormat",
+      "FirstChild",
+      "GetChildNodes",
+      "GetEnumerator",
+      "GetPageHistory",
+      "Highlight",
+      "HorizontalAlignment",
+      "Image",
+      "IncorrectDocumentStructureException",
+      "IncorrectPasswordException",
+      "Insert",
+      "InsertChild",
+      "IsBold",
+      "IsItalic",
+      "IsStrikethrough",
+      "IsSubscript",
+      "IsSuperscript",
+      "IsTitleDate",
+      "IsTitleText",
+      "IsTitleTime",
+      "IsUnderline",
+      "Language",
+      "LastChild",
+      "Length",
+      "License",
+      "LoadOptions",
+      "Metered",
+      "Node",
+      "NodeType",
+      "NoteTag",
+      "NumberList",
+      "Outline",
+      "OutlineElement",
+      "Page",
+      "PdfSaveOptions",
+      "Remove",
+      "RemoveChild",
+      "Replace",
+      "RichText",
+      "Save",
+      "SaveFormat",
+      "SaveOptions",
+      "SetLicense",
+      "SetMeteredKey",
+      "Table",
+      "TableCell",
+      "TableRow",
+      "TextRun",
+      "TextRuns",
+      "TextStyle",
+      "Title",
+      "Trim",
+      "TrimEnd",
+      "TrimStart",
+      "UnsupportedFileFormatException",
+      "UnsupportedSaveFormatException",
+      "VisitDocumentEnd",
+      "VisitDocumentStart",
+      "VisitImageEnd",
+      "VisitImageStart",
+      "VisitOutlineElementEnd",
+      "VisitOutlineElementStart",
+      "VisitOutlineEnd",
+      "VisitOutlineStart",
+      "VisitPageEnd",
+      "VisitPageStart",
+      "VisitRichTextEnd",
+      "VisitRichTextStart",
+      "VisitTitleEnd",
+      "VisitTitleStart"
+    ],
+    "class_briefs": [
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [
+          "Count",
+          "DetectLayoutChanges",
+          "GetPageHistory",
+          "Save"
+        ],
+        "name": "Document",
+        "properties": [
+          "FileFormat"
+        ],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "Count",
+            "parameters": [],
+            "return_type": "int"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "DetectLayoutChanges",
+            "parameters": [],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "GetPageHistory",
+            "parameters": [
+              {
+                "name": "page",
+                "type_annotation": "Page"
+              }
+            ],
+            "return_type": "list[Page]"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "Save",
+            "parameters": [
+              {
+                "name": "target",
+                "type_annotation": "str | Path | BinaryIO"
+              },
+              {
+                "name": "format_or_options",
+                "type_annotation": "SaveFormat | SaveOptions | None"
+              }
+            ],
+            "return_type": "None"
+          }
+        ],
+        "typed_properties": [
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "FileFormat",
+            "type_annotation": "FileFormat"
+          }
+        ]
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [
+          "CreateYellowStar"
+        ],
+        "name": "NoteTag",
+        "properties": [],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": true,
+            "name": "CreateYellowStar",
+            "parameters": [],
+            "return_type": "NoteTag"
+          }
+        ],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "AsposeNoteError",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "AttachedFile",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [
+          "AppendChildLast",
+          "AppendChildFirst",
+          "InsertChild",
+          "RemoveChild",
+          "GetEnumerator",
+          "GetChildNodes"
+        ],
+        "name": "CompositeNode",
+        "properties": [
+          "FirstChild",
+          "LastChild"
+        ],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "AppendChildLast",
+            "parameters": [
+              {
+                "name": "node",
+                "type_annotation": "TNode"
+              }
+            ],
+            "return_type": "TNode"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "AppendChildFirst",
+            "parameters": [
+              {
+                "name": "node",
+                "type_annotation": "TNode"
+              }
+            ],
+            "return_type": "TNode"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "InsertChild",
+            "parameters": [
+              {
+                "name": "index",
+                "type_annotation": "int"
+              },
+              {
+                "name": "node",
+                "type_annotation": "TNode"
+              }
+            ],
+            "return_type": "TNode"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "RemoveChild",
+            "parameters": [
+              {
+                "name": "node",
+                "type_annotation": "Node"
+              }
+            ],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "GetEnumerator",
+            "parameters": [],
+            "return_type": "Iterator[Node]"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "GetChildNodes",
+            "parameters": [
+              {
+                "name": "node_type",
+                "type_annotation": "type[TNode]"
+              }
+            ],
+            "return_type": "list[TNode]"
+          }
+        ],
+        "typed_properties": [
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "FirstChild",
+            "type_annotation": "Node | None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "LastChild",
+            "type_annotation": "Node | None"
+          }
+        ]
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [
+          "VisitDocumentStart",
+          "VisitDocumentEnd",
+          "VisitPageStart",
+          "VisitPageEnd",
+          "VisitTitleStart",
+          "VisitTitleEnd",
+          "VisitOutlineStart",
+          "VisitOutlineEnd",
+          "VisitOutlineElementStart",
+          "VisitOutlineElementEnd",
+          "VisitRichTextStart",
+          "VisitRichTextEnd",
+          "VisitImageStart",
+          "VisitImageEnd"
+        ],
+        "name": "DocumentVisitor",
+        "properties": [],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "VisitDocumentStart",
+            "parameters": [
+              {
+                "name": "document",
+                "type_annotation": "Document"
+              }
+            ],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "VisitDocumentEnd",
+            "parameters": [
+              {
+                "name": "document",
+                "type_annotation": "Document"
+              }
+            ],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "VisitPageStart",
+            "parameters": [
+              {
+                "name": "page",
+                "type_annotation": "Page"
+              }
+            ],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "VisitPageEnd",
+            "parameters": [
+              {
+                "name": "page",
+                "type_annotation": "Page"
+              }
+            ],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "VisitTitleStart",
+            "parameters": [
+              {
+                "name": "title",
+                "type_annotation": "Title"
+              }
+            ],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "VisitTitleEnd",
+            "parameters": [
+              {
+                "name": "title",
+                "type_annotation": "Title"
+              }
+            ],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "VisitOutlineStart",
+            "parameters": [
+              {
+                "name": "outline",
+                "type_annotation": "Outline"
+              }
+            ],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "VisitOutlineEnd",
+            "parameters": [
+              {
+                "name": "outline",
+                "type_annotation": "Outline"
+              }
+            ],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "VisitOutlineElementStart",
+            "parameters": [
+              {
+                "name": "outline_element",
+                "type_annotation": "OutlineElement"
+              }
+            ],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "VisitOutlineElementEnd",
+            "parameters": [
+              {
+                "name": "outline_element",
+                "type_annotation": "OutlineElement"
+              }
+            ],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "VisitRichTextStart",
+            "parameters": [
+              {
+                "name": "rich_text",
+                "type_annotation": "RichText"
+              }
+            ],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "VisitRichTextEnd",
+            "parameters": [
+              {
+                "name": "rich_text",
+                "type_annotation": "RichText"
+              }
+            ],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "VisitImageStart",
+            "parameters": [
+              {
+                "name": "image",
+                "type_annotation": "Image"
+              }
+            ],
+            "return_type": "None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "VisitImageEnd",
+            "parameters": [
+              {
+                "name": "image",
+                "type_annotation": "Image"
+              }
+            ],
+            "return_type": "None"
+          }
+        ],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "FileCorruptedException",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [
+          {
+            "docstring_snippet": "",
+            "members": [
+              {
+                "name": "OneNote2010",
+                "value": "onenote2010"
+              },
+              {
+                "name": "OneNoteOnline",
+                "value": "onenoteonline"
+              },
+              {
+                "name": "OneNote2007",
+                "value": "onenote2007"
+              }
+            ],
+            "name": "FileFormat"
+          }
+        ],
+        "methods": [],
+        "name": "FileFormat",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [
+          {
+            "docstring_snippet": "",
+            "members": [
+              {
+                "name": "Left",
+                "value": "left"
+              },
+              {
+                "name": "Center",
+                "value": "center"
+              },
+              {
+                "name": "Right",
+                "value": "right"
+              }
+            ],
+            "name": "HorizontalAlignment"
+          }
+        ],
+        "methods": [],
+        "name": "HorizontalAlignment",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [
+          "Replace"
+        ],
+        "name": "Image",
+        "properties": [
+          "Alignment"
+        ],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "Replace",
+            "parameters": [
+              {
+                "name": "image",
+                "type_annotation": "Image"
+              }
+            ],
+            "return_type": "None"
+          }
+        ],
+        "typed_properties": [
+          {
+            "docstring_snippet": "",
+            "is_readonly": false,
+            "name": "Alignment",
+            "type_annotation": "HorizontalAlignment | None"
+          }
+        ]
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "IncorrectDocumentStructureException",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "IncorrectPasswordException",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [
+          "SetLicense"
+        ],
+        "name": "License",
+        "properties": [],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "SetLicense",
+            "parameters": [
+              {
+                "name": "license_path_or_stream",
+                "type_annotation": "Any"
+              }
+            ],
+            "return_type": "None"
+          }
+        ],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "LoadOptions",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [
+          "SetMeteredKey"
+        ],
+        "name": "Metered",
+        "properties": [],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "SetMeteredKey",
+            "parameters": [
+              {
+                "name": "public_key",
+                "type_annotation": "str"
+              },
+              {
+                "name": "private_key",
+                "type_annotation": "str"
+              }
+            ],
+            "return_type": "None"
+          }
+        ],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [
+          "Accept"
+        ],
+        "name": "Node",
+        "properties": [
+          "Document"
+        ],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "Accept",
+            "parameters": [
+              {
+                "name": "visitor",
+                "type_annotation": "DocumentVisitor"
+              }
+            ],
+            "return_type": "None"
+          }
+        ],
+        "typed_properties": [
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "Document",
+            "type_annotation": "Document | None"
+          }
+        ]
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [
+          {
+            "docstring_snippet": "",
+            "members": [
+              {
+                "name": "Document",
+                "value": "document"
+              },
+              {
+                "name": "Page",
+                "value": "page"
+              },
+              {
+                "name": "Outline",
+                "value": "outline"
+              },
+              {
+                "name": "OutlineElement",
+                "value": "outline_element"
+              },
+              {
+                "name": "RichText",
+                "value": "rich_text"
+              },
+              {
+                "name": "Image",
+                "value": "image"
+              },
+              {
+                "name": "Table",
+                "value": "table"
+              },
+              {
+                "name": "AttachedFile",
+                "value": "attached_file"
+              }
+            ],
+            "name": "NodeType"
+          }
+        ],
+        "methods": [],
+        "name": "NodeType",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "NumberList",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "Outline",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "OutlineElement",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [
+          "Clone"
+        ],
+        "name": "Page",
+        "properties": [],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "Clone",
+            "parameters": [
+              {
+                "name": "cloneHistory",
+                "type_annotation": "bool"
+              }
+            ],
+            "return_type": "Page"
+          }
+        ],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [
+          "Append",
+          "AppendFront",
+          "Clear",
+          "GetEnumerator",
+          "Insert",
+          "Remove",
+          "Replace",
+          "Trim",
+          "TrimStart",
+          "TrimEnd"
+        ],
+        "name": "RichText",
+        "properties": [
+          "Alignment",
+          "IsTitleDate",
+          "IsTitleText",
+          "IsTitleTime",
+          "Length",
+          "TextRuns"
+        ],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "Append",
+            "parameters": [
+              {
+                "name": "text",
+                "type_annotation": "str"
+              },
+              {
+                "name": "style",
+                "type_annotation": "TextStyle | None"
+              }
+            ],
+            "return_type": "RichText"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "AppendFront",
+            "parameters": [
+              {
+                "name": "text",
+                "type_annotation": "str"
+              },
+              {
+                "name": "style",
+                "type_annotation": "TextStyle | None"
+              }
+            ],
+            "return_type": "RichText"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "Clear",
+            "parameters": [],
+            "return_type": "RichText"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "GetEnumerator",
+            "parameters": [],
+            "return_type": "Iterator[str]"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "Insert",
+            "parameters": [
+              {
+                "name": "index",
+                "type_annotation": "int"
+              },
+              {
+                "name": "text",
+                "type_annotation": "str"
+              },
+              {
+                "name": "style",
+                "type_annotation": "TextStyle | None"
+              }
+            ],
+            "return_type": "RichText"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "Remove",
+            "parameters": [
+              {
+                "name": "start",
+                "type_annotation": "int"
+              },
+              {
+                "name": "count",
+                "type_annotation": "int | None"
+              }
+            ],
+            "return_type": "RichText"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "Replace",
+            "parameters": [
+              {
+                "name": "old_value",
+                "type_annotation": "str"
+              },
+              {
+                "name": "new_value",
+                "type_annotation": "str"
+              },
+              {
+                "name": "style",
+                "type_annotation": "TextStyle | None"
+              }
+            ],
+            "return_type": "RichText"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "Trim",
+            "parameters": [],
+            "return_type": "RichText"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "TrimStart",
+            "parameters": [],
+            "return_type": "RichText"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "TrimEnd",
+            "parameters": [],
+            "return_type": "RichText"
+          }
+        ],
+        "typed_properties": [
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "TextRuns",
+            "type_annotation": "list[TextRun]"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "Length",
+            "type_annotation": "int"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": false,
+            "name": "Alignment",
+            "type_annotation": "HorizontalAlignment | None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "IsTitleText",
+            "type_annotation": "bool"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "IsTitleDate",
+            "type_annotation": "bool"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": true,
+            "name": "IsTitleTime",
+            "type_annotation": "bool"
+          }
+        ]
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [
+          {
+            "docstring_snippet": "",
+            "members": [
+              {
+                "name": "Pdf",
+                "value": "pdf"
+              }
+            ],
+            "name": "SaveFormat"
+          }
+        ],
+        "methods": [],
+        "name": "SaveFormat",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "Table",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "TableCell",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "TableRow",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "TextRun",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [
+          "Default",
+          "DefaultMsOneNoteTitleTextStyle",
+          "DefaultMsOneNoteTitleDateStyle",
+          "DefaultMsOneNoteTitleTimeStyle"
+        ],
+        "name": "TextStyle",
+        "properties": [
+          "Highlight",
+          "IsBold",
+          "IsItalic",
+          "IsStrikethrough",
+          "IsSubscript",
+          "IsSuperscript",
+          "IsUnderline",
+          "Language"
+        ],
+        "typed_methods": [
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "Default",
+            "parameters": [],
+            "return_type": "TextStyle"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "DefaultMsOneNoteTitleTextStyle",
+            "parameters": [],
+            "return_type": "TextStyle"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "DefaultMsOneNoteTitleDateStyle",
+            "parameters": [],
+            "return_type": "TextStyle"
+          },
+          {
+            "docstring_snippet": "",
+            "is_async": false,
+            "is_static": false,
+            "name": "DefaultMsOneNoteTitleTimeStyle",
+            "parameters": [],
+            "return_type": "TextStyle"
+          }
+        ],
+        "typed_properties": [
+          {
+            "docstring_snippet": "",
+            "is_readonly": false,
+            "name": "IsBold",
+            "type_annotation": "bool"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": false,
+            "name": "IsItalic",
+            "type_annotation": "bool"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": false,
+            "name": "IsUnderline",
+            "type_annotation": "bool"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": false,
+            "name": "IsStrikethrough",
+            "type_annotation": "bool"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": false,
+            "name": "IsSuperscript",
+            "type_annotation": "bool"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": false,
+            "name": "IsSubscript",
+            "type_annotation": "bool"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": false,
+            "name": "Highlight",
+            "type_annotation": "int | None"
+          },
+          {
+            "docstring_snippet": "",
+            "is_readonly": false,
+            "name": "Language",
+            "type_annotation": "int | None"
+          }
+        ]
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "Title",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "UnsupportedFileFormatException",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "UnsupportedSaveFormatException",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "PdfSaveOptions",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      },
+      {
+        "docstring_snippet": "",
+        "enums": [],
+        "methods": [],
+        "name": "SaveOptions",
+        "properties": [],
+        "typed_methods": [],
+        "typed_properties": []
+      }
+    ],
+    "confidence": "high",
+    "enums": [
+      {
+        "docstring_snippet": "",
+        "members": [
+          {
+            "name": "Pdf",
+            "value": "pdf"
+          }
+        ],
+        "name": "SaveFormat"
+      },
+      {
+        "docstring_snippet": "",
+        "members": [
+          {
+            "name": "OneNote2010",
+            "value": "onenote2010"
+          },
+          {
+            "name": "OneNoteOnline",
+            "value": "onenoteonline"
+          },
+          {
+            "name": "OneNote2007",
+            "value": "onenote2007"
+          }
+        ],
+        "name": "FileFormat"
+      },
+      {
+        "docstring_snippet": "",
+        "members": [
+          {
+            "name": "Left",
+            "value": "left"
+          },
+          {
+            "name": "Center",
+            "value": "center"
+          },
+          {
+            "name": "Right",
+            "value": "right"
+          }
+        ],
+        "name": "HorizontalAlignment"
+      },
+      {
+        "docstring_snippet": "",
+        "members": [
+          {
+            "name": "Document",
+            "value": "document"
+          },
+          {
+            "name": "Page",
+            "value": "page"
+          },
+          {
+            "name": "Outline",
+            "value": "outline"
+          },
+          {
+            "name": "OutlineElement",
+            "value": "outline_element"
+          },
+          {
+            "name": "RichText",
+            "value": "rich_text"
+          },
+          {
+            "name": "Image",
+            "value": "image"
+          },
+          {
+            "name": "Table",
+            "value": "table"
+          },
+          {
+            "name": "AttachedFile",
+            "value": "attached_file"
+          }
+        ],
+        "name": "NodeType"
+      }
+    ],
+    "format_matrix": [
+      {
+        "can_export": true,
+        "can_import": false,
+        "caveats": [],
+        "extension": ".pdf",
+        "name": "PDF",
+        "source_evidence": "runs\\.clone_cache\\aspose_note_python",
+        "test_count": 9
+      },
+      {
+        "can_export": true,
+        "can_import": false,
+        "caveats": [],
+        "extension": ".tiff",
+        "name": "TIFF",
+        "source_evidence": "runs\\.clone_cache\\aspose_note_python",
+        "test_count": 1
+      },
+      {
+        "can_export": true,
+        "can_import": true,
+        "caveats": [],
+        "extension": "",
+        "name": "ONENOTE2007",
+        "source_evidence": "enum_member:FileFormat",
+        "test_count": 0
+      },
+      {
+        "can_export": true,
+        "can_import": true,
+        "caveats": [],
+        "extension": "",
+        "name": "ONENOTE2010",
+        "source_evidence": "enum_member:FileFormat",
+        "test_count": 0
+      },
+      {
+        "can_export": true,
+        "can_import": true,
+        "caveats": [],
+        "extension": "",
+        "name": "ONENOTEONLINE",
+        "source_evidence": "enum_member:FileFormat",
+        "test_count": 0
+      }
+    ],
+    "import_allowlist": [
+      "aspose.note",
+      "aspose.note.AsposeNoteError",
+      "aspose.note.AttachedFile",
+      "aspose.note.CompositeNode",
+      "aspose.note.Document",
+      "aspose.note.DocumentVisitor",
+      "aspose.note.FileCorruptedException",
+      "aspose.note.FileFormat",
+      "aspose.note.HorizontalAlignment",
+      "aspose.note.Image",
+      "aspose.note.IncorrectDocumentStructureException",
+      "aspose.note.IncorrectPasswordException",
+      "aspose.note.License",
+      "aspose.note.LoadOptions",
+      "aspose.note.Metered",
+      "aspose.note.Node",
+      "aspose.note.NodeType",
+      "aspose.note.NoteTag",
+      "aspose.note.NumberList",
+      "aspose.note.Outline",
+      "aspose.note.OutlineElement",
+      "aspose.note.Page",
+      "aspose.note.PdfSaveOptions",
+      "aspose.note.RichText",
+      "aspose.note.SaveFormat",
+      "aspose.note.SaveOptions",
+      "aspose.note.Table",
+      "aspose.note.TableCell",
+      "aspose.note.TableRow",
+      "aspose.note.TextRun",
+      "aspose.note.TextStyle",
+      "aspose.note.Title",
+      "aspose.note.UnsupportedFileFormatException",
+      "aspose.note.UnsupportedSaveFormatException",
+      "aspose.note.annotations"
+    ],
+    "public_classes": [
+      "Document",
+      "NoteTag",
+      "AsposeNoteError",
+      "AttachedFile",
+      "CompositeNode",
+      "DocumentVisitor",
+      "FileCorruptedException",
+      "FileFormat",
+      "HorizontalAlignment",
+      "Image",
+      "IncorrectDocumentStructureException",
+      "IncorrectPasswordException",
+      "License",
+      "LoadOptions",
+      "Metered",
+      "Node",
+      "NodeType",
+      "NumberList",
+      "Outline",
+      "OutlineElement",
+      "Page",
+      "RichText",
+      "SaveFormat",
+      "Table",
+      "TableCell",
+      "TableRow",
+      "TextRun",
+      "TextStyle",
+      "Title",
+      "UnsupportedFileFormatException",
+      "UnsupportedSaveFormatException",
+      "PdfSaveOptions",
+      "SaveOptions"
+    ]
+  },
+  "claims": [
+    {
+      "claim_id": "CLM-note-644685",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": 438,
+          "snippet": "- Saving formats other than PDF (HTML/images/ONE) are declar: - Saving formats other than PDF (HTML/images/ONE) are decl",
+          "source_file": "README.md"
+        }
+      ],
+      "kind": "troubleshoot",
+      "text": "- Saving formats other than PDF (HTML/images/ONE) are declar has limitation: - Saving formats other than PDF (HTML/images/ONE) are declared for compatibility but not implemented.",
+      "tier_relevance": "all",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-de917d",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": 436,
+          "snippet": "- The implementation focuses on **reading** `.one` and build: - The implementation focuses on **reading** `.one` and bui",
+          "source_file": "README.md"
+        }
+      ],
+      "kind": "troubleshoot",
+      "text": "- The implementation focuses on **reading** `.one` and build has limitation: - The implementation focuses on **reading** `.one` and building a DOM; writing back to `.one` is not implemented.",
+      "tier_relevance": "all",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-073550",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": 222,
+          "snippet": "- `DocumentPassword: str | None` (password/encryption is **n: - `DocumentPassword: str | None` (password/encryption is *",
+          "source_file": "README.md"
+        }
+      ],
+      "kind": "troubleshoot",
+      "text": "- `DocumentPassword: str | None` (password/encryption is **n has limitation: - `DocumentPassword: str | None` (password/encryption is **not supported**)",
+      "tier_relevance": "all",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-0af80a",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": 437,
+          "snippet": "- `DocumentPassword` / encrypted documents are: - `DocumentPassword` / encrypted documents are not supported (raises `In",
+          "source_file": "README.md"
+        }
+      ],
+      "kind": "troubleshoot",
+      "text": "- `DocumentPassword` / encrypted documents are has limitation: - `DocumentPassword` / encrypted documents are not supported (raises `IncorrectPasswordException`).",
+      "tier_relevance": "all",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-dc18de",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "ONENOTE2007 format support",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "format",
+      "text": "Aspose.Note supports ONENOTE2007 format for reading and writing",
+      "tier_relevance": "all",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-2fae8e",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "ONENOTE2010 format support",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "format",
+      "text": "Aspose.Note supports ONENOTE2010 format for reading and writing",
+      "tier_relevance": "all",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-3c05b8",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "ONENOTEONLINE format support",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "format",
+      "text": "Aspose.Note supports ONENOTEONLINE format for reading and writing",
+      "tier_relevance": "all",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-f5771f",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "PDF format support",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "format",
+      "text": "Aspose.Note supports PDF (.pdf) format for writing",
+      "tier_relevance": "all",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-dc8047",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "TIFF format support",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "format",
+      "text": "Aspose.Note supports TIFF (.tiff) format for writing",
+      "tier_relevance": "all",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-b67342",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class AsposeNoteError",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "AsposeNoteError is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-446e3e",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class AttachedFile",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "AttachedFile is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-961931",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "from aspose.note import Document, Page, Outline, OutlineElement, RichText\n\ndoc = Document(\"testfiles/SimpleTable.one\")\n\n",
+          "source_file": "README.md"
+        }
+      ],
+      "kind": "example",
+      "text": "Code example demonstrates usage of GetChildNodes",
+      "tier_relevance": "all",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-562fb7",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "PDF_GOLDEN_CASES: tuple[PdfGoldenCase, ...] = (\n    PdfGoldenCase(\"formatted_richtext\", \"FormattedRichText.one\"),\n    Pd",
+          "source_file": ".github/skills/add-pdf-golden-test/SKILL.md"
+        }
+      ],
+      "kind": "example",
+      "text": "Code example demonstrates usage of PdfGoldenCase",
+      "tier_relevance": "all",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-58eab4",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "from aspose.note import Document, DocumentVisitor, Page, Image, RichText\n\n\nclass Counter(DocumentVisitor):\n  def __init_",
+          "source_file": "README.md"
+        }
+      ],
+      "kind": "example",
+      "text": "Code example demonstrates usage of VisitPageStart",
+      "tier_relevance": "all",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-096e95",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class CompositeNode",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "CompositeNode is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-85963f",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class Document",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "Document is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-3f420b",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "Document.Save()",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "Document.Save() is part of the public API for Aspose.Note.",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-3ddfe4",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class DocumentVisitor",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "DocumentVisitor is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-1553bb",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "from aspose.note import Document, SaveFormat\n\n\ndoc = Document(\"../testfiles/SimpleTable.one\")\ndoc.Save(\"out.pdf\", SaveFo",
+          "source_file": "examples/export_pdf.py"
+        }
+      ],
+      "kind": "workflow",
+      "text": "Example demonstrates saving files in PDF format",
+      "tier_relevance": "all",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-ae4c46",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class FileCorruptedException",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "FileCorruptedException is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-6d9e50",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class FileFormat",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "FileFormat is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-e8780f",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class HorizontalAlignment",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "HorizontalAlignment is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-21ba5b",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class Image",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "Image is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-f8ac17",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class IncorrectDocumentStructureException",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "IncorrectDocumentStructureException is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-de41d6",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class IncorrectPasswordException",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "IncorrectPasswordException is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-2e2929",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "pip install aspose-note>=26.3.1",
+          "source_file": ""
+        }
+      ],
+      "kind": "install",
+      "text": "Install Aspose.Note via: pip install aspose-note>=26.3.1",
+      "tier_relevance": "all",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-e24b8c",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class License",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "License is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-b9489f",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "LoadOptions",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "LoadOptions configures file import options in Aspose.Note.",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-84aaf0",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class LoadOptions",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "LoadOptions is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-e86de2",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class Metered",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "Metered is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-cba17f",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class Node",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "Node is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-d99a4c",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class NodeType",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "NodeType is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-57e597",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class NoteTag",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "NoteTag is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-0424e9",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "NoteTag.CreateYellowStar()",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "NoteTag.CreateYellowStar() is part of the public API for Aspose.Note.",
+      "tier_relevance": "full",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-51a188",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class NumberList",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "NumberList is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-e68aeb",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class Outline",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "Outline is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-2ab19d",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class OutlineElement",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "OutlineElement is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-53d9de",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class Page",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "Page is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-4f2775",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "PdfSaveOptions",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "PdfSaveOptions configures file export options in Aspose.Note.",
+      "tier_relevance": "full",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-e9045a",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class PdfSaveOptions",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "PdfSaveOptions is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-9a3fea",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class RichText",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "RichText is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-f05a2e",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class SaveFormat",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "SaveFormat is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-458240",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "SaveOptions",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "SaveOptions configures file export options in Aspose.Note.",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-e3a1b3",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class SaveOptions",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "SaveOptions is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-7620ec",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class Table",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "Table is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-e9d3a5",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class TableCell",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "TableCell is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-cd2c44",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class TableRow",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "TableRow is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-f0e5be",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class TextRun",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "TextRun is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-4e8298",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class TextStyle",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "TextStyle is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-551f3d",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class Title",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "Title is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-86c80d",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class UnsupportedFileFormatException",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "UnsupportedFileFormatException is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-8829b9",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "class UnsupportedSaveFormatException",
+          "source_file": ""
+        }
+      ],
+      "kind": "api",
+      "text": "UnsupportedSaveFormatException is part of the Aspose.Note API",
+      "tier_relevance": "full",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-75807c",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 11,
+          "line_start": 8,
+          "snippet": "class DocumentVisitor:",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "api",
+      "text": "The `DocumentVisitor` class allows traversing the document structure and visiting specific node types, such as `Page`, `RichText`, and `Image`.",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-9edb43",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 35,
+          "line_start": 32,
+          "snippet": "def GetChildNodes(self, node_type: Type[Page]) -> List[Page]:",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "api",
+      "text": "The `Document` class allows retrieval of child nodes of type `Page`.",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-f8f762",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 21,
+          "line_start": 18,
+          "snippet": "def Count(self) -> int:",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "api",
+      "text": "The `Document` class provides a `Count()` method to determine the number of child elements within a document.",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-ae0b9c",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 11,
+          "line_start": 8,
+          "snippet": "class Image:",
+          "source_file": "unknown"
+        },
+        {
+          "line_end": 21,
+          "line_start": 18,
+          "snippet": "Bytes: bytes",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "api",
+      "text": "The `Image` class provides access to image data via the `Bytes` property.",
+      "tier_relevance": "full",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-7918b5",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 11,
+          "line_start": 8,
+          "snippet": "class Outline:",
+          "source_file": "unknown"
+        },
+        {
+          "line_end": 11,
+          "line_start": 8,
+          "snippet": "class OutlineElement:",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "api",
+      "text": "The `Outline` class provides access to child `OutlineElement` objects.",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-d83112",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 15,
+          "line_start": 12,
+          "snippet": "class Page:",
+          "source_file": "unknown"
+        },
+        {
+          "line_end": 11,
+          "line_start": 8,
+          "snippet": "class Title:",
+          "source_file": "unknown"
+        },
+        {
+          "line_end": 11,
+          "line_start": 8,
+          "snippet": "class TitleText:",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "api",
+      "text": "The `Page` class has a `Title` property that contains a `TitleText` object, which in turn has a `Text` property.",
+      "tier_relevance": "full",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-c76bbd",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 6,
+          "line_start": 3,
+          "snippet": "from pathlib import Path\nfrom aspose.note import Document\n\none_path = Path(\"testfiles/SimpleTable.one\")",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "example",
+      "text": "The `Pathlib` class can be used to open a document file in binary read mode.",
+      "tier_relevance": "all",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-56ee61",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 11,
+          "line_start": 8,
+          "snippet": "class PdfSaveOptions:",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "api",
+      "text": "The `PdfSaveOptions` class allows configuring PDF saving options, including specifying a directory for tag icons and setting their size and gap.",
+      "tier_relevance": "full",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-note-663622",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 17,
+          "line_start": 14,
+          "snippet": "def GetChildNodes(self, node_type: Type[RichText]) -> List[RichText]:",
+          "source_file": "unknown"
+        },
+        {
+          "line_end": 11,
+          "line_start": 8,
+          "snippet": "class RichText:",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "api",
+      "text": "The `RichText` class can be retrieved as child nodes of an `OutlineElement`.",
+      "tier_relevance": "full",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-note-32884a",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 15,
+          "line_start": 12,
+          "snippet": "class SaveFormat(enum.Enum):\n    Pdf = 1",
+          "source_file": "unknown"
+        },
+        {
+          "line_end": 26,
+          "line_start": 23,
+          "snippet": "def Save(self, filename: str, format: SaveFormat) -> None:",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "format",
+      "text": "The library supports saving documents to PDF format using the `SaveFormat.Pdf` enumeration.",
+      "tier_relevance": "all",
+      "visibility": "public"
+    }
+  ],
+  "extraction_db": {
+    "api_facts": [
+      {
+        "class_name": "AsposeNoteError",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-AsposeNoteError-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "AsposeNoteError",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "AttachedFile",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-AttachedFile-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "AttachedFile",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "CompositeNode",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-CompositeNode-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "CompositeNode",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "CompositeNode",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-CompositeNode.AppendChildFirst-d07a37",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "AppendChildFirst",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "node",
+            "type": "TNode"
+          }
+        ],
+        "return_type": "TNode",
+        "signature": "AppendChildFirst(node: TNode) -> TNode",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "CompositeNode",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-CompositeNode.AppendChildLast-b9dcd1",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "AppendChildLast",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "node",
+            "type": "TNode"
+          }
+        ],
+        "return_type": "TNode",
+        "signature": "AppendChildLast(node: TNode) -> TNode",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "CompositeNode",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-CompositeNode.GetChildNodes-8fba3a",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "GetChildNodes",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "node_type",
+            "type": "type[TNode]"
+          }
+        ],
+        "return_type": "list[TNode]",
+        "signature": "GetChildNodes(node_type: type[TNode]) -> list[TNode]",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "CompositeNode",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-CompositeNode.GetEnumerator-111eef",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "GetEnumerator",
+        "member_type": "method",
+        "parameters": [],
+        "return_type": "Iterator[Node]",
+        "signature": "GetEnumerator() -> Iterator[Node]",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "CompositeNode",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-CompositeNode.InsertChild-d8db16",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "InsertChild",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "index",
+            "type": "int"
+          },
+          {
+            "default": "",
+            "name": "node",
+            "type": "TNode"
+          }
+        ],
+        "return_type": "TNode",
+        "signature": "InsertChild(index: int, node: TNode) -> TNode",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "CompositeNode",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-CompositeNode.RemoveChild-c8afb5",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "RemoveChild",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "node",
+            "type": "Node"
+          }
+        ],
+        "return_type": "None",
+        "signature": "RemoveChild(node: Node) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "CompositeNode",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-CompositeNode.FirstChild-e733a8",
+        "is_readonly": true,
+        "is_static": false,
+        "member_name": "FirstChild",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "Node | None",
+        "signature": "FirstChild: Node | None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "CompositeNode",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-CompositeNode.LastChild-699b7c",
+        "is_readonly": true,
+        "is_static": false,
+        "member_name": "LastChild",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "Node | None",
+        "signature": "LastChild: Node | None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Document",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Document-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Document",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Document",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Document.Count-3575ab",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Count",
+        "member_type": "method",
+        "parameters": [],
+        "return_type": "int",
+        "signature": "Count() -> int",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Document",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Document.DetectLayoutChanges-1504ec",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "DetectLayoutChanges",
+        "member_type": "method",
+        "parameters": [],
+        "return_type": "None",
+        "signature": "DetectLayoutChanges() -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Document",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Document.GetPageHistory-6f069c",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "GetPageHistory",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "page",
+            "type": "Page"
+          }
+        ],
+        "return_type": "list[Page]",
+        "signature": "GetPageHistory(page: Page) -> list[Page]",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Document",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Document.Save-79ba25",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Save",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "target",
+            "type": "str | Path | BinaryIO"
+          },
+          {
+            "default": "",
+            "name": "format_or_options",
+            "type": "SaveFormat | SaveOptions | None"
+          }
+        ],
+        "return_type": "None",
+        "signature": "Save(target: str | Path | BinaryIO, format_or_options: SaveFormat | SaveOptions | None) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Document",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Document.FileFormat-ef74d5",
+        "is_readonly": true,
+        "is_static": false,
+        "member_name": "FileFormat",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "FileFormat",
+        "signature": "FileFormat: FileFormat",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "DocumentVisitor",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-DocumentVisitor-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "DocumentVisitor",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "DocumentVisitor",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-DocumentVisitor.VisitDocumentEnd-29d4d4",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "VisitDocumentEnd",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "document",
+            "type": "Document"
+          }
+        ],
+        "return_type": "None",
+        "signature": "VisitDocumentEnd(document: Document) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "DocumentVisitor",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-DocumentVisitor.VisitDocumentStart-c483e0",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "VisitDocumentStart",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "document",
+            "type": "Document"
+          }
+        ],
+        "return_type": "None",
+        "signature": "VisitDocumentStart(document: Document) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "DocumentVisitor",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-DocumentVisitor.VisitImageEnd-ae8cd6",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "VisitImageEnd",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "image",
+            "type": "Image"
+          }
+        ],
+        "return_type": "None",
+        "signature": "VisitImageEnd(image: Image) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "DocumentVisitor",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-DocumentVisitor.VisitImageStart-b74d02",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "VisitImageStart",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "image",
+            "type": "Image"
+          }
+        ],
+        "return_type": "None",
+        "signature": "VisitImageStart(image: Image) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "DocumentVisitor",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-DocumentVisitor.VisitOutlineElementEnd-15fd21",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "VisitOutlineElementEnd",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "outline_element",
+            "type": "OutlineElement"
+          }
+        ],
+        "return_type": "None",
+        "signature": "VisitOutlineElementEnd(outline_element: OutlineElement) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "DocumentVisitor",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-DocumentVisitor.VisitOutlineElementStart-a9d147",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "VisitOutlineElementStart",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "outline_element",
+            "type": "OutlineElement"
+          }
+        ],
+        "return_type": "None",
+        "signature": "VisitOutlineElementStart(outline_element: OutlineElement) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "DocumentVisitor",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-DocumentVisitor.VisitOutlineEnd-89a89c",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "VisitOutlineEnd",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "outline",
+            "type": "Outline"
+          }
+        ],
+        "return_type": "None",
+        "signature": "VisitOutlineEnd(outline: Outline) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "DocumentVisitor",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-DocumentVisitor.VisitOutlineStart-294221",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "VisitOutlineStart",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "outline",
+            "type": "Outline"
+          }
+        ],
+        "return_type": "None",
+        "signature": "VisitOutlineStart(outline: Outline) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "DocumentVisitor",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-DocumentVisitor.VisitPageEnd-ed2815",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "VisitPageEnd",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "page",
+            "type": "Page"
+          }
+        ],
+        "return_type": "None",
+        "signature": "VisitPageEnd(page: Page) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "DocumentVisitor",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-DocumentVisitor.VisitPageStart-b5a8eb",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "VisitPageStart",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "page",
+            "type": "Page"
+          }
+        ],
+        "return_type": "None",
+        "signature": "VisitPageStart(page: Page) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "DocumentVisitor",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-DocumentVisitor.VisitRichTextEnd-22c531",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "VisitRichTextEnd",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "rich_text",
+            "type": "RichText"
+          }
+        ],
+        "return_type": "None",
+        "signature": "VisitRichTextEnd(rich_text: RichText) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "DocumentVisitor",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-DocumentVisitor.VisitRichTextStart-1f1527",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "VisitRichTextStart",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "rich_text",
+            "type": "RichText"
+          }
+        ],
+        "return_type": "None",
+        "signature": "VisitRichTextStart(rich_text: RichText) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "DocumentVisitor",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-DocumentVisitor.VisitTitleEnd-60b07c",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "VisitTitleEnd",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "title",
+            "type": "Title"
+          }
+        ],
+        "return_type": "None",
+        "signature": "VisitTitleEnd(title: Title) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "DocumentVisitor",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-DocumentVisitor.VisitTitleStart-f6993e",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "VisitTitleStart",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "title",
+            "type": "Title"
+          }
+        ],
+        "return_type": "None",
+        "signature": "VisitTitleStart(title: Title) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "FileCorruptedException",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-FileCorruptedException-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "FileCorruptedException",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "FileFormat",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-FileFormat-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "FileFormat",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "FileFormat",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-FileFormat.OneNote2007-a4b603",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "OneNote2007",
+        "member_type": "enum_member",
+        "parameters": [],
+        "return_type": "",
+        "signature": "FileFormat.OneNote2007",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "FileFormat",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-FileFormat.OneNote2010-460b22",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "OneNote2010",
+        "member_type": "enum_member",
+        "parameters": [],
+        "return_type": "",
+        "signature": "FileFormat.OneNote2010",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "FileFormat",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-FileFormat.OneNoteOnline-acc335",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "OneNoteOnline",
+        "member_type": "enum_member",
+        "parameters": [],
+        "return_type": "",
+        "signature": "FileFormat.OneNoteOnline",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "HorizontalAlignment",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-HorizontalAlignment-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "HorizontalAlignment",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "HorizontalAlignment",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-HorizontalAlignment.Center-048356",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Center",
+        "member_type": "enum_member",
+        "parameters": [],
+        "return_type": "",
+        "signature": "HorizontalAlignment.Center",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "HorizontalAlignment",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-HorizontalAlignment.Left-eef6ad",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Left",
+        "member_type": "enum_member",
+        "parameters": [],
+        "return_type": "",
+        "signature": "HorizontalAlignment.Left",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "HorizontalAlignment",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-HorizontalAlignment.Right-466142",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Right",
+        "member_type": "enum_member",
+        "parameters": [],
+        "return_type": "",
+        "signature": "HorizontalAlignment.Right",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Image",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Image-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Image",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Image",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Image.Replace-d132dc",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Replace",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "image",
+            "type": "Image"
+          }
+        ],
+        "return_type": "None",
+        "signature": "Replace(image: Image) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Image",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Image.Alignment-9f6b33",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Alignment",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "HorizontalAlignment | None",
+        "signature": "Alignment: HorizontalAlignment | None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "IncorrectDocumentStructureException",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-IncorrectDocumentStructureException-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "IncorrectDocumentStructureException",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "IncorrectPasswordException",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-IncorrectPasswordException-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "IncorrectPasswordException",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "License",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-License-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "License",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "License",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-License.SetLicense-dd93f5",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "SetLicense",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "license_path_or_stream",
+            "type": "Any"
+          }
+        ],
+        "return_type": "None",
+        "signature": "SetLicense(license_path_or_stream: Any) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "LoadOptions",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-LoadOptions-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "LoadOptions",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Metered",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Metered-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Metered",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Metered",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Metered.SetMeteredKey-0fed57",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "SetMeteredKey",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "public_key",
+            "type": "str"
+          },
+          {
+            "default": "",
+            "name": "private_key",
+            "type": "str"
+          }
+        ],
+        "return_type": "None",
+        "signature": "SetMeteredKey(public_key: str, private_key: str) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Node",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Node-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Node",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Node",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Node.Accept-1dfc68",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Accept",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "visitor",
+            "type": "DocumentVisitor"
+          }
+        ],
+        "return_type": "None",
+        "signature": "Accept(visitor: DocumentVisitor) -> None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Node",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Node.Document-06db83",
+        "is_readonly": true,
+        "is_static": false,
+        "member_name": "Document",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "Document | None",
+        "signature": "Document: Document | None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "NodeType",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-NodeType-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "NodeType",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "NodeType",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-NodeType.AttachedFile-a23c8c",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "AttachedFile",
+        "member_type": "enum_member",
+        "parameters": [],
+        "return_type": "",
+        "signature": "NodeType.AttachedFile",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "NodeType",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-NodeType.Document-794f1c",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Document",
+        "member_type": "enum_member",
+        "parameters": [],
+        "return_type": "",
+        "signature": "NodeType.Document",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "NodeType",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-NodeType.Image-77d933",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Image",
+        "member_type": "enum_member",
+        "parameters": [],
+        "return_type": "",
+        "signature": "NodeType.Image",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "NodeType",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-NodeType.Outline-eb0375",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Outline",
+        "member_type": "enum_member",
+        "parameters": [],
+        "return_type": "",
+        "signature": "NodeType.Outline",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "NodeType",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-NodeType.OutlineElement-8f3ba2",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "OutlineElement",
+        "member_type": "enum_member",
+        "parameters": [],
+        "return_type": "",
+        "signature": "NodeType.OutlineElement",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "NodeType",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-NodeType.Page-b88ce2",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Page",
+        "member_type": "enum_member",
+        "parameters": [],
+        "return_type": "",
+        "signature": "NodeType.Page",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "NodeType",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-NodeType.RichText-e5f674",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "RichText",
+        "member_type": "enum_member",
+        "parameters": [],
+        "return_type": "",
+        "signature": "NodeType.RichText",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "NodeType",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-NodeType.Table-748173",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Table",
+        "member_type": "enum_member",
+        "parameters": [],
+        "return_type": "",
+        "signature": "NodeType.Table",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "NoteTag",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-NoteTag-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "NoteTag",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "NoteTag",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-NoteTag.CreateYellowStar-f37e62",
+        "is_readonly": false,
+        "is_static": true,
+        "member_name": "CreateYellowStar",
+        "member_type": "method",
+        "parameters": [],
+        "return_type": "NoteTag",
+        "signature": "CreateYellowStar() -> NoteTag",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "NumberList",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-NumberList-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "NumberList",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Outline",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Outline-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Outline",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "OutlineElement",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-OutlineElement-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "OutlineElement",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Page",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Page-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Page",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Page",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Page.Clone-2435be",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Clone",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "cloneHistory",
+            "type": "bool"
+          }
+        ],
+        "return_type": "Page",
+        "signature": "Clone(cloneHistory: bool) -> Page",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "PdfSaveOptions",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-PdfSaveOptions-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "PdfSaveOptions",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "RichText",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText.Append-223f09",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Append",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "text",
+            "type": "str"
+          },
+          {
+            "default": "",
+            "name": "style",
+            "type": "TextStyle | None"
+          }
+        ],
+        "return_type": "RichText",
+        "signature": "Append(text: str, style: TextStyle | None) -> RichText",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText.AppendFront-32ceed",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "AppendFront",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "text",
+            "type": "str"
+          },
+          {
+            "default": "",
+            "name": "style",
+            "type": "TextStyle | None"
+          }
+        ],
+        "return_type": "RichText",
+        "signature": "AppendFront(text: str, style: TextStyle | None) -> RichText",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText.Clear-e61540",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Clear",
+        "member_type": "method",
+        "parameters": [],
+        "return_type": "RichText",
+        "signature": "Clear() -> RichText",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText.GetEnumerator-559191",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "GetEnumerator",
+        "member_type": "method",
+        "parameters": [],
+        "return_type": "Iterator[str]",
+        "signature": "GetEnumerator() -> Iterator[str]",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText.Insert-afa6c1",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Insert",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "index",
+            "type": "int"
+          },
+          {
+            "default": "",
+            "name": "text",
+            "type": "str"
+          },
+          {
+            "default": "",
+            "name": "style",
+            "type": "TextStyle | None"
+          }
+        ],
+        "return_type": "RichText",
+        "signature": "Insert(index: int, text: str, style: TextStyle | None) -> RichText",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText.Remove-ab3d9c",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Remove",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "start",
+            "type": "int"
+          },
+          {
+            "default": "",
+            "name": "count",
+            "type": "int | None"
+          }
+        ],
+        "return_type": "RichText",
+        "signature": "Remove(start: int, count: int | None) -> RichText",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText.Replace-f6ff3a",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Replace",
+        "member_type": "method",
+        "parameters": [
+          {
+            "default": "",
+            "name": "old_value",
+            "type": "str"
+          },
+          {
+            "default": "",
+            "name": "new_value",
+            "type": "str"
+          },
+          {
+            "default": "",
+            "name": "style",
+            "type": "TextStyle | None"
+          }
+        ],
+        "return_type": "RichText",
+        "signature": "Replace(old_value: str, new_value: str, style: TextStyle | None) -> RichText",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText.Trim-55aa9e",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Trim",
+        "member_type": "method",
+        "parameters": [],
+        "return_type": "RichText",
+        "signature": "Trim() -> RichText",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText.TrimEnd-7ca665",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "TrimEnd",
+        "member_type": "method",
+        "parameters": [],
+        "return_type": "RichText",
+        "signature": "TrimEnd() -> RichText",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText.TrimStart-80304c",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "TrimStart",
+        "member_type": "method",
+        "parameters": [],
+        "return_type": "RichText",
+        "signature": "TrimStart() -> RichText",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText.Alignment-6218ab",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Alignment",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "HorizontalAlignment | None",
+        "signature": "Alignment: HorizontalAlignment | None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText.IsTitleDate-984058",
+        "is_readonly": true,
+        "is_static": false,
+        "member_name": "IsTitleDate",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "bool",
+        "signature": "IsTitleDate: bool",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText.IsTitleText-d44553",
+        "is_readonly": true,
+        "is_static": false,
+        "member_name": "IsTitleText",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "bool",
+        "signature": "IsTitleText: bool",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText.IsTitleTime-ad201c",
+        "is_readonly": true,
+        "is_static": false,
+        "member_name": "IsTitleTime",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "bool",
+        "signature": "IsTitleTime: bool",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText.Length-c70cce",
+        "is_readonly": true,
+        "is_static": false,
+        "member_name": "Length",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "int",
+        "signature": "Length: int",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "RichText",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-RichText.TextRuns-80b2dc",
+        "is_readonly": true,
+        "is_static": false,
+        "member_name": "TextRuns",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "list[TextRun]",
+        "signature": "TextRuns: list[TextRun]",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "SaveFormat",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-SaveFormat-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "SaveFormat",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "SaveFormat",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-SaveFormat.Pdf-64fbd8",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Pdf",
+        "member_type": "enum_member",
+        "parameters": [],
+        "return_type": "",
+        "signature": "SaveFormat.Pdf",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "SaveOptions",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-SaveOptions-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "SaveOptions",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Table",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Table-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Table",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "TableCell",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-TableCell-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "TableCell",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "TableRow",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-TableRow-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "TableRow",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "TextRun",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-TextRun-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "TextRun",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "TextStyle",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-TextStyle-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "TextStyle",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "TextStyle",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-TextStyle.Default-435423",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Default",
+        "member_type": "method",
+        "parameters": [],
+        "return_type": "TextStyle",
+        "signature": "Default() -> TextStyle",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "TextStyle",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-TextStyle.DefaultMsOneNoteTitleDateStyle-87c436",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "DefaultMsOneNoteTitleDateStyle",
+        "member_type": "method",
+        "parameters": [],
+        "return_type": "TextStyle",
+        "signature": "DefaultMsOneNoteTitleDateStyle() -> TextStyle",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "TextStyle",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-TextStyle.DefaultMsOneNoteTitleTextStyle-4f0570",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "DefaultMsOneNoteTitleTextStyle",
+        "member_type": "method",
+        "parameters": [],
+        "return_type": "TextStyle",
+        "signature": "DefaultMsOneNoteTitleTextStyle() -> TextStyle",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "TextStyle",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-TextStyle.DefaultMsOneNoteTitleTimeStyle-84db5c",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "DefaultMsOneNoteTitleTimeStyle",
+        "member_type": "method",
+        "parameters": [],
+        "return_type": "TextStyle",
+        "signature": "DefaultMsOneNoteTitleTimeStyle() -> TextStyle",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "TextStyle",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-TextStyle.Highlight-103830",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Highlight",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "int | None",
+        "signature": "Highlight: int | None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "TextStyle",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-TextStyle.IsBold-0f998d",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "IsBold",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "bool",
+        "signature": "IsBold: bool",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "TextStyle",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-TextStyle.IsItalic-a2fb4d",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "IsItalic",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "bool",
+        "signature": "IsItalic: bool",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "TextStyle",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-TextStyle.IsStrikethrough-d124e4",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "IsStrikethrough",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "bool",
+        "signature": "IsStrikethrough: bool",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "TextStyle",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-TextStyle.IsSubscript-0ed490",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "IsSubscript",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "bool",
+        "signature": "IsSubscript: bool",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "TextStyle",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-TextStyle.IsSuperscript-16b6e6",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "IsSuperscript",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "bool",
+        "signature": "IsSuperscript: bool",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "TextStyle",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-TextStyle.IsUnderline-072562",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "IsUnderline",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "bool",
+        "signature": "IsUnderline: bool",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "TextStyle",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-TextStyle.Language-5a17ad",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Language",
+        "member_type": "property",
+        "parameters": [],
+        "return_type": "int | None",
+        "signature": "Language: int | None",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "Title",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-Title-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "Title",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "UnsupportedFileFormatException",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-UnsupportedFileFormatException-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "UnsupportedFileFormatException",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      },
+      {
+        "class_name": "UnsupportedSaveFormatException",
+        "confidence": 1.0,
+        "docstring": "",
+        "fact_id": "AF-note-python-UnsupportedSaveFormatException-class",
+        "is_readonly": false,
+        "is_static": false,
+        "member_name": "UnsupportedSaveFormatException",
+        "member_type": "class",
+        "parameters": [],
+        "return_type": "",
+        "signature": "",
+        "source_file": "",
+        "source_line": 0
+      }
+    ],
+    "completeness": {
+      "api_class_count": 33,
+      "api_confidence": "high",
+      "api_method_count": 44,
+      "format_confidence_avg": 0.89,
+      "format_count": 5,
+      "limitation_count": 4,
+      "missing_signals": [],
+      "operation_coverage": [
+        "load_file",
+        "save_file",
+        "other"
+      ],
+      "overall_completeness": 0.848,
+      "snippet_count": 16
+    },
+    "format_facts": [
+      {
+        "can_export": true,
+        "can_import": false,
+        "confidence": 1.0,
+        "evidence_source": "enum_declaration",
+        "extension": ".pdf",
+        "fact_id": "FF-note-python-PDF",
+        "format_name": "PDF",
+        "source_file": "runs\\.clone_cache\\aspose_note_python"
+      },
+      {
+        "can_export": true,
+        "can_import": false,
+        "confidence": 0.9,
+        "evidence_source": "enum_declaration",
+        "extension": ".tiff",
+        "fact_id": "FF-note-python-TIFF",
+        "format_name": "TIFF",
+        "source_file": "runs\\.clone_cache\\aspose_note_python"
+      },
+      {
+        "can_export": true,
+        "can_import": true,
+        "confidence": 0.85,
+        "evidence_source": "enum_declaration",
+        "extension": "",
+        "fact_id": "FF-note-python-ONENOTE2007",
+        "format_name": "ONENOTE2007",
+        "source_file": "enum_member:FileFormat"
+      },
+      {
+        "can_export": true,
+        "can_import": true,
+        "confidence": 0.85,
+        "evidence_source": "enum_declaration",
+        "extension": "",
+        "fact_id": "FF-note-python-ONENOTE2010",
+        "format_name": "ONENOTE2010",
+        "source_file": "enum_member:FileFormat"
+      },
+      {
+        "can_export": true,
+        "can_import": true,
+        "confidence": 0.85,
+        "evidence_source": "enum_declaration",
+        "extension": "",
+        "fact_id": "FF-note-python-ONENOTEONLINE",
+        "format_name": "ONENOTEONLINE",
+        "source_file": "enum_member:FileFormat"
+      }
+    ],
+    "install_recipe": {
+      "install_command": "pip install aspose-note>=26.3.1",
+      "package_name": "aspose-note",
+      "source_file": "pyproject.toml (cached)",
+      "verification_code": "import aspose_note_foss\nprint('Installation successful')",
+      "version_constraint": ">=26.3.1"
+    },
+    "limitation_facts": [
+      {
+        "confidence": 0.8,
+        "constraint": "- `DocumentPassword: str | None` (password/encryption is **not supported**)",
+        "fact_id": "LF-note-python-13c587",
+        "feature": "- `DocumentPassword: str | None` (password/encryption is **n",
+        "source_file": "README.md",
+        "source_line": 222,
+        "status": "warning"
+      },
+      {
+        "confidence": 0.8,
+        "constraint": "- The implementation focuses on **reading** `.one` and building a DOM; writing back to `.one` is not implemented.",
+        "fact_id": "LF-note-python-ab6f7c",
+        "feature": "- The implementation focuses on **reading** `.one` and build",
+        "source_file": "README.md",
+        "source_line": 436,
+        "status": "warning"
+      },
+      {
+        "confidence": 0.8,
+        "constraint": "- `DocumentPassword` / encrypted documents are not supported (raises `IncorrectPasswordException`).",
+        "fact_id": "LF-note-python-905c9c",
+        "feature": "- `DocumentPassword` / encrypted documents are",
+        "source_file": "README.md",
+        "source_line": 437,
+        "status": "warning"
+      },
+      {
+        "confidence": 0.8,
+        "constraint": "- Saving formats other than PDF (HTML/images/ONE) are declared for compatibility but not implemented.",
+        "fact_id": "LF-note-python-a81a84",
+        "feature": "- Saving formats other than PDF (HTML/images/ONE) are declar",
+        "source_file": "README.md",
+        "source_line": 438,
+        "status": "warning"
+      }
+    ],
+    "missing_coverage": [],
+    "snippet_facts": [
+      {
+        "code": "from aspose.note import Document\n\ndoc = Document(\"testfiles/SimpleTable.one\")\nprint(doc.DisplayName)\nprint(doc.Count())\n\n# pages are direct children of Document\nfor page in doc:\n    print(page.Title.TitleText.Text)",
+        "confidence": 0.7,
+        "demonstrates_class": "",
+        "demonstrates_methods": [],
+        "fact_id": "SF-note-python-other-caafc4",
+        "input_format": "",
+        "language": "python",
+        "operation_label": "other",
+        "output_format": "",
+        "snippet_source_idx": 0,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "from aspose.note import Document, SaveFormat\n\ndoc = Document(\"testfiles/FormattedRichText.one\")\ndoc.Save(\"out.pdf\", SaveFormat.Pdf)",
+        "confidence": 0.7,
+        "demonstrates_class": "",
+        "demonstrates_methods": [],
+        "fact_id": "SF-note-python-save_file-e6df51",
+        "input_format": "",
+        "language": "python",
+        "operation_label": "save_file",
+        "output_format": "PDF",
+        "snippet_source_idx": 1,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "from aspose.note import Document, RichText\n\ndoc = Document(\"testfiles/FormattedRichText.one\")\ntexts = [rt.Text for rt in doc.GetChildNodes(RichText)]\nprint(\"\\n\".join(texts))",
+        "confidence": 0.7,
+        "demonstrates_class": "GetChildNodes",
+        "demonstrates_methods": [],
+        "fact_id": "SF-note-python-other-f71563",
+        "input_format": "",
+        "language": "python",
+        "operation_label": "other",
+        "output_format": "",
+        "snippet_source_idx": 2,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "from aspose.note import Document, Image\n\ndoc = Document(\"testfiles/3ImagesWithDifferentAlignment.one\")\nfor i, img in enumerate(doc.GetChildNodes(Image), start=1):\n    name = img.FileName or f\"image_{i}.bin\"\n    with open(name, \"wb\") as f:\n        f.write(img.Bytes)",
+        "confidence": 0.7,
+        "demonstrates_class": "GetChildNodes",
+        "demonstrates_methods": [],
+        "fact_id": "SF-note-python-save_file-0521cd",
+        "input_format": "",
+        "language": "python",
+        "operation_label": "save_file",
+        "output_format": "",
+        "snippet_source_idx": 3,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "from aspose.note import Document, PdfSaveOptions, SaveFormat\n\ndoc = Document(\"testfiles/TagSizes.one\")\nopts = PdfSaveOptions(\n    SaveFormat=SaveFormat.Pdf,\n    TagIconDir=\"./tag-icons\",\n    TagIconSize=10,\n    TagIconGap=2,\n)\ndoc.Save(\"out.pdf\", opts)",
+        "confidence": 0.7,
+        "demonstrates_class": "PdfSaveOptions",
+        "demonstrates_methods": [],
+        "fact_id": "SF-note-python-save_file-d6173a",
+        "input_format": "",
+        "language": "python",
+        "operation_label": "save_file",
+        "output_format": "PDF",
+        "snippet_source_idx": 4,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "from pathlib import Path\nfrom aspose.note import Document\n\none_path = Path(\"testfiles/SimpleTable.one\")\nwith one_path.open(\"rb\") as f:\n  doc = Document(f)\n\nprint(doc.DisplayName)\nprint(doc.Count())",
+        "confidence": 0.7,
+        "demonstrates_class": "",
+        "demonstrates_methods": [],
+        "fact_id": "SF-note-python-load_file-c67678",
+        "input_format": "",
+        "language": "python",
+        "operation_label": "load_file",
+        "output_format": "",
+        "snippet_source_idx": 5,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "from aspose.note import Document, Page, Outline, OutlineElement, RichText\n\ndoc = Document(\"testfiles/SimpleTable.one\")\n\nfor page in doc.GetChildNodes(Page):\n  title = page.Title.TitleText.Text if page.Title and page.Title.TitleText else \"(no title)\"\n  print(f\"# {title}\")\n\n  for outline in page.GetChildNodes(Outline):\n    for oe in outline.GetChildNodes(OutlineElement):\n      # OutlineElement may contain RichText, Table, Image, etc.\n      texts = [rt.Text for rt in oe.GetChildNodes(RichText)]\n      if texts:\n        print(\"-\", \" \".join(t.strip() for t in texts if t.strip()))",
+        "confidence": 0.7,
+        "demonstrates_class": "GetChildNodes",
+        "demonstrates_methods": [],
+        "fact_id": "SF-note-python-other-2810ff",
+        "input_format": "",
+        "language": "python",
+        "operation_label": "other",
+        "output_format": "",
+        "snippet_source_idx": 6,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "from aspose.note import Document, DocumentVisitor, Page, Image, RichText\n\n\nclass Counter(DocumentVisitor):\n  def __init__(self) -> None:\n    self.pages = 0\n    self.rich_texts = 0\n    self.images = 0\n\n  def VisitPageStart(self, page: Page) -> None:  # noqa: N802\n    self.pages += 1\n\n  def VisitRichTextStart(self, rich_text: RichText) -> None:  # noqa: N802\n    self.rich_texts += 1\n\n  def VisitImageStart(self, image: Image) -> None:  # noqa: N802\n    self.images += 1\n\n\ndoc = Document(\"testfiles/3ImagesWithDifferentAlignment.one\")\ncounter = Counter()\ndoc.Accept(counter)\nprint(counter.pages, counter.rich_texts, counter.images)",
+        "confidence": 0.7,
+        "demonstrates_class": "VisitPageStart",
+        "demonstrates_methods": [],
+        "fact_id": "SF-note-python-other-39fe9f",
+        "input_format": "",
+        "language": "python",
+        "operation_label": "other",
+        "output_format": "",
+        "snippet_source_idx": 7,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "from aspose.note import Document, RichText\n\ndoc = Document(\"testfiles/FormattedRichText.one\")\nfor rt in doc.GetChildNodes(RichText):\n  for run in rt.Runs:\n    if run.Style.IsHyperlink and run.Style.HyperlinkAddress:\n      print(run.Text, \"->\", run.Style.HyperlinkAddress)",
+        "confidence": 0.7,
+        "demonstrates_class": "GetChildNodes",
+        "demonstrates_methods": [],
+        "fact_id": "SF-note-python-other-620500",
+        "input_format": "",
+        "language": "python",
+        "operation_label": "other",
+        "output_format": "",
+        "snippet_source_idx": 8,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "from aspose.note import Document, RichText, Image, Table\n\ndoc = Document(\"testfiles/TagSizes.one\")\n\ndef dump_tags(kind: str, tags) -> None:\n  for t in tags:\n    print(kind, \"tag:\", t.label)\n\nfor rt in doc.GetChildNodes(RichText):\n  dump_tags(\"RichText\", rt.Tags)\n\nfor img in doc.GetChildNodes(Image):\n  dump_tags(\"Image\", img.Tags)\n\nfor tbl in doc.GetChildNodes(Table):\n  dump_tags(\"Table\", tbl.Tags)",
+        "confidence": 0.7,
+        "demonstrates_class": "GetChildNodes",
+        "demonstrates_methods": [],
+        "fact_id": "SF-note-python-other-cd3e01",
+        "input_format": "",
+        "language": "python",
+        "operation_label": "other",
+        "output_format": "",
+        "snippet_source_idx": 9,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "from aspose.note import Document, Table, TableRow, TableCell, RichText\n\ndoc = Document(\"testfiles/SimpleTable.one\")\n\nfor table in doc.GetChildNodes(Table):\n  print(\"Table columns:\", table.ColumnWidths)\n  for row_index, row in enumerate(table.GetChildNodes(TableRow), start=1):\n    cells = row.GetChildNodes(TableCell)\n    values: list[str] = []\n    for cell in cells:\n      cell_text = \" \".join(rt.Text for rt in cell.GetChildNodes(RichText)).strip()\n      values.append(cell_text)\n    print(f\"Row {row_index}:\", values)",
+        "confidence": 0.7,
+        "demonstrates_class": "GetChildNodes",
+        "demonstrates_methods": [],
+        "fact_id": "SF-note-python-other-b83790",
+        "input_format": "",
+        "language": "python",
+        "operation_label": "other",
+        "output_format": "",
+        "snippet_source_idx": 10,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "from aspose.note import Document, AttachedFile\n\ndoc = Document(\"testfiles/OnePageWithFile.one\")\n\nfor i, af in enumerate(doc.GetChildNodes(AttachedFile), start=1):\n  name = af.FileName or f\"attachment_{i}.bin\"\n  with open(name, \"wb\") as f:\n    f.write(af.Bytes)\n  print(\"saved:\", name)",
+        "confidence": 0.7,
+        "demonstrates_class": "GetChildNodes",
+        "demonstrates_methods": [],
+        "fact_id": "SF-note-python-save_file-b631a3",
+        "input_format": "",
+        "language": "python",
+        "operation_label": "save_file",
+        "output_format": "",
+        "snippet_source_idx": 11,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "from aspose.note import Document, OutlineElement\n\ndoc = Document(\"testfiles/NumberedListWithTags.one\")\n\nfor oe in doc.GetChildNodes(OutlineElement):\n  nl = oe.NumberList\n  if nl is None:\n    continue\n  print(\n    \"indent=\", oe.IndentLevel,\n    \"is_numbered=\", nl.IsNumbered,\n    \"format=\", nl.Format,\n    \"restart=\", nl.Restart,\n  )",
+        "confidence": 0.7,
+        "demonstrates_class": "GetChildNodes",
+        "demonstrates_methods": [],
+        "fact_id": "SF-note-python-other-664cef",
+        "input_format": "",
+        "language": "python",
+        "operation_label": "other",
+        "output_format": "",
+        "snippet_source_idx": 12,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "from aspose.note import Document, SaveFormat\n\n\ndoc = Document(\"../testfiles/SimpleTable.one\")\ndoc.Save(\"out.pdf\", SaveFormat.Pdf)",
+        "confidence": 0.9,
+        "demonstrates_class": "",
+        "demonstrates_methods": [],
+        "fact_id": "SF-note-python-save_file-c9c78a",
+        "input_format": "",
+        "language": "python",
+        "operation_label": "save_file",
+        "output_format": "PDF",
+        "snippet_source_idx": 13,
+        "source_file": "examples/export_pdf.py",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "import sys\n\nfrom aspose.note import Document, RichText\n\n\n# Windows console may use a legacy encoding (e.g. cp1251) and crash on some characters.\nif hasattr(sys.stdout, \"reconfigure\"):\n    sys.stdout.reconfigure(encoding=\"utf-8\", errors=\"replace\")\n\n\ndoc = Document(\"../testfiles/FormattedRichText.one\")\nfor rt in doc.GetChildNodes(RichText):\n    if rt.Text:\n        print(rt.Text)",
+        "confidence": 0.9,
+        "demonstrates_class": "GetChildNodes",
+        "demonstrates_methods": [],
+        "fact_id": "SF-note-python-other-e2decb",
+        "input_format": "",
+        "language": "python",
+        "operation_label": "other",
+        "output_format": "",
+        "snippet_source_idx": 14,
+        "source_file": "examples/extract_text.py",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "from pathlib import Path\n\nfrom aspose.note import Document, Image\n\n\nout_dir = Path(\"out_images\")\nout_dir.mkdir(exist_ok=True)\n\ndoc = Document(\"../testfiles/3ImagesWithDifferentAlignment.one\")\nfor i, img in enumerate(doc.GetChildNodes(Image), start=1):\n    name = img.FileName or f\"image_{i}.png\"\n    (out_dir / name).write_bytes(img.Bytes)",
+        "confidence": 0.9,
+        "demonstrates_class": "GetChildNodes",
+        "demonstrates_methods": [],
+        "fact_id": "SF-note-python-other-566826",
+        "input_format": "",
+        "language": "python",
+        "operation_label": "other",
+        "output_format": "",
+        "snippet_source_idx": 15,
+        "source_file": "examples/save_images.py",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      }
+    ]
+  },
+  "extraction_degraded": false,
+  "keyword_research": {
+    "cache_version": 1,
+    "cached_at": "2026-03-25T11:20:36.513709+00:00",
+    "gemini_available": true,
+    "long_tail": [
+      "note python code",
+      "note python google",
+      "python note pdf",
+      "python note pad",
+      "python note taking app",
+      "python note syntax",
+      "python note for professional",
+      "python note code with harry",
+      "python note keyword",
+      "aspose note python install",
+      "aspose note python tutorial",
+      "python onenote library",
+      "python create onenote file",
+      "python read onenote content",
+      "python edit onenote page"
+    ],
+    "per_page": {
+      "api-overview": [
+        "note",
+        "python"
+      ],
+      "best-practices": [
+        "note",
+        "python"
+      ],
+      "developer-guide": [
+        "note",
+        "python",
+        "aspose note python tutorial"
+      ],
+      "faq": [
+        "note",
+        "python"
+      ],
+      "getting-started": [
+        "note",
+        "python",
+        "aspose note python install"
+      ],
+      "installation": [
+        "note",
+        "python",
+        "aspose note python install"
+      ],
+      "troubleshooting": [
+        "note",
+        "python"
+      ],
+      "tutorial": [
+        "note",
+        "python",
+        "aspose note python tutorial"
+      ]
+    },
+    "primary_keywords": [
+      "note python",
+      "note python code",
+      "note python google",
+      "python note pdf",
+      "python note pad",
+      "python note taking app",
+      "python note syntax",
+      "python note for professional"
+    ],
+    "sources": {
+      "claims": [
+        "aspose",
+        "note",
+        "api",
+        "part",
+        "class",
+        "pdf",
+        "document",
+        "format",
+        "supports",
+        "writing",
+        "one",
+        "reading",
+        "saving",
+        "child",
+        "demonstrates",
+        "documentpassword",
+        "example",
+        "file",
+        "image",
+        "limitation"
+      ],
+      "gemini": [
+        "aspose note python install",
+        "aspose note python tutorial",
+        "python onenote library",
+        "python create onenote file",
+        "python read onenote content",
+        "python edit onenote page",
+        "convert onenote to pdf python",
+        "onenote to html python",
+        "aspose note python examples",
+        "aspose note python api documentation",
+        "python extract text from onenote",
+        "aspose note python vs onenote api",
+        "python add image to onenote",
+        "aspose note python troubleshooting",
+        "aspose note python performance benchmark"
+      ],
+      "patterns": [
+        "how to install Aspose.Note python",
+        "Aspose.Note python tutorial",
+        "Aspose.Note python example",
+        "Aspose.Note python getting started",
+        "python note library",
+        "note python documentation",
+        "Aspose.Note python api reference",
+        "best note library for python",
+        "how to load note files python",
+        "how to save note files python",
+        "how to export note files python",
+        "how to import note files python",
+        "how to create note files python",
+        "how to read note files python",
+        "how to open note files python"
+      ],
+      "suggest": [
+        "note python",
+        "note python code",
+        "note python google",
+        "python note pdf",
+        "python note pad",
+        "python note taking app",
+        "python note syntax",
+        "python note for professional",
+        "python note code with harry",
+        "python note keyword"
+      ]
+    }
+  },
+  "page_evidence_index": {
+    "_index": {
+      "claim_count": 62,
+      "evidence_sufficient": false,
+      "format_evidence_complete": true,
+      "has_operation_snippets": true,
+      "missing": [
+        "no_verified_claims"
+      ],
+      "page_role": "_index",
+      "snippet_count": 16,
+      "verified_claim_count": 0
+    },
+    "api_reference": {
+      "claim_count": 62,
+      "evidence_sufficient": true,
+      "format_evidence_complete": false,
+      "has_operation_snippets": true,
+      "missing": [],
+      "page_role": "api_reference",
+      "snippet_count": 16,
+      "verified_claim_count": 5
+    },
+    "feature_blog": {
+      "claim_count": 62,
+      "evidence_sufficient": false,
+      "format_evidence_complete": true,
+      "has_operation_snippets": true,
+      "missing": [
+        "no_verified_claims"
+      ],
+      "page_role": "feature_blog",
+      "snippet_count": 16,
+      "verified_claim_count": 0
+    },
+    "format_conversion": {
+      "claim_count": 62,
+      "evidence_sufficient": true,
+      "format_evidence_complete": true,
+      "has_operation_snippets": true,
+      "missing": [],
+      "page_role": "format_conversion",
+      "snippet_count": 16,
+      "verified_claim_count": 0
+    },
+    "howto_article": {
+      "claim_count": 62,
+      "evidence_sufficient": false,
+      "format_evidence_complete": false,
+      "has_operation_snippets": true,
+      "missing": [
+        "no_verified_claims"
+      ],
+      "page_role": "howto_article",
+      "snippet_count": 16,
+      "verified_claim_count": 0
+    },
+    "install_guide": {
+      "claim_count": 62,
+      "evidence_sufficient": true,
+      "format_evidence_complete": false,
+      "has_operation_snippets": true,
+      "missing": [],
+      "page_role": "install_guide",
+      "snippet_count": 16,
+      "verified_claim_count": 0
+    }
+  },
+  "product": {
+    "canonical_import": "aspose_note_foss",
+    "display_name": "Aspose.Note",
+    "family": "note",
+    "platform": "python",
+    "platform_profile": null,
+    "repo_sha": "dbccd2d1f271991556c25d4ca78442d9b9f3c962",
+    "repo_url": "https://github.com/aspose-note-foss/Aspose.Note-FOSS-for-Python",
+    "runtime_import": "aspose.note"
+  },
+  "product_evidence": {
+    "capabilities": [],
+    "confidence": {},
+    "conversion_pairs": [],
+    "format_evidence_source": "ast_verified",
+    "input_formats": [
+      "ONENOTE2007",
+      "ONENOTE2010",
+      "ONENOTEONLINE"
+    ],
+    "install_recipe": {
+      "install_command": "pip install aspose-note>=26.3.1",
+      "package_name": "aspose-note",
+      "source_file": "pyproject.toml (cached)",
+      "verification_code": "import aspose_note_foss\nprint('Installation successful')",
+      "version_constraint": ">=26.3.1"
+    },
+    "limitations": [
+      {
+        "confidence": "doc_stated",
+        "constraint": "- `DocumentPassword: str | None` (password/encryption is **not supported**)",
+        "context": "",
+        "feature": "- `DocumentPassword: str | None` (password/encryption is **n",
+        "quote": "- `DocumentPassword: str | None` (password/encryption is **not supported**)",
+        "source_file": "README.md",
+        "source_line": 222,
+        "status": "warning"
+      },
+      {
+        "confidence": "doc_stated",
+        "constraint": "- The implementation focuses on **reading** `.one` and building a DOM; writing back to `.one` is not implemented.",
+        "context": "",
+        "feature": "- The implementation focuses on **reading** `.one` and build",
+        "quote": "- The implementation focuses on **reading** `.one` and building a DOM; writing back to `.one` is not implemented.",
+        "source_file": "README.md",
+        "source_line": 436,
+        "status": "warning"
+      },
+      {
+        "confidence": "doc_stated",
+        "constraint": "- `DocumentPassword` / encrypted documents are not supported (raises `IncorrectPasswordException`).",
+        "context": "",
+        "feature": "- `DocumentPassword` / encrypted documents are",
+        "quote": "- `DocumentPassword` / encrypted documents are not supported (raises `IncorrectPasswordException`).",
+        "source_file": "README.md",
+        "source_line": 437,
+        "status": "warning"
+      },
+      {
+        "confidence": "doc_stated",
+        "constraint": "- Saving formats other than PDF (HTML/images/ONE) are declared for compatibility but not implemented.",
+        "context": "",
+        "feature": "- Saving formats other than PDF (HTML/images/ONE) are declar",
+        "quote": "- Saving formats other than PDF (HTML/images/ONE) are declared for compatibility but not implemented.",
+        "source_file": "README.md",
+        "source_line": 438,
+        "status": "warning"
+      }
+    ],
+    "missing_info": [],
+    "output_formats": [
+      "PDF",
+      "TIFF",
+      "ONENOTE2007",
+      "ONENOTE2010",
+      "ONENOTEONLINE"
+    ],
+    "supported_formats": [
+      "PDF",
+      "TIFF",
+      "ONENOTE2007",
+      "ONENOTE2010",
+      "ONENOTEONLINE"
+    ],
+    "workflow_examples": [],
+    "workflows": [
+      {
+        "api_classes_used": [
+          "Document",
+          "SaveFormat"
+        ],
+        "name": "export_pdf",
+        "source_file": "examples/export_pdf.py"
+      },
+      {
+        "api_classes_used": [
+          "Document",
+          "RichText"
+        ],
+        "name": "extract_text",
+        "source_file": "examples/extract_text.py"
+      },
+      {
+        "api_classes_used": [
+          "Document",
+          "Image"
+        ],
+        "name": "save_images",
+        "source_file": "examples/save_images.py"
+      }
+    ]
+  },
+  "repo": {
+    "config_paths": [
+      ".gitignore",
+      ".vscode/settings.json",
+      "pyproject.toml"
+    ],
+    "content_budget_used": 645092,
+    "content_files_read": 67,
+    "doc_paths": [
+      ".github/skills/add-pdf-golden-test/SKILL.md",
+      "README.md",
+      "THIRD_PARTY_NOTICES.md"
+    ],
+    "example_paths": [
+      "examples/.gitignore",
+      "examples/export_pdf.py",
+      "examples/extract_text.py",
+      "examples/MANIFEST.in",
+      "examples/pyproject.toml",
+      "examples/README.md",
+      "examples/save_images.py",
+      "examples/THIRD_PARTY_NOTICES.md"
+    ],
+    "file_index": {
+      ".clone_sha": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 40
+      },
+      ".clone_timestamp": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 32
+      },
+      ".clone_url": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 63
+      },
+      ".github/skills/add-pdf-golden-test/SKILL.md": {
+        "category": "doc",
+        "language": "",
+        "size_bytes": 8024
+      },
+      ".github/workflows/ci.yml": {
+        "category": "ci",
+        "language": "",
+        "size_bytes": 1714
+      },
+      ".github/workflows/publish-pypi.yml": {
+        "category": "ci",
+        "language": "",
+        "size_bytes": 2791
+      },
+      ".gitignore": {
+        "category": "config",
+        "language": "",
+        "size_bytes": 569
+      },
+      ".vscode/settings.json": {
+        "category": "config",
+        "language": "",
+        "size_bytes": 263
+      },
+      "LICENSE": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 1084
+      },
+      "MANIFEST.in": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 92
+      },
+      "README.md": {
+        "category": "doc",
+        "language": "",
+        "size_bytes": 14577
+      },
+      "THIRD_PARTY_NOTICES.md": {
+        "category": "doc",
+        "language": "",
+        "size_bytes": 1985
+      },
+      "[MS-ONESTORE].pdf": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 4140095
+      },
+      "[MS-ONE].pdf": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 3669895
+      },
+      "examples/.gitignore": {
+        "category": "example",
+        "language": "",
+        "size_bytes": 51
+      },
+      "examples/MANIFEST.in": {
+        "category": "example",
+        "language": "",
+        "size_bytes": 75
+      },
+      "examples/README.md": {
+        "category": "example",
+        "language": "",
+        "size_bytes": 1165
+      },
+      "examples/THIRD_PARTY_NOTICES.md": {
+        "category": "example",
+        "language": "",
+        "size_bytes": 2115
+      },
+      "examples/export_pdf.py": {
+        "category": "example",
+        "language": "python",
+        "size_bytes": 133
+      },
+      "examples/extract_text.py": {
+        "category": "example",
+        "language": "python",
+        "size_bytes": 394
+      },
+      "examples/pyproject.toml": {
+        "category": "example",
+        "language": "",
+        "size_bytes": 457
+      },
+      "examples/save_images.py": {
+        "category": "example",
+        "language": "python",
+        "size_bytes": 352
+      },
+      "language-agnostic-plan/aspose-note-public-api.toon": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 25417
+      },
+      "language-agnostic-plan/ms-one_spec_structure.txt": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 315097
+      },
+      "language-agnostic-plan/ms-onestore-format.toon": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 52781
+      },
+      "language-agnostic-plan/ms-onestore_structures_extract.txt": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 199924
+      },
+      "pyproject.toml": {
+        "category": "config",
+        "language": "",
+        "size_bytes": 1469
+      },
+      "sitecustomize.py": {
+        "category": "source",
+        "language": "python",
+        "size_bytes": 463
+      },
+      "src/aspose/__init__.py": {
+        "category": "source",
+        "language": "python",
+        "size_bytes": 193
+      },
+      "src/aspose/note/__init__.py": {
+        "category": "source",
+        "language": "python",
+        "size_bytes": 1464
+      },
+      "src/aspose/note/_internal/__init__.py": {
+        "category": "source",
+        "language": "python",
+        "size_bytes": 36
+      },
+      "src/aspose/note/_internal/ms_one/__init__.py": {
+        "category": "source",
+        "language": "python",
+        "size_bytes": 166
+      },
+      "src/aspose/note/_internal/ms_one/entities/__init__.py": {
+        "category": "source",
+        "language": "python",
+        "size_bytes": 451
+      },
+      "src/aspose/note/_internal/ms_one/loader.py": {
+        "category": "source",
+        "language": "python",
+        "size_bytes": 48244
+      },
+      "src/aspose/note/_internal/onestore/__init__.py": {
+        "category": "source",
+        "language": "python",
+        "size_bytes": 294
+      },
+      "src/aspose/note/_internal/onestore/parser.py": {
+        "category": "source",
+        "language": "python",
+        "size_bytes": 33171
+      },
+      "src/aspose/note/enums.py": {
+        "category": "source",
+        "language": "python",
+        "size_bytes": 582
+      },
+      "src/aspose/note/exceptions.py": {
+        "category": "source",
+        "language": "python",
+        "size_bytes": 597
+      },
+      "src/aspose/note/model.py": {
+        "category": "source",
+        "language": "python",
+        "size_bytes": 22286
+      },
+      "src/aspose/note/saving/__init__.py": {
+        "category": "source",
+        "language": "python",
+        "size_bytes": 147
+      },
+      "src/aspose/note/saving/options.py": {
+        "category": "source",
+        "language": "python",
+        "size_bytes": 1770
+      },
+      "src/aspose/note/saving/pdf_writer.py": {
+        "category": "source",
+        "language": "python",
+        "size_bytes": 77701
+      },
+      "testfiles/3ImagesWithDifferentAlignment.one": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 273088
+      },
+      "testfiles/AttachedFileWithTag.one": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 497824
+      },
+      "testfiles/FormattedRichText.one": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 35480
+      },
+      "testfiles/ImageWithTag.one": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 567968
+      },
+      "testfiles/Issue1Subpages.one": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 21656
+      },
+      "testfiles/NumberedListWithTags.one": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 102760
+      },
+      "testfiles/OnePageWithFile.one": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 488600
+      },
+      "testfiles/SimpleHistory.one": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 78632
+      },
+      "testfiles/SimpleImageFromSeparateFile.one": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 726480
+      },
+      "testfiles/SimpleTable.one": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 30472
+      },
+      "testfiles/TableWithTag.one": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 519488
+      },
+      "testfiles/TagSizes.one": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 83232
+      },
+      "tests/__init__.py": {
+        "category": "test",
+        "language": "python",
+        "size_bytes": 332
+      },
+      "tests/_bootstrap.py": {
+        "category": "test",
+        "language": "python",
+        "size_bytes": 276
+      },
+      "tests/_pdf_goldens.py": {
+        "category": "test",
+        "language": "python",
+        "size_bytes": 11527
+      },
+      "tests/goldens/pdf/attached_file_with_tag.manifest.json": {
+        "category": "test",
+        "language": "",
+        "size_bytes": 1932
+      },
+      "tests/goldens/pdf/formatted_richtext.manifest.json": {
+        "category": "test",
+        "language": "",
+        "size_bytes": 5107
+      },
+      "tests/goldens/pdf/image_with_tag.manifest.json": {
+        "category": "test",
+        "language": "",
+        "size_bytes": 1907
+      },
+      "tests/goldens/pdf/images_with_alignment.manifest.json": {
+        "category": "test",
+        "language": "",
+        "size_bytes": 4501
+      },
+      "tests/goldens/pdf/numbered_list_with_tags.manifest.json": {
+        "category": "test",
+        "language": "",
+        "size_bytes": 15301
+      },
+      "tests/goldens/pdf/one_page_with_file.manifest.json": {
+        "category": "test",
+        "language": "",
+        "size_bytes": 1276
+      },
+      "tests/goldens/pdf/page_with_subpage.manifest.json": {
+        "category": "test",
+        "language": "",
+        "size_bytes": 2405
+      },
+      "tests/goldens/pdf/page_with_subpage.pdf": {
+        "category": "test",
+        "language": "",
+        "size_bytes": 2109
+      },
+      "tests/goldens/pdf/simple_history.manifest.json": {
+        "category": "test",
+        "language": "",
+        "size_bytes": 1055
+      },
+      "tests/goldens/pdf/simple_image_from_separate_file.manifest.json": {
+        "category": "test",
+        "language": "",
+        "size_bytes": 530
+      },
+      "tests/goldens/pdf/simple_table.manifest.json": {
+        "category": "test",
+        "language": "",
+        "size_bytes": 7404
+      },
+      "tests/goldens/pdf/table_with_tag.manifest.json": {
+        "category": "test",
+        "language": "",
+        "size_bytes": 8751
+      },
+      "tests/goldens/pdf/tag_sizes.manifest.json": {
+        "category": "test",
+        "language": "",
+        "size_bytes": 4088
+      },
+      "tests/snapshots/simpletable_summary.json": {
+        "category": "test",
+        "language": "",
+        "size_bytes": 12563
+      },
+      "tests/test_aspose_note_compat_smoke.py": {
+        "category": "test",
+        "language": "python",
+        "size_bytes": 3267
+      },
+      "tests/test_aspose_note_dom_content.py": {
+        "category": "test",
+        "language": "python",
+        "size_bytes": 3934
+      },
+      "tests/test_aspose_note_dom_document.py": {
+        "category": "test",
+        "language": "python",
+        "size_bytes": 7388
+      },
+      "tests/test_aspose_note_exceptions_and_stubs.py": {
+        "category": "test",
+        "language": "python",
+        "size_bytes": 1123
+      },
+      "tests/test_aspose_note_history.py": {
+        "category": "test",
+        "language": "python",
+        "size_bytes": 6736
+      },
+      "tests/test_aspose_note_pdf_goldens.py": {
+        "category": "test",
+        "language": "python",
+        "size_bytes": 5548
+      },
+      "tests/test_aspose_note_richtext_formatting.py": {
+        "category": "test",
+        "language": "python",
+        "size_bytes": 3971
+      },
+      "tests/test_aspose_note_save_options.py": {
+        "category": "test",
+        "language": "python",
+        "size_bytes": 31020
+      },
+      "tests/test_aspose_note_tags.py": {
+        "category": "test",
+        "language": "python",
+        "size_bytes": 9902
+      },
+      "tests/test_imports_smoke.py": {
+        "category": "test",
+        "language": "python",
+        "size_bytes": 401
+      },
+      "tools/regenerate_pdf_goldens.py": {
+        "category": "source",
+        "language": "python",
+        "size_bytes": 2051
+      }
+    },
+    "file_tree": [
+      ".clone_sha",
+      ".clone_timestamp",
+      ".clone_url",
+      ".github/skills/add-pdf-golden-test/SKILL.md",
+      ".github/workflows/ci.yml",
+      ".github/workflows/publish-pypi.yml",
+      ".gitignore",
+      ".vscode/settings.json",
+      "[MS-ONE].pdf",
+      "[MS-ONESTORE].pdf",
+      "examples/.gitignore",
+      "examples/export_pdf.py",
+      "examples/extract_text.py",
+      "examples/MANIFEST.in",
+      "examples/pyproject.toml",
+      "examples/README.md",
+      "examples/save_images.py",
+      "examples/THIRD_PARTY_NOTICES.md",
+      "language-agnostic-plan/aspose-note-public-api.toon",
+      "language-agnostic-plan/ms-one_spec_structure.txt",
+      "language-agnostic-plan/ms-onestore-format.toon",
+      "language-agnostic-plan/ms-onestore_structures_extract.txt",
+      "LICENSE",
+      "MANIFEST.in",
+      "pyproject.toml",
+      "README.md",
+      "sitecustomize.py",
+      "src/aspose/__init__.py",
+      "src/aspose/note/__init__.py",
+      "src/aspose/note/_internal/__init__.py",
+      "src/aspose/note/_internal/ms_one/__init__.py",
+      "src/aspose/note/_internal/ms_one/entities/__init__.py",
+      "src/aspose/note/_internal/ms_one/loader.py",
+      "src/aspose/note/_internal/onestore/__init__.py",
+      "src/aspose/note/_internal/onestore/parser.py",
+      "src/aspose/note/enums.py",
+      "src/aspose/note/exceptions.py",
+      "src/aspose/note/model.py",
+      "src/aspose/note/saving/__init__.py",
+      "src/aspose/note/saving/options.py",
+      "src/aspose/note/saving/pdf_writer.py",
+      "testfiles/3ImagesWithDifferentAlignment.one",
+      "testfiles/AttachedFileWithTag.one",
+      "testfiles/FormattedRichText.one",
+      "testfiles/ImageWithTag.one",
+      "testfiles/Issue1Subpages.one",
+      "testfiles/NumberedListWithTags.one",
+      "testfiles/OnePageWithFile.one",
+      "testfiles/SimpleHistory.one",
+      "testfiles/SimpleImageFromSeparateFile.one",
+      "testfiles/SimpleTable.one",
+      "testfiles/TableWithTag.one",
+      "testfiles/TagSizes.one",
+      "tests/__init__.py",
+      "tests/_bootstrap.py",
+      "tests/_pdf_goldens.py",
+      "tests/goldens/pdf/attached_file_with_tag.manifest.json",
+      "tests/goldens/pdf/formatted_richtext.manifest.json",
+      "tests/goldens/pdf/image_with_tag.manifest.json",
+      "tests/goldens/pdf/images_with_alignment.manifest.json",
+      "tests/goldens/pdf/numbered_list_with_tags.manifest.json",
+      "tests/goldens/pdf/one_page_with_file.manifest.json",
+      "tests/goldens/pdf/page_with_subpage.manifest.json",
+      "tests/goldens/pdf/page_with_subpage.pdf",
+      "tests/goldens/pdf/simple_history.manifest.json",
+      "tests/goldens/pdf/simple_image_from_separate_file.manifest.json",
+      "tests/goldens/pdf/simple_table.manifest.json",
+      "tests/goldens/pdf/table_with_tag.manifest.json",
+      "tests/goldens/pdf/tag_sizes.manifest.json",
+      "tests/snapshots/simpletable_summary.json",
+      "tests/test_aspose_note_compat_smoke.py",
+      "tests/test_aspose_note_dom_content.py",
+      "tests/test_aspose_note_dom_document.py",
+      "tests/test_aspose_note_exceptions_and_stubs.py",
+      "tests/test_aspose_note_history.py",
+      "tests/test_aspose_note_pdf_goldens.py",
+      "tests/test_aspose_note_richtext_formatting.py",
+      "tests/test_aspose_note_save_options.py",
+      "tests/test_aspose_note_tags.py",
+      "tests/test_imports_smoke.py",
+      "THIRD_PARTY_NOTICES.md",
+      "tools/regenerate_pdf_goldens.py"
+    ],
+    "important_files_skipped": 0,
+    "readme_summary": "## ✨ Features\n\n- ✅ Read `.one` from a file path or a binary stream\n- ✅ Aspose-like DOM (Document/Page/Outline/…): traversal + type-based search\n- ✅ Content extraction\n  - ✅ Rich text with formatting runs (TextRun/TextStyle) and hyperlinks\n  - ✅ Images (bytes, file name, dimensions)\n  - ✅ Attached files (bytes, file name)\n  - ✅ Tables (rows/cells + cell content)\n  - ✅ OneNote tags (NoteTag) on text/images/tables/list elements\n  - ✅ Numbered lists (NumberList) and indent levels\n- ✅ PDF export via `Document.Save(..., SaveFormat.Pdf)` (uses ReportLab)\n\n## 📦 Installation\n\nFrom PyPI:\n\n```bash\npython -m pip install aspose-note\n```\n\nWith PDF export support:\n\n```bash\npython -m pip install \"aspose-note[pdf]\"\n```\n\nFrom a local checkout:\n\n```bash\npython -m pip install -e .\n```\n\nPDF export requires ReportLab:\n\n```bash\npython -m pip install -e \".[pdf]\"\n```\n\nSemantic PDF golden tests require `pypdf` in addition to ReportLab:\n\n```bash\npython -m pip install -e \".[pdf,test-pdf]\"\n```\n\n## 🧩 Public API (what is considered supported)\n\nOnly the `aspose.note` package is considered **public and supported**.\nEverything under `aspose.note._internal` is internal implementation detail and may change.\n\nBelow is a complete list of objects exported from `aspose.note.__init__`.\n\n## 📚 MS OneNote Examples\n\nMore runnable scripts are available in [examples/](examples/) (MS OneNote `.one` samples).\n\n### 🔗 Extract hyperlinks from formatted text in an MS OneNote document\n\n```python\nfrom aspose.note import Document, RichText\n\ndoc = Document(\"testfiles/FormattedRichText.one\")\nfor rt in doc.GetChildNodes(RichText):\n  for run in rt.Runs:\n    if run.Style.IsHyperlink and run.Style.HyperlinkAddress:\n      print(run.Text, \"->\", run.Style.HyperlinkAddress)\n```\n\n# 🗒️ Aspose.Note FOSS for Python\n\n[![CI](https://github.com/aspose-note/aspose-note-python/actions/workflows/ci.yml/badge.svg)](https://github.com/aspose-note/aspose-note-python/actions/workflows/ci.yml)\n[![PyPI](https://img.shields.io/pypi/v/aspose-note.svg)](https://pypi.org/project/aspose-note/)\n[![Python Versions](https://img.shields.io/pypi/pyversions/aspose-note.svg)](https://pypi.org/project/aspose-note/)\n[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)\n\nQuick links: [📚 Examples](examples/) • [📦 PyPI](https://pypi.org/project/aspose-note/)\n\n✅ **Official Aspose project** — **100% free & open-source**. Provides an Aspose.Note-compatible Python API for working with OneNote `.one` files.\n\nThis repository provides a Python library with an **Aspose.Note-shaped public API** for reading Microsoft OneNote files (`.one`).\n\nThe goal is to offer a familiar surface (`aspose.note.*`) inspired by [Aspose.Note for .NET](https://products.aspose.com/note/net/), backed by this repository’s built-in MS-ONE/OneStore parser.\n\n## 🚀 Quick start\n\n```python\nfrom aspose.note import Document\n\ndoc = Document(\"testfiles/SimpleTable.one\")\nprint(doc.DisplayName)\nprint(doc.Count())\n\n# pages are direct children of Document\nfor page in doc:\n    print(page.Title.TitleText.Text)\n```\n\n### 📄 Export to PDF\n\n```python\nfrom aspose.note import Document, SaveFormat\n\ndoc = Document(\"testfiles/FormattedRichText.one\")\ndoc.Save(\"out.pdf\", SaveFormat.Pdf)\n```\n\n## PDF golden workflow\n\nGolden PDFs are stored under `tests/goldens/pdf/` together with JSON manifests extracted from the generated PDF.\nThe test suite compares manifests, not raw PDF bytes, so it stays stable across platforms and ReportLab internals.\nThe PDF writer now uses deterministic Base-14 fonts by default. If you explicitly want to try Windows system fonts for local inspection, set `ASPOSE_NOTE_PDF_USE_SYSTEM_FONTS=1` before export.\n\nRegenerate the baselines with:\n\n```bash\npython tools/regenerate_pdf_goldens.py\n```\n\nTo rebuild only selected cases:\n\n```bash\npython tools/regenerate_pdf_goldens.py --case formatted_richtext --case simple_table\n```\n\nRun the verification suite with:\n\n```bash\npython -m unittest tests.test_aspose_note_pdf_goldens -v\n```\n\nOn mismatch, generated PDFs and manifests are written to `tests/out/pdf_golden_failures/` for inspection.\nIf `PyMuPDF` is installed, the failing test also renders baseline/generated pages to PNG and writes visual diff artifacts into the same output tree.\nIf `PyMuPDF` is unavailable but `pdftoppm` is available on `PATH`, the tests use `pdftoppm` as a fallback renderer.\n\nPyPI release page (maintainers): https://pypi.org/manage/project/aspose-note/releases/\n\n### 🧭 Document and traversal\n\n- `Document(source=None, load_options=None)`\n  - `DisplayName: str | None`\n  - `CreationTime: datetime | None`\n  - `Count() -> int` — number of pages (direct children of Document)\n  - iteration: `for page in doc: ...`\n  - `FileFormat -> FileFormat` (best-effort)\n  - `GetPageHistory(page) -> list[Page]` (currently returns `[page]`)\n  - `DetectLayoutChanges()` (compatibility stub)\n  - `Save(target, format_or_options=None)`\n    - supported: `SaveFormat.Pdf` only\n\n- `DocumentVisitor` — base visitor for traversal:\n  - `VisitDocumentStart/End`, `VisitPageStart/End`, `VisitTitleStart/End`, `VisitOutlineStart/End`,\n    `VisitOutlineElementStart/End`, `VisitRichTextStart/End`, `VisitImageStart/End`\n\n- `Node`\n  - `ParentNode`\n  - `Document` (property) — walk up to the root `Document`\n  - `Accept(visitor)`\n\n- `CompositeNode(Node)`\n  - `FirstChild`, `LastChild`\n  - `AppendChildLast(node)`, `AppendChildFirst(node)`, `InsertChild(index, node)`, `RemoveChild(node)`\n  - `GetEnumerator()` / iteration `for child in node: ...`\n  - `GetChildNodes(Type) -> list[Type]` — recursive search by type\n\n### 🏗️ Document structure\n\n- `Page(CompositeNode)`\n  - `Title: Title | None`\n  - `Author: str | None`\n  - `CreationTime: datetime | None`, `LastModifiedTime: datetime | None`\n  - `Level: int | None`\n  - `Clone(deep=False) -> Page` (minimal clone)\n\n- `Title(CompositeNode)`\n  - `TitleText: RichText | None`\n  - `TitleDate: RichText | None`\n  - `TitleTime: RichText | None`\n\n- `Outline(CompositeNode)`\n  - `X`, `Y`, `Width` (positioning)\n\n- `OutlineElement(CompositeNode)`\n  - `IndentLevel: int`\n  - `NumberList: NumberList | None`\n  - `Tags: list[NoteTag]`\n\n### 📝 Content\n\n- `RichText(CompositeNode)`\n  - `Text: str`\n  - `Runs: list[TextRun]` — formatted segments\n  - `FontSize: float | None`\n  - `Tags: list[NoteTag]`\n  - `Append(text, style=None) -> RichText`\n  - `Replace(old_value, new_value) -> None`\n\n- `TextRun(Node)`\n  - `Text: str`\n  - `Style: TextStyle`\n  - `Start: int | None`, `End: int | None`\n\n- `TextStyle(Node)`\n  - `Bold/Italic/Underline/Strikethrough/Superscript/Subscript: bool`\n  - `FontName: str | None`, `FontSize: float | None`\n  - `FontColor: int | None`, `HighlightColor: int | None`\n  - `LanguageId: int | None`\n  - `IsHyperlink: bool`, `HyperlinkAddress: str | None`\n\n- `Image(CompositeNode)`\n  - `FileName: str | None`, `Bytes: bytes`\n  - `Width: float | None`, `Height: float | None`\n  - `AlternativeTextTitle: str | None`, `AlternativeTextDescription: str | None`\n  - `HyperlinkUrl: str | None`\n  - `Tags: list[NoteTag]`\n  - `Replace(image) -> None` — replace image contents\n\n- `AttachedFile(CompositeNode)`\n  - `FileName: str | None`, `Bytes: bytes`\n  - `Tags: list[NoteTag]`\n\n- `Table(CompositeNode)`\n  - `ColumnWidths: list[float]`\n  - `BordersVisible: bool`\n  - `Tags: list[NoteTag]`\n\n- `TableRow(CompositeNode)`, `TableCell(CompositeNode)`\n\n- `NoteTag(Node)`\n  - fields: `shape`, `label`, `text_color`, `highlight_color`, `created`, `completed`\n  - `CreateYellowStar()` — convenience factory\n\n- `NumberList(Node)`\n  - `Format: str | None`, `Restart: int | None`, `IsNumbered: bool`\n\n### ⚙️ Load/save options\n\n- `LoadOptions`\n  - `DocumentPassword: str | None` (password/encryption is **not supported**)\n  - `LoadHistory: bool`\n\n- `SaveOptions` (base)\n  - `SaveFormat: SaveFormat`\n\n- `PdfSaveOptions(SaveOptions)` (subset)\n  - `PageIndex: int`, `PageCount: int | None`\n  - `TagIconDir: str | None`, `TagIconSize: float | None`, `TagIconGap: float | None`\n\n### 🔢 Enums\n\n- `SaveFormat`: `Pdf`\n- `FileForm",
+    "shared_facts": {
+      "build_systems": [
+        "pyproject"
+      ],
+      "dependencies": [],
+      "description": "Aspose.Note-compatible Python API for reading OneNote (.one) files",
+      "entrypoints": [],
+      "has_ci": true,
+      "has_docs_folder": false,
+      "has_examples_folder": true,
+      "has_tests": true,
+      "install_command": "pip install aspose-note",
+      "license_type": "LicenseRef-Aspose-Split",
+      "module_path": "",
+      "package_name": "aspose-note",
+      "primary_language": "python",
+      "python_requires": ">=3.10",
+      "target_frameworks": [],
+      "version": "26.3.1"
+    },
+    "skipped_paths": [
+      "[MS-ONE].pdf",
+      "[MS-ONESTORE].pdf",
+      "testfiles/OnePageWithFile.one",
+      "testfiles/AttachedFileWithTag.one",
+      "testfiles/TableWithTag.one",
+      "testfiles/ImageWithTag.one",
+      "testfiles/SimpleImageFromSeparateFile.one"
+    ],
+    "source_paths": [
+      "sitecustomize.py",
+      "src/aspose/__init__.py",
+      "src/aspose/note/__init__.py",
+      "src/aspose/note/_internal/__init__.py",
+      "src/aspose/note/_internal/ms_one/__init__.py",
+      "src/aspose/note/_internal/ms_one/entities/__init__.py",
+      "src/aspose/note/_internal/ms_one/loader.py",
+      "src/aspose/note/_internal/onestore/__init__.py",
+      "src/aspose/note/_internal/onestore/parser.py",
+      "src/aspose/note/enums.py",
+      "src/aspose/note/exceptions.py",
+      "src/aspose/note/model.py",
+      "src/aspose/note/saving/__init__.py",
+      "src/aspose/note/saving/options.py",
+      "src/aspose/note/saving/pdf_writer.py",
+      "tools/regenerate_pdf_goldens.py"
+    ],
+    "test_paths": [
+      "tests/__init__.py",
+      "tests/_bootstrap.py",
+      "tests/_pdf_goldens.py",
+      "tests/goldens/pdf/attached_file_with_tag.manifest.json",
+      "tests/goldens/pdf/formatted_richtext.manifest.json",
+      "tests/goldens/pdf/image_with_tag.manifest.json",
+      "tests/goldens/pdf/images_with_alignment.manifest.json",
+      "tests/goldens/pdf/numbered_list_with_tags.manifest.json",
+      "tests/goldens/pdf/one_page_with_file.manifest.json",
+      "tests/goldens/pdf/page_with_subpage.manifest.json",
+      "tests/goldens/pdf/page_with_subpage.pdf",
+      "tests/goldens/pdf/simple_history.manifest.json",
+      "tests/goldens/pdf/simple_image_from_separate_file.manifest.json",
+      "tests/goldens/pdf/simple_table.manifest.json",
+      "tests/goldens/pdf/table_with_tag.manifest.json",
+      "tests/goldens/pdf/tag_sizes.manifest.json",
+      "tests/snapshots/simpletable_summary.json",
+      "tests/test_aspose_note_compat_smoke.py",
+      "tests/test_aspose_note_dom_content.py",
+      "tests/test_aspose_note_dom_document.py",
+      "tests/test_aspose_note_exceptions_and_stubs.py",
+      "tests/test_aspose_note_history.py",
+      "tests/test_aspose_note_pdf_goldens.py",
+      "tests/test_aspose_note_richtext_formatting.py",
+      "tests/test_aspose_note_save_options.py",
+      "tests/test_aspose_note_tags.py",
+      "tests/test_imports_smoke.py"
+    ]
+  },
+  "richness_tier": {
+    "code_evidence_sparse": false,
+    "reason": "api_methods=44(+0.26); formats=5(+0.10); api_conf=high(+0.20); snippets=16(+0.15); fmt_conf_avg=0.89(+0.13); code_evidence=18(example_files=8,non_test_snippets=16,sparse=False)",
+    "score": 85,
+    "tier": "A"
+  },
+  "snippets": [
+    {
+      "claim_ids": [
+        "CLM-note-dc18de",
+        "CLM-note-2fae8e",
+        "CLM-note-3c05b8",
+        "CLM-note-f5771f",
+        "CLM-note-dc8047",
+        "CLM-note-b67342",
+        "CLM-note-446e3e",
+        "CLM-note-096e95",
+        "CLM-note-85963f",
+        "CLM-note-3f420b",
+        "CLM-note-3ddfe4",
+        "CLM-note-ae4c46",
+        "CLM-note-6d9e50",
+        "CLM-note-e8780f",
+        "CLM-note-21ba5b",
+        "CLM-note-f8ac17",
+        "CLM-note-de41d6",
+        "CLM-note-2e2929",
+        "CLM-note-e24b8c",
+        "CLM-note-b9489f",
+        "CLM-note-84aaf0",
+        "CLM-note-e86de2",
+        "CLM-note-cba17f",
+        "CLM-note-d99a4c",
+        "CLM-note-57e597",
+        "CLM-note-0424e9",
+        "CLM-note-51a188",
+        "CLM-note-e68aeb",
+        "CLM-note-2ab19d",
+        "CLM-note-53d9de",
+        "CLM-note-4f2775",
+        "CLM-note-e9045a",
+        "CLM-note-9a3fea",
+        "CLM-note-f05a2e",
+        "CLM-note-458240",
+        "CLM-note-e3a1b3",
+        "CLM-note-7620ec",
+        "CLM-note-e9d3a5",
+        "CLM-note-cd2c44",
+        "CLM-note-f0e5be",
+        "CLM-note-4e8298",
+        "CLM-note-551f3d",
+        "CLM-note-86c80d",
+        "CLM-note-8829b9",
+        "CLM-note-75807c",
+        "CLM-note-9edb43",
+        "CLM-note-f8f762",
+        "CLM-note-d83112"
+      ],
+      "code": "from aspose.note import Document\n\ndoc = Document(\"testfiles/SimpleTable.one\")\nprint(doc.DisplayName)\nprint(doc.Count())\n\n# pages are direct children of Document\nfor page in doc:\n    print(page.Title.TitleText.Text)",
+      "language": "python",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-note-644685",
+        "CLM-note-dc18de",
+        "CLM-note-2fae8e",
+        "CLM-note-3c05b8",
+        "CLM-note-f5771f",
+        "CLM-note-dc8047",
+        "CLM-note-b67342",
+        "CLM-note-446e3e",
+        "CLM-note-096e95",
+        "CLM-note-85963f",
+        "CLM-note-3f420b",
+        "CLM-note-3ddfe4",
+        "CLM-note-ae4c46",
+        "CLM-note-6d9e50",
+        "CLM-note-e8780f",
+        "CLM-note-21ba5b",
+        "CLM-note-f8ac17",
+        "CLM-note-de41d6",
+        "CLM-note-2e2929",
+        "CLM-note-e24b8c",
+        "CLM-note-b9489f",
+        "CLM-note-84aaf0",
+        "CLM-note-e86de2",
+        "CLM-note-cba17f",
+        "CLM-note-d99a4c",
+        "CLM-note-57e597",
+        "CLM-note-0424e9",
+        "CLM-note-51a188",
+        "CLM-note-e68aeb",
+        "CLM-note-2ab19d",
+        "CLM-note-53d9de",
+        "CLM-note-4f2775",
+        "CLM-note-e9045a",
+        "CLM-note-9a3fea",
+        "CLM-note-f05a2e",
+        "CLM-note-458240",
+        "CLM-note-e3a1b3",
+        "CLM-note-7620ec",
+        "CLM-note-e9d3a5",
+        "CLM-note-cd2c44",
+        "CLM-note-f0e5be",
+        "CLM-note-4e8298",
+        "CLM-note-551f3d",
+        "CLM-note-86c80d",
+        "CLM-note-8829b9",
+        "CLM-note-32884a"
+      ],
+      "code": "from aspose.note import Document, SaveFormat\n\ndoc = Document(\"testfiles/FormattedRichText.one\")\ndoc.Save(\"out.pdf\", SaveFormat.Pdf)",
+      "language": "python",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-note-dc18de",
+        "CLM-note-2fae8e",
+        "CLM-note-3c05b8",
+        "CLM-note-f5771f",
+        "CLM-note-dc8047",
+        "CLM-note-b67342",
+        "CLM-note-446e3e",
+        "CLM-note-096e95",
+        "CLM-note-85963f",
+        "CLM-note-3f420b",
+        "CLM-note-3ddfe4",
+        "CLM-note-ae4c46",
+        "CLM-note-6d9e50",
+        "CLM-note-e8780f",
+        "CLM-note-21ba5b",
+        "CLM-note-f8ac17",
+        "CLM-note-de41d6",
+        "CLM-note-2e2929",
+        "CLM-note-e24b8c",
+        "CLM-note-b9489f",
+        "CLM-note-84aaf0",
+        "CLM-note-e86de2",
+        "CLM-note-cba17f",
+        "CLM-note-d99a4c",
+        "CLM-note-57e597",
+        "CLM-note-0424e9",
+        "CLM-note-51a188",
+        "CLM-note-e68aeb",
+        "CLM-note-2ab19d",
+        "CLM-note-53d9de",
+        "CLM-note-4f2775",
+        "CLM-note-e9045a",
+        "CLM-note-9a3fea",
+        "CLM-note-f05a2e",
+        "CLM-note-458240",
+        "CLM-note-e3a1b3",
+        "CLM-note-7620ec",
+        "CLM-note-e9d3a5",
+        "CLM-note-cd2c44",
+        "CLM-note-f0e5be",
+        "CLM-note-4e8298",
+        "CLM-note-551f3d",
+        "CLM-note-86c80d",
+        "CLM-note-8829b9",
+        "CLM-note-75807c"
+      ],
+      "code": "from aspose.note import Document, RichText\n\ndoc = Document(\"testfiles/FormattedRichText.one\")\ntexts = [rt.Text for rt in doc.GetChildNodes(RichText)]\nprint(\"\\n\".join(texts))",
+      "language": "python",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-note-75807c",
+        "CLM-note-ae0b9c",
+        "CLM-note-c76bbd",
+        "CLM-note-961931"
+      ],
+      "code": "from aspose.note import Document, Image\n\ndoc = Document(\"testfiles/3ImagesWithDifferentAlignment.one\")\nfor i, img in enumerate(doc.GetChildNodes(Image), start=1):\n    name = img.FileName or f\"image_{i}.bin\"\n    with open(name, \"wb\") as f:\n        f.write(img.Bytes)",
+      "language": "python",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-note-644685",
+        "CLM-note-56ee61",
+        "CLM-note-32884a",
+        "CLM-note-1553bb"
+      ],
+      "code": "from aspose.note import Document, PdfSaveOptions, SaveFormat\n\ndoc = Document(\"testfiles/TagSizes.one\")\nopts = PdfSaveOptions(\n    SaveFormat=SaveFormat.Pdf,\n    TagIconDir=\"./tag-icons\",\n    TagIconSize=10,\n    TagIconGap=2,\n)\ndoc.Save(\"out.pdf\", opts)",
+      "language": "python",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-note-f8f762",
+        "CLM-note-c76bbd"
+      ],
+      "code": "from pathlib import Path\nfrom aspose.note import Document\n\none_path = Path(\"testfiles/SimpleTable.one\")\nwith one_path.open(\"rb\") as f:\n  doc = Document(f)\n\nprint(doc.DisplayName)\nprint(doc.Count())",
+      "language": "python",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-note-9edb43",
+        "CLM-note-7918b5",
+        "CLM-note-d83112",
+        "CLM-note-663622",
+        "CLM-note-961931"
+      ],
+      "code": "from aspose.note import Document, Page, Outline, OutlineElement, RichText\n\ndoc = Document(\"testfiles/SimpleTable.one\")\n\nfor page in doc.GetChildNodes(Page):\n  title = page.Title.TitleText.Text if page.Title and page.Title.TitleText else \"(no title)\"\n  print(f\"# {title}\")\n\n  for outline in page.GetChildNodes(Outline):\n    for oe in outline.GetChildNodes(OutlineElement):\n      # OutlineElement may contain RichText, Table, Image, etc.\n      texts = [rt.Text for rt in oe.GetChildNodes(RichText)]\n      if texts:\n        print(\"-\", \" \".join(t.strip() for t in texts if t.strip()))",
+      "language": "python",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-note-644685",
+        "CLM-note-9edb43",
+        "CLM-note-58eab4",
+        "CLM-note-d83112"
+      ],
+      "code": "from aspose.note import Document, DocumentVisitor, Page, Image, RichText\n\n\nclass Counter(DocumentVisitor):\n  def __init__(self) -> None:\n    self.pages = 0\n    self.rich_texts = 0\n    self.images = 0\n\n  def VisitPageStart(self, page: Page) -> None:  # noqa: N802\n    self.pages += 1\n\n  def VisitRichTextStart(self, rich_text: RichText) -> None:  # noqa: N802\n    self.rich_texts += 1\n\n  def VisitImageStart(self, image: Image) -> None:  # noqa: N802\n    self.images += 1\n\n\ndoc = Document(\"testfiles/3ImagesWithDifferentAlignment.one\")\ncounter = Counter()\ndoc.Accept(counter)\nprint(counter.pages, counter.rich_texts, counter.images)",
+      "language": "python",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-note-961931"
+      ],
+      "code": "from aspose.note import Document, RichText\n\ndoc = Document(\"testfiles/FormattedRichText.one\")\nfor rt in doc.GetChildNodes(RichText):\n  for run in rt.Runs:\n    if run.Style.IsHyperlink and run.Style.HyperlinkAddress:\n      print(run.Text, \"->\", run.Style.HyperlinkAddress)",
+      "language": "python",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-note-663622",
+        "CLM-note-073550"
+      ],
+      "code": "from aspose.note import Document, RichText, Image, Table\n\ndoc = Document(\"testfiles/TagSizes.one\")\n\ndef dump_tags(kind: str, tags) -> None:\n  for t in tags:\n    print(kind, \"tag:\", t.label)\n\nfor rt in doc.GetChildNodes(RichText):\n  dump_tags(\"RichText\", rt.Tags)\n\nfor img in doc.GetChildNodes(Image):\n  dump_tags(\"Image\", img.Tags)\n\nfor tbl in doc.GetChildNodes(Table):\n  dump_tags(\"Table\", tbl.Tags)",
+      "language": "python",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-note-663622",
+        "CLM-note-073550"
+      ],
+      "code": "from aspose.note import Document, Table, TableRow, TableCell, RichText\n\ndoc = Document(\"testfiles/SimpleTable.one\")\n\nfor table in doc.GetChildNodes(Table):\n  print(\"Table columns:\", table.ColumnWidths)\n  for row_index, row in enumerate(table.GetChildNodes(TableRow), start=1):\n    cells = row.GetChildNodes(TableCell)\n    values: list[str] = []\n    for cell in cells:\n      cell_text = \" \".join(rt.Text for rt in cell.GetChildNodes(RichText)).strip()\n      values.append(cell_text)\n    print(f\"Row {row_index}:\", values)",
+      "language": "python",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-note-c76bbd",
+        "CLM-note-ae0b9c"
+      ],
+      "code": "from aspose.note import Document, AttachedFile\n\ndoc = Document(\"testfiles/OnePageWithFile.one\")\n\nfor i, af in enumerate(doc.GetChildNodes(AttachedFile), start=1):\n  name = af.FileName or f\"attachment_{i}.bin\"\n  with open(name, \"wb\") as f:\n    f.write(af.Bytes)\n  print(\"saved:\", name)",
+      "language": "python",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-note-7918b5"
+      ],
+      "code": "from aspose.note import Document, OutlineElement\n\ndoc = Document(\"testfiles/NumberedListWithTags.one\")\n\nfor oe in doc.GetChildNodes(OutlineElement):\n  nl = oe.NumberList\n  if nl is None:\n    continue\n  print(\n    \"indent=\", oe.IndentLevel,\n    \"is_numbered=\", nl.IsNumbered,\n    \"format=\", nl.Format,\n    \"restart=\", nl.Restart,\n  )",
+      "language": "python",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-note-32884a",
+        "CLM-note-1553bb"
+      ],
+      "code": "from aspose.note import Document, SaveFormat\n\n\ndoc = Document(\"../testfiles/SimpleTable.one\")\ndoc.Save(\"out.pdf\", SaveFormat.Pdf)",
+      "language": "python",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "examples/export_pdf.py",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-note-f8f762"
+      ],
+      "code": "import sys\n\nfrom aspose.note import Document, RichText\n\n\n# Windows console may use a legacy encoding (e.g. cp1251) and crash on some characters.\nif hasattr(sys.stdout, \"reconfigure\"):\n    sys.stdout.reconfigure(encoding=\"utf-8\", errors=\"replace\")\n\n\ndoc = Document(\"../testfiles/FormattedRichText.one\")\nfor rt in doc.GetChildNodes(RichText):\n    if rt.Text:\n        print(rt.Text)",
+      "language": "python",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "examples/extract_text.py",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-note-ae0b9c"
+      ],
+      "code": "from pathlib import Path\n\nfrom aspose.note import Document, Image\n\n\nout_dir = Path(\"out_images\")\nout_dir.mkdir(exist_ok=True)\n\ndoc = Document(\"../testfiles/3ImagesWithDifferentAlignment.one\")\nfor i, img in enumerate(doc.GetChildNodes(Image), start=1):\n    name = img.FileName or f\"image_{i}.png\"\n    (out_dir / name).write_bytes(img.Bytes)",
+      "language": "python",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "examples/save_images.py",
+      "source_type": "extracted",
+      "syntax_valid": true
+    }
+  ]
+}

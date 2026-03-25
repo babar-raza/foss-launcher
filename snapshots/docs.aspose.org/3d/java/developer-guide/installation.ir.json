@@ -1,0 +1,446 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/3d/java/developer-guide/installation/",
+    "canonical_import": "com.aspose.threed",
+    "code_import": "com.aspose.threed",
+    "date": "2026-03-24T16:56:25Z",
+    "dateModified": "2026-03-24T16:56:25Z",
+    "datePublished": "2026-03-24T16:56:25Z",
+    "description": "Aspose.3D: Example demonstrates saving files in OBJ format",
+    "display_name": "Aspose.3D",
+    "family": "3d",
+    "keywords": [
+      "3d javascript",
+      "3d javascript library",
+      "3d java",
+      "3d java skins",
+      "3d javascript game engine",
+      "3d javascript game",
+      "3d javascript framework",
+      "3d java game engine"
+    ],
+    "lastmod": "2026-03-24T16:56:25Z",
+    "page_role": "workflow_page",
+    "platform": "java",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.3D Installation",
+    "slug": "installation",
+    "summary": "",
+    "title": "Installation",
+    "type": "workflow_page",
+    "url": "/docs.aspose.org/3d/java/developer-guide/installation/",
+    "weight": 3
+  },
+  "page_id": "docs/installation",
+  "page_role": "workflow_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D -- Introductory overview: explain what the library does, its primary use cases, and what readers will accomplish. Mention the product name in the first sentence..",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-8e73a1"
+          ],
+          "content": "Aspose.3D Example demonstrates saving files in OBJ format.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-2e0199",
+            "CLM-3d-affb76",
+            "CLM-3d-cc84ff"
+          ],
+          "content": "This guide walks you through installing and using Aspose.3D to `load`, process, and convert 3D models in Java. Aspose.3D enables programmatic handling of 3D scenes, meshes, and formats like OBJ and STL without external dependencies.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-2e0199",
+            "CLM-3d-8e73a1",
+            "CLM-3d-c85c59"
+          ],
+          "content": "import com.aspose.threed.*;\n\n// Install via Maven: mvn dependency:get -Dartifact=com.aspose:aspose-3d-foss:26.1.0\nScene scene = new Scene(\"testdata/input/cube.obj\");\nscene.save(\"output.stl\");",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-8e73a1",
+            "CLM-3d-c85c59",
+            "CLM-3d-affb76",
+            "CLM-3d-cc84ff"
+          ],
+          "content": "",
+          "items": [
+            "Supports loading and saving files in OBJ format for interoperability with modeling tools.",
+            "Enables binary and ASCII export to STL format for 3D printing workflows.",
+            "Provides coordinate system flipping options for Gltf and FBX formats to match target engine conventions.",
+            "Includes built-in format detection via `IOService` to automatically identify file types from extensions or streams.",
+            "Supports Maven builds (`mvn clean package`, `mvn test`) and standalone builds using `build.sh` and `run-tests.sh` scripts."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Key Features",
+      "level": 2,
+      "section_id": "key_features"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D -- Required setup and dependencies.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-2e0199"
+          ],
+          "content": "Aspose.3D Install Aspose.3D via: mvn dependency:get -Dartifact=com.aspose:aspose-3d-foss:26.1.0.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-2d677c",
+            "CLM-3d-f9b8e1",
+            "CLM-3d-2e0199",
+            "CLM-3d-f3ad07",
+            "CLM-3d-ffafd6"
+          ],
+          "content": "import com.aspose.threed.Scene;\n\n// Load a 3D file\nScene scene = new Scene(\"testdata/input/cube.obj\");\n\n// Save to another format\nscene.save(\"output.stl\");",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-affb76"
+          ],
+          "content": "This guide walks you through installing Aspose.3D and converting 3D models between OBJ and STL formats using Java. First, install the library using Maven or the provided shell scripts, then load a 3D scene and save it in the desired output format.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import com.aspose.threed.*;\n\n// Install Aspose.3D via Maven\n// mvn dependency:get -Dartifact=com.aspose:aspose-3d-foss:26.1.0\n\n// Load an OBJ file\nScene scene = new Scene(\"testdata/input/cube.obj\");\n\n// Save as STL in binary format\nscene.save(\"output_binary.stl\");\n\n// Save as STL in ASCII format\nscene.save(\"output_ascii.stl\");",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Use binary STL when file size and parsing speed matter—ideal for 3D printing workflows.",
+            "Use ASCII STL when human inspection of the file is required—common in CAD verification.",
+            "OBJ input supports polygonal meshes; ensure your source file uses valid geometry."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [],
+          "content": "For advanced control over STL export, configure `StlSaveOptions` to specify content type. This example creates a mesh programmatically, attaches it to a scene node, and exports it with explicit binary content type.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import com.aspose.threed.*;\nimport java.nio.file.Files;\nimport java.nio.file.Path;\n\nScene scene = new Scene();\nMesh mesh = new Mesh(\"TestMesh\");\n\nmesh.addControlPoint(0, 0, 0);\nmesh.addControlPoint(1, 0, 0);\nmesh.addControlPoint(0, 1, 0);\nmesh.addControlPoint(0, 0, 1);\n\nmesh.createPolygon(new int[]{0, 1, 2});\nmesh.createPolygon(new int[]{0, 1, 3});\nmesh.createPolygon(new int[]{0, 2, 3});\nmesh.createPolygon(new int[]{1, 2, 3});\n\nscene.getRootNode().createChildNode(\"TestNode\", mesh);\n\nPath outputPath = Files.createTempFile(\"test_export\", \".stl\");\nStlSaveOptions options = new StlSaveOptions();\noptions.setContentType(FileContentType.BINARY);\nscene.save(outputPath.toString(), options);",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-affb76"
+          ],
+          "content": "Build the project using Maven or the provided shell scripts. The library supports standard Maven commands and also provides `build.sh` and `run-tests.sh` for environments without Maven.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-affb76"
+          ],
+          "content": "",
+          "items": [
+            "Run `mvn clean package` to compile and package the library.",
+            "Run `mvn test` to execute unit tests.",
+            "Run `./build.sh` and `./run-tests.sh` for non-Maven builds."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [],
+          "content": "Common Questions",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Q: Can I export to OBJ format using Aspose.3D? A: Yes—the example loads an OBJ file and saves it as STL, confirming OBJ import and STL export are supported. OBJ export is not yet implemented per current limitations.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Q: Do I need Maven to build the library? A: No—`build.sh` and `run-tests.sh` scripts allow building and testing without Maven, as documented in the repository.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Code Examples",
+      "level": 2,
+      "section_id": "code_examples"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-3d-2e0199",
+            "CLM-3d-affb76",
+            "CLM-3d-cc84ff"
+          ],
+          "content": "This section outlines best practices for using Aspose.3D in Java projects, focusing on reliable setup, format handling, and build workflows. Follow these guidelines to avoid common pitfalls and ensure reproducible 3D processing pipelines.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-3d-2e0199",
+            "CLM-3d-affb76",
+            "CLM-3d-cc84ff",
+            "CLM-3d-c85c59"
+          ],
+          "content": "",
+          "items": [
+            "Use `import com.aspose.threed.*;` — never .NET-style using directives or incorrect package paths.",
+            "Install the library via `mvn dependency:get -Dartifact=com.aspose:aspose-3d-foss:26.1.0` for Maven-based projects.",
+            "Build and test using `mvn clean package` and `mvn test`, or use `./build.sh` and `./run-tests.sh` for non-Maven environments.",
+            "When saving files, explicitly specify `FileContentType` for STL (ASCII or BINARY) to control output format."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [],
+          "content": "For OBJ `export`, `load` a scene and call `save()` with a `.obj` extension — Aspose.3D auto-detects the format. For STL, instantiate `StlSaveOptions`, `set` `setContentType()`, and pass it to `save()`. Always validate output by checking file existence and content type after saving.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "When building custom plugins (e.g., for new formats), follow the verified workflow: `create` the plugin in `src/plugins/formats/<Format>/`, implement `IImporter` or `IExporter`, register in `[identifier omitted].java`, and `add` test files. This ensures compatibility with the library’s plugin architecture and test harness.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Best Practices",
+      "level": 2,
+      "section_id": "best_practices"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D -- Common issues and solutions.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "For details on troubleshooting, see the Aspose.3D documentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Troubleshooting",
+      "level": 2,
+      "section_id": "troubleshooting"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "How do I install Aspose.3D for Java?",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Install Aspose.3D using Maven by running `mvn dependency:get -Dartifact=com.aspose:aspose-3d-foss:26.1.0`. After installation, include `import com.aspose.threed.*;` at the top of your Java file. The library also supports building with `mvn clean package` and `mvn test`, or using the standalone scripts `./build.sh` and `./run-tests.sh` without Maven.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Can I `save` a 3D model in OBJ format using Aspose.3D?",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Yes. Load an existing 3D file and `save` it as OBJ using the `Scene` class and its `save()` method. The example in the README demonstrates loading a cube.obj file and saving it, confirming OBJ `export` support.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "How do I `export` a 3D mesh to STL format?",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Create a `Scene`, `add` a `Mesh` with control points and polygons, then call `save()` with a `StlSaveOptions` instance. The test suite shows exporting both binary and ASCII STL formats by setting `FileContentType.BINARY` or `FileContentType.ASCII`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "What import paths are valid for Aspose.3D in Java?",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Only `import com.aspose.threed.*;` (or explicit classes like `import com.aspose.threed.Scene;`) is valid. Never use .NET-style directives such as `using Aspose.3D`, or any path outside `com.aspose.threed.*`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "FAQ",
+      "level": 2,
+      "section_id": "faq"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.3D -- Section content.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "For details on api reference summary, see the Aspose.3D documentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "API Reference Summary",
+      "level": 2,
+      "section_id": "api_reference_summary"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Get started with Aspose.3D](/docs.aspose.org/3d/java/developer-guide/getting-started/)",
+            "[Explore the full API reference](/reference.aspose.org/3d/java/api-overview/)",
+            "[Discover key 3D features](/blog.aspose.org/3d/java/3d-key-features/)",
+            "[Learn about translation transforms](/blog.aspose.org/3d/java/introducing-3d-foss-java/)",
+            "[Load files step by step](/docs.aspose.org/3d/java/developer-guide/model-loading/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Installation"
+}

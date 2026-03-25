@@ -1,0 +1,1019 @@
+{
+  "acquisition": {
+    "acquisition_confidence": "low",
+    "canonical_import": "Aspose.Slides",
+    "clone_cache_hit": true,
+    "discovered_at": "2026-03-22T15:02:40.376437+00:00",
+    "display_name": "Aspose.Slides FOSS for Dotnet",
+    "failure_state": "",
+    "family": "slides",
+    "field_provenance": {
+      "canonical_import": "families_yaml",
+      "display_name": "families_yaml",
+      "runtime_import": "inferred_default"
+    },
+    "is_fresh_clone": false,
+    "launch_tier": "core",
+    "phase": "phase1_acquisition",
+    "platform": "dotnet",
+    "repo_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\.clone_cache\\aspose_slides_dotnet",
+    "repo_sha": "bd19e16057b628310b4a04330585d366cb40e9b7",
+    "repo_signals": {
+      "detected_manifest_files": [
+        "Aspose.Slides.Foss.sln"
+      ],
+      "files_estimated": 15,
+      "inferred_language": "dotnet",
+      "is_empty_clone": false,
+      "readme_present": true
+    },
+    "repo_url": "https://github.com/aspose-slides-foss/Aspose.Slides-FOSS-for-.NET",
+    "runtime_import": ""
+  },
+  "canonical_import": "Aspose.Slides",
+  "classification": {
+    "decision": "eligible",
+    "full_name": "aspose-slides-foss/Aspose.Slides-FOSS-for-.NET",
+    "reasons": [
+      "source-grounded phase1 inspection passed"
+    ]
+  },
+  "display_name": "Aspose.Slides FOSS for Dotnet",
+  "family": "slides",
+  "phase": "phase1_inspection",
+  "platform": "dotnet",
+  "repo": {
+    "archived": false,
+    "created_at": "2026-03-18T15:26:53Z",
+    "default_branch": "main",
+    "description": "The official open-source C#/.NET library by Aspose.Slides for creating, reading, and editing PowerPoint (.pptx) presentations.",
+    "fork": false,
+    "full_name": "aspose-slides-foss/Aspose.Slides-FOSS-for-.NET",
+    "html_url": "https://github.com/aspose-slides-foss/Aspose.Slides-FOSS-for-.NET",
+    "id": 1185437353,
+    "is_template": false,
+    "language": "C#",
+    "license": {
+      "name": "MIT License",
+      "spdx_id": "MIT"
+    },
+    "name": "Aspose.Slides-FOSS-for-.NET",
+    "owner": {
+      "login": "aspose-slides-foss",
+      "type": "Organization"
+    },
+    "pushed_at": "2026-03-18T15:37:02Z",
+    "size": 530,
+    "stargazers_count": 0,
+    "topics": [
+      "pptx",
+      "presentation",
+      "slides"
+    ],
+    "updated_at": "2026-03-20T18:18:06Z"
+  },
+  "runtime_import": "",
+  "scout": {
+    "budget_log": [
+      {
+        "category": "source",
+        "path": "src/Aspose.Slides.Foss/SlideCollection.cs",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 24487
+      },
+      {
+        "category": "source",
+        "path": "src/Aspose.Slides.Foss/ShapeCollection.cs",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 25315
+      },
+      {
+        "category": "source",
+        "path": "src/Aspose.Slides.Foss/MasterSlideCollection.cs",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 26677
+      },
+      {
+        "category": "ci",
+        "path": ".github/workflows/ci.yml",
+        "reason": "source_reserve",
+        "size_bytes": 845
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/INotesSizeTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 377
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/Aspose.Slides.Foss.Tests.csproj",
+        "reason": "source_reserve",
+        "size_bytes": 746
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/Aspose.Slides.Foss.IntegrationTests.csproj",
+        "reason": "source_reserve",
+        "size_bytes": 996
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/NotesSlideTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 1315
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/PointFTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 2368
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/ImagesTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 2575
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ISoftEdgeTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 2717
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/DocumentPropertiesTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 2834
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/IInnerShadowTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 2906
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/LineFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 2913
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/IMasterSlideCollectionTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 2984
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/PresentationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 3012
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/NotesSlideTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 3135
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/IPresetShadowTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 3207
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/ThreeDFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 3454
+      },
+      {
+        "category": "test",
+        "path": "tests/test_data/lotus.png",
+        "reason": "source_reserve",
+        "size_bytes": 3462
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/SizeTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 3534
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/CameraTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 3722
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/PresentationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 3943
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/TextTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 4019
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/BlurTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 4023
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/SlidesTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 4039
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/SlidesTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 4059
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/AdjustValueTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 4204
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/EffectFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 4209
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/CommentAuthorTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 4285
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/INotesSlideTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 4388
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/FillFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 4404
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/TestHelpers.cs",
+        "reason": "source_reserve",
+        "size_bytes": 4438
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/BaseSlideTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 4528
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ThreeDFormatIntegrationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 4549
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/PresetShadowTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 4749
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/PVIObjectTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 4794
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/GradientStopTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 4814
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/IMasterSlideTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 4978
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/TextFormattingTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 5077
+      },
+      {
+        "category": "test",
+        "path": "tests/test_data/Presentation.pptx",
+        "reason": "source_reserve",
+        "size_bytes": 5135
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/IRowContractTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 5142
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/ConnectorTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 5187
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/NotesSlideHeaderFooterTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 5194
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/FillOverlayTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 5289
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/LightRigTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 5294
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/GlowTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 5540
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ICommentAuthorContractTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 5556
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/CommentsTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 5577
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/ShapesTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 5624
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/TextFrameTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 5629
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/PatternFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 5732
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/LineFormatIntegrationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 5753
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ShapeBevelTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 5852
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/CommentAuthorCollectionTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 5956
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ColorTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 5975
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/IOuterShadowTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 6111
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/TableTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 6242
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ImageIntegrationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 6280
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/EffectFormatIntegrationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 6512
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/TextFormattingTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 6621
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/PresentationIntegrationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 6890
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/EffectFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 7078
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/IPictureFillFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 7175
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/IGeometryShapeTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 7417
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/TextFormattingIntegrationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 7460
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/RowCollectionTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 7602
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ColumnCollectionTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 7660
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ITableFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 8122
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/LineFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 8245
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/FillFormatIntegrationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 8314
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/NotesSlideIntegrationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 8419
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ColumnTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 8560
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/DocumentPropertiesIntegrationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 8585
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/TableRoundTripTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 8768
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/TableTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 8796
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ISlideCollectionTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 8820
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/INotesSlideManagerTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 8824
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ConnectorIntegrationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 9029
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/SlideIntegrationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 9071
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/RowTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 9074
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ISlideTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 9146
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/CommentIntegrationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 9317
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ThreeDFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 9410
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ICommentCollectionContractTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 9546
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/GradientStopCollectionTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 9753
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/CommentCollectionTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 9952
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ILineFillFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 10188
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/BulletFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 10510
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/IPortionCollectionTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 10524
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ParagraphFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 10549
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/PortionTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 10567
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ConnectorTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 10712
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ICellFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 10727
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/TextIntegrationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 10905
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/IShapeFrameContractTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 11125
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ParagraphTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 11179
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/IReflectionTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 11469
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/FillFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 11568
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ShapeIntegrationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 11649
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/CommentTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 11657
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ImageTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 11852
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ColorFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 12239
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/TableTableTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 12409
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/GradientFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 12678
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/IParagraphCollectionTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 13451
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/TextFrameFormatTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 14005
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/ITextFrameTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 15324
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/AutoShapeTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 15756
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/IParagraphTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 16251
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/DocumentPropertiesTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 17069
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/TableIntegrationTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 17426
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/CellCollectionTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 21598
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/IShapeCollectionContractTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 23105
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/CellTests.cs",
+        "reason": "source_reserve",
+        "size_bytes": 35300
+      },
+      {
+        "category": "test",
+        "path": "tests/test_data/image_example.jpg",
+        "reason": "source_reserve",
+        "size_bytes": 140425
+      },
+      {
+        "category": "asset",
+        "path": "Directory.Build.props",
+        "reason": "source_reserve",
+        "size_bytes": 242
+      },
+      {
+        "category": "asset",
+        "path": "Directory.Packages.props",
+        "reason": "source_reserve",
+        "size_bytes": 509
+      },
+      {
+        "category": "asset",
+        "path": "LICENSE",
+        "reason": "source_reserve",
+        "size_bytes": 1090
+      },
+      {
+        "category": "asset",
+        "path": "Aspose.Slides.Foss.sln",
+        "reason": "source_reserve",
+        "size_bytes": 4693
+      },
+      {
+        "category": "asset",
+        "path": ".clone_timestamp",
+        "reason": "source_reserve",
+        "size_bytes": 32
+      },
+      {
+        "category": "asset",
+        "path": ".clone_sha",
+        "reason": "source_reserve",
+        "size_bytes": 40
+      },
+      {
+        "category": "asset",
+        "path": ".clone_url",
+        "reason": "source_reserve",
+        "size_bytes": 65
+      },
+      {
+        "category": "asset",
+        "path": "src/Aspose.Slides.Foss/Aspose.Slides.Foss.csproj",
+        "reason": "source_reserve",
+        "size_bytes": 314
+      }
+    ],
+    "budget_log_overflow_count": 0,
+    "by_category": {
+      "asset": 8,
+      "ci": 1,
+      "config": 2,
+      "doc": 2,
+      "source": 297,
+      "test": 112
+    },
+    "content_used_bytes": 992066,
+    "doc_paths": [
+      "AGENTS.md",
+      "README.md"
+    ],
+    "doc_selection": [
+      {
+        "decision": "kept",
+        "importance_rank": 7,
+        "language": "",
+        "path": "README.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 5608
+      },
+      {
+        "decision": "kept",
+        "importance_rank": 4,
+        "language": "",
+        "path": "AGENTS.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 6770
+      }
+    ],
+    "example_paths": [],
+    "example_selection": [],
+    "files_enumerated": 422,
+    "files_read": 298,
+    "selected_doc_count": 2,
+    "selected_example_count": 0,
+    "skip_counts_approximate": false,
+    "skip_reason_counts": {
+      "file_too_large_for_remaining_budget": 3,
+      "source_reserve": 121
+    },
+    "skipped_paths": [
+      "src/Aspose.Slides.Foss/SlideCollection.cs",
+      "src/Aspose.Slides.Foss/ShapeCollection.cs",
+      "src/Aspose.Slides.Foss/MasterSlideCollection.cs",
+      ".github/workflows/ci.yml",
+      "tests/Aspose.Slides.Foss.Tests/INotesSizeTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/Aspose.Slides.Foss.Tests.csproj",
+      "tests/Aspose.Slides.Foss.IntegrationTests/Aspose.Slides.Foss.IntegrationTests.csproj",
+      "tests/Aspose.Slides.Foss.Tests/NotesSlideTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/PointFTests.cs",
+      "tests/Aspose.Slides.Foss.IntegrationTests/ImagesTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ISoftEdgeTests.cs",
+      "tests/Aspose.Slides.Foss.IntegrationTests/DocumentPropertiesTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/IInnerShadowTests.cs",
+      "tests/Aspose.Slides.Foss.IntegrationTests/LineFormatTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/IMasterSlideCollectionTests.cs",
+      "tests/Aspose.Slides.Foss.IntegrationTests/PresentationTests.cs",
+      "tests/Aspose.Slides.Foss.IntegrationTests/NotesSlideTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/IPresetShadowTests.cs",
+      "tests/Aspose.Slides.Foss.IntegrationTests/ThreeDFormatTests.cs",
+      "tests/test_data/lotus.png",
+      "tests/Aspose.Slides.Foss.Tests/SizeTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/CameraTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/PresentationTests.cs",
+      "tests/Aspose.Slides.Foss.IntegrationTests/TextTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/BlurTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/SlidesTests.cs",
+      "tests/Aspose.Slides.Foss.IntegrationTests/SlidesTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/AdjustValueTests.cs",
+      "tests/Aspose.Slides.Foss.IntegrationTests/EffectFormatTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/CommentAuthorTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/INotesSlideTests.cs",
+      "tests/Aspose.Slides.Foss.IntegrationTests/FillFormatTests.cs",
+      "tests/Aspose.Slides.Foss.IntegrationTests/TestHelpers.cs",
+      "tests/Aspose.Slides.Foss.Tests/BaseSlideTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ThreeDFormatIntegrationTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/PresetShadowTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/PVIObjectTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/GradientStopTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/IMasterSlideTests.cs",
+      "tests/Aspose.Slides.Foss.IntegrationTests/TextFormattingTests.cs",
+      "tests/test_data/Presentation.pptx",
+      "tests/Aspose.Slides.Foss.Tests/IRowContractTests.cs",
+      "tests/Aspose.Slides.Foss.IntegrationTests/ConnectorTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/NotesSlideHeaderFooterTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/FillOverlayTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/LightRigTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/GlowTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ICommentAuthorContractTests.cs",
+      "tests/Aspose.Slides.Foss.IntegrationTests/CommentsTests.cs",
+      "tests/Aspose.Slides.Foss.IntegrationTests/ShapesTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/TextFrameTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/PatternFormatTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/LineFormatIntegrationTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ShapeBevelTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/CommentAuthorCollectionTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ColorTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/IOuterShadowTests.cs",
+      "tests/Aspose.Slides.Foss.IntegrationTests/TableTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ImageIntegrationTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/EffectFormatIntegrationTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/TextFormattingTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/PresentationIntegrationTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/EffectFormatTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/IPictureFillFormatTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/IGeometryShapeTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/TextFormattingIntegrationTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/RowCollectionTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ColumnCollectionTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ITableFormatTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/LineFormatTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/FillFormatIntegrationTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/NotesSlideIntegrationTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ColumnTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/DocumentPropertiesIntegrationTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/TableRoundTripTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/TableTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ISlideCollectionTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/INotesSlideManagerTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ConnectorIntegrationTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/SlideIntegrationTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/RowTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ISlideTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/CommentIntegrationTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ThreeDFormatTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ICommentCollectionContractTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/GradientStopCollectionTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/CommentCollectionTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ILineFillFormatTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/BulletFormatTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/IPortionCollectionTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ParagraphFormatTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/PortionTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ConnectorTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ICellFormatTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/TextIntegrationTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/IShapeFrameContractTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ParagraphTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/IReflectionTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/FillFormatTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ShapeIntegrationTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/CommentTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ImageTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ColorFormatTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/TableTableTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/GradientFormatTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/IParagraphCollectionTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/TextFrameFormatTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/ITextFrameTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/AutoShapeTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/IParagraphTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/DocumentPropertiesTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/TableIntegrationTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/CellCollectionTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/IShapeCollectionContractTests.cs",
+      "tests/Aspose.Slides.Foss.Tests/CellTests.cs",
+      "tests/test_data/image_example.jpg",
+      "Directory.Build.props",
+      "Directory.Packages.props",
+      "LICENSE",
+      "Aspose.Slides.Foss.sln",
+      ".clone_timestamp",
+      ".clone_sha",
+      ".clone_url",
+      "src/Aspose.Slides.Foss/Aspose.Slides.Foss.csproj"
+    ],
+    "truncated_files": []
+  },
+  "shared_facts": {
+    "build_systems": [],
+    "dependencies": [
+      "coverlet.collector",
+      "Microsoft.NET.Test.Sdk",
+      "xunit",
+      "xunit.runner.visualstudio",
+      "FluentAssertions"
+    ],
+    "description": "",
+    "entrypoints": [],
+    "has_ci": true,
+    "has_docs_folder": false,
+    "has_examples_folder": false,
+    "has_tests": true,
+    "install_command": "dotnet add package Aspose.Slides.Foss.IntegrationTests",
+    "license_type": "",
+    "module_path": "",
+    "package_name": "Aspose.Slides.Foss.IntegrationTests",
+    "primary_language": "csharp",
+    "python_requires": "",
+    "version": ""
+  }
+}

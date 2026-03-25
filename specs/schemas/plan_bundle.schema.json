@@ -88,6 +88,30 @@
             "type": "boolean",
             "default": false,
             "description": "TR-01: True when example_files + extracted_snippets < 3. Triggers EVIDENCE ABSENT prompt instruction in section_prompt."
+          },
+          "maintenance_action": {
+            "type": "string",
+            "enum": ["create", "update", "enhance", "no-change", ""],
+            "default": "",
+            "description": "TC-5168: Action from maintenance planner (empty string = create mode, no filtering applied)."
+          },
+          "evidence_score": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "default": 1.0,
+            "description": "TC-FIX-217: Numeric evidence quality score (0-1) from page evidence index."
+          },
+          "evidence_sufficient": {
+            "type": "boolean",
+            "default": true,
+            "description": "TC-FIX-217: Whether the page has sufficient evidence for generation."
+          },
+          "evidence_missing": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": [],
+            "description": "TC-FIX-217: List of missing evidence signals."
           }
         },
         "additionalProperties": false

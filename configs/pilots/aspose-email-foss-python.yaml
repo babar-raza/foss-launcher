@@ -1,0 +1,38 @@
+family: email
+platform: python
+repo_url: "https://github.com/aspose-email-foss/Aspose.Email-FOSS-for-Python"
+launch_tier: auto
+validation_profile: pilot
+product_name: "Aspose.Email FOSS for Python"
+display_name: "Aspose.Email FOSS"
+canonical_import: "aspose_email_foss"
+runtime_import: "aspose.email"
+
+llm:
+  primary:
+    base_url: "https://llm.professionalize.com/v1"
+    model: "qwen3-next"
+  reasoning:
+    model: "recommended"
+  fallback:
+    base_url: "http://127.0.0.1:11434/v1"
+    model: "gemma3:12b"
+  routing:
+    extract: standard
+    generate: standard
+    review: reasoning
+  temperature: 0.0
+  max_tokens: 6000
+  max_concurrency: 4
+
+golden:
+  enabled: true
+  dir: "golden/"
+
+output:
+  goal: draft
+  run_dir: "runs/"
+  deploy_dir: "deploy/"
+  content_repo_map:
+    "aspose.org": "${ASPOSE_ORG_CONTENT_REPO}"
+pipeline_mode: create

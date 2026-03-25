@@ -1,0 +1,311 @@
+{
+  "acquisition": {
+    "acquisition_confidence": "high",
+    "canonical_import": "aspose_slides_foss",
+    "clone_cache_hit": true,
+    "discovered_at": "2026-03-21T13:33:06.141765+00:00",
+    "display_name": "Aspose.Slides FOSS for Python",
+    "failure_state": "",
+    "family": "slides",
+    "field_provenance": {
+      "canonical_import": "families_yaml",
+      "display_name": "families_yaml",
+      "runtime_import": "families_yaml"
+    },
+    "is_fresh_clone": false,
+    "launch_tier": "core",
+    "phase": "phase1_acquisition",
+    "platform": "python",
+    "repo_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\intake\\.clone_cache\\po_slides_python",
+    "repo_sha": "f9541c5cbdc5c39432a624180f6a820d374fec7e",
+    "repo_signals": {
+      "detected_manifest_files": [
+        "pyproject.toml"
+      ],
+      "files_estimated": 11,
+      "inferred_language": "python",
+      "is_empty_clone": false,
+      "readme_present": true
+    },
+    "repo_url": "https://github.com/aspose-slides-foss/Aspose.Slides-FOSS-for-Python",
+    "runtime_import": "aspose.slides"
+  },
+  "canonical_import": "aspose_slides_foss",
+  "classification": {
+    "decision": "eligible",
+    "full_name": "aspose-slides-foss/Aspose.Slides-FOSS-for-Python",
+    "reasons": [
+      "source-grounded phase1 inspection passed"
+    ]
+  },
+  "display_name": "Aspose.Slides FOSS for Python",
+  "family": "slides",
+  "phase": "phase1_inspection",
+  "platform": "python",
+  "repo": {
+    "archived": false,
+    "created_at": "2026-03-04T12:15:08Z",
+    "default_branch": "main",
+    "description": "The official open-source Python library by Aspose.Slides for creating, reading, and editing PowerPoint (`.pptx`) presentations. https://products.aspose.org/slides/",
+    "fork": false,
+    "full_name": "aspose-slides-foss/Aspose.Slides-FOSS-for-Python",
+    "html_url": "https://github.com/aspose-slides-foss/Aspose.Slides-FOSS-for-Python",
+    "id": 1172529510,
+    "is_template": false,
+    "language": "Python",
+    "license": {
+      "name": "MIT License",
+      "spdx_id": "MIT"
+    },
+    "name": "Aspose.Slides-FOSS-for-Python",
+    "owner": {
+      "login": "aspose-slides-foss",
+      "type": "Organization"
+    },
+    "pushed_at": "2026-03-06T13:20:38Z",
+    "size": 314,
+    "stargazers_count": 0,
+    "topics": [],
+    "updated_at": "2026-03-06T13:20:41Z"
+  },
+  "runtime_import": "aspose.slides",
+  "scout": {
+    "budget_log": [
+      {
+        "category": "doc",
+        "path": "agents.md",
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 6814
+      },
+      {
+        "category": "test",
+        "path": "tests/test_images.py",
+        "reason": "source_reserve",
+        "size_bytes": 1688
+      },
+      {
+        "category": "test",
+        "path": "tests/test_line_format.py",
+        "reason": "source_reserve",
+        "size_bytes": 1969
+      },
+      {
+        "category": "test",
+        "path": "tests/test_document_properties.py",
+        "reason": "source_reserve",
+        "size_bytes": 1993
+      },
+      {
+        "category": "test",
+        "path": "tests/conftest.py",
+        "reason": "source_reserve",
+        "size_bytes": 2085
+      },
+      {
+        "category": "test",
+        "path": "tests/test_presentation.py",
+        "reason": "source_reserve",
+        "size_bytes": 2121
+      },
+      {
+        "category": "test",
+        "path": "tests/test_notes_slide.py",
+        "reason": "source_reserve",
+        "size_bytes": 2155
+      },
+      {
+        "category": "test",
+        "path": "tests/test_threed_format.py",
+        "reason": "source_reserve",
+        "size_bytes": 2496
+      },
+      {
+        "category": "test",
+        "path": "tests/test_slides.py",
+        "reason": "source_reserve",
+        "size_bytes": 2940
+      },
+      {
+        "category": "test",
+        "path": "tests/test_text.py",
+        "reason": "source_reserve",
+        "size_bytes": 3006
+      },
+      {
+        "category": "test",
+        "path": "tests/test_effect_format.py",
+        "reason": "source_reserve",
+        "size_bytes": 3123
+      },
+      {
+        "category": "test",
+        "path": "tests/test_fill_format.py",
+        "reason": "source_reserve",
+        "size_bytes": 3301
+      },
+      {
+        "category": "test",
+        "path": "tests/test_data/lotus.png",
+        "reason": "source_reserve",
+        "size_bytes": 3462
+      },
+      {
+        "category": "test",
+        "path": "tests/test_text_formatting.py",
+        "reason": "source_reserve",
+        "size_bytes": 3691
+      },
+      {
+        "category": "test",
+        "path": "tests/test_connector.py",
+        "reason": "source_reserve",
+        "size_bytes": 3750
+      },
+      {
+        "category": "test",
+        "path": "tests/test_shapes.py",
+        "reason": "source_reserve",
+        "size_bytes": 4248
+      },
+      {
+        "category": "test",
+        "path": "tests/test_comments.py",
+        "reason": "source_reserve",
+        "size_bytes": 4323
+      },
+      {
+        "category": "test",
+        "path": "tests/test_table.py",
+        "reason": "source_reserve",
+        "size_bytes": 4694
+      },
+      {
+        "category": "test",
+        "path": "tests/test_data/image_example.jpg",
+        "reason": "source_reserve",
+        "size_bytes": 140425
+      },
+      {
+        "category": "asset",
+        "path": "LICENSE",
+        "reason": "source_reserve",
+        "size_bytes": 1090
+      },
+      {
+        "category": "asset",
+        "path": ".clone_timestamp",
+        "reason": "source_reserve",
+        "size_bytes": 32
+      },
+      {
+        "category": "asset",
+        "path": ".clone_sha",
+        "reason": "source_reserve",
+        "size_bytes": 40
+      },
+      {
+        "category": "asset",
+        "path": ".clone_url",
+        "reason": "source_reserve",
+        "size_bytes": 67
+      },
+      {
+        "category": "asset",
+        "path": "aspose/slides_foss/_internal/pptx/Template.pptx",
+        "reason": "source_reserve",
+        "size_bytes": 29298
+      }
+    ],
+    "budget_log_overflow_count": 0,
+    "by_category": {
+      "asset": 5,
+      "config": 2,
+      "doc": 2,
+      "source": 254,
+      "test": 18
+    },
+    "content_used_bytes": 922603,
+    "doc_paths": [
+      "README.md"
+    ],
+    "doc_selection": [
+      {
+        "decision": "kept",
+        "importance_rank": 7,
+        "language": "",
+        "path": "README.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 6407
+      },
+      {
+        "decision": "skipped",
+        "importance_rank": 4,
+        "language": "",
+        "path": "agents.md",
+        "readable_in_repo_content": false,
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 6814
+      }
+    ],
+    "example_paths": [],
+    "example_selection": [],
+    "files_enumerated": 281,
+    "files_read": 257,
+    "selected_doc_count": 1,
+    "selected_example_count": 0,
+    "skip_counts_approximate": false,
+    "skip_reason_counts": {
+      "doc_ineligible_meta": 1,
+      "source_reserve": 23
+    },
+    "skipped_paths": [
+      "agents.md",
+      "tests/test_images.py",
+      "tests/test_line_format.py",
+      "tests/test_document_properties.py",
+      "tests/conftest.py",
+      "tests/test_presentation.py",
+      "tests/test_notes_slide.py",
+      "tests/test_threed_format.py",
+      "tests/test_slides.py",
+      "tests/test_text.py",
+      "tests/test_effect_format.py",
+      "tests/test_fill_format.py",
+      "tests/test_data/lotus.png",
+      "tests/test_text_formatting.py",
+      "tests/test_connector.py",
+      "tests/test_shapes.py",
+      "tests/test_comments.py",
+      "tests/test_table.py",
+      "tests/test_data/image_example.jpg",
+      "LICENSE",
+      ".clone_timestamp",
+      ".clone_sha",
+      ".clone_url",
+      "aspose/slides_foss/_internal/pptx/Template.pptx"
+    ],
+    "truncated_files": []
+  },
+  "shared_facts": {
+    "build_systems": [
+      "pyproject"
+    ],
+    "dependencies": [
+      "lxml>=4.9"
+    ],
+    "description": "Official open-source Python library by Aspose.Slides for creating, reading, and editing PowerPoint (.pptx) presentations. Designed for developers and AI agents.",
+    "entrypoints": [],
+    "has_ci": false,
+    "has_docs_folder": false,
+    "has_examples_folder": false,
+    "has_tests": true,
+    "install_command": "pip install aspose-slides-foss",
+    "license_type": "MIT",
+    "module_path": "",
+    "package_name": "aspose-slides-foss",
+    "primary_language": "python",
+    "python_requires": ">=3.10",
+    "version": "26.3.2"
+  }
+}

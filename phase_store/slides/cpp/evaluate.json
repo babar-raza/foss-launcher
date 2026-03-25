@@ -1,0 +1,2480 @@
+{
+  "api_surface_coverage": 0.0,
+  "cross_page_findings": [],
+  "gates": [],
+  "go_criteria": [
+    {
+      "actual": "0",
+      "criterion": "CRITICAL findings",
+      "passed": true,
+      "threshold": "0"
+    },
+    {
+      "actual": "6%",
+      "criterion": "A+B rate",
+      "passed": false,
+      "threshold": ">= 50%"
+    },
+    {
+      "actual": "17%",
+      "criterion": "D+F rate",
+      "passed": true,
+      "threshold": "<= 30%"
+    },
+    {
+      "actual": "17%",
+      "criterion": "Editorial-critical HIGH rate",
+      "passed": false,
+      "threshold": "<= 15%"
+    }
+  ],
+  "hallucination_rate": 0.0,
+  "pages": [
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "api_consistency": false,
+        "canonical_import": false,
+        "claim_coverage": true,
+        "code_correctness": false,
+        "code_formatting": false,
+        "completeness": false,
+        "content_density": true,
+        "factual_accuracy": false,
+        "heading_quality": true
+      },
+      "conformance_score": null,
+      "content_path": "products.aspose.org/slides/_index",
+      "findings": [
+        {
+          "check": "claim_coverage",
+          "location": "_index",
+          "message": "3/15 assigned claims are not covered in the page body. Uncovered: Install Aspose.Slides FOSS for C++ via: pip install aspose_s, Aspose.Slides FOSS for C++ supports exporting presentations  ...",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": [
+            "Install Aspose.Slides FOSS for C++ via: pip install aspose_slides_foss",
+            "Aspose.Slides FOSS for C++ supports exporting presentations to PPTX format with full round-trip fidelity.",
+            "The library preserves unknown XML parts encountered during load and saves them verbatim, ensuring round-trip fidelity."
+          ]
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `Comment` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `CommentAuthor` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `Paragraph` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `PictureFrame` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `Portion` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `TextFrame` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code block 1 (save example)",
+          "message": "Placeholder `[identifier omitted]` used in `pres.save(..., [identifier omitted]::PPTX);` makes the code non‑functional and introduces non‑existent identifiers.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Quick Start and Key Features sections",
+          "message": "Classes `Comment`, `CommentAuthor`, `Paragraph`, `PictureFrame`, `Portion`, and `TextFrame` are mentioned in prose but are not part of the known API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "canonical_import",
+          "location": "Entire page code examples",
+          "message": "All `#include` statements and `using namespace` directives reference `Aspose::Slides::Foss` instead of the required `Aspose::Slides`.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Page body",
+          "message": "Only a handful of the assigned CLM‑slides claims are covered; the majority are omitted.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "heading_quality",
+          "location": "Section headings",
+          "message": "Headings like \"Overview\" and \"Quick Start\" are too generic and do not describe the specific content that follows.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "All code blocks",
+          "message": "Code uses undefined placeholders and missing enum names, e.g., `[identifier omitted]::PPTX`, which will not compile.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Quick Start section",
+          "message": "The \"Quick Start\" section contains only one sentence of explanation before a code block, providing insufficient guidance.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Prose throughout the page",
+          "message": "References to non‑existent API types break consistency with the known surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Prose sections",
+          "message": "API identifiers such as `CommentAuthor` and `TextFrame` are not wrapped in backticks in the narrative text.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "api_consistency": false,
+        "canonical_import": false,
+        "code_correctness": false,
+        "code_formatting": true,
+        "content_density": true,
+        "factual_accuracy": false
+      },
+      "conformance_score": null,
+      "content_path": "docs.aspose.org/slides/_index",
+      "findings": [
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `Paragraph` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `Portion` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `TextFrame` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Capabilities section, bullet list",
+          "message": "References to `Paragraph`, `Portion`, and `TextFrame` are not present in the known API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Getting Started code block",
+          "message": "Placeholder `[identifier omitted]` appears in C++ code, making the example non‑compilable.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Quick Install section",
+          "message": "The Quick Install section suggests `pip install aspose-slides-foss-cpp`, which is a Python package command for a C++ library.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "canonical_import",
+          "location": "Quick Install description and Developer Guide prose",
+          "message": "Include statement `#include <Aspose.Slides FOSS for C++>` does not match the required canonical import `Aspose::Slides`.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "Getting Started code block",
+          "message": "C++ example uses `System::[identifier omitted]<Aspose::Slides::Presentation>()`, which is invalid syntax.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Quick Install and Getting Started sections",
+          "message": "Quick Install and Getting Started sections each contain only one explanatory sentence before a code block.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Capabilities and Developer Guide sections",
+          "message": "Mentions of `Paragraph`, `Portion`, and `TextFrame` are not part of the documented API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Getting Started and Developer Guide sections",
+          "message": "API identifiers such as `Presentation`, `Save`, and `Pptx` are not wrapped in backticks in the prose.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "api_consistency": false,
+        "claim_coverage": true,
+        "code_correctness": false,
+        "code_formatting": true,
+        "completeness": true,
+        "content_density": true,
+        "factual_accuracy": false,
+        "heading_quality": true,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "docs.aspose.org/slides/cpp/developer-guide/installation",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "installation",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "installation",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "installation",
+          "message": "Page body has 264 prose words; golden spec requires ≥994.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "claim_coverage",
+          "location": "installation",
+          "message": "1/3 assigned claim is not covered in the page body: Install Aspose.Slides FOSS for C++ via: pip install aspose_slides_foss",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": [
+            "Install Aspose.Slides FOSS for C++ via: pip install aspose_slides_foss"
+          ]
+        },
+        {
+          "check": "api_allowlist",
+          "location": "installation",
+          "message": "Unknown class identifier in prose: `Presentation` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "installation",
+          "message": "Unknown member identifier in prose: `fill` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "installation",
+          "message": "Unknown member identifier in prose: `pptx` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Overview section, first paragraph",
+          "message": "The guide tells users to install the C++ library with `pip install aspose_slides_foss`, which is incorrect for a native C++ package.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code blocks in Overview and Code Example sections",
+          "message": "Placeholders like `[identifier omitted]` appear in code examples, creating non‑existent classes and methods.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Overview section",
+          "message": "Claim CLM‑slides‑048efc (installation via CMake) is not addressed; only a pip command is mentioned.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "heading_quality",
+          "location": "H2 heading at start of page",
+          "message": "Section heading \"Overview\" does not describe the specific content of the installation steps.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "Overview code block",
+          "message": "The line `auto pres = System::[identifier omitted]<Aspose::Slides::Presentation>();` is not valid C++ syntax.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "Code Example section",
+          "message": "Missing required CMake commands and incorrect include paths (`#include <Aspose::Slides/Foss/...>`).",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Entire page body",
+          "message": "Total prose word count is only 264 words; the specification requires at least 994 words for sufficient depth.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Code Example section",
+          "message": "Identifiers `Presentation`, `fill`, and `pptx` are not part of the known Aspose.Slides C++ API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Prose surrounding code blocks",
+          "message": "API names such as `Presentation` and `Save` are not enclosed in backticks in the explanatory text.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "installation"
+    },
+    {
+      "check_results": {
+        "api_allowlist": true,
+        "api_consistency": true,
+        "audience_appropriateness": true,
+        "canonical_import": false,
+        "claim_coverage": false,
+        "code_correctness": false,
+        "code_formatting": true,
+        "completeness": false,
+        "content_density": false,
+        "factual_accuracy": false,
+        "heading_quality": true,
+        "route_consistency": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "docs.aspose.org/slides/cpp/developer-guide/getting-started",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "getting-started",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "getting-started",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "getting-started",
+          "message": "Page body has 374 prose words; golden spec requires ≥994.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "claim_coverage",
+          "location": "getting-started",
+          "message": "7/9 assigned claims (78%) are not covered in the page body. Uncovered: Install Aspose.Slides FOSS for C++ via: pip install aspose_s, Example demonstrates saving files in PPTX format, Aspose.Slides FOSS for C++ supports exporting presentations  ...",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": [
+            "Install Aspose.Slides FOSS for C++ via: pip install aspose_slides_foss",
+            "Example demonstrates saving files in PPTX format",
+            "Aspose.Slides FOSS for C++ supports exporting presentations to PPTX format with full round-trip fidelity.",
+            "Text formatting is supported through TextFrame, Paragraph, and Portion with character, paragraph, and text frame formatting including bullets.",
+            "Aspose.Slides FOSS for C++ supports PPTX (.pptx) format for writing",
+            "The library supports adding, removing, cloning, reordering, and iterating slides via the slides() collection on Presentation.",
+            "Shape fill support includes Solid, gradient, pattern, and picture fills via FillFormat."
+          ]
+        },
+        {
+          "check": "api_allowlist",
+          "location": "getting-started",
+          "message": "Unknown member identifier in prose: `pptx` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "route_consistency",
+          "location": "getting-started",
+          "message": "Off-topic page: slug topic words ['getting', 'started'] not found in prose — claims may be misrouted",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Prerequisites section",
+          "message": "Installation is described with `pip install aspose_slides_foss`, which is a Python package manager and not applicable to the C++ library.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "canonical_import",
+          "location": "All code blocks",
+          "message": "Code imports `<Aspose/Slides/Foss/...>` and uses `Aspose::Slides::Foss` namespace instead of the required `Aspose::Slides`.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Overall page content",
+          "message": "Only two of the nine assigned claim identifiers are covered; the rest are omitted.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "heading_quality",
+          "location": "Section headings",
+          "message": "Headings like \"Overview\" and \"First Steps\" are too generic and do not convey specific information.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "Code Example sections",
+          "message": "Placeholders `[identifier omitted]` appear in code (e.g., `pres.save(\"output.pptx\", [identifier omitted]::PPTX);`) causing compilation errors.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Entire page",
+          "message": "Prose word count is 374, well below the required minimum; many sections consist of a single sentence.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Prerequisites and code blocks",
+          "message": "Identifiers such as `pptx` and `GoogleTest` are not part of the documented Aspose.Slides API surface.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "audience_appropriateness",
+          "location": "Prerequisites section",
+          "message": "Mixing Python pip installation instructions with C++ usage examples creates confusion for the target C++ developer audience.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Narrative text",
+          "message": "API names in prose are not wrapped in backticks (e.g., Presentation, save).",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "D",
+      "numeric_score": 0.0,
+      "slug": "getting-started"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "api_consistency": false,
+        "canonical_import": false,
+        "code_correctness": false,
+        "code_formatting": true,
+        "content_density": true,
+        "factual_accuracy": false
+      },
+      "conformance_score": null,
+      "content_path": "reference.aspose.org/slides/_index",
+      "findings": [
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `Paragraph` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `Portion` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Quick Install, paragraph 1",
+          "message": "Quick Install section suggests installing the library with `pip`, which is a Python package manager, but Aspose.Slides FOSS is a C++ library.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Getting Started code block",
+          "message": "Include directive `#include <Aspose.Slides FOSS for C++>` is not a valid C++ header and does not match the canonical import.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "canonical_import",
+          "location": "Getting Started code block",
+          "message": "Code uses `#include <Aspose.Slides FOSS for C++>` instead of the required `#include <Aspose::Slides>`.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "Getting Started code block",
+          "message": "The C++ example contains placeholders like `System::[identifier omitted]` and missing enum/class names, making it non‑compilable.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Getting Started",
+          "message": "Getting Started section contains only one explanatory sentence before the code example, lacking sufficient narrative detail.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Developer Guide",
+          "message": "Prose mentions `Paragraph` and `Portion` classes which are not part of the known API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Developer Guide and other sections",
+          "message": "API identifiers such as `Presentation`, `Save`, and `Pptx` are not wrapped in backticks in the surrounding text.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "api_consistency": false,
+        "claim_coverage": false,
+        "code_correctness": false,
+        "code_formatting": true,
+        "completeness": false,
+        "content_density": false,
+        "evidence_adequacy": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "reference.aspose.org/slides/cpp/api-overview",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "api-overview",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "claim_coverage",
+          "location": "api-overview",
+          "message": "3/4 assigned claims (75%) are not covered in the page body. Uncovered: The library provides a BaseCollection base class that delive, The library supports exporting presentations to file paths a, The library uses an ExporterRegistry to manage format export",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": [
+            "The library provides a BaseCollection base class that delivers index-based random-access iterators, length(), begin(), end(), and contains() for collections.",
+            "The library supports exporting presentations to file paths and streams via ExporterBase::export_to_path() and ExporterBase::export_to_stream().",
+            "The library uses an ExporterRegistry to manage format exporters dynamically via register_exporter<T>() and get_exporter(format) methods."
+          ]
+        },
+        {
+          "check": "api_allowlist",
+          "location": "api-overview",
+          "message": "Unknown class identifier in prose: `Presentation` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "api-overview",
+          "message": "Unknown member identifier in prose: `fileName` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "api-overview",
+          "message": "Unknown member identifier in prose: `loadOptions` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "api-overview",
+          "message": "Unknown member identifier in prose: `stream` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "api-overview",
+          "message": "Page role 'api_reference' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_verified_claims, no_api_facts. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "Code Examples",
+          "message": "Section 'Code Examples' has 0 words (golden spec requires ≥30).",
+          "section_id": "Code Examples",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Throughout the page, especially in Constructors and Properties tables.",
+          "message": "The class `Presentation` and parameters `fileName`, `loadOptions`, `stream` are not defined in the known API surface; they appear to be invented.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Entire document – no mention of BaseCollection.",
+          "message": "The claim that the library provides a `BaseCollection` base class is not covered.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "All code blocks (e.g., `pres.save(\"output.pptx\", [identifier omitted]::PPTX);`).",
+          "message": "Placeholders like `[identifier omitted]` appear in code snippets, making the examples non‑compilable.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Section “Code Examples”.",
+          "message": "The “Code Examples” section provides only code with zero explanatory text.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Multiple sections.",
+          "message": "References to undefined identifiers (`[identifier omitted]`, `Presentation`) break API consistency.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Throughout the narrative and tables.",
+          "message": "API names and members are not wrapped in backticks in prose and tables.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "D",
+      "numeric_score": 0.0,
+      "slug": "api-overview"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "api_consistency": false,
+        "canonical_import": false,
+        "code_correctness": false,
+        "code_formatting": false,
+        "factual_accuracy": false
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/slides/_index",
+      "findings": [
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `IShape` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `ISlide` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `ITextFrame` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `Paragraph` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `Portion` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `Presentation` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `TextFrame` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Quick Install section",
+          "message": "The installation instructions use `pip install aspose-slides-foss`, which is a Python package manager command for a C++ library.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "canonical_import",
+          "location": "Quick Install and Getting Started sections",
+          "message": "Code examples import `<Aspose.Slides FOSS for C++>` while the canonical import is `Aspose::Slides`.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "Getting Started code block",
+          "message": "The C++ example contains placeholders (`System::[identifier omitted]`, `Aspose::Slides::[identifier omitted]::Pptx`) that make the code uncompilable.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Capabilities, Developer Guide, and prose throughout",
+          "message": "References to `IShape`, `ISlide`, `ITextFrame`, `Paragraph`, `Portion`, `Presentation`, and `TextFrame` are not present in the known API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Capabilities and Developer Guide sections",
+          "message": "API names such as `Presentation` and `ISlide` are not wrapped in backticks in the narrative text.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "canonical_import": false,
+        "code_formatting": true,
+        "factual_accuracy": false,
+        "seo": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/slides/cpp/faq",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "faq",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Section \"How do I include Aspose.Slides FOSS for C++ in my C++ project?\"",
+          "message": "The include statement `#include <Aspose.Slides FOSS for C++>` is not a valid C++ header and contradicts the documented import method.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "canonical_import",
+          "location": "Section \"How do I include Aspose.Slides FOSS for C++ in my C++ project?\"",
+          "message": "The page uses a non‑canonical import path instead of the required `Aspose::Slides` namespace.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Section \"How do I include Aspose.Slides FOSS for C++ in my C++ project?\"",
+          "message": "The referenced include path does not match any class or namespace in the known Aspose.Slides API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Section \"How do I include Aspose.Slides FOSS for C++ in my C++ project?\"",
+          "message": "Library identifiers are not wrapped in backticks and the include example is not presented as a fenced code block with a language tag.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "faq"
+    },
+    {
+      "check_results": {
+        "canonical_import": false,
+        "claim_coverage": true,
+        "code_correctness": false,
+        "code_formatting": true,
+        "completeness": false,
+        "content_density": true,
+        "factual_accuracy": false,
+        "heading_quality": true,
+        "route_consistency": false,
+        "seo": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/slides/cpp/developer-guide/use-cases",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "use-cases",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "use-cases",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "claim_coverage",
+          "location": "use-cases",
+          "message": "7/17 assigned claims are not covered in the page body. Uncovered: Install Aspose.Slides FOSS for C++ via: pip install aspose_s, Example demonstrates saving files in PPTX format ...",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": [
+            "Install Aspose.Slides FOSS for C++ via: pip install aspose_slides_foss",
+            "Example demonstrates saving files in PPTX format",
+            "Threaded comments with authors, timestamps, and positions are supported via CommentAuthor and Comment collections.",
+            "Images can be embedded from file, bytes, or stream via PictureFrame and related APIs.",
+            "Speaker notes per slide are supported via NotesSlideManager and NotesSlide with header/footer management.",
+            "The library preserves unknown XML parts encountered during load and saves them verbatim, ensuring round-trip fidelity.",
+            "The library enables opening, creating, and saving .pptx files using the Presentation class and SaveFormat::PPTX."
+          ]
+        },
+        {
+          "check": "route_consistency",
+          "location": "use-cases",
+          "message": "Off-topic page: slug topic words ['cases'] not found in prose — claims may be misrouted",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "All code examples",
+          "message": "Placeholder `[identifier omitted]` appears in multiple code blocks where a real enum (e.g., `SaveFormat::PPTX`) should be used.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "canonical_import",
+          "location": "Every code block",
+          "message": "Code imports use `Aspose::Slides::Foss` instead of the required `Aspose::Slides` namespace.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Page body",
+          "message": "Seven of the seventeen assigned CLM claims (e.g., CLM‑slides‑f10545, CLM‑slides‑173051, etc.) are not mentioned or explained in the page.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "heading_quality",
+          "location": "H2 headings",
+          "message": "Headings like \"Overview\" and \"How It Works\" are too generic and do not describe the specific capabilities being shown.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "All code blocks",
+          "message": "Code snippets reference undefined identifiers and missing enum values, preventing successful compilation.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Overview, How It Works, Code Example",
+          "message": "Narrative sections contain fewer than 50 words of explanatory prose, offering insufficient guidance.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Throughout the document",
+          "message": "Class and method names such as `Presentation`, `slides()`, `add_auto_shape` are not enclosed in backticks in the prose.",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "D",
+      "numeric_score": 0.0,
+      "slug": "use-cases"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "api_consistency": true,
+        "code_correctness": false,
+        "code_formatting": true,
+        "content_density": true,
+        "evidence_adequacy": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/slides/cpp/how-to-load-presentations-cpp",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "how-to-load-presentations-cpp",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-load-presentations-cpp",
+          "message": "Unknown class identifier in prose: `Presentation` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-load-presentations-cpp",
+          "message": "Unknown member identifier in prose: `example` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-load-presentations-cpp",
+          "message": "Unknown member identifier in prose: `pptx` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "how-to-load-presentations-cpp",
+          "message": "Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_operation_examples. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "See Also",
+          "message": "Section 'See Also' has 0 words (golden spec requires ≥30).",
+          "section_id": "See Also",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Problem section, code block 1",
+          "message": "References to `Presentation`, `example`, and `pptx` are not part of the known API surface and the placeholder `System::[identifier omitted]` is not a real call.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "Loading the File section, code block",
+          "message": "Code uses `System::[identifier omitted]` syntax, which is invalid C++ and will not compile.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "See Also section",
+          "message": "\"See Also\" section contains only link titles and no explanatory text (≈0 words).",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Throughout the article",
+          "message": "API identifiers such as `Presentation` and file‑format strings are not listed in the known API surface.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Multiple sections",
+          "message": "API identifiers are not wrapped in backticks in the narrative prose.",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-load-presentations-cpp"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "api_consistency": false,
+        "artifacts": false,
+        "code_correctness": false,
+        "code_formatting": false,
+        "content_density": false,
+        "evidence_adequacy": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/slides/cpp/how-to-save-presentations-cpp",
+      "findings": [
+        {
+          "check": "artifacts",
+          "location": "how-to-save-presentations-cpp",
+          "message": "[ENG] 1 link(s) have an empty or missing href (e.g. '[text]()'). Broken links are visible to readers.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "how-to-save-presentations-cpp",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-save-presentations-cpp",
+          "message": "Unknown class identifier in prose: `Jpeg` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-save-presentations-cpp",
+          "message": "Unknown class identifier in prose: `Pdf` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-save-presentations-cpp",
+          "message": "Unknown class identifier in prose: `Png` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-save-presentations-cpp",
+          "message": "Unknown class identifier in prose: `Ppt` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-save-presentations-cpp",
+          "message": "Unknown class identifier in prose: `Pptx` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-save-presentations-cpp",
+          "message": "Unknown class identifier in prose: `Presentation` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-save-presentations-cpp",
+          "message": "Unknown class identifier in prose: `SaveOptions` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-save-presentations-cpp",
+          "message": "Unknown member identifier in prose: `catch` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-save-presentations-cpp",
+          "message": "Unknown member identifier in prose: `pdf` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-save-presentations-cpp",
+          "message": "Unknown member identifier in prose: `pptx` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-save-presentations-cpp",
+          "message": "Unknown member identifier in prose: `try` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "how-to-save-presentations-cpp",
+          "message": "Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_operation_examples. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "See Also",
+          "message": "Section 'See Also' has 0 words (golden spec requires ≥30).",
+          "section_id": "See Also",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "throughout the article",
+          "message": "Placeholders like `[identifier omitted]` and references to enums (`Pdf`, `Pptx`, `Jpeg`, etc.) are not substantiated by the known API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "Problem, Prerequisites, Saving the File, Code Example, Output Options sections",
+          "message": "Code blocks contain incomplete template syntax (`System::[identifier omitted]<...>`) and undefined enum members, making them non‑compilable.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Problem, Prerequisites, Saving the File, Output Options",
+          "message": "Sections such as \"Problem\" and \"Prerequisites\" consist of a single sentence plus a code snippet, providing insufficient explanatory text.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "multiple sections",
+          "message": "Identifiers `Presentation`, `SaveOptions`, `Pdf`, `Pptx`, `Png`, `Jpeg`, `Ppt` are not present in the provided API surface and appear to be invented.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "throughout the article",
+          "message": "API names are not enclosed in backticks in the narrative text (e.g., `Presentation`, `Save()`), violating the formatting guideline.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-save-presentations-cpp"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "api_consistency": false,
+        "code_correctness": false,
+        "code_formatting": true,
+        "content_density": true,
+        "evidence_adequacy": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/slides/cpp/how-to-convert-presentations-cpp",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "how-to-convert-presentations-cpp",
+          "message": "seoTitle too long: 67 chars (max 60)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "how-to-convert-presentations-cpp",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-convert-presentations-cpp",
+          "message": "Unknown class identifier in prose: `Presentation` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-convert-presentations-cpp",
+          "message": "Unknown class identifier in prose: `Save` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-convert-presentations-cpp",
+          "message": "Unknown member identifier in prose: `pdf` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-convert-presentations-cpp",
+          "message": "Unknown member identifier in prose: `pptx` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-convert-presentations-cpp",
+          "message": "Unknown member identifier in prose: `try` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "how-to-convert-presentations-cpp",
+          "message": "Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_operation_examples. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "See Also",
+          "message": "Section 'See Also' has 0 words (golden spec requires ≥30).",
+          "section_id": "See Also",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "throughout the article",
+          "message": "References to `Presentation`, `Save`, `Pdf`, `pptx`, and `try` are not part of the documented API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "Conversion Steps, Code Example sections",
+          "message": "Code snippets use placeholder syntax (`System::[identifier omitted]<...>`) that is not valid C++ and will not compile.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "See Also section",
+          "message": "The \"See Also\" section contains only a list of links with no explanatory text (0 words).",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "multiple sections",
+          "message": "API identifiers used in prose do not correspond to any known Aspose.Slides FOSS for C++ members.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "throughout the article",
+          "message": "API identifiers are not wrapped in backticks in the narrative text.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-convert-presentations-cpp"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "api_consistency": false,
+        "canonical_import": false,
+        "code_correctness": false,
+        "code_formatting": true,
+        "completeness": true,
+        "content_density": true,
+        "evidence_adequacy": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/slides/cpp/how-to-fix-presentations-errors-cpp",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "how-to-fix-presentations-errors-cpp",
+          "message": "seoTitle too long: 64 chars (max 60)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "how-to-fix-presentations-errors-cpp",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-fix-presentations-errors-cpp",
+          "message": "Unknown class identifier in prose: `Presentation` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-fix-presentations-errors-cpp",
+          "message": "Unknown class identifier in prose: `Save` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-fix-presentations-errors-cpp",
+          "message": "Unknown class identifier in prose: `Shape` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-fix-presentations-errors-cpp",
+          "message": "Unknown class identifier in prose: `Slide` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-fix-presentations-errors-cpp",
+          "message": "Unknown member identifier in prose: `pptx` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "how-to-fix-presentations-errors-cpp",
+          "message": "Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_operation_examples. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "See Also",
+          "message": "Section 'See Also' has 0 words (golden spec requires ≥30).",
+          "section_id": "See Also",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Root Cause and Code Example sections",
+          "message": "The article references non‑existent classes and methods such as `Presentation`, `Save`, `Slide`, `Shape` and the enum `Pptx`.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "canonical_import",
+          "location": "Solution Steps – Step 1 and all code snippets",
+          "message": "Code blocks use `#include <Aspose::Slides>` or `#include <Aspose.Slides FOSS for C++>` instead of the required canonical import `Aspose::Slides`.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "See Also section",
+          "message": "The “See Also” section contains no explanatory text (<30 words) and the page does not disclose the single‑format limitation of the FOSS distribution.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "All code blocks",
+          "message": "Code snippets contain placeholders like `System::[identifier omitted]` and invalid C++ syntax, making them uncompilable.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "See Also and various narrative sections",
+          "message": "The “See Also” section is empty and several prose sections consist of only one sentence or a list, failing the 2‑sentence minimum.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Problem, Symptoms, Root Cause, and Code Example sections",
+          "message": "References to API identifiers (`Presentation`, `Save`, `Slide`, `Shape`, `Pptx`) are not part of the known API surface for Aspose.Slides FOSS for C++.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Throughout the article",
+          "message": "API identifiers are not wrapped in backticks in the explanatory text.",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-fix-presentations-errors-cpp"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "code_correctness": false,
+        "code_formatting": true,
+        "content_density": true,
+        "evidence_adequacy": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/slides/cpp/how-to-optimize-presentations-cpp",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "how-to-optimize-presentations-cpp",
+          "message": "seoTitle too long: 67 chars (max 60)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "how-to-optimize-presentations-cpp",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "how-to-optimize-presentations-cpp",
+          "message": "Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_operation_examples. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "See Also",
+          "message": "Section 'See Also' has 0 words (golden spec requires ≥30).",
+          "section_id": "See Also",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Optimization Steps, code block 1",
+          "message": "Placeholders like `System::[identifier omitted]<Presentation>` and omitted method names make the statements unverifiable.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "Prerequisites, code block",
+          "message": "Code contains non‑compilable placeholders (`[identifier omitted]`) and uses undefined symbols.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Optimization Steps, code blocks",
+          "message": "Methods such as `idx_get`, `Export::[identifier omitted]`, and shape‑creation calls are not documented in the known API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Throughout the article",
+          "message": "Class and method names like `Presentation` and `Save` are not enclosed in backticks in the explanatory text.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "See Also section",
+          "message": "The “See Also” section provides only a list of links with no descriptive prose (0 words).",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-optimize-presentations-cpp"
+    },
+    {
+      "check_results": {
+        "code_correctness": false,
+        "seo": true
+      },
+      "conformance_score": null,
+      "content_path": "blog.aspose.org/slides/cpp/introducing-slides-foss-cpp",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "introducing-slides-foss-cpp",
+          "message": "Title too long: 80 chars (max 70)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "introducing-slides-foss-cpp",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "introducing-slides-foss-cpp",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "All code blocks",
+          "message": "Code examples are missing language tags (e.g., ```cpp) and contain placeholder tokens such as \"[identifier omitted]\", resulting in invalid C++ code.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "introducing-slides-foss-cpp"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "api_consistency": false,
+        "code_correctness": false,
+        "code_formatting": true,
+        "content_density": false,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true,
+        "tone_and_style": true
+      },
+      "conformance_score": null,
+      "content_path": "blog.aspose.org/slides/cpp/slides-key-features",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "slides-key-features",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "slides-key-features",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "slides-key-features",
+          "message": "Unknown class identifier in prose: `IFill` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "slides-key-features",
+          "message": "Unknown class identifier in prose: `IParagraph` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "slides-key-features",
+          "message": "Unknown class identifier in prose: `IPortion` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "slides-key-features",
+          "message": "Unknown class identifier in prose: `IShape` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "slides-key-features",
+          "message": "Unknown class identifier in prose: `IShapeCollection` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "slides-key-features",
+          "message": "Unknown class identifier in prose: `ISlideCollection` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "slides-key-features",
+          "message": "Unknown class identifier in prose: `ITextFrame` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "slides-key-features",
+          "message": "Unknown class identifier in prose: `Presentation` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "slides-key-features",
+          "message": "Unknown member identifier in prose: `pptx` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "Introduction",
+          "message": "Section 'Introduction' has 0 words (golden spec requires ≥30).",
+          "section_id": "Introduction",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code blocks in Key Highlights and Getting Started sections",
+          "message": "Invalid include directive `#include <Aspose.Slides FOSS for C++>` and placeholder identifiers (`[identifier omitted]`) appear in the code examples.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Key Highlights section",
+          "message": "Prose references to classes and interfaces such as `Presentation`, `ISlideCollection`, `IShape`, `ITextFrame`, `IParagraph`, `IPortion`, and `IFill` are not present in the known API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Introduction heading",
+          "message": "The Introduction section contains 0 words of explanatory text, failing the minimum prose requirement.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "All code blocks",
+          "message": "Code examples include placeholder tokens and syntactically invalid constructs (`System::[identifier omitted]`, missing template arguments), making them non‑compilable.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "tone_and_style",
+          "location": "Introduction, Key Highlights, Getting Started sections",
+          "message": "Repeated marketing‑style phrasing such as “If you have ever needed to programmatically…” adds fluff and detracts from a professional technical tone.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Prose throughout the page",
+          "message": "API identifiers in the narrative are not enclosed in backticks (e.g., Presentation, IShape, ITextFrame).",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "slides-key-features"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "code_correctness": false,
+        "code_formatting": true,
+        "content_density": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "docs.aspose.org/slides/cpp/developer-guide/presentation-creation",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "presentation-creation",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "presentation-creation",
+          "message": "Unknown class identifier in prose: `Paragraph` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "presentation-creation",
+          "message": "Unknown class identifier in prose: `Portion` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "presentation-creation",
+          "message": "Unknown class identifier in prose: `Presentation` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "presentation-creation",
+          "message": "Unknown class identifier in prose: `Table` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "presentation-creation",
+          "message": "Unknown class identifier in prose: `Text` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "Notes and Best Practices",
+          "message": "Section 'Notes and Best Practices' has 0 words (golden spec requires ≥30).",
+          "section_id": "Notes and Best Practices",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "multiple sections",
+          "message": "References to `Presentation`, `Paragraph`, `Portion`, `Table`, and `Text` classes are not part of the documented API surface and appear to be fabricated.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "all code examples",
+          "message": "Code blocks contain placeholder tokens (`[identifier omitted]`) and syntactically invalid constructs such as `System::[identifier omitted]<Aspose::Slides::Presentation>()`.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Notes and Best Practices",
+          "message": "The \"Notes and Best Practices\" section has zero words of explanatory text, failing the minimum prose requirement.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "throughout the document",
+          "message": "API identifiers in narrative prose are not enclosed in backticks, e.g., `Presentation` appears as plain text.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "presentation-creation"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "canonical_import": true,
+        "code_correctness": false,
+        "code_formatting": true,
+        "content_density": false,
+        "factual_accuracy": false,
+        "opener_boilerplate": true,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "docs.aspose.org/slides/cpp/developer-guide/slide-manipulation",
+      "findings": [
+        {
+          "check": "opener_boilerplate",
+          "location": "slide-manipulation",
+          "message": "Section uses 'When working with...' as an opener (1 occurrence). Replace with a specific statement about what the page covers.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "slide-manipulation",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "slide-manipulation",
+          "message": "Unknown class identifier in prose: `Presentation` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "Notes and Best Practices",
+          "message": "Section 'Notes and Best Practices' has 0 words (golden spec requires ≥30).",
+          "section_id": "Notes and Best Practices",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code blocks throughout the page",
+          "message": "Placeholders like `System::[identifier omitted]` and `Aspose::Slides::[identifier omitted]` are not real API identifiers, making the statements inaccurate.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "canonical_import",
+          "location": "Notes and Best Practices section",
+          "message": "Prose recommends `#include <Aspose.Slides FOSS for C++>` which conflicts with the required canonical import `Aspose::Slides`.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "All three code examples",
+          "message": "Code contains `[identifier omitted]` placeholders, causing syntax errors and preventing compilation.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Working with Data and Notes and Best Practices sections",
+          "message": "The \"Working with Data\" section consists of only two short sentences, and the \"Notes and Best Practices\" section has essentially no prose.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Throughout the prose",
+          "message": "API identifiers such as `Presentation` and `Slide::Clone()` are mentioned in the narrative without backticks.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "slide-manipulation"
+    }
+  ],
+  "quality": {
+    "avg_word_count": 726.1,
+    "claim_coverage": 1.0,
+    "pages_by_grade": {
+      "B": 1,
+      "C": 14,
+      "D": 3
+    }
+  },
+  "root_cause_diagnosis": [
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "getting-started",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter claim_coverage constraints",
+      "issue": "claim_coverage: 3/15 assigned claims are not covered in the page body. Uncovered: Install Aspose.Slides FOSS for C++ via: pip install aspose_s, Aspose.Slides FOSS for C++ supports exporting presentations  ... (4 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'claim_coverage' found 4 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "getting-started",
+        "how-to-convert-presentations-cpp",
+        "how-to-fix-presentations-errors-cpp",
+        "how-to-load-presentations-cpp",
+        "how-to-save-presentations-cpp",
+        "installation",
+        "presentation-creation",
+        "slide-manipulation",
+        "slides-key-features"
+      ],
+      "fix": "Re-run generate worker with tighter api_allowlist constraints",
+      "issue": "api_allowlist: Unknown class identifier in prose: `Comment` not in API surface (65 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'api_allowlist' found 65 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "faq",
+        "getting-started",
+        "how-to-convert-presentations-cpp",
+        "how-to-fix-presentations-errors-cpp",
+        "how-to-load-presentations-cpp",
+        "how-to-optimize-presentations-cpp",
+        "how-to-save-presentations-cpp",
+        "installation",
+        "presentation-creation",
+        "slide-manipulation",
+        "slides-key-features",
+        "use-cases"
+      ],
+      "fix": "Re-run understand worker with tighter factual_accuracy constraints",
+      "issue": "factual_accuracy: Placeholder `[identifier omitted]` used in `pres.save(..., [identifier omitted]::PPTX);` makes the code non‑functional and introduces non‑existent identifiers. (22 occurrences)",
+      "responsible_phase": "B_extract",
+      "responsible_worker": "understand",
+      "root_cause": "Check 'factual_accuracy' found 22 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "faq",
+        "getting-started",
+        "how-to-fix-presentations-errors-cpp",
+        "slide-manipulation",
+        "use-cases"
+      ],
+      "fix": "Re-run understand worker with tighter canonical_import constraints",
+      "issue": "canonical_import: All `#include` statements and `using namespace` directives reference `Aspose::Slides::Foss` instead of the required `Aspose::Slides`. (9 occurrences)",
+      "responsible_phase": "B_extract",
+      "responsible_worker": "understand",
+      "root_cause": "Check 'canonical_import' found 9 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "getting-started",
+        "how-to-fix-presentations-errors-cpp",
+        "installation",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter completeness constraints",
+      "issue": "completeness: Only a handful of the assigned CLM‑slides claims are covered; the majority are omitted. (6 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'completeness' found 6 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "getting-started",
+        "how-to-convert-presentations-cpp",
+        "how-to-fix-presentations-errors-cpp",
+        "how-to-load-presentations-cpp",
+        "how-to-optimize-presentations-cpp",
+        "how-to-save-presentations-cpp",
+        "installation",
+        "introducing-slides-foss-cpp",
+        "presentation-creation",
+        "slide-manipulation",
+        "slides-key-features",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter code_correctness constraints",
+      "issue": "code_correctness: Code uses undefined placeholders and missing enum names, e.g., `[identifier omitted]::PPTX`, which will not compile. (18 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'code_correctness' found 18 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "getting-started",
+        "how-to-convert-presentations-cpp",
+        "how-to-fix-presentations-errors-cpp",
+        "how-to-load-presentations-cpp",
+        "how-to-optimize-presentations-cpp",
+        "how-to-save-presentations-cpp",
+        "installation",
+        "presentation-creation",
+        "slide-manipulation",
+        "slides-key-features",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter content_density constraints",
+      "issue": "content_density: The \"Quick Start\" section contains only one sentence of explanation before a code block, providing insufficient guidance. (15 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'content_density' found 15 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "faq",
+        "getting-started",
+        "how-to-convert-presentations-cpp",
+        "how-to-fix-presentations-errors-cpp",
+        "how-to-load-presentations-cpp",
+        "how-to-optimize-presentations-cpp",
+        "how-to-save-presentations-cpp",
+        "installation",
+        "slides-key-features"
+      ],
+      "fix": "Re-run understand worker with tighter api_consistency constraints",
+      "issue": "api_consistency: References to non‑existent API types break consistency with the known surface. (14 occurrences)",
+      "responsible_phase": "B_extract",
+      "responsible_worker": "understand",
+      "root_cause": "Check 'api_consistency' found 14 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "faq",
+        "getting-started",
+        "how-to-convert-presentations-cpp",
+        "how-to-optimize-presentations-cpp",
+        "how-to-save-presentations-cpp",
+        "installation",
+        "presentation-creation",
+        "slide-manipulation",
+        "slides-key-features"
+      ],
+      "fix": "Re-run generate worker with tighter code_formatting constraints",
+      "issue": "code_formatting: API identifiers such as `CommentAuthor` and `TextFrame` are not wrapped in backticks in the narrative text. (14 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'code_formatting' found 14 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "getting-started",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter route_consistency constraints",
+      "issue": "route_consistency: Off-topic page: slug topic words ['getting', 'started'] not found in prose — claims may be misrouted (2 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'route_consistency' found 2 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "how-to-save-presentations-cpp"
+      ],
+      "fix": "Re-run generate worker with tighter artifacts constraints",
+      "issue": "artifacts: [ENG] 1 link(s) have an empty or missing href (e.g. '[text]()'). Broken links are visible to readers. (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'artifacts' found 1 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "getting-started",
+        "installation",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter heading_quality constraints",
+      "issue": "heading_quality: Headings like \"Overview\" and \"Quick Start\" are too generic and do not describe the specific content that follows. (4 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'heading_quality' found 4 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "api-overview",
+        "getting-started",
+        "how-to-convert-presentations-cpp",
+        "how-to-fix-presentations-errors-cpp",
+        "how-to-load-presentations-cpp",
+        "how-to-optimize-presentations-cpp",
+        "how-to-save-presentations-cpp",
+        "installation",
+        "presentation-creation",
+        "slide-manipulation",
+        "slides-key-features"
+      ],
+      "fix": "Re-run generate worker with tighter structure constraints",
+      "issue": "structure: Page body has 264 prose words; golden spec requires ≥994. (11 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'structure' found 11 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "getting-started"
+      ],
+      "fix": "Re-run generate worker with tighter audience_appropriateness constraints",
+      "issue": "audience_appropriateness: Mixing Python pip installation instructions with C++ usage examples creates confusion for the target C++ developer audience. (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'audience_appropriateness' found 1 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "api-overview",
+        "how-to-convert-presentations-cpp",
+        "how-to-fix-presentations-errors-cpp",
+        "how-to-load-presentations-cpp",
+        "how-to-optimize-presentations-cpp",
+        "how-to-save-presentations-cpp"
+      ],
+      "fix": "Re-run generate worker with tighter evidence_adequacy constraints",
+      "issue": "evidence_adequacy: Page role 'api_reference' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_verified_claims, no_api_facts. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision. (6 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'evidence_adequacy' found 6 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "slides-key-features"
+      ],
+      "fix": "Re-run generate worker with tighter tone_and_style constraints",
+      "issue": "tone_and_style: Repeated marketing‑style phrasing such as “If you have ever needed to programmatically…” adds fluff and detracts from a professional technical tone. (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'tone_and_style' found 1 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "slide-manipulation"
+      ],
+      "fix": "Re-run generate worker with tighter opener_boilerplate constraints",
+      "issue": "opener_boilerplate: Section uses 'When working with...' as an opener (1 occurrence). Replace with a specific statement about what the page covers. (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'opener_boilerplate' found 1 issues",
+      "severity_weight": 1.0
+    }
+  ],
+  "verdict": "NO_GO"
+}

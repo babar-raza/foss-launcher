@@ -1,23 +1,23 @@
 ---
 canonical: https://docs.aspose.org/cells/python/developer-guide/formula-calculation/
-canonical_import: aspose_cells_foss
-date: '2026-03-11T21:00:43Z'
-dateModified: '2026-03-11T21:00:43Z'
-datePublished: '2026-03-11T21:00:43Z'
-description: The `Cell.formula()` method allows setting and retrieving cell formulas,
-  while `CellValueHandler` supports parsing and formatting cell values per...
+canonical_import: aspose.cells
+date: '2026-03-23T13:16:22Z'
+dateModified: '2026-03-23T13:16:22Z'
+datePublished: '2026-03-23T13:16:22Z'
+description: Developers use the `Workbook` class to manage spreadsheets and the `Cell`
+  class to read or write `values` and formulas at specific coordinates.
 display_name: Aspose.Cells FOSS
 family: cells
 keywords:
-- python
-- python openpyxl
-- openpyxl pandas
-- openpyxl in python
-- openpyxl documentation
-- install openpyxl
-- openpyxl cell
-- openpyxl pip
-lastmod: '2026-03-11T21:00:43Z'
+- cells python
+- python cells in excel
+- python cells vscode
+- cell python docx
+- cell python spyder
+- aspose cells python
+- code cells python
+- voronoi cells python
+lastmod: '2026-03-23T13:16:22Z'
 page_role: workflow_page
 platform: python
 reading_time: 1
@@ -32,27 +32,23 @@ weight: 19
 
 ## Overview
 
-Aspose.Cells FOSS enables Python developers to work with formulas in Excel workbooks using the Workbook, Worksheet, and `Cell` classes. The `Cell.formula()` method allows setting and retrieving cell formulas, while `CellValueHandler` supports parsing and formatting cell values per [identifier omitted]-376 specifications.
+Aspose.Cells FOSS enables programmatic manipulation of Excel workbooks and `cells` in Python. Developers use the `Workbook` class to manage spreadsheets and the `Cell` class to read or write `values` and formulas at specific coordinates.
+
+The library supports core spreadsheet operations including `formula` evaluation, `cell` styling, and chart creation using only the documented API surface: `Workbook`, `Cell`, `Cells`, `Chart`, and related handlers like `CSVHandler`, `JsonHandler`, and `MarkdownHandler`.
 
 ## Core Concepts
 
-Aspose.Cells FOSS provides core classes for working with Excel formulas in Python. [identifier omitted] must understand how the `Cell` class stores and evaluates formulas, how the Workbook and Worksheet objects manage formula contexts, and how the `CellValueHandler` processes formula-related data types per [identifier omitted]-376 specifications.
+Aspose.Cells FOSS provides core classes for working with Excel workbooks and their components in Python. The `Workbook` class serves as the primary entry point for loading, creating, and managing spreadsheet files, while `Worksheet`, `Cells`, and `Cell` enable granular access to individual elements.
 
-### `Cell`-[identifier omitted] Formula Handling
+Formula handling relies on the `Cell` class, where the `formula` property allows setting and retrieving formulas, and `value` stores computed results. The `Cells` collection provides indexed access to `cells` using 1-based row/column coordinates via the `cell(row, column)` method.
 
-The `Cell` class exposes the formula() method to set or retrieve a cell's formula string. [identifier omitted] are stored as text and evaluated by Excel-compatible engines when the workbook is opened or recalculated. The value() property reflects the computed result after evaluation, while data_type() indicates whether the cell holds a number, string, boolean, or error.
+`Chart` creation and manipulation are supported through `Chart`, `ChartCollection`, and `ChartSeries` classes. Charts are added to a worksheet using methods like `add_line()` or `add_bar()` on the `ChartCollection`, and series data is configured using `add_series()` with explicit `value` and category inputs.
 
-### Workbook and Worksheet [identifier omitted]
-
-[identifier omitted] may reference other cells or ranges within the same worksheet or across worksheets. The Workbook and Worksheet classes maintain internal references and dependencies required for correct formula resolution. The `CalculationProperties` class exposes settings like calc_mode() and full_calc_on_load() that control when and how formulas are recalculated.
-
-### Value Parsing and Formatting
-
-The `CellValueHandler` class provides static utilities to parse and format cell values according to [identifier omitted]-376 standards. [identifier omitted] like parse_value_from_xml() and format_value_for_xml() ensure compatibility when importing or exporting formula results, while excel_serial_to_datetime() converts Excel date serial numbers to Python datetime objects.
+Data import/export operations use dedicated handler classes: `CSVHandler` for CSV, `JsonHandler` for JSON, and `MarkdownHandler` for Markdown formats. These static methods operate directly on `Workbook` instances to serialize or deserialize content without intermediate objects.
 
 ## Implementation
 
-Aspose.Cells FOSS enables formula handling through the `Cell` class, which supports reading and writing formulas via the formula() method. The `CellValueHandler` class provides utilities for parsing and formatting cell values according to [identifier omitted]-376, including type detection and error value handling.
+Aspose.Cells FOSS enables programmatic `formula` handling in Excel files using the `Workbook` and `Cell` classes. Developers can set, read, and `clear` formulas on individual `cells` via the `formula` property and related methods.
 
 ```python
 import aspose.cells
@@ -62,56 +58,47 @@ workbook = aspose.cells.Workbook()
 worksheet = workbook.worksheets[0]
 
 # Set a formula in cell A1
-worksheet.cells.get('A1').formula('=SUM(B1:B5)')
-
-# Retrieve the formula
-formula_text = worksheet.cells.get('A1').formula()
+worksheet.cells.cell(0, 0).formula = "=SUM(B1:B5)"
 
 # Save the workbook
-workbook.save('formula_example.xlsx')
+workbook.save("output.xlsx")
 ```
 
-To work with cell values and formulas together, use the `Cell` class methods value() and formula() independently. The formula() method accepts a string expression starting with '=' and stores it as a formula, while value() handles raw data such as numbers, strings, or booleans.
+To evaluate or inspect a `cell`'s `formula`, access the `formula` property directly. Use `clear_formula()` to `remove` the `formula` while preserving the `cell`'s `value`.
 
 ```python
 import aspose.cells
 
-workbook = aspose.cells.Workbook()
+workbook = aspose.cells.Workbook("input.xlsx")
 worksheet = workbook.worksheets[0]
-cell = worksheet.cells.get('C1')
 
-# Set a numeric value
-cell.value(42)
+# Read the formula from cell C1
+formula = worksheet.cells.cell(0, 2).formula
 
-# Set a formula referencing another cell
-cell.formula('=A1*2')
+# Clear the formula but keep the calculated value
+worksheet.cells.cell(0, 2).clear_formula()
 
-# Get the stored formula
-stored_formula = cell.formula()
-
-# Get the raw value (not calculated result)
-raw_value = cell.value()
+workbook.save("output.xlsx")
 ```
 
-For advanced value handling, `CellValueHandler` provides static methods like get_cell_type() to determine the [identifier omitted]-376 cell type and is_error_value() to check for error states such as #DIV/0! or #N/A. [identifier omitted] utilities support robust processing of imported or exported cell data.
+The `Cells` class provides utility methods for coordinate conversions, such as `column_index_from_string()` and `coordinate_from_string()`, which help map Excel-`style` references (e.g., "A1") to row/column indices used in the API.
 
 ```python
 import aspose.cells
 
-# Determine cell type from a Python value
-value = 100.5
-cell_type = aspose.cells.CellValueHandler.get_cell_type(value)
+# Convert Excel column letter to 1-based index
+col_index = aspose.cells.Cells.column_index_from_string("C")
 
-# Check if a value is an error
-is_error = aspose.cells.CellValueHandler.is_error_value('#N/A')
+# Convert row/column to Excel coordinate string
+coord = aspose.cells.Cells.coordinate_to_string(5, 3)
 
-# Format value for XML export
-formatted = aspose.cells.CellValueHandler.format_value_for_xml(123, 'n')
+print(f"Column C → index {col_index}")
+print(f"Row 5, Column 3 → {coord}")
 ```
 
 ## Code Examples
 
-Aspose.Cells FOSS enables reading and writing cell formulas in Python workbooks. Use the `Cell` class to set or retrieve formulas via the formula() method, and ensure values update correctly by triggering calculation.
+Aspose.Cells FOSS enables programmatic manipulation of Excel workbooks and cells in Python. Using the `Workbook` and `Cell` classes, developers can create, read, and modify formulas and values directly in spreadsheet data.
 
 ```python
 import aspose.cells
@@ -121,23 +108,33 @@ workbook = aspose.cells.Workbook()
 worksheet = workbook.worksheets[0]
 
 # Set a formula in cell A1
-worksheet.cells.get('A1').formula('=SUM(B1:B5)')
-
-# Set values in B1 to B5 for the formula to compute
-for i in range(5):
-    worksheet.cells.get(f'B{i+1}').value = i + 1
-
-# Calculate formulas
-workbook.calculate()
+worksheet.cells.cell(0, 0).formula = "=10+20"
 
 # Save the workbook
-workbook.save('formula_example.xlsx')
+workbook.save("output.xlsx")
+```
+
+The `Cells` collection provides methods to access cells by row/column indices or coordinate strings. Use `cell(row, column)` with 1-based indexing to retrieve a `Cell` instance and set its `formula` property.
+
+```python
+import aspose.cells
+
+# Load a workbook from file
+workbook = aspose.cells.Workbook("input.xlsx")
+worksheet = workbook.worksheets.get_worksheet(0)
+
+# Read and update a formula in cell B2
+cell = worksheet.cells.cell(1, 1)
+cell.formula = "=A1*B1"
+
+# Save changes
+workbook.save("updated.xlsx")
 ```
 
 ## See Also
 
-- [Add and manage cell comments](/blog.aspose.org/cells/python/introducing-cells-foss-python/)
-- [Protect workbooks and worksheets](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)
-- [Perform spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)
-- [Convert file formats](/kb.aspose.org/cells/python/how-to-convert-csv-to-json-python/)
-- [Fix common errors](/kb.aspose.org/cells/python/how-to-fix-spreadsheets-errors-python/)
+- [Install and set up Cells FOSS](/blog.aspose.org/cells/python/introducing-cells-foss-python/)
+- [Create all chart types in spreadsheets](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)
+- [Perform core spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)
+- [Convert files between formats](/kb.aspose.org/cells/python/how-to-convert-csv-to-json-python/)
+- [Resolve common errors and issues](/kb.aspose.org/cells/python/how-to-fix-spreadsheets-errors-python/)

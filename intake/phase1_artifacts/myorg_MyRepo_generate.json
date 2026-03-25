@@ -9,14 +9,15 @@
     }
   },
   "classification": {
-    "decision": "eligible",
+    "decision": "ineligible",
     "full_name": "myorg/MyRepo",
     "reasons": [
-      "source-grounded phase1 inspection passed"
+      "repository is archived"
     ]
   },
   "platform": "python",
   "repo": {
+    "archived": true,
     "default_branch": "main",
     "description": "A test repo",
     "full_name": "myorg/MyRepo",

@@ -1,0 +1,22 @@
+{
+  "budget_log_overflow_count": 0,
+  "build_systems": [
+    "maven"
+  ],
+  "by_category": {
+    "asset": 5,
+    "config": 2,
+    "doc": 2,
+    "source": 277,
+    "test": 117
+  },
+  "content_used_bytes": 1604533,
+  "files_enumerated": 403,
+  "files_read": 363,
+  "has_ci": false,
+  "has_docs_folder": false,
+  "has_examples_folder": false,
+  "has_tests": true,
+  "package_name": "org.aspose.slides.foss:aspose-slides-foss",
+  "primary_language": "java"
+}

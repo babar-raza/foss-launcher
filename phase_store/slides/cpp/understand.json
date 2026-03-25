@@ -1,0 +1,4390 @@
+{
+  "api_surface": {
+    "api_identifiers": [],
+    "class_briefs": [],
+    "confidence": "low",
+    "enums": [],
+    "format_matrix": [
+      {
+        "can_export": true,
+        "can_import": false,
+        "caveats": [],
+        "extension": ".pptx",
+        "name": "PPTX",
+        "source_evidence": "runs\\.clone_cache\\aspose_slides_cpp",
+        "test_count": 11
+      }
+    ],
+    "import_allowlist": [],
+    "public_classes": []
+  },
+  "claims": [
+    {
+      "claim_id": "CLM-slides-fa8517",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "PPTX format support",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "format",
+      "text": "Aspose.Slides FOSS for C++ supports PPTX (.pptx) format for writing",
+      "tier_relevance": "all",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-slides-6bdf02",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/table.h>\n#include <Aspose/Slides/Foss/export/s",
+          "source_file": "README.md"
+        }
+      ],
+      "kind": "workflow",
+      "text": "Example demonstrates saving files in PPTX format",
+      "tier_relevance": "all",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-slides-243e1a",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": null,
+          "snippet": "find_package(aspose_slides_foss REQUIRED)  # CMake",
+          "source_file": ""
+        }
+      ],
+      "kind": "install",
+      "text": "Install Aspose.Slides FOSS for C++ via: find_package(aspose_slides_foss REQUIRED)  # CMake",
+      "tier_relevance": "all",
+      "visibility": "internal"
+    },
+    {
+      "claim_id": "CLM-slides-3b715a",
+      "claim_source": "deterministic",
+      "confidence": 0.65,
+      "evidence": [
+        {
+          "line_end": null,
+          "line_start": 235,
+          "snippet": "The following areas are: The following areas are not yet available:",
+          "source_file": "README.md"
+        }
+      ],
+      "kind": "troubleshoot",
+      "text": "The following areas are has limitation: The following areas are not yet available:",
+      "tier_relevance": "all",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-slides-b21169",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 40,
+          "line_start": 34,
+          "snippet": "fmt.fill_format().set_fill_type(FillType::SOLID);\nfmt.fill_format().solid_fill_color().set_color(Color::from_argb(255, 0, 70, 127));",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "api",
+      "text": "The `FillFormat` class allows setting the fill type and color.",
+      "tier_relevance": "core",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-slides-3ae3bc",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 33,
+          "line_start": 27,
+          "snippet": "fmt.set_font_height(24.0f);\nfmt.set_font_bold(NullableBool::TRUE);",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "api",
+      "text": "The `PortionFormat` class allows setting font height and bolding text.",
+      "tier_relevance": "core",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-slides-d2bfac",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 33,
+          "line_start": 27,
+          "snippet": "fmt.set_font_height(24.0f);\nfmt.set_font_bold(NullableBool::TRUE);",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "api",
+      "text": "The `Portion` class allows setting the text of a portion within a paragraph.",
+      "tier_relevance": "core",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-slides-69bdbd",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 12,
+          "line_start": 9,
+          "snippet": "// Create a new presentation\nPresentation new_pres;\nnew_pres.save(\"new.pptx\", SaveFormat::PPTX);",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "feature",
+      "text": "The `Presentation` class allows creating new presentations.",
+      "tier_relevance": "all",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-slides-52188c",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 6,
+          "line_start": 3,
+          "snippet": "// Open an existing presentation\nPresentation pres(\"input.pptx\");",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "feature",
+      "text": "The `Presentation` class allows opening existing presentations.",
+      "tier_relevance": "all",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-slides-3b246a",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 9,
+          "line_start": 6,
+          "snippet": "pres.save(\"output.pptx\", SaveFormat::PPTX);",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "api",
+      "text": "The `Presentation` class provides a `save` method to save presentations in PPTX format.",
+      "tier_relevance": "core",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-slides-47cc81",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 17,
+          "line_start": 14,
+          "snippet": "auto& shape = slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 50, 50, 300, 100);",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "api",
+      "text": "The `ShapeType` enumeration includes a `RECTANGLE` shape type.",
+      "tier_relevance": "core",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-slides-9db4eb",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 17,
+          "line_start": 14,
+          "snippet": "auto& shape = slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 50, 50, 300, 100);",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "api",
+      "text": "The `Shape` class allows adding auto shapes to a presentation.",
+      "tier_relevance": "core",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-slides-bbf153",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 46,
+          "line_start": 43,
+          "snippet": "auto& table = pres.slides()[0].shapes().add_table(\n    50, 50, {120.0, 120.0, 120.0}, {40.0, 40.0});",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "api",
+      "text": "The `Table` class allows adding tables to a presentation.",
+      "tier_relevance": "core",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-slides-924fc3",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 20,
+          "line_start": 17,
+          "snippet": "shape.add_text_frame(\"Hello, world!\");",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "api",
+      "text": "The `TextFrame` class allows adding text to a shape.",
+      "tier_relevance": "core",
+      "visibility": "public"
+    },
+    {
+      "claim_id": "CLM-slides-84402d",
+      "claim_source": "llm_sparse_grounding",
+      "confidence": 0.55,
+      "evidence": [
+        {
+          "line_end": 9,
+          "line_start": 6,
+          "snippet": "pres.save(\"output.pptx\", SaveFormat::PPTX);",
+          "source_file": "unknown"
+        }
+      ],
+      "kind": "format",
+      "text": "The library supports saving presentations in PPTX format.",
+      "tier_relevance": "all",
+      "visibility": "public"
+    }
+  ],
+  "extraction_db": {
+    "api_facts": [],
+    "completeness": {
+      "api_class_count": 0,
+      "api_confidence": "low",
+      "api_method_count": 0,
+      "format_confidence_avg": 1.0,
+      "format_count": 1,
+      "limitation_count": 1,
+      "missing_signals": [
+        "no_api_classes"
+      ],
+      "operation_coverage": [
+        "save_file"
+      ],
+      "overall_completeness": 0.26,
+      "snippet_count": 9
+    },
+    "format_facts": [
+      {
+        "can_export": true,
+        "can_import": false,
+        "confidence": 1.0,
+        "evidence_source": "enum_declaration",
+        "extension": ".pptx",
+        "fact_id": "FF-slides-cpp-PPTX",
+        "format_name": "PPTX",
+        "source_file": "runs\\.clone_cache\\aspose_slides_cpp"
+      }
+    ],
+    "install_recipe": {
+      "install_command": "find_package(aspose_slides_foss REQUIRED)  # CMake",
+      "package_name": "aspose_slides_foss",
+      "source_file": "CMakeLists.txt",
+      "verification_code": "#include <Aspose/Slides>",
+      "version_constraint": ""
+    },
+    "limitation_facts": [
+      {
+        "confidence": 0.8,
+        "constraint": "The following areas are not yet available:",
+        "fact_id": "LF-slides-cpp-fe37c2",
+        "feature": "The following areas are",
+        "source_file": "README.md",
+        "source_line": 235,
+        "status": "warning"
+      }
+    ],
+    "missing_coverage": [
+      {
+        "attempted_strategies": [
+          "ast_extraction",
+          "tree_sitter"
+        ],
+        "fallback_used": "none",
+        "field": "api_facts",
+        "reason": "no_api_members_extracted"
+      }
+    ],
+    "snippet_facts": [
+      {
+        "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nint main() {\n    // Open an existing presentation\n    Presentation pres(\"input.pptx\");\n    auto& slides = pres.slides();\n    // ... work with slides ...\n    pres.save(\"output.pptx\", SaveFormat::PPTX);\n\n    // Create a new presentation\n    Presentation new_pres;\n    auto& slide = new_pres.slides()[0];\n    new_pres.save(\"new.pptx\", SaveFormat::PPTX);\n}",
+        "confidence": 0.7,
+        "demonstrates_class": "",
+        "demonstrates_methods": [],
+        "fact_id": "SF-slides-cpp-save_file-f94a1a",
+        "input_format": "",
+        "language": "cpp",
+        "operation_label": "save_file",
+        "output_format": "PPTX",
+        "snippet_source_idx": 0,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/shape_type.h>\n#include <Aspose/Slides/Foss/auto_shape.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\nauto& slide = pres.slides()[0];\nauto& shape = slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 50, 50, 300, 100);\nshape.add_text_frame(\"Hello, world!\");\npres.save(\"shapes.pptx\", SaveFormat::PPTX);",
+        "confidence": 0.7,
+        "demonstrates_class": "",
+        "demonstrates_methods": [],
+        "fact_id": "SF-slides-cpp-save_file-814561",
+        "input_format": "",
+        "language": "cpp",
+        "operation_label": "save_file",
+        "output_format": "PPTX",
+        "snippet_source_idx": 1,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/shape_type.h>\n#include <Aspose/Slides/Foss/auto_shape.h>\n#include <Aspose/Slides/Foss/text_frame.h>\n#include <Aspose/Slides/Foss/paragraph.h>\n#include <Aspose/Slides/Foss/portion.h>\n#include <Aspose/Slides/Foss/portion_format.h>\n#include <Aspose/Slides/Foss/fill_type.h>\n#include <Aspose/Slides/Foss/nullable_bool.h>\n#include <Aspose/Slides/Foss/drawing/color.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\nusing namespace Aspose::Slides::Foss::Drawing;\n\nPresentation pres;\nauto& shape = pres.slides()[0].shapes().add_auto_shape(\n    ShapeType::RECTANGLE, 50, 50, 400, 150);\nauto& tf = shape.add_text_frame(\"Formatted text\");\nauto& fmt = tf.paragraphs()[0].portions()[0].portion_format();\nfmt.set_font_height(24.0f);\nfmt.set_font_bold(NullableBool::TRUE);\nfmt.fill_format().set_fill_type(FillType::SOLID);\nfmt.fill_format().solid_fill_color().set_color(Color::from_argb(255, 0, 70, 127));\npres.save(\"text.pptx\", SaveFormat::PPTX);",
+        "confidence": 0.7,
+        "demonstrates_class": "",
+        "demonstrates_methods": [],
+        "fact_id": "SF-slides-cpp-save_file-fc949b",
+        "input_format": "",
+        "language": "cpp",
+        "operation_label": "save_file",
+        "output_format": "PPTX",
+        "snippet_source_idx": 2,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/table.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\nauto& table = pres.slides()[0].shapes().add_table(\n    50, 50, {120.0, 120.0, 120.0}, {40.0, 40.0});\ntable.rows()[0][0].text_frame().set_text(\"Name\");\ntable.rows()[0][1].text_frame().set_text(\"Value\");\npres.save(\"table.pptx\", SaveFormat::PPTX);",
+        "confidence": 0.7,
+        "demonstrates_class": "",
+        "demonstrates_methods": [],
+        "fact_id": "SF-slides-cpp-save_file-3f9f66",
+        "input_format": "",
+        "language": "cpp",
+        "operation_label": "save_file",
+        "output_format": "PPTX",
+        "snippet_source_idx": 3,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/shape_type.h>\n#include <Aspose/Slides/Foss/auto_shape.h>\n#include <Aspose/Slides/Foss/connector.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\nauto& slide = pres.slides()[0];\nauto& box1 = slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 50, 100, 150, 60);\nauto& box2 = slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 350, 100, 150, 60);\nauto& conn = slide.shapes().add_connector(\n    ShapeType::BENT_CONNECTOR3, 0, 0, 10, 10);\nconn.set_start_shape_connected_to(&box1);\nconn.set_start_shape_connection_site_index(3);  // right\nconn.set_end_shape_connected_to(&box2);\nconn.set_end_shape_connection_site_index(1);    // left\npres.save(\"connector.pptx\", SaveFormat::PPTX);",
+        "confidence": 0.7,
+        "demonstrates_class": "",
+        "demonstrates_methods": [],
+        "fact_id": "SF-slides-cpp-save_file-cb5901",
+        "input_format": "",
+        "language": "cpp",
+        "operation_label": "save_file",
+        "output_format": "PPTX",
+        "snippet_source_idx": 4,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/shape_type.h>\n#include <Aspose/Slides/Foss/auto_shape.h>\n#include <Aspose/Slides/Foss/fill_type.h>\n#include <Aspose/Slides/Foss/drawing/color.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\nusing namespace Aspose::Slides::Foss::Drawing;\n\nPresentation pres;\nauto& shape = pres.slides()[0].shapes().add_auto_shape(\n    ShapeType::RECTANGLE, 50, 50, 300, 150);\nshape.fill_format().set_fill_type(FillType::SOLID);\nshape.fill_format().solid_fill_color().set_color(Color::from_argb(255, 30, 120, 200));\npres.save(\"fill.pptx\", SaveFormat::PPTX);",
+        "confidence": 0.7,
+        "demonstrates_class": "",
+        "demonstrates_methods": [],
+        "fact_id": "SF-slides-cpp-save_file-d17f21",
+        "input_format": "",
+        "language": "cpp",
+        "operation_label": "save_file",
+        "output_format": "PPTX",
+        "snippet_source_idx": 5,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/notes_slide_manager.h>\n#include <Aspose/Slides/Foss/notes_slide.h>\n#include <Aspose/Slides/Foss/text_frame.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\nauto& notes = pres.slides()[0].notes_slide_manager().add_notes_slide();\nnotes.notes_text_frame().set_text(\"Speaker notes go here.\");\npres.save(\"notes.pptx\", SaveFormat::PPTX);",
+        "confidence": 0.7,
+        "demonstrates_class": "",
+        "demonstrates_methods": [],
+        "fact_id": "SF-slides-cpp-save_file-87dfb4",
+        "input_format": "",
+        "language": "cpp",
+        "operation_label": "save_file",
+        "output_format": "PPTX",
+        "snippet_source_idx": 6,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/comment_author_collection.h>\n#include <Aspose/Slides/Foss/comment_author.h>\n#include <Aspose/Slides/Foss/comment_collection.h>\n#include <Aspose/Slides/Foss/drawing/point_f.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n#include <chrono>\n\nusing namespace Aspose::Slides::Foss;\nusing namespace Aspose::Slides::Foss::Drawing;\n\nPresentation pres;\nauto& author = pres.comment_authors().add_author(\"Jane Smith\", \"JS\");\nauto& slide = pres.slides()[0];\nauthor.comments().add_comment(\n    \"Review this slide\", &slide, PointF{2.0, 2.0},\n    std::chrono::system_clock::now());\npres.save(\"comments.pptx\", SaveFormat::PPTX);",
+        "confidence": 0.7,
+        "demonstrates_class": "",
+        "demonstrates_methods": [],
+        "fact_id": "SF-slides-cpp-save_file-97e8fd",
+        "input_format": "",
+        "language": "cpp",
+        "operation_label": "save_file",
+        "output_format": "PPTX",
+        "snippet_source_idx": 7,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      },
+      {
+        "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/document_properties.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\npres.document_properties().set_title(\"Q1 Results\");\npres.document_properties().set_author(\"Finance Team\");\npres.document_properties().set_custom_property_value(\"Version\", 3);\npres.save(\"deck.pptx\", SaveFormat::PPTX);",
+        "confidence": 0.7,
+        "demonstrates_class": "",
+        "demonstrates_methods": [],
+        "fact_id": "SF-slides-cpp-save_file-4d24aa",
+        "input_format": "",
+        "language": "cpp",
+        "operation_label": "save_file",
+        "output_format": "PPTX",
+        "snippet_source_idx": 8,
+        "source_file": "README.md",
+        "source_lines": [
+          0,
+          0
+        ],
+        "syntax_valid": true
+      }
+    ]
+  },
+  "extraction_degraded": false,
+  "keyword_research": {
+    "cache_version": 1,
+    "cached_at": "2026-03-25T11:21:45.282284+00:00",
+    "gemini_available": true,
+    "long_tail": [
+      "cppcon slides 2025",
+      "aspose slides cpp",
+      "meeting cpp slides",
+      "python slides for beginners",
+      "install aspose slides c++",
+      "c++ open source powerpoint library",
+      "create pptx c++ example",
+      "read powerpoint c++ code",
+      "edit presentation c++ programmatically",
+      "convert pptx to pdf c++",
+      "c++ generate slides from data",
+      "aspose slides c++ api documentation",
+      "c++ presentation automation library",
+      "free c++ powerpoint api",
+      "c++ export slides to image"
+    ],
+    "per_page": {
+      "api-overview": [
+        "slides",
+        "cpp",
+        "aspose slides c++ api documentation",
+        "free c++ powerpoint api"
+      ],
+      "best-practices": [
+        "slides",
+        "cpp"
+      ],
+      "developer-guide": [
+        "slides",
+        "cpp",
+        "create pptx c++ example"
+      ],
+      "faq": [
+        "slides",
+        "cpp"
+      ],
+      "getting-started": [
+        "slides",
+        "cpp",
+        "install aspose slides c++"
+      ],
+      "installation": [
+        "slides",
+        "cpp",
+        "install aspose slides c++"
+      ],
+      "troubleshooting": [
+        "slides",
+        "cpp"
+      ],
+      "tutorial": [
+        "slides",
+        "cpp",
+        "create pptx c++ example"
+      ]
+    },
+    "primary_keywords": [
+      "cppcon slides",
+      "cpp slides",
+      "cppnow slides",
+      "cppcon slides 2025",
+      "aspose slides cpp",
+      "meeting cpp slides",
+      "python slides",
+      "python slides for beginners"
+    ],
+    "sources": {
+      "claims": [
+        "class",
+        "allows",
+        "pptx",
+        "presentation",
+        "format",
+        "presentations",
+        "adding",
+        "setting",
+        "shape",
+        "text",
+        "areas",
+        "aspose",
+        "following",
+        "foss",
+        "portion",
+        "save",
+        "saving",
+        "slides",
+        "supports",
+        "type"
+      ],
+      "gemini": [
+        "install aspose slides c++",
+        "c++ open source powerpoint library",
+        "create pptx c++ example",
+        "read powerpoint c++ code",
+        "edit presentation c++ programmatically",
+        "convert pptx to pdf c++",
+        "c++ generate slides from data",
+        "aspose slides c++ api documentation",
+        "c++ presentation automation library",
+        "free c++ powerpoint api",
+        "c++ export slides to image",
+        "add slide to powerpoint c++",
+        "c++ powerpoint library tutorial",
+        "aspose slides c++ github",
+        "c++ powerpoint chart generation"
+      ],
+      "patterns": [
+        "how to install FOSS cpp",
+        "FOSS cpp tutorial",
+        "FOSS cpp example",
+        "FOSS cpp getting started",
+        "python slides library",
+        "slides cpp documentation",
+        "FOSS cpp api reference",
+        "best slides library for cpp",
+        "how to load slides files cpp",
+        "how to save slides files cpp",
+        "how to export slides files cpp",
+        "how to read slides files cpp",
+        "how to open slides files cpp"
+      ],
+      "suggest": [
+        "cppcon slides",
+        "cpp slides",
+        "cppnow slides",
+        "cppcon slides 2025",
+        "aspose slides cpp",
+        "meeting cpp slides",
+        "python slides",
+        "python slides for beginners",
+        "python slideshare",
+        "python slideshow"
+      ]
+    }
+  },
+  "page_evidence_index": {
+    "_index": {
+      "claim_count": 15,
+      "evidence_sufficient": false,
+      "format_evidence_complete": true,
+      "has_operation_snippets": false,
+      "missing": [
+        "no_verified_claims"
+      ],
+      "page_role": "_index",
+      "snippet_count": 9,
+      "verified_claim_count": 0
+    },
+    "api_reference": {
+      "claim_count": 15,
+      "evidence_sufficient": false,
+      "format_evidence_complete": false,
+      "has_operation_snippets": false,
+      "missing": [
+        "no_verified_claims",
+        "no_api_facts"
+      ],
+      "page_role": "api_reference",
+      "snippet_count": 9,
+      "verified_claim_count": 0
+    },
+    "feature_blog": {
+      "claim_count": 15,
+      "evidence_sufficient": false,
+      "format_evidence_complete": true,
+      "has_operation_snippets": false,
+      "missing": [
+        "no_verified_claims"
+      ],
+      "page_role": "feature_blog",
+      "snippet_count": 9,
+      "verified_claim_count": 0
+    },
+    "format_conversion": {
+      "claim_count": 15,
+      "evidence_sufficient": false,
+      "format_evidence_complete": true,
+      "has_operation_snippets": false,
+      "missing": [
+        "no_operation_examples"
+      ],
+      "page_role": "format_conversion",
+      "snippet_count": 9,
+      "verified_claim_count": 0
+    },
+    "howto_article": {
+      "claim_count": 15,
+      "evidence_sufficient": false,
+      "format_evidence_complete": false,
+      "has_operation_snippets": false,
+      "missing": [
+        "no_operation_examples",
+        "no_verified_claims"
+      ],
+      "page_role": "howto_article",
+      "snippet_count": 9,
+      "verified_claim_count": 0
+    },
+    "install_guide": {
+      "claim_count": 15,
+      "evidence_sufficient": true,
+      "format_evidence_complete": false,
+      "has_operation_snippets": false,
+      "missing": [],
+      "page_role": "install_guide",
+      "snippet_count": 9,
+      "verified_claim_count": 0
+    }
+  },
+  "product": {
+    "canonical_import": "Aspose::Slides",
+    "display_name": "Aspose.Slides FOSS for C++",
+    "family": "slides",
+    "platform": "cpp",
+    "platform_profile": null,
+    "repo_sha": "25adb25c8796f06d9b89cd5f8093e490091195ef",
+    "repo_url": "https://github.com/aspose-slides-foss/Aspose.Slides-FOSS-for-Cpp",
+    "runtime_import": ""
+  },
+  "product_evidence": {
+    "capabilities": [
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 33
+        },
+        "source": "readme",
+        "text": "**Presentation I/O** — Open, create, and save `.pptx` files with full round-trip fidelity"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 34
+        },
+        "source": "readme",
+        "text": "**Slides** — Add, remove, clone, reorder, and iterate slides"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 35
+        },
+        "source": "readme",
+        "text": "**Shapes** — AutoShapes, PictureFrames, Tables, Connectors"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 36
+        },
+        "source": "readme",
+        "text": "**Text** — TextFrame, Paragraph, Portion with character, paragraph, and text frame formatting (including bullets)"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 37
+        },
+        "source": "readme",
+        "text": "**Fill** — Solid, gradient, pattern, and picture fills"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 38
+        },
+        "source": "readme",
+        "text": "**Lines** — Width, dash style, arrows, join and alignment"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 39
+        },
+        "source": "readme",
+        "text": "**Effects** — Outer shadow, glow, soft edge, blur, reflection, inner shadow"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 40
+        },
+        "source": "readme",
+        "text": "**3D** — Bevel, camera, light rig, material, extrusion depth"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 41
+        },
+        "source": "readme",
+        "text": "**Document properties** — Core, app, and custom properties"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 42
+        },
+        "source": "readme",
+        "text": "**Notes slides** — Per-slide notes with header/footer management"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 43
+        },
+        "source": "readme",
+        "text": "**Comments** — Threaded comments with authors, timestamps, and positions"
+      },
+      {
+        "evidence": {
+          "file": "README.md",
+          "line": 44
+        },
+        "source": "readme",
+        "text": "**Images** — Embed from file, bytes, or stream"
+      },
+      {
+        "evidence": {
+          "file": "src\\Aspose.Slides.Foss\\_internal\\pptx\\shape_type_mapping.cpp",
+          "line": 15
+        },
+        "source": "docstring:MappingEntry",
+        "text": "A single entry in the OOXML prst ↔ ShapeType name mapping."
+      }
+    ],
+    "confidence": {},
+    "conversion_pairs": [],
+    "format_evidence_source": "ast_verified",
+    "input_formats": [],
+    "install_recipe": {
+      "install_command": "find_package(aspose_slides_foss REQUIRED)  # CMake",
+      "package_name": "aspose_slides_foss",
+      "source_file": "CMakeLists.txt",
+      "verification_code": "#include <Aspose/Slides>",
+      "version_constraint": ""
+    },
+    "limitations": [
+      {
+        "confidence": "doc_stated",
+        "constraint": "The following areas are not yet available:",
+        "context": "",
+        "feature": "The following areas are",
+        "quote": "The following areas are not yet available:",
+        "source_file": "README.md",
+        "source_line": 235,
+        "status": "warning"
+      }
+    ],
+    "missing_info": [],
+    "output_formats": [
+      "PPTX"
+    ],
+    "supported_formats": [
+      "PPTX"
+    ],
+    "workflow_examples": [],
+    "workflows": []
+  },
+  "repo": {
+    "config_paths": [
+      ".gitattributes",
+      ".gitignore"
+    ],
+    "content_budget_used": 1988943,
+    "content_files_read": 475,
+    "doc_paths": [
+      "README.md"
+    ],
+    "example_paths": [],
+    "file_index": {
+      ".clone_sha": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 40
+      },
+      ".clone_timestamp": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 32
+      },
+      ".clone_url": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 64
+      },
+      ".gitattributes": {
+        "category": "config",
+        "language": "",
+        "size_bytes": 392
+      },
+      ".gitignore": {
+        "category": "config",
+        "language": "",
+        "size_bytes": 324
+      },
+      "CMakeLists.txt": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 1453
+      },
+      "LICENSE": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 1092
+      },
+      "README.md": {
+        "category": "doc",
+        "language": "",
+        "size_bytes": 7969
+      },
+      "THIRD_PARTY_NOTICES": {
+        "category": "asset",
+        "language": "",
+        "size_bytes": 4472
+      },
+      "include/Aspose/Slides/Foss/_internal/base_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 6042
+      },
+      "include/Aspose/Slides/Foss/_internal/export/exporter_base.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3117
+      },
+      "include/Aspose/Slides/Foss/_internal/export/exporter_registry.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3439
+      },
+      "include/Aspose/Slides/Foss/_internal/export/pptx_exporter.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3130
+      },
+      "include/Aspose/Slides/Foss/_internal/opc/content_types.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1703
+      },
+      "include/Aspose/Slides/Foss/_internal/opc/content_types_manager.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4048
+      },
+      "include/Aspose/Slides/Foss/_internal/opc/opc_package.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4154
+      },
+      "include/Aspose/Slides/Foss/_internal/opc/part_utils.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2762
+      },
+      "include/Aspose/Slides/Foss/_internal/opc/relationships.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3907
+      },
+      "include/Aspose/Slides/Foss/_internal/opc/relationships_manager.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 7304
+      },
+      "include/Aspose/Slides/Foss/_internal/pptx/app_properties_part.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3775
+      },
+      "include/Aspose/Slides/Foss/_internal/pptx/bulk_text_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4089
+      },
+      "include/Aspose/Slides/Foss/_internal/pptx/comment_authors_part.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4004
+      },
+      "include/Aspose/Slides/Foss/_internal/pptx/comments_part.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 7265
+      },
+      "include/Aspose/Slides/Foss/_internal/pptx/constants.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 17754
+      },
+      "include/Aspose/Slides/Foss/_internal/pptx/core_properties_part.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3456
+      },
+      "include/Aspose/Slides/Foss/_internal/pptx/custom_properties_part.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3965
+      },
+      "include/Aspose/Slides/Foss/_internal/pptx/layout_slide_part.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2161
+      },
+      "include/Aspose/Slides/Foss/_internal/pptx/master_slide_part.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2147
+      },
+      "include/Aspose/Slides/Foss/_internal/pptx/notes_slide_part.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 5063
+      },
+      "include/Aspose/Slides/Foss/_internal/pptx/slide_part.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2166
+      },
+      "include/Aspose/Slides/Foss/_internal/xml/xml_element.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3304
+      },
+      "include/Aspose/Slides/Foss/adjust_value.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1842
+      },
+      "include/Aspose/Slides/Foss/adjust_value_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2909
+      },
+      "include/Aspose/Slides/Foss/auto_shape.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1795
+      },
+      "include/Aspose/Slides/Foss/base_handout_notes_slide_header_footer_manager.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 991
+      },
+      "include/Aspose/Slides/Foss/base_portion_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 9362
+      },
+      "include/Aspose/Slides/Foss/base_shape_lock.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 359
+      },
+      "include/Aspose/Slides/Foss/base_slide.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2662
+      },
+      "include/Aspose/Slides/Foss/bevel_preset_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3409
+      },
+      "include/Aspose/Slides/Foss/bullet_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4345
+      },
+      "include/Aspose/Slides/Foss/bullet_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 757
+      },
+      "include/Aspose/Slides/Foss/camera.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3011
+      },
+      "include/Aspose/Slides/Foss/camera_preset_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 20090
+      },
+      "include/Aspose/Slides/Foss/cell.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 8626
+      },
+      "include/Aspose/Slides/Foss/cell_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4010
+      },
+      "include/Aspose/Slides/Foss/cell_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2651
+      },
+      "include/Aspose/Slides/Foss/color_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2600
+      },
+      "include/Aspose/Slides/Foss/color_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 862
+      },
+      "include/Aspose/Slides/Foss/column.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2991
+      },
+      "include/Aspose/Slides/Foss/column_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2692
+      },
+      "include/Aspose/Slides/Foss/column_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 352
+      },
+      "include/Aspose/Slides/Foss/comment.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2513
+      },
+      "include/Aspose/Slides/Foss/comment_author.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3376
+      },
+      "include/Aspose/Slides/Foss/comment_author_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4429
+      },
+      "include/Aspose/Slides/Foss/comment_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3202
+      },
+      "include/Aspose/Slides/Foss/connector.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3690
+      },
+      "include/Aspose/Slides/Foss/document_properties.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 12186
+      },
+      "include/Aspose/Slides/Foss/drawing/color.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 6445
+      },
+      "include/Aspose/Slides/Foss/drawing/point_f.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 873
+      },
+      "include/Aspose/Slides/Foss/drawing/rectangle_f.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 952
+      },
+      "include/Aspose/Slides/Foss/drawing/size.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 901
+      },
+      "include/Aspose/Slides/Foss/drawing/size_f.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 923
+      },
+      "include/Aspose/Slides/Foss/effect_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 5687
+      },
+      "include/Aspose/Slides/Foss/effects/blur.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2143
+      },
+      "include/Aspose/Slides/Foss/effects/fill_overlay.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3268
+      },
+      "include/Aspose/Slides/Foss/effects/glow.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2171
+      },
+      "include/Aspose/Slides/Foss/effects/i_blur.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1020
+      },
+      "include/Aspose/Slides/Foss/effects/i_fill_overlay.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1405
+      },
+      "include/Aspose/Slides/Foss/effects/i_glow.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1044
+      },
+      "include/Aspose/Slides/Foss/effects/i_image_transform_operation.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 346
+      },
+      "include/Aspose/Slides/Foss/effects/i_inner_shadow.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1403
+      },
+      "include/Aspose/Slides/Foss/effects/i_outer_shadow.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2942
+      },
+      "include/Aspose/Slides/Foss/effects/i_preset_shadow.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1513
+      },
+      "include/Aspose/Slides/Foss/effects/i_reflection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3945
+      },
+      "include/Aspose/Slides/Foss/effects/i_soft_edge.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 783
+      },
+      "include/Aspose/Slides/Foss/effects/image_transform_operation.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 596
+      },
+      "include/Aspose/Slides/Foss/effects/inner_shadow.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2702
+      },
+      "include/Aspose/Slides/Foss/effects/outer_shadow.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4404
+      },
+      "include/Aspose/Slides/Foss/effects/preset_shadow.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2749
+      },
+      "include/Aspose/Slides/Foss/effects/reflection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 5549
+      },
+      "include/Aspose/Slides/Foss/effects/soft_edge.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1882
+      },
+      "include/Aspose/Slides/Foss/export/save_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2567
+      },
+      "include/Aspose/Slides/Foss/fill_blend_mode.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 754
+      },
+      "include/Aspose/Slides/Foss/fill_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4323
+      },
+      "include/Aspose/Slides/Foss/fill_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 881
+      },
+      "include/Aspose/Slides/Foss/font_alignment.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 829
+      },
+      "include/Aspose/Slides/Foss/font_data.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1332
+      },
+      "include/Aspose/Slides/Foss/geometry_shape.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1431
+      },
+      "include/Aspose/Slides/Foss/global_layout_slide_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 5006
+      },
+      "include/Aspose/Slides/Foss/gradient_direction.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 947
+      },
+      "include/Aspose/Slides/Foss/gradient_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3194
+      },
+      "include/Aspose/Slides/Foss/gradient_shape.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 775
+      },
+      "include/Aspose/Slides/Foss/gradient_stop.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2017
+      },
+      "include/Aspose/Slides/Foss/gradient_stop_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 5560
+      },
+      "include/Aspose/Slides/Foss/graphical_object.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 794
+      },
+      "include/Aspose/Slides/Foss/graphical_object_lock.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1978
+      },
+      "include/Aspose/Slides/Foss/group_shape.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 782
+      },
+      "include/Aspose/Slides/Foss/heading_pair.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1253
+      },
+      "include/Aspose/Slides/Foss/i_adjust_value.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 572
+      },
+      "include/Aspose/Slides/Foss/i_adjust_value_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 838
+      },
+      "include/Aspose/Slides/Foss/i_auto_shape.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1102
+      },
+      "include/Aspose/Slides/Foss/i_base_handout_notes_slide_header_footer_manager.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1186
+      },
+      "include/Aspose/Slides/Foss/i_base_header_footer_manager.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1017
+      },
+      "include/Aspose/Slides/Foss/i_base_portion_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 7887
+      },
+      "include/Aspose/Slides/Foss/i_base_slide.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 830
+      },
+      "include/Aspose/Slides/Foss/i_base_slide_header_footer_manager.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 633
+      },
+      "include/Aspose/Slides/Foss/i_bulk_text_formattable.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 790
+      },
+      "include/Aspose/Slides/Foss/i_bullet_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3435
+      },
+      "include/Aspose/Slides/Foss/i_camera.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1466
+      },
+      "include/Aspose/Slides/Foss/i_cell.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3794
+      },
+      "include/Aspose/Slides/Foss/i_cell_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1331
+      },
+      "include/Aspose/Slides/Foss/i_cell_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 714
+      },
+      "include/Aspose/Slides/Foss/i_color_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3074
+      },
+      "include/Aspose/Slides/Foss/i_column.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1390
+      },
+      "include/Aspose/Slides/Foss/i_column_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1986
+      },
+      "include/Aspose/Slides/Foss/i_column_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 319
+      },
+      "include/Aspose/Slides/Foss/i_comment.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1664
+      },
+      "include/Aspose/Slides/Foss/i_comment_author.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1037
+      },
+      "include/Aspose/Slides/Foss/i_comment_author_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1662
+      },
+      "include/Aspose/Slides/Foss/i_comment_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2396
+      },
+      "include/Aspose/Slides/Foss/i_connector.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 901
+      },
+      "include/Aspose/Slides/Foss/i_document_properties.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 9237
+      },
+      "include/Aspose/Slides/Foss/i_effect_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3551
+      },
+      "include/Aspose/Slides/Foss/i_effect_param_source.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 287
+      },
+      "include/Aspose/Slides/Foss/i_fill_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2251
+      },
+      "include/Aspose/Slides/Foss/i_fill_param_source.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 281
+      },
+      "include/Aspose/Slides/Foss/i_font_data.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 840
+      },
+      "include/Aspose/Slides/Foss/i_geometry_shape.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1091
+      },
+      "include/Aspose/Slides/Foss/i_global_layout_slide_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1147
+      },
+      "include/Aspose/Slides/Foss/i_gradient_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1757
+      },
+      "include/Aspose/Slides/Foss/i_gradient_stop.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 884
+      },
+      "include/Aspose/Slides/Foss/i_gradient_stop_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 471
+      },
+      "include/Aspose/Slides/Foss/i_graphical_object.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 766
+      },
+      "include/Aspose/Slides/Foss/i_graphical_object_lock.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1117
+      },
+      "include/Aspose/Slides/Foss/i_group_shape.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 478
+      },
+      "include/Aspose/Slides/Foss/i_heading_pair.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 661
+      },
+      "include/Aspose/Slides/Foss/i_hyperlink_container.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 344
+      },
+      "include/Aspose/Slides/Foss/i_image.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 915
+      },
+      "include/Aspose/Slides/Foss/i_image_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 964
+      },
+      "include/Aspose/Slides/Foss/i_layout_slide.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 918
+      },
+      "include/Aspose/Slides/Foss/i_layout_slide_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1264
+      },
+      "include/Aspose/Slides/Foss/i_light_rig.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1186
+      },
+      "include/Aspose/Slides/Foss/i_line_fill_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1793
+      },
+      "include/Aspose/Slides/Foss/i_line_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4564
+      },
+      "include/Aspose/Slides/Foss/i_line_param_source.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 281
+      },
+      "include/Aspose/Slides/Foss/i_load_options.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 377
+      },
+      "include/Aspose/Slides/Foss/i_master_layout_slide_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 630
+      },
+      "include/Aspose/Slides/Foss/i_master_slide.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 801
+      },
+      "include/Aspose/Slides/Foss/i_master_slide_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1163
+      },
+      "include/Aspose/Slides/Foss/i_notes_size.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 998
+      },
+      "include/Aspose/Slides/Foss/i_notes_slide.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1433
+      },
+      "include/Aspose/Slides/Foss/i_notes_slide_header_footer_manager.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 819
+      },
+      "include/Aspose/Slides/Foss/i_notes_slide_manager.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 721
+      },
+      "include/Aspose/Slides/Foss/i_paragraph.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1286
+      },
+      "include/Aspose/Slides/Foss/i_paragraph_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2313
+      },
+      "include/Aspose/Slides/Foss/i_paragraph_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4146
+      },
+      "include/Aspose/Slides/Foss/i_pattern_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 752
+      },
+      "include/Aspose/Slides/Foss/i_picture_fill_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4129
+      },
+      "include/Aspose/Slides/Foss/i_picture_frame.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1512
+      },
+      "include/Aspose/Slides/Foss/i_picture_frame_lock.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2509
+      },
+      "include/Aspose/Slides/Foss/i_portion.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1114
+      },
+      "include/Aspose/Slides/Foss/i_portion_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2072
+      },
+      "include/Aspose/Slides/Foss/i_portion_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 693
+      },
+      "include/Aspose/Slides/Foss/i_presentation.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3263
+      },
+      "include/Aspose/Slides/Foss/i_presentation_component.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 494
+      },
+      "include/Aspose/Slides/Foss/i_row.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1542
+      },
+      "include/Aspose/Slides/Foss/i_row_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2015
+      },
+      "include/Aspose/Slides/Foss/i_row_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 307
+      },
+      "include/Aspose/Slides/Foss/i_section.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 405
+      },
+      "include/Aspose/Slides/Foss/i_shape.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 5177
+      },
+      "include/Aspose/Slides/Foss/i_shape_bevel.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 791
+      },
+      "include/Aspose/Slides/Foss/i_shape_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 5465
+      },
+      "include/Aspose/Slides/Foss/i_shape_frame.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1820
+      },
+      "include/Aspose/Slides/Foss/i_shape_style.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 263
+      },
+      "include/Aspose/Slides/Foss/i_slide.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1819
+      },
+      "include/Aspose/Slides/Foss/i_slide_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3158
+      },
+      "include/Aspose/Slides/Foss/i_slide_component.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 821
+      },
+      "include/Aspose/Slides/Foss/i_slides_picture.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1084
+      },
+      "include/Aspose/Slides/Foss/i_table.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3896
+      },
+      "include/Aspose/Slides/Foss/i_table_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 622
+      },
+      "include/Aspose/Slides/Foss/i_text_frame.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1896
+      },
+      "include/Aspose/Slides/Foss/i_text_frame_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4095
+      },
+      "include/Aspose/Slides/Foss/i_three_d_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1839
+      },
+      "include/Aspose/Slides/Foss/i_three_d_param_source.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 283
+      },
+      "include/Aspose/Slides/Foss/image.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1385
+      },
+      "include/Aspose/Slides/Foss/image_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1652
+      },
+      "include/Aspose/Slides/Foss/image_utils.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 871
+      },
+      "include/Aspose/Slides/Foss/images.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 637
+      },
+      "include/Aspose/Slides/Foss/ipp_image.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1273
+      },
+      "include/Aspose/Slides/Foss/layout_slide.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2979
+      },
+      "include/Aspose/Slides/Foss/layout_slide_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2700
+      },
+      "include/Aspose/Slides/Foss/light_rig.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2845
+      },
+      "include/Aspose/Slides/Foss/light_rig_preset_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 6970
+      },
+      "include/Aspose/Slides/Foss/lighting_direction.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2487
+      },
+      "include/Aspose/Slides/Foss/line_alignment.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 637
+      },
+      "include/Aspose/Slides/Foss/line_arrowhead_length.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 740
+      },
+      "include/Aspose/Slides/Foss/line_arrowhead_style.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 945
+      },
+      "include/Aspose/Slides/Foss/line_arrowhead_width.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 735
+      },
+      "include/Aspose/Slides/Foss/line_cap_style.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 683
+      },
+      "include/Aspose/Slides/Foss/line_dash_style.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1424
+      },
+      "include/Aspose/Slides/Foss/line_fill_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2097
+      },
+      "include/Aspose/Slides/Foss/line_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 8570
+      },
+      "include/Aspose/Slides/Foss/line_join_style.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 692
+      },
+      "include/Aspose/Slides/Foss/line_style.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 858
+      },
+      "include/Aspose/Slides/Foss/master_layout_slide_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 5268
+      },
+      "include/Aspose/Slides/Foss/master_slide.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2500
+      },
+      "include/Aspose/Slides/Foss/master_slide_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 5516
+      },
+      "include/Aspose/Slides/Foss/material_preset_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4438
+      },
+      "include/Aspose/Slides/Foss/notes_size.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1888
+      },
+      "include/Aspose/Slides/Foss/notes_slide.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4034
+      },
+      "include/Aspose/Slides/Foss/notes_slide_header_footer_manager.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3120
+      },
+      "include/Aspose/Slides/Foss/notes_slide_manager.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2511
+      },
+      "include/Aspose/Slides/Foss/notes_slide_part.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1579
+      },
+      "include/Aspose/Slides/Foss/nullable_bool.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 622
+      },
+      "include/Aspose/Slides/Foss/numbered_bullet_style.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 5653
+      },
+      "include/Aspose/Slides/Foss/paragraph.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3199
+      },
+      "include/Aspose/Slides/Foss/paragraph_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 5978
+      },
+      "include/Aspose/Slides/Foss/paragraph_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 7012
+      },
+      "include/Aspose/Slides/Foss/pattern_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1873
+      },
+      "include/Aspose/Slides/Foss/pattern_style.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 5073
+      },
+      "include/Aspose/Slides/Foss/picture.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2842
+      },
+      "include/Aspose/Slides/Foss/picture_fill_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 7474
+      },
+      "include/Aspose/Slides/Foss/picture_fill_mode.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 570
+      },
+      "include/Aspose/Slides/Foss/picture_frame.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3226
+      },
+      "include/Aspose/Slides/Foss/picture_frame_lock.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4181
+      },
+      "include/Aspose/Slides/Foss/picture_utilities.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1756
+      },
+      "include/Aspose/Slides/Foss/portion.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3175
+      },
+      "include/Aspose/Slides/Foss/portion_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 5364
+      },
+      "include/Aspose/Slides/Foss/portion_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1411
+      },
+      "include/Aspose/Slides/Foss/pp_image.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2720
+      },
+      "include/Aspose/Slides/Foss/presentation.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 7067
+      },
+      "include/Aspose/Slides/Foss/preset_color.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 10741
+      },
+      "include/Aspose/Slides/Foss/preset_shadow_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2985
+      },
+      "include/Aspose/Slides/Foss/pvi_object.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1211
+      },
+      "include/Aspose/Slides/Foss/rectangle_alignment.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1180
+      },
+      "include/Aspose/Slides/Foss/row.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3407
+      },
+      "include/Aspose/Slides/Foss/row_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3943
+      },
+      "include/Aspose/Slides/Foss/row_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 337
+      },
+      "include/Aspose/Slides/Foss/scheme_color.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1667
+      },
+      "include/Aspose/Slides/Foss/shape.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 10326
+      },
+      "include/Aspose/Slides/Foss/shape_bevel.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1836
+      },
+      "include/Aspose/Slides/Foss/shape_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 10665
+      },
+      "include/Aspose/Slides/Foss/shape_frame.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3175
+      },
+      "include/Aspose/Slides/Foss/shape_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 16426
+      },
+      "include/Aspose/Slides/Foss/simple_color_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1241
+      },
+      "include/Aspose/Slides/Foss/slide.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 5628
+      },
+      "include/Aspose/Slides/Foss/slide_collection.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 8560
+      },
+      "include/Aspose/Slides/Foss/slide_layout_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3751
+      },
+      "include/Aspose/Slides/Foss/source_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 590
+      },
+      "include/Aspose/Slides/Foss/table.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 7473
+      },
+      "include/Aspose/Slides/Foss/table_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 972
+      },
+      "include/Aspose/Slides/Foss/table_style_preset.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 8490
+      },
+      "include/Aspose/Slides/Foss/text_alignment.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 930
+      },
+      "include/Aspose/Slides/Foss/text_anchor_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 861
+      },
+      "include/Aspose/Slides/Foss/text_autofit_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 703
+      },
+      "include/Aspose/Slides/Foss/text_cap_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 680
+      },
+      "include/Aspose/Slides/Foss/text_frame.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3462
+      },
+      "include/Aspose/Slides/Foss/text_frame_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 7224
+      },
+      "include/Aspose/Slides/Foss/text_shape_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 3653
+      },
+      "include/Aspose/Slides/Foss/text_strikethrough_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 761
+      },
+      "include/Aspose/Slides/Foss/text_underline_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1932
+      },
+      "include/Aspose/Slides/Foss/text_vertical_type.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1212
+      },
+      "include/Aspose/Slides/Foss/theme/i_themeable.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 544
+      },
+      "include/Aspose/Slides/Foss/three_d_format.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 4048
+      },
+      "include/Aspose/Slides/Foss/tile_flip.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 729
+      },
+      "src/Aspose.Slides.Foss/_internal/export/exporter_base.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1155
+      },
+      "src/Aspose.Slides.Foss/_internal/export/exporter_registry.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1612
+      },
+      "src/Aspose.Slides.Foss/_internal/export/pptx_exporter.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 2554
+      },
+      "src/Aspose.Slides.Foss/_internal/opc/opc_package.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 5392
+      },
+      "src/Aspose.Slides.Foss/_internal/opc/part_utils.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 6386
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/app_properties_part.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 10084
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/bulk_text_format.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 5548
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/comment_authors_part.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 6244
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/comments_part.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 17210
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/core_properties_part.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 8773
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/custom_properties_part.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 10556
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/layout_slide_part.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 4381
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/master_slide_part.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 4555
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/notes_slide_part.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 17199
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/shape_factory.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 3107
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/shape_factory.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 2385
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/shape_type_mapping.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 12285
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/shape_type_mapping.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1240
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/slide_part.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 4048
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/table_style_mapping.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 6011
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/table_style_mapping.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1114
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/template.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1686
+      },
+      "src/Aspose.Slides.Foss/_internal/pptx/template.h": {
+        "category": "source",
+        "language": "c",
+        "size_bytes": 1567
+      },
+      "src/Aspose.Slides.Foss/adjust_value.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1743
+      },
+      "src/Aspose.Slides.Foss/adjust_value_collection.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1563
+      },
+      "src/Aspose.Slides.Foss/auto_shape.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1089
+      },
+      "src/Aspose.Slides.Foss/base_handout_notes_slide_header_footer_manager.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 560
+      },
+      "src/Aspose.Slides.Foss/bullet_format.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1082
+      },
+      "src/Aspose.Slides.Foss/camera.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 2107
+      },
+      "src/Aspose.Slides.Foss/cell.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 3331
+      },
+      "src/Aspose.Slides.Foss/cell_collection.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 565
+      },
+      "src/Aspose.Slides.Foss/cell_format.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1050
+      },
+      "src/Aspose.Slides.Foss/column.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1985
+      },
+      "src/Aspose.Slides.Foss/column_collection.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 3720
+      },
+      "src/Aspose.Slides.Foss/comment.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 2018
+      },
+      "src/Aspose.Slides.Foss/comment_author.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 2257
+      },
+      "src/Aspose.Slides.Foss/comment_author_collection.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 4676
+      },
+      "src/Aspose.Slides.Foss/comment_collection.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 3483
+      },
+      "src/Aspose.Slides.Foss/connector.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 3746
+      },
+      "src/Aspose.Slides.Foss/document_properties.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 16360
+      },
+      "src/Aspose.Slides.Foss/drawing/color.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 7879
+      },
+      "src/Aspose.Slides.Foss/drawing/point_f.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 332
+      },
+      "src/Aspose.Slides.Foss/drawing/size.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 327
+      },
+      "src/Aspose.Slides.Foss/drawing/size_f.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 330
+      },
+      "src/Aspose.Slides.Foss/effect_format.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 13780
+      },
+      "src/Aspose.Slides.Foss/effects/blur.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1462
+      },
+      "src/Aspose.Slides.Foss/effects/fill_overlay.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 595
+      },
+      "src/Aspose.Slides.Foss/effects/glow.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1387
+      },
+      "src/Aspose.Slides.Foss/effects/inner_shadow.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 2545
+      },
+      "src/Aspose.Slides.Foss/effects/outer_shadow.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 7618
+      },
+      "src/Aspose.Slides.Foss/effects/preset_shadow.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 5992
+      },
+      "src/Aspose.Slides.Foss/effects/reflection.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 10565
+      },
+      "src/Aspose.Slides.Foss/effects/soft_edge.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1380
+      },
+      "src/Aspose.Slides.Foss/fill_format.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 17926
+      },
+      "src/Aspose.Slides.Foss/gradient_format.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 509
+      },
+      "src/Aspose.Slides.Foss/gradient_stop.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 488
+      },
+      "src/Aspose.Slides.Foss/gradient_stop_collection.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1068
+      },
+      "src/Aspose.Slides.Foss/group_shape.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 394
+      },
+      "src/Aspose.Slides.Foss/image.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1373
+      },
+      "src/Aspose.Slides.Foss/image_collection.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1834
+      },
+      "src/Aspose.Slides.Foss/image_utils.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 5373
+      },
+      "src/Aspose.Slides.Foss/images.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1182
+      },
+      "src/Aspose.Slides.Foss/layout_slide.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 871
+      },
+      "src/Aspose.Slides.Foss/light_rig.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 2835
+      },
+      "src/Aspose.Slides.Foss/line_format.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 12552
+      },
+      "src/Aspose.Slides.Foss/master_slide.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 842
+      },
+      "src/Aspose.Slides.Foss/master_slide_collection.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 17764
+      },
+      "src/Aspose.Slides.Foss/notes_size.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 3732
+      },
+      "src/Aspose.Slides.Foss/notes_slide.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1593
+      },
+      "src/Aspose.Slides.Foss/notes_slide_header_footer_manager.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 3070
+      },
+      "src/Aspose.Slides.Foss/notes_slide_manager.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 3461
+      },
+      "src/Aspose.Slides.Foss/paragraph.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 5340
+      },
+      "src/Aspose.Slides.Foss/paragraph_collection.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 5233
+      },
+      "src/Aspose.Slides.Foss/paragraph_format.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 8542
+      },
+      "src/Aspose.Slides.Foss/pattern_format.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 513
+      },
+      "src/Aspose.Slides.Foss/picture.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1613
+      },
+      "src/Aspose.Slides.Foss/picture_fill_format.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 4296
+      },
+      "src/Aspose.Slides.Foss/picture_frame_lock.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 3808
+      },
+      "src/Aspose.Slides.Foss/picture_utilities.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 4327
+      },
+      "src/Aspose.Slides.Foss/placeholder.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 202
+      },
+      "src/Aspose.Slides.Foss/portion.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 3246
+      },
+      "src/Aspose.Slides.Foss/portion_collection.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 4813
+      },
+      "src/Aspose.Slides.Foss/portion_format.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 11499
+      },
+      "src/Aspose.Slides.Foss/pp_image.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 2034
+      },
+      "src/Aspose.Slides.Foss/presentation.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 65873
+      },
+      "src/Aspose.Slides.Foss/pvi_object.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 955
+      },
+      "src/Aspose.Slides.Foss/row.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 1542
+      },
+      "src/Aspose.Slides.Foss/row_collection.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 5381
+      },
+      "src/Aspose.Slides.Foss/shape.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 14541
+      },
+      "src/Aspose.Slides.Foss/shape_bevel.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 3499
+      },
+      "src/Aspose.Slides.Foss/shape_collection.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 68767
+      },
+      "src/Aspose.Slides.Foss/slide.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 3221
+      },
+      "src/Aspose.Slides.Foss/slide_collection.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 32695
+      },
+      "src/Aspose.Slides.Foss/table.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 7542
+      },
+      "src/Aspose.Slides.Foss/table_format.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 397
+      },
+      "src/Aspose.Slides.Foss/text_frame.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 5592
+      },
+      "src/Aspose.Slides.Foss/text_frame_format.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 4370
+      },
+      "src/Aspose.Slides.Foss/three_d_format.cpp": {
+        "category": "source",
+        "language": "cpp",
+        "size_bytes": 11122
+      },
+      "tests/Aspose.Slides.Foss.IntegrationTests/comments_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 7591
+      },
+      "tests/Aspose.Slides.Foss.IntegrationTests/connector_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 6791
+      },
+      "tests/Aspose.Slides.Foss.IntegrationTests/document_properties_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4301
+      },
+      "tests/Aspose.Slides.Foss.IntegrationTests/effect_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 5657
+      },
+      "tests/Aspose.Slides.Foss.IntegrationTests/fill_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 6855
+      },
+      "tests/Aspose.Slides.Foss.IntegrationTests/images_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 8522
+      },
+      "tests/Aspose.Slides.Foss.IntegrationTests/line_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4312
+      },
+      "tests/Aspose.Slides.Foss.IntegrationTests/notes_slide_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4552
+      },
+      "tests/Aspose.Slides.Foss.IntegrationTests/presentation_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 3829
+      },
+      "tests/Aspose.Slides.Foss.IntegrationTests/shapes_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 6958
+      },
+      "tests/Aspose.Slides.Foss.IntegrationTests/slides_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 5648
+      },
+      "tests/Aspose.Slides.Foss.IntegrationTests/table_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 8980
+      },
+      "tests/Aspose.Slides.Foss.IntegrationTests/text_formatting_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 7141
+      },
+      "tests/Aspose.Slides.Foss.IntegrationTests/text_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 5808
+      },
+      "tests/Aspose.Slides.Foss.IntegrationTests/threed_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4771
+      },
+      "tests/Aspose.Slides.Foss.Tests/adjust_value_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 5273
+      },
+      "tests/Aspose.Slides.Foss.Tests/app_properties_part_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 8520
+      },
+      "tests/Aspose.Slides.Foss.Tests/auto_shape_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4049
+      },
+      "tests/Aspose.Slides.Foss.Tests/base_portion_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 16712
+      },
+      "tests/Aspose.Slides.Foss.Tests/base_slide_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 2237
+      },
+      "tests/Aspose.Slides.Foss.Tests/blur_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 3078
+      },
+      "tests/Aspose.Slides.Foss.Tests/bullet_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 12596
+      },
+      "tests/Aspose.Slides.Foss.Tests/cell_collection_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 5844
+      },
+      "tests/Aspose.Slides.Foss.Tests/cell_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 3516
+      },
+      "tests/Aspose.Slides.Foss.Tests/cell_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 9935
+      },
+      "tests/Aspose.Slides.Foss.Tests/color_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 7957
+      },
+      "tests/Aspose.Slides.Foss.Tests/column_collection_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 8566
+      },
+      "tests/Aspose.Slides.Foss.Tests/column_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4625
+      },
+      "tests/Aspose.Slides.Foss.Tests/comment_authors_part_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 9241
+      },
+      "tests/Aspose.Slides.Foss.Tests/comment_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 12080
+      },
+      "tests/Aspose.Slides.Foss.Tests/comments_part_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 14982
+      },
+      "tests/Aspose.Slides.Foss.Tests/connector_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4010
+      },
+      "tests/Aspose.Slides.Foss.Tests/core_properties_part_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 8002
+      },
+      "tests/Aspose.Slides.Foss.Tests/custom_properties_part_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 12102
+      },
+      "tests/Aspose.Slides.Foss.Tests/document_properties_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 14539
+      },
+      "tests/Aspose.Slides.Foss.Tests/drawing_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 7981
+      },
+      "tests/Aspose.Slides.Foss.Tests/effect_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4541
+      },
+      "tests/Aspose.Slides.Foss.Tests/enums_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 10559
+      },
+      "tests/Aspose.Slides.Foss.Tests/fill_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 6601
+      },
+      "tests/Aspose.Slides.Foss.Tests/fill_overlay_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 6424
+      },
+      "tests/Aspose.Slides.Foss.Tests/font_data_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 3565
+      },
+      "tests/Aspose.Slides.Foss.Tests/glow_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 2158
+      },
+      "tests/Aspose.Slides.Foss.Tests/gradient_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 6110
+      },
+      "tests/Aspose.Slides.Foss.Tests/gradient_stop_collection_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4645
+      },
+      "tests/Aspose.Slides.Foss.Tests/gradient_stop_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4171
+      },
+      "tests/Aspose.Slides.Foss.Tests/graphical_object_lock_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 1517
+      },
+      "tests/Aspose.Slides.Foss.Tests/graphical_object_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 1833
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_auto_shape_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4973
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_base_portion_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 9021
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_bullet_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 9291
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_cell_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 9396
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_column_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 5835
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_comment_collection_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4701
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_geometry_shape_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4313
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_inner_shadow_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 3263
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_layout_slide_collection_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 3709
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_layout_slide_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 1371
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_light_rig_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 2556
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_line_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 6553
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_master_slide_collection_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 1913
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_master_slide_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 2108
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_notes_size_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 1181
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_notes_slide_manager_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 2795
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_notes_slide_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 2272
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_outer_shadow_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 5525
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_paragraph_collection_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 8776
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_paragraph_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 6589
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_paragraph_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 3660
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_pattern_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 2701
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_picture_fill_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 6082
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_picture_frame_lock_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 3539
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_portion_collection_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4570
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_portion_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 7858
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_preset_shadow_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4832
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_reflection_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 6085
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_row_collection_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 8303
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_shape_collection_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 7641
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_shape_frame_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 3941
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_shape_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 8712
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_slide_collection_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 5464
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_slide_component_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 2916
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_slide_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4507
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_table_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 7567
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_text_frame_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 6338
+      },
+      "tests/Aspose.Slides.Foss.Tests/i_text_frame_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 7009
+      },
+      "tests/Aspose.Slides.Foss.Tests/image_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 5755
+      },
+      "tests/Aspose.Slides.Foss.Tests/image_transform_operation_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 2678
+      },
+      "tests/Aspose.Slides.Foss.Tests/line_fill_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 3836
+      },
+      "tests/Aspose.Slides.Foss.Tests/line_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 2616
+      },
+      "tests/Aspose.Slides.Foss.Tests/master_slide_collection_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 3372
+      },
+      "tests/Aspose.Slides.Foss.Tests/master_slide_part_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 7670
+      },
+      "tests/Aspose.Slides.Foss.Tests/notes_slide_header_footer_manager_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 3988
+      },
+      "tests/Aspose.Slides.Foss.Tests/notes_slide_manager_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 2224
+      },
+      "tests/Aspose.Slides.Foss.Tests/notes_slide_part_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 15556
+      },
+      "tests/Aspose.Slides.Foss.Tests/paragraph_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 3035
+      },
+      "tests/Aspose.Slides.Foss.Tests/paragraph_slide_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 5138
+      },
+      "tests/Aspose.Slides.Foss.Tests/picture_frame_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 6957
+      },
+      "tests/Aspose.Slides.Foss.Tests/picture_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 2621
+      },
+      "tests/Aspose.Slides.Foss.Tests/picture_utilities_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4098
+      },
+      "tests/Aspose.Slides.Foss.Tests/portion_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 2575
+      },
+      "tests/Aspose.Slides.Foss.Tests/portion_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 4087
+      },
+      "tests/Aspose.Slides.Foss.Tests/presentation_io_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 3719
+      },
+      "tests/Aspose.Slides.Foss.Tests/relationships_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 10894
+      },
+      "tests/Aspose.Slides.Foss.Tests/row_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 5140
+      },
+      "tests/Aspose.Slides.Foss.Tests/shape_bevel_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 11274
+      },
+      "tests/Aspose.Slides.Foss.Tests/shape_type_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 6190
+      },
+      "tests/Aspose.Slides.Foss.Tests/soft_edge_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 3196
+      },
+      "tests/Aspose.Slides.Foss.Tests/table_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 3266
+      },
+      "tests/Aspose.Slides.Foss.Tests/table_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 7791
+      },
+      "tests/Aspose.Slides.Foss.Tests/text_frame_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 5673
+      },
+      "tests/Aspose.Slides.Foss.Tests/text_frame_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 5949
+      },
+      "tests/Aspose.Slides.Foss.Tests/threed_format_test.cpp": {
+        "category": "test",
+        "language": "cpp",
+        "size_bytes": 5307
+      },
+      "tests/test_data/image_example.jpg": {
+        "category": "test",
+        "language": "",
+        "size_bytes": 140425
+      },
+      "tests/test_data/lotus.png": {
+        "category": "test",
+        "language": "",
+        "size_bytes": 3462
+      }
+    },
+    "file_tree": [
+      ".clone_sha",
+      ".clone_timestamp",
+      ".clone_url",
+      ".gitattributes",
+      ".gitignore",
+      "CMakeLists.txt",
+      "include/Aspose/Slides/Foss/_internal/base_collection.h",
+      "include/Aspose/Slides/Foss/_internal/export/exporter_base.h",
+      "include/Aspose/Slides/Foss/_internal/export/exporter_registry.h",
+      "include/Aspose/Slides/Foss/_internal/export/pptx_exporter.h",
+      "include/Aspose/Slides/Foss/_internal/opc/content_types.h",
+      "include/Aspose/Slides/Foss/_internal/opc/content_types_manager.h",
+      "include/Aspose/Slides/Foss/_internal/opc/opc_package.h",
+      "include/Aspose/Slides/Foss/_internal/opc/part_utils.h",
+      "include/Aspose/Slides/Foss/_internal/opc/relationships.h",
+      "include/Aspose/Slides/Foss/_internal/opc/relationships_manager.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/app_properties_part.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/bulk_text_format.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/comment_authors_part.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/comments_part.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/constants.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/core_properties_part.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/custom_properties_part.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/layout_slide_part.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/master_slide_part.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/notes_slide_part.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/slide_part.h",
+      "include/Aspose/Slides/Foss/_internal/xml/xml_element.h",
+      "include/Aspose/Slides/Foss/adjust_value.h",
+      "include/Aspose/Slides/Foss/adjust_value_collection.h",
+      "include/Aspose/Slides/Foss/auto_shape.h",
+      "include/Aspose/Slides/Foss/base_handout_notes_slide_header_footer_manager.h",
+      "include/Aspose/Slides/Foss/base_portion_format.h",
+      "include/Aspose/Slides/Foss/base_shape_lock.h",
+      "include/Aspose/Slides/Foss/base_slide.h",
+      "include/Aspose/Slides/Foss/bevel_preset_type.h",
+      "include/Aspose/Slides/Foss/bullet_format.h",
+      "include/Aspose/Slides/Foss/bullet_type.h",
+      "include/Aspose/Slides/Foss/camera.h",
+      "include/Aspose/Slides/Foss/camera_preset_type.h",
+      "include/Aspose/Slides/Foss/cell.h",
+      "include/Aspose/Slides/Foss/cell_collection.h",
+      "include/Aspose/Slides/Foss/cell_format.h",
+      "include/Aspose/Slides/Foss/color_format.h",
+      "include/Aspose/Slides/Foss/color_type.h",
+      "include/Aspose/Slides/Foss/column.h",
+      "include/Aspose/Slides/Foss/column_collection.h",
+      "include/Aspose/Slides/Foss/column_format.h",
+      "include/Aspose/Slides/Foss/comment.h",
+      "include/Aspose/Slides/Foss/comment_author.h",
+      "include/Aspose/Slides/Foss/comment_author_collection.h",
+      "include/Aspose/Slides/Foss/comment_collection.h",
+      "include/Aspose/Slides/Foss/connector.h",
+      "include/Aspose/Slides/Foss/document_properties.h",
+      "include/Aspose/Slides/Foss/drawing/color.h",
+      "include/Aspose/Slides/Foss/drawing/point_f.h",
+      "include/Aspose/Slides/Foss/drawing/rectangle_f.h",
+      "include/Aspose/Slides/Foss/drawing/size.h",
+      "include/Aspose/Slides/Foss/drawing/size_f.h",
+      "include/Aspose/Slides/Foss/effect_format.h",
+      "include/Aspose/Slides/Foss/effects/blur.h",
+      "include/Aspose/Slides/Foss/effects/fill_overlay.h",
+      "include/Aspose/Slides/Foss/effects/glow.h",
+      "include/Aspose/Slides/Foss/effects/i_blur.h",
+      "include/Aspose/Slides/Foss/effects/i_fill_overlay.h",
+      "include/Aspose/Slides/Foss/effects/i_glow.h",
+      "include/Aspose/Slides/Foss/effects/i_image_transform_operation.h",
+      "include/Aspose/Slides/Foss/effects/i_inner_shadow.h",
+      "include/Aspose/Slides/Foss/effects/i_outer_shadow.h",
+      "include/Aspose/Slides/Foss/effects/i_preset_shadow.h",
+      "include/Aspose/Slides/Foss/effects/i_reflection.h",
+      "include/Aspose/Slides/Foss/effects/i_soft_edge.h",
+      "include/Aspose/Slides/Foss/effects/image_transform_operation.h",
+      "include/Aspose/Slides/Foss/effects/inner_shadow.h",
+      "include/Aspose/Slides/Foss/effects/outer_shadow.h",
+      "include/Aspose/Slides/Foss/effects/preset_shadow.h",
+      "include/Aspose/Slides/Foss/effects/reflection.h",
+      "include/Aspose/Slides/Foss/effects/soft_edge.h",
+      "include/Aspose/Slides/Foss/export/save_format.h",
+      "include/Aspose/Slides/Foss/fill_blend_mode.h",
+      "include/Aspose/Slides/Foss/fill_format.h",
+      "include/Aspose/Slides/Foss/fill_type.h",
+      "include/Aspose/Slides/Foss/font_alignment.h",
+      "include/Aspose/Slides/Foss/font_data.h",
+      "include/Aspose/Slides/Foss/geometry_shape.h",
+      "include/Aspose/Slides/Foss/global_layout_slide_collection.h",
+      "include/Aspose/Slides/Foss/gradient_direction.h",
+      "include/Aspose/Slides/Foss/gradient_format.h",
+      "include/Aspose/Slides/Foss/gradient_shape.h",
+      "include/Aspose/Slides/Foss/gradient_stop.h",
+      "include/Aspose/Slides/Foss/gradient_stop_collection.h",
+      "include/Aspose/Slides/Foss/graphical_object.h",
+      "include/Aspose/Slides/Foss/graphical_object_lock.h",
+      "include/Aspose/Slides/Foss/group_shape.h",
+      "include/Aspose/Slides/Foss/heading_pair.h",
+      "include/Aspose/Slides/Foss/i_adjust_value.h",
+      "include/Aspose/Slides/Foss/i_adjust_value_collection.h",
+      "include/Aspose/Slides/Foss/i_auto_shape.h",
+      "include/Aspose/Slides/Foss/i_base_handout_notes_slide_header_footer_manager.h",
+      "include/Aspose/Slides/Foss/i_base_header_footer_manager.h",
+      "include/Aspose/Slides/Foss/i_base_portion_format.h",
+      "include/Aspose/Slides/Foss/i_base_slide.h",
+      "include/Aspose/Slides/Foss/i_base_slide_header_footer_manager.h",
+      "include/Aspose/Slides/Foss/i_bulk_text_formattable.h",
+      "include/Aspose/Slides/Foss/i_bullet_format.h",
+      "include/Aspose/Slides/Foss/i_camera.h",
+      "include/Aspose/Slides/Foss/i_cell.h",
+      "include/Aspose/Slides/Foss/i_cell_collection.h",
+      "include/Aspose/Slides/Foss/i_cell_format.h",
+      "include/Aspose/Slides/Foss/i_color_format.h",
+      "include/Aspose/Slides/Foss/i_column.h",
+      "include/Aspose/Slides/Foss/i_column_collection.h",
+      "include/Aspose/Slides/Foss/i_column_format.h",
+      "include/Aspose/Slides/Foss/i_comment.h",
+      "include/Aspose/Slides/Foss/i_comment_author.h",
+      "include/Aspose/Slides/Foss/i_comment_author_collection.h",
+      "include/Aspose/Slides/Foss/i_comment_collection.h",
+      "include/Aspose/Slides/Foss/i_connector.h",
+      "include/Aspose/Slides/Foss/i_document_properties.h",
+      "include/Aspose/Slides/Foss/i_effect_format.h",
+      "include/Aspose/Slides/Foss/i_effect_param_source.h",
+      "include/Aspose/Slides/Foss/i_fill_format.h",
+      "include/Aspose/Slides/Foss/i_fill_param_source.h",
+      "include/Aspose/Slides/Foss/i_font_data.h",
+      "include/Aspose/Slides/Foss/i_geometry_shape.h",
+      "include/Aspose/Slides/Foss/i_global_layout_slide_collection.h",
+      "include/Aspose/Slides/Foss/i_gradient_format.h",
+      "include/Aspose/Slides/Foss/i_gradient_stop.h",
+      "include/Aspose/Slides/Foss/i_gradient_stop_collection.h",
+      "include/Aspose/Slides/Foss/i_graphical_object.h",
+      "include/Aspose/Slides/Foss/i_graphical_object_lock.h",
+      "include/Aspose/Slides/Foss/i_group_shape.h",
+      "include/Aspose/Slides/Foss/i_heading_pair.h",
+      "include/Aspose/Slides/Foss/i_hyperlink_container.h",
+      "include/Aspose/Slides/Foss/i_image.h",
+      "include/Aspose/Slides/Foss/i_image_collection.h",
+      "include/Aspose/Slides/Foss/i_layout_slide.h",
+      "include/Aspose/Slides/Foss/i_layout_slide_collection.h",
+      "include/Aspose/Slides/Foss/i_light_rig.h",
+      "include/Aspose/Slides/Foss/i_line_fill_format.h",
+      "include/Aspose/Slides/Foss/i_line_format.h",
+      "include/Aspose/Slides/Foss/i_line_param_source.h",
+      "include/Aspose/Slides/Foss/i_load_options.h",
+      "include/Aspose/Slides/Foss/i_master_layout_slide_collection.h",
+      "include/Aspose/Slides/Foss/i_master_slide.h",
+      "include/Aspose/Slides/Foss/i_master_slide_collection.h",
+      "include/Aspose/Slides/Foss/i_notes_size.h",
+      "include/Aspose/Slides/Foss/i_notes_slide.h",
+      "include/Aspose/Slides/Foss/i_notes_slide_header_footer_manager.h",
+      "include/Aspose/Slides/Foss/i_notes_slide_manager.h",
+      "include/Aspose/Slides/Foss/i_paragraph.h",
+      "include/Aspose/Slides/Foss/i_paragraph_collection.h",
+      "include/Aspose/Slides/Foss/i_paragraph_format.h",
+      "include/Aspose/Slides/Foss/i_pattern_format.h",
+      "include/Aspose/Slides/Foss/i_picture_fill_format.h",
+      "include/Aspose/Slides/Foss/i_picture_frame.h",
+      "include/Aspose/Slides/Foss/i_picture_frame_lock.h",
+      "include/Aspose/Slides/Foss/i_portion.h",
+      "include/Aspose/Slides/Foss/i_portion_collection.h",
+      "include/Aspose/Slides/Foss/i_portion_format.h",
+      "include/Aspose/Slides/Foss/i_presentation.h",
+      "include/Aspose/Slides/Foss/i_presentation_component.h",
+      "include/Aspose/Slides/Foss/i_row.h",
+      "include/Aspose/Slides/Foss/i_row_collection.h",
+      "include/Aspose/Slides/Foss/i_row_format.h",
+      "include/Aspose/Slides/Foss/i_section.h",
+      "include/Aspose/Slides/Foss/i_shape.h",
+      "include/Aspose/Slides/Foss/i_shape_bevel.h",
+      "include/Aspose/Slides/Foss/i_shape_collection.h",
+      "include/Aspose/Slides/Foss/i_shape_frame.h",
+      "include/Aspose/Slides/Foss/i_shape_style.h",
+      "include/Aspose/Slides/Foss/i_slide.h",
+      "include/Aspose/Slides/Foss/i_slide_collection.h",
+      "include/Aspose/Slides/Foss/i_slide_component.h",
+      "include/Aspose/Slides/Foss/i_slides_picture.h",
+      "include/Aspose/Slides/Foss/i_table.h",
+      "include/Aspose/Slides/Foss/i_table_format.h",
+      "include/Aspose/Slides/Foss/i_text_frame.h",
+      "include/Aspose/Slides/Foss/i_text_frame_format.h",
+      "include/Aspose/Slides/Foss/i_three_d_format.h",
+      "include/Aspose/Slides/Foss/i_three_d_param_source.h",
+      "include/Aspose/Slides/Foss/image.h",
+      "include/Aspose/Slides/Foss/image_collection.h",
+      "include/Aspose/Slides/Foss/image_utils.h",
+      "include/Aspose/Slides/Foss/images.h",
+      "include/Aspose/Slides/Foss/ipp_image.h",
+      "include/Aspose/Slides/Foss/layout_slide.h",
+      "include/Aspose/Slides/Foss/layout_slide_collection.h",
+      "include/Aspose/Slides/Foss/light_rig.h",
+      "include/Aspose/Slides/Foss/light_rig_preset_type.h",
+      "include/Aspose/Slides/Foss/lighting_direction.h",
+      "include/Aspose/Slides/Foss/line_alignment.h",
+      "include/Aspose/Slides/Foss/line_arrowhead_length.h",
+      "include/Aspose/Slides/Foss/line_arrowhead_style.h",
+      "include/Aspose/Slides/Foss/line_arrowhead_width.h",
+      "include/Aspose/Slides/Foss/line_cap_style.h",
+      "include/Aspose/Slides/Foss/line_dash_style.h",
+      "include/Aspose/Slides/Foss/line_fill_format.h",
+      "include/Aspose/Slides/Foss/line_format.h",
+      "include/Aspose/Slides/Foss/line_join_style.h",
+      "include/Aspose/Slides/Foss/line_style.h",
+      "include/Aspose/Slides/Foss/master_layout_slide_collection.h",
+      "include/Aspose/Slides/Foss/master_slide.h",
+      "include/Aspose/Slides/Foss/master_slide_collection.h",
+      "include/Aspose/Slides/Foss/material_preset_type.h",
+      "include/Aspose/Slides/Foss/notes_size.h",
+      "include/Aspose/Slides/Foss/notes_slide.h",
+      "include/Aspose/Slides/Foss/notes_slide_header_footer_manager.h",
+      "include/Aspose/Slides/Foss/notes_slide_manager.h",
+      "include/Aspose/Slides/Foss/notes_slide_part.h",
+      "include/Aspose/Slides/Foss/nullable_bool.h",
+      "include/Aspose/Slides/Foss/numbered_bullet_style.h",
+      "include/Aspose/Slides/Foss/paragraph.h",
+      "include/Aspose/Slides/Foss/paragraph_collection.h",
+      "include/Aspose/Slides/Foss/paragraph_format.h",
+      "include/Aspose/Slides/Foss/pattern_format.h",
+      "include/Aspose/Slides/Foss/pattern_style.h",
+      "include/Aspose/Slides/Foss/picture.h",
+      "include/Aspose/Slides/Foss/picture_fill_format.h",
+      "include/Aspose/Slides/Foss/picture_fill_mode.h",
+      "include/Aspose/Slides/Foss/picture_frame.h",
+      "include/Aspose/Slides/Foss/picture_frame_lock.h",
+      "include/Aspose/Slides/Foss/picture_utilities.h",
+      "include/Aspose/Slides/Foss/portion.h",
+      "include/Aspose/Slides/Foss/portion_collection.h",
+      "include/Aspose/Slides/Foss/portion_format.h",
+      "include/Aspose/Slides/Foss/pp_image.h",
+      "include/Aspose/Slides/Foss/presentation.h",
+      "include/Aspose/Slides/Foss/preset_color.h",
+      "include/Aspose/Slides/Foss/preset_shadow_type.h",
+      "include/Aspose/Slides/Foss/pvi_object.h",
+      "include/Aspose/Slides/Foss/rectangle_alignment.h",
+      "include/Aspose/Slides/Foss/row.h",
+      "include/Aspose/Slides/Foss/row_collection.h",
+      "include/Aspose/Slides/Foss/row_format.h",
+      "include/Aspose/Slides/Foss/scheme_color.h",
+      "include/Aspose/Slides/Foss/shape.h",
+      "include/Aspose/Slides/Foss/shape_bevel.h",
+      "include/Aspose/Slides/Foss/shape_collection.h",
+      "include/Aspose/Slides/Foss/shape_frame.h",
+      "include/Aspose/Slides/Foss/shape_type.h",
+      "include/Aspose/Slides/Foss/simple_color_format.h",
+      "include/Aspose/Slides/Foss/slide.h",
+      "include/Aspose/Slides/Foss/slide_collection.h",
+      "include/Aspose/Slides/Foss/slide_layout_type.h",
+      "include/Aspose/Slides/Foss/source_format.h",
+      "include/Aspose/Slides/Foss/table.h",
+      "include/Aspose/Slides/Foss/table_format.h",
+      "include/Aspose/Slides/Foss/table_style_preset.h",
+      "include/Aspose/Slides/Foss/text_alignment.h",
+      "include/Aspose/Slides/Foss/text_anchor_type.h",
+      "include/Aspose/Slides/Foss/text_autofit_type.h",
+      "include/Aspose/Slides/Foss/text_cap_type.h",
+      "include/Aspose/Slides/Foss/text_frame.h",
+      "include/Aspose/Slides/Foss/text_frame_format.h",
+      "include/Aspose/Slides/Foss/text_shape_type.h",
+      "include/Aspose/Slides/Foss/text_strikethrough_type.h",
+      "include/Aspose/Slides/Foss/text_underline_type.h",
+      "include/Aspose/Slides/Foss/text_vertical_type.h",
+      "include/Aspose/Slides/Foss/theme/i_themeable.h",
+      "include/Aspose/Slides/Foss/three_d_format.h",
+      "include/Aspose/Slides/Foss/tile_flip.h",
+      "LICENSE",
+      "README.md",
+      "src/Aspose.Slides.Foss/_internal/export/exporter_base.cpp",
+      "src/Aspose.Slides.Foss/_internal/export/exporter_registry.cpp",
+      "src/Aspose.Slides.Foss/_internal/export/pptx_exporter.cpp",
+      "src/Aspose.Slides.Foss/_internal/opc/opc_package.cpp",
+      "src/Aspose.Slides.Foss/_internal/opc/part_utils.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/app_properties_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/bulk_text_format.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/comment_authors_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/comments_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/core_properties_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/custom_properties_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/layout_slide_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/master_slide_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/notes_slide_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/shape_factory.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/shape_factory.h",
+      "src/Aspose.Slides.Foss/_internal/pptx/shape_type_mapping.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/shape_type_mapping.h",
+      "src/Aspose.Slides.Foss/_internal/pptx/slide_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/table_style_mapping.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/table_style_mapping.h",
+      "src/Aspose.Slides.Foss/_internal/pptx/template.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/template.h",
+      "src/Aspose.Slides.Foss/adjust_value.cpp",
+      "src/Aspose.Slides.Foss/adjust_value_collection.cpp",
+      "src/Aspose.Slides.Foss/auto_shape.cpp",
+      "src/Aspose.Slides.Foss/base_handout_notes_slide_header_footer_manager.cpp",
+      "src/Aspose.Slides.Foss/bullet_format.cpp",
+      "src/Aspose.Slides.Foss/camera.cpp",
+      "src/Aspose.Slides.Foss/cell.cpp",
+      "src/Aspose.Slides.Foss/cell_collection.cpp",
+      "src/Aspose.Slides.Foss/cell_format.cpp",
+      "src/Aspose.Slides.Foss/column.cpp",
+      "src/Aspose.Slides.Foss/column_collection.cpp",
+      "src/Aspose.Slides.Foss/comment.cpp",
+      "src/Aspose.Slides.Foss/comment_author.cpp",
+      "src/Aspose.Slides.Foss/comment_author_collection.cpp",
+      "src/Aspose.Slides.Foss/comment_collection.cpp",
+      "src/Aspose.Slides.Foss/connector.cpp",
+      "src/Aspose.Slides.Foss/document_properties.cpp",
+      "src/Aspose.Slides.Foss/drawing/color.cpp",
+      "src/Aspose.Slides.Foss/drawing/point_f.cpp",
+      "src/Aspose.Slides.Foss/drawing/size.cpp",
+      "src/Aspose.Slides.Foss/drawing/size_f.cpp",
+      "src/Aspose.Slides.Foss/effect_format.cpp",
+      "src/Aspose.Slides.Foss/effects/blur.cpp",
+      "src/Aspose.Slides.Foss/effects/fill_overlay.cpp",
+      "src/Aspose.Slides.Foss/effects/glow.cpp",
+      "src/Aspose.Slides.Foss/effects/inner_shadow.cpp",
+      "src/Aspose.Slides.Foss/effects/outer_shadow.cpp",
+      "src/Aspose.Slides.Foss/effects/preset_shadow.cpp",
+      "src/Aspose.Slides.Foss/effects/reflection.cpp",
+      "src/Aspose.Slides.Foss/effects/soft_edge.cpp",
+      "src/Aspose.Slides.Foss/fill_format.cpp",
+      "src/Aspose.Slides.Foss/gradient_format.cpp",
+      "src/Aspose.Slides.Foss/gradient_stop.cpp",
+      "src/Aspose.Slides.Foss/gradient_stop_collection.cpp",
+      "src/Aspose.Slides.Foss/group_shape.cpp",
+      "src/Aspose.Slides.Foss/image.cpp",
+      "src/Aspose.Slides.Foss/image_collection.cpp",
+      "src/Aspose.Slides.Foss/image_utils.cpp",
+      "src/Aspose.Slides.Foss/images.cpp",
+      "src/Aspose.Slides.Foss/layout_slide.cpp",
+      "src/Aspose.Slides.Foss/light_rig.cpp",
+      "src/Aspose.Slides.Foss/line_format.cpp",
+      "src/Aspose.Slides.Foss/master_slide.cpp",
+      "src/Aspose.Slides.Foss/master_slide_collection.cpp",
+      "src/Aspose.Slides.Foss/notes_size.cpp",
+      "src/Aspose.Slides.Foss/notes_slide.cpp",
+      "src/Aspose.Slides.Foss/notes_slide_header_footer_manager.cpp",
+      "src/Aspose.Slides.Foss/notes_slide_manager.cpp",
+      "src/Aspose.Slides.Foss/paragraph.cpp",
+      "src/Aspose.Slides.Foss/paragraph_collection.cpp",
+      "src/Aspose.Slides.Foss/paragraph_format.cpp",
+      "src/Aspose.Slides.Foss/pattern_format.cpp",
+      "src/Aspose.Slides.Foss/picture.cpp",
+      "src/Aspose.Slides.Foss/picture_fill_format.cpp",
+      "src/Aspose.Slides.Foss/picture_frame_lock.cpp",
+      "src/Aspose.Slides.Foss/picture_utilities.cpp",
+      "src/Aspose.Slides.Foss/placeholder.cpp",
+      "src/Aspose.Slides.Foss/portion.cpp",
+      "src/Aspose.Slides.Foss/portion_collection.cpp",
+      "src/Aspose.Slides.Foss/portion_format.cpp",
+      "src/Aspose.Slides.Foss/pp_image.cpp",
+      "src/Aspose.Slides.Foss/presentation.cpp",
+      "src/Aspose.Slides.Foss/pvi_object.cpp",
+      "src/Aspose.Slides.Foss/row.cpp",
+      "src/Aspose.Slides.Foss/row_collection.cpp",
+      "src/Aspose.Slides.Foss/shape.cpp",
+      "src/Aspose.Slides.Foss/shape_bevel.cpp",
+      "src/Aspose.Slides.Foss/shape_collection.cpp",
+      "src/Aspose.Slides.Foss/slide.cpp",
+      "src/Aspose.Slides.Foss/slide_collection.cpp",
+      "src/Aspose.Slides.Foss/table.cpp",
+      "src/Aspose.Slides.Foss/table_format.cpp",
+      "src/Aspose.Slides.Foss/text_frame.cpp",
+      "src/Aspose.Slides.Foss/text_frame_format.cpp",
+      "src/Aspose.Slides.Foss/three_d_format.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/comments_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/connector_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/document_properties_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/effect_format_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/fill_format_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/images_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/line_format_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/notes_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/presentation_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/shapes_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/slides_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/table_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/text_formatting_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/text_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/threed_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/adjust_value_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/app_properties_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/auto_shape_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/base_portion_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/base_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/blur_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/bullet_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/cell_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/cell_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/cell_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/color_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/column_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/column_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/comment_authors_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/comment_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/comments_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/connector_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/core_properties_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/custom_properties_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/document_properties_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/drawing_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/effect_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/enums_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/fill_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/fill_overlay_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/font_data_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/glow_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/gradient_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/gradient_stop_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/gradient_stop_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/graphical_object_lock_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/graphical_object_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_auto_shape_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_base_portion_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_bullet_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_cell_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_column_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_comment_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_geometry_shape_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_inner_shadow_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_layout_slide_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_layout_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_light_rig_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_line_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_master_slide_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_master_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_notes_size_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_notes_slide_manager_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_notes_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_outer_shadow_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_paragraph_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_paragraph_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_paragraph_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_pattern_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_picture_fill_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_picture_frame_lock_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_portion_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_portion_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_preset_shadow_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_reflection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_row_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_shape_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_shape_frame_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_shape_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_slide_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_slide_component_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_table_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_text_frame_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_text_frame_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/image_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/image_transform_operation_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/line_fill_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/line_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/master_slide_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/master_slide_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/notes_slide_header_footer_manager_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/notes_slide_manager_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/notes_slide_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/paragraph_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/paragraph_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/picture_frame_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/picture_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/picture_utilities_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/portion_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/portion_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/presentation_io_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/relationships_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/row_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/shape_bevel_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/shape_type_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/soft_edge_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/table_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/table_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/text_frame_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/text_frame_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/threed_format_test.cpp",
+      "tests/test_data/image_example.jpg",
+      "tests/test_data/lotus.png",
+      "THIRD_PARTY_NOTICES"
+    ],
+    "important_files_skipped": 0,
+    "readme_summary": "# Aspose.Slides FOSS for C++\n\nThe official open-source C++ library by Aspose.Slides for creating, reading, and editing PowerPoint (`.pptx`) presentations.\n\n---\n\n## Quick Start\n\n```cpp\n#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nint main() {\n    // Open an existing presentation\n    Presentation pres(\"input.pptx\");\n    auto& slides = pres.slides();\n    // ... work with slides ...\n    pres.save(\"output.pptx\", SaveFormat::PPTX);\n\n    // Create a new presentation\n    Presentation new_pres;\n    auto& slide = new_pres.slides()[0];\n    new_pres.save(\"new.pptx\", SaveFormat::PPTX);\n}\n```\n\n---\n\n## Features\n\n- **Presentation I/O** — Open, create, and save `.pptx` files with full round-trip fidelity\n- **Slides** — Add, remove, clone, reorder, and iterate slides\n- **Shapes** — AutoShapes, PictureFrames, Tables, Connectors\n- **Text** — TextFrame, Paragraph, Portion with character, paragraph, and text frame formatting (including bullets)\n- **Fill** — Solid, gradient, pattern, and picture fills\n- **Lines** — Width, dash style, arrows, join and alignment\n- **Effects** — Outer shadow, glow, soft edge, blur, reflection, inner shadow\n- **3D** — Bevel, camera, light rig, material, extrusion depth\n- **Document properties** — Core, app, and custom properties\n- **Notes slides** — Per-slide notes with header/footer management\n- **Comments** — Threaded comments with authors, timestamps, and positions\n- **Images** — Embed from file, bytes, or stream\n\n---\n\n## Usage Examples\n\n### Shapes\n\n```cpp\n#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/shape_type.h>\n#include <Aspose/Slides/Foss/auto_shape.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\nauto& slide = pres.slides()[0];\nauto& shape = slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 50, 50, 300, 100);\nshape.add_text_frame(\"Hello, world!\");\npres.save(\"shapes.pptx\", SaveFormat::PPTX);\n```\n\n### Text Formatting\n\n```cpp\n#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/shape_type.h>\n#include <Aspose/Slides/Foss/auto_shape.h>\n#include <Aspose/Slides/Foss/text_frame.h>\n#include <Aspose/Slides/Foss/paragraph.h>\n#include <Aspose/Slides/Foss/portion.h>\n#include <Aspose/Slides/Foss/portion_format.h>\n#include <Aspose/Slides/Foss/fill_type.h>\n#include <Aspose/Slides/Foss/nullable_bool.h>\n#include <Aspose/Slides/Foss/drawing/color.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\nusing namespace Aspose::Slides::Foss::Drawing;\n\nPresentation pres;\nauto& shape = pres.slides()[0].shapes().add_auto_shape(\n    ShapeType::RECTANGLE, 50, 50, 400, 150);\nauto& tf = shape.add_text_frame(\"Formatted text\");\nauto& fmt = tf.paragraphs()[0].portions()[0].portion_format();\nfmt.set_font_height(24.0f);\nfmt.set_font_bold(NullableBool::TRUE);\nfmt.fill_format().set_fill_type(FillType::SOLID);\nfmt.fill_format().solid_fill_color().set_color(Color::from_argb(255, 0, 70, 127));\npres.save(\"text.pptx\", SaveFormat::PPTX);\n```\n\n### Table\n\n```cpp\n#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/table.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\nauto& table = pres.slides()[0].shapes().add_table(\n    50, 50, {120.0, 120.0, 120.0}, {40.0, 40.0});\ntable.rows()[0][0].text_frame().set_text(\"Name\");\ntable.rows()[0][1].text_frame().set_text(\"Value\");\npres.save(\"table.pptx\", SaveFormat::PPTX);\n```\n\n### Connector\n\n```cpp\n#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/shape_type.h>\n#include <Aspose/Slides/Foss/auto_shape.h>\n#include <Aspose/Slides/Foss/connector.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\nauto& slide = pres.slides()[0];\nauto& box1 = slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 50, 100, 150, 60);\nauto& box2 = slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 350, 100, 150, 60);\nauto& conn = slide.shapes().add_connector(\n    ShapeType::BENT_CONNECTOR3, 0, 0, 10, 10);\nconn.set_start_shape_connected_to(&box1);\nconn.set_start_shape_connection_site_index(3);  // right\nconn.set_end_shape_connected_to(&box2);\nconn.set_end_shape_connection_site_index(1);    // left\npres.save(\"connector.pptx\", SaveFormat::PPTX);\n```\n\n### Fill\n\n```cpp\n#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/shape_type.h>\n#include <Aspose/Slides/Foss/auto_shape.h>\n#include <Aspose/Slides/Foss/fill_type.h>\n#include <Aspose/Slides/Foss/drawing/color.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\nusing namespace Aspose::Slides::Foss::Drawing;\n\nPresentation pres;\nauto& shape = pres.slides()[0].shapes().add_auto_shape(\n    ShapeType::RECTANGLE, 50, 50, 300, 150);\nshape.fill_format().set_fill_type(FillType::SOLID);\nshape.fill_format().solid_fill_color().set_color(Color::from_argb(255, 30, 120, 200));\npres.save(\"fill.pptx\", SaveFormat::PPTX);\n```\n\n### Notes\n\n```cpp\n#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/notes_slide_manager.h>\n#include <Aspose/Slides/Foss/notes_slide.h>\n#include <Aspose/Slides/Foss/text_frame.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\nauto& notes = pres.slides()[0].notes_slide_manager().add_notes_slide();\nnotes.notes_text_frame().set_text(\"Speaker notes go here.\");\npres.save(\"notes.pptx\", SaveFormat::PPTX);\n```\n\n### Comments\n\n```cpp\n#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/comment_author_collection.h>\n#include <Aspose/Slides/Foss/comment_author.h>\n#include <Aspose/Slides/Foss/comment_collection.h>\n#include <Aspose/Slides/Foss/drawing/point_f.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n#include <chrono>\n\nusing namespace Aspose::Slides::Foss;\nusing namespace Aspose::Slides::Foss::Drawing;\n\nPresentation pres;\nauto& author = pres.comment_authors().add_author(\"Jane Smith\", \"JS\");\nauto& slide = pres.slides()[0];\nauthor.comments().add_comment(\n    \"Review this slide\", &slide, PointF{2.0, 2.0},\n    std::chrono::system_clock::now());\npres.save(\"comments.pptx\", SaveFormat::PPTX);\n```\n\n### Document Properties\n\n```cpp\n#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/document_properties.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\npres.document_properties().set_title(\"Q1 Results\");\npres.document_properties().set_author(\"Finance Team\");\npres.document_properties().set_custom_property_value(\"Version\", 3);\npres.save(\"deck.pptx\", SaveFormat::PPTX);\n```\n\n---\n\n## Building\n\n```bash\ncmake -B build -DCMAKE_BUILD_TYPE=Release\ncmake --build build\n```\n\nDependencies (fetched automatically via CMake FetchContent):\n- [pugixml](https://github.com/zeux/pugixml) v1.14 — XML parsing\n- [miniz](https://github.com/richgel999/miniz) 3.0.2 — ZIP archive I/O\n- [GoogleTest](https://github.com/google/googletest) v1.15.2 — Testing (build only)\n\n**Requires:** C++20 compiler, CMake 3.20+\n\n---\n\n## Limitations\n\nThe following areas are not yet available:\n\n- Charts, SmartArt, OLE objects, mathematical text\n- Animations and slide transitions\n- Export to non-PPTX formats (PDF, HTML, SVG, images)\n- VBA macros, digital signatures\n- Hyperlinks and action settings\n\nUnknown XML parts encountered during load are preserved verbatim on save —\nopening and re-saving a file will never strip content this library does not yet understand.\n\n---\n\n## Links\n\n- [GitHub Repository](https://github.com/aspose-slides-foss/Aspose.Slides-FOSS-for-Cpp)\n- [Issue Tracker](https://github.com/aspose-slides-foss/Aspose.Slides-FOSS-for-Cpp/issues)\n\n---\n\n## License\n\n[MIT License](https://github.com/aspose-slides-foss/Aspose.Slides-FOSS-for-Cpp/blob/main/LICENSE)\n",
+    "shared_facts": {
+      "build_systems": [
+        "cmake"
+      ],
+      "dependencies": [],
+      "description": "",
+      "entrypoints": [],
+      "has_ci": false,
+      "has_docs_folder": false,
+      "has_examples_folder": false,
+      "has_tests": true,
+      "install_command": "",
+      "license_type": "",
+      "module_path": "",
+      "package_name": "aspose_slides_foss",
+      "primary_language": "c",
+      "python_requires": "",
+      "target_frameworks": [],
+      "version": ""
+    },
+    "skipped_paths": [],
+    "source_paths": [
+      "include/Aspose/Slides/Foss/_internal/base_collection.h",
+      "include/Aspose/Slides/Foss/_internal/export/exporter_base.h",
+      "include/Aspose/Slides/Foss/_internal/export/exporter_registry.h",
+      "include/Aspose/Slides/Foss/_internal/export/pptx_exporter.h",
+      "include/Aspose/Slides/Foss/_internal/opc/content_types.h",
+      "include/Aspose/Slides/Foss/_internal/opc/content_types_manager.h",
+      "include/Aspose/Slides/Foss/_internal/opc/opc_package.h",
+      "include/Aspose/Slides/Foss/_internal/opc/part_utils.h",
+      "include/Aspose/Slides/Foss/_internal/opc/relationships.h",
+      "include/Aspose/Slides/Foss/_internal/opc/relationships_manager.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/app_properties_part.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/bulk_text_format.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/comment_authors_part.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/comments_part.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/constants.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/core_properties_part.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/custom_properties_part.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/layout_slide_part.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/master_slide_part.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/notes_slide_part.h",
+      "include/Aspose/Slides/Foss/_internal/pptx/slide_part.h",
+      "include/Aspose/Slides/Foss/_internal/xml/xml_element.h",
+      "include/Aspose/Slides/Foss/adjust_value.h",
+      "include/Aspose/Slides/Foss/adjust_value_collection.h",
+      "include/Aspose/Slides/Foss/auto_shape.h",
+      "include/Aspose/Slides/Foss/base_handout_notes_slide_header_footer_manager.h",
+      "include/Aspose/Slides/Foss/base_portion_format.h",
+      "include/Aspose/Slides/Foss/base_shape_lock.h",
+      "include/Aspose/Slides/Foss/base_slide.h",
+      "include/Aspose/Slides/Foss/bevel_preset_type.h",
+      "include/Aspose/Slides/Foss/bullet_format.h",
+      "include/Aspose/Slides/Foss/bullet_type.h",
+      "include/Aspose/Slides/Foss/camera.h",
+      "include/Aspose/Slides/Foss/camera_preset_type.h",
+      "include/Aspose/Slides/Foss/cell.h",
+      "include/Aspose/Slides/Foss/cell_collection.h",
+      "include/Aspose/Slides/Foss/cell_format.h",
+      "include/Aspose/Slides/Foss/color_format.h",
+      "include/Aspose/Slides/Foss/color_type.h",
+      "include/Aspose/Slides/Foss/column.h",
+      "include/Aspose/Slides/Foss/column_collection.h",
+      "include/Aspose/Slides/Foss/column_format.h",
+      "include/Aspose/Slides/Foss/comment.h",
+      "include/Aspose/Slides/Foss/comment_author.h",
+      "include/Aspose/Slides/Foss/comment_author_collection.h",
+      "include/Aspose/Slides/Foss/comment_collection.h",
+      "include/Aspose/Slides/Foss/connector.h",
+      "include/Aspose/Slides/Foss/document_properties.h",
+      "include/Aspose/Slides/Foss/drawing/color.h",
+      "include/Aspose/Slides/Foss/drawing/point_f.h",
+      "include/Aspose/Slides/Foss/drawing/rectangle_f.h",
+      "include/Aspose/Slides/Foss/drawing/size.h",
+      "include/Aspose/Slides/Foss/drawing/size_f.h",
+      "include/Aspose/Slides/Foss/effect_format.h",
+      "include/Aspose/Slides/Foss/effects/blur.h",
+      "include/Aspose/Slides/Foss/effects/fill_overlay.h",
+      "include/Aspose/Slides/Foss/effects/glow.h",
+      "include/Aspose/Slides/Foss/effects/i_blur.h",
+      "include/Aspose/Slides/Foss/effects/i_fill_overlay.h",
+      "include/Aspose/Slides/Foss/effects/i_glow.h",
+      "include/Aspose/Slides/Foss/effects/i_image_transform_operation.h",
+      "include/Aspose/Slides/Foss/effects/i_inner_shadow.h",
+      "include/Aspose/Slides/Foss/effects/i_outer_shadow.h",
+      "include/Aspose/Slides/Foss/effects/i_preset_shadow.h",
+      "include/Aspose/Slides/Foss/effects/i_reflection.h",
+      "include/Aspose/Slides/Foss/effects/i_soft_edge.h",
+      "include/Aspose/Slides/Foss/effects/image_transform_operation.h",
+      "include/Aspose/Slides/Foss/effects/inner_shadow.h",
+      "include/Aspose/Slides/Foss/effects/outer_shadow.h",
+      "include/Aspose/Slides/Foss/effects/preset_shadow.h",
+      "include/Aspose/Slides/Foss/effects/reflection.h",
+      "include/Aspose/Slides/Foss/effects/soft_edge.h",
+      "include/Aspose/Slides/Foss/export/save_format.h",
+      "include/Aspose/Slides/Foss/fill_blend_mode.h",
+      "include/Aspose/Slides/Foss/fill_format.h",
+      "include/Aspose/Slides/Foss/fill_type.h",
+      "include/Aspose/Slides/Foss/font_alignment.h",
+      "include/Aspose/Slides/Foss/font_data.h",
+      "include/Aspose/Slides/Foss/geometry_shape.h",
+      "include/Aspose/Slides/Foss/global_layout_slide_collection.h",
+      "include/Aspose/Slides/Foss/gradient_direction.h",
+      "include/Aspose/Slides/Foss/gradient_format.h",
+      "include/Aspose/Slides/Foss/gradient_shape.h",
+      "include/Aspose/Slides/Foss/gradient_stop.h",
+      "include/Aspose/Slides/Foss/gradient_stop_collection.h",
+      "include/Aspose/Slides/Foss/graphical_object.h",
+      "include/Aspose/Slides/Foss/graphical_object_lock.h",
+      "include/Aspose/Slides/Foss/group_shape.h",
+      "include/Aspose/Slides/Foss/heading_pair.h",
+      "include/Aspose/Slides/Foss/i_adjust_value.h",
+      "include/Aspose/Slides/Foss/i_adjust_value_collection.h",
+      "include/Aspose/Slides/Foss/i_auto_shape.h",
+      "include/Aspose/Slides/Foss/i_base_handout_notes_slide_header_footer_manager.h",
+      "include/Aspose/Slides/Foss/i_base_header_footer_manager.h",
+      "include/Aspose/Slides/Foss/i_base_portion_format.h",
+      "include/Aspose/Slides/Foss/i_base_slide.h",
+      "include/Aspose/Slides/Foss/i_base_slide_header_footer_manager.h",
+      "include/Aspose/Slides/Foss/i_bulk_text_formattable.h",
+      "include/Aspose/Slides/Foss/i_bullet_format.h",
+      "include/Aspose/Slides/Foss/i_camera.h",
+      "include/Aspose/Slides/Foss/i_cell.h",
+      "include/Aspose/Slides/Foss/i_cell_collection.h",
+      "include/Aspose/Slides/Foss/i_cell_format.h",
+      "include/Aspose/Slides/Foss/i_color_format.h",
+      "include/Aspose/Slides/Foss/i_column.h",
+      "include/Aspose/Slides/Foss/i_column_collection.h",
+      "include/Aspose/Slides/Foss/i_column_format.h",
+      "include/Aspose/Slides/Foss/i_comment.h",
+      "include/Aspose/Slides/Foss/i_comment_author.h",
+      "include/Aspose/Slides/Foss/i_comment_author_collection.h",
+      "include/Aspose/Slides/Foss/i_comment_collection.h",
+      "include/Aspose/Slides/Foss/i_connector.h",
+      "include/Aspose/Slides/Foss/i_document_properties.h",
+      "include/Aspose/Slides/Foss/i_effect_format.h",
+      "include/Aspose/Slides/Foss/i_effect_param_source.h",
+      "include/Aspose/Slides/Foss/i_fill_format.h",
+      "include/Aspose/Slides/Foss/i_fill_param_source.h",
+      "include/Aspose/Slides/Foss/i_font_data.h",
+      "include/Aspose/Slides/Foss/i_geometry_shape.h",
+      "include/Aspose/Slides/Foss/i_global_layout_slide_collection.h",
+      "include/Aspose/Slides/Foss/i_gradient_format.h",
+      "include/Aspose/Slides/Foss/i_gradient_stop.h",
+      "include/Aspose/Slides/Foss/i_gradient_stop_collection.h",
+      "include/Aspose/Slides/Foss/i_graphical_object.h",
+      "include/Aspose/Slides/Foss/i_graphical_object_lock.h",
+      "include/Aspose/Slides/Foss/i_group_shape.h",
+      "include/Aspose/Slides/Foss/i_heading_pair.h",
+      "include/Aspose/Slides/Foss/i_hyperlink_container.h",
+      "include/Aspose/Slides/Foss/i_image.h",
+      "include/Aspose/Slides/Foss/i_image_collection.h",
+      "include/Aspose/Slides/Foss/i_layout_slide.h",
+      "include/Aspose/Slides/Foss/i_layout_slide_collection.h",
+      "include/Aspose/Slides/Foss/i_light_rig.h",
+      "include/Aspose/Slides/Foss/i_line_fill_format.h",
+      "include/Aspose/Slides/Foss/i_line_format.h",
+      "include/Aspose/Slides/Foss/i_line_param_source.h",
+      "include/Aspose/Slides/Foss/i_load_options.h",
+      "include/Aspose/Slides/Foss/i_master_layout_slide_collection.h",
+      "include/Aspose/Slides/Foss/i_master_slide.h",
+      "include/Aspose/Slides/Foss/i_master_slide_collection.h",
+      "include/Aspose/Slides/Foss/i_notes_size.h",
+      "include/Aspose/Slides/Foss/i_notes_slide.h",
+      "include/Aspose/Slides/Foss/i_notes_slide_header_footer_manager.h",
+      "include/Aspose/Slides/Foss/i_notes_slide_manager.h",
+      "include/Aspose/Slides/Foss/i_paragraph.h",
+      "include/Aspose/Slides/Foss/i_paragraph_collection.h",
+      "include/Aspose/Slides/Foss/i_paragraph_format.h",
+      "include/Aspose/Slides/Foss/i_pattern_format.h",
+      "include/Aspose/Slides/Foss/i_picture_fill_format.h",
+      "include/Aspose/Slides/Foss/i_picture_frame.h",
+      "include/Aspose/Slides/Foss/i_picture_frame_lock.h",
+      "include/Aspose/Slides/Foss/i_portion.h",
+      "include/Aspose/Slides/Foss/i_portion_collection.h",
+      "include/Aspose/Slides/Foss/i_portion_format.h",
+      "include/Aspose/Slides/Foss/i_presentation.h",
+      "include/Aspose/Slides/Foss/i_presentation_component.h",
+      "include/Aspose/Slides/Foss/i_row.h",
+      "include/Aspose/Slides/Foss/i_row_collection.h",
+      "include/Aspose/Slides/Foss/i_row_format.h",
+      "include/Aspose/Slides/Foss/i_section.h",
+      "include/Aspose/Slides/Foss/i_shape.h",
+      "include/Aspose/Slides/Foss/i_shape_bevel.h",
+      "include/Aspose/Slides/Foss/i_shape_collection.h",
+      "include/Aspose/Slides/Foss/i_shape_frame.h",
+      "include/Aspose/Slides/Foss/i_shape_style.h",
+      "include/Aspose/Slides/Foss/i_slide.h",
+      "include/Aspose/Slides/Foss/i_slide_collection.h",
+      "include/Aspose/Slides/Foss/i_slide_component.h",
+      "include/Aspose/Slides/Foss/i_slides_picture.h",
+      "include/Aspose/Slides/Foss/i_table.h",
+      "include/Aspose/Slides/Foss/i_table_format.h",
+      "include/Aspose/Slides/Foss/i_text_frame.h",
+      "include/Aspose/Slides/Foss/i_text_frame_format.h",
+      "include/Aspose/Slides/Foss/i_three_d_format.h",
+      "include/Aspose/Slides/Foss/i_three_d_param_source.h",
+      "include/Aspose/Slides/Foss/image.h",
+      "include/Aspose/Slides/Foss/image_collection.h",
+      "include/Aspose/Slides/Foss/image_utils.h",
+      "include/Aspose/Slides/Foss/images.h",
+      "include/Aspose/Slides/Foss/ipp_image.h",
+      "include/Aspose/Slides/Foss/layout_slide.h",
+      "include/Aspose/Slides/Foss/layout_slide_collection.h",
+      "include/Aspose/Slides/Foss/light_rig.h",
+      "include/Aspose/Slides/Foss/light_rig_preset_type.h",
+      "include/Aspose/Slides/Foss/lighting_direction.h",
+      "include/Aspose/Slides/Foss/line_alignment.h",
+      "include/Aspose/Slides/Foss/line_arrowhead_length.h",
+      "include/Aspose/Slides/Foss/line_arrowhead_style.h",
+      "include/Aspose/Slides/Foss/line_arrowhead_width.h",
+      "include/Aspose/Slides/Foss/line_cap_style.h",
+      "include/Aspose/Slides/Foss/line_dash_style.h",
+      "include/Aspose/Slides/Foss/line_fill_format.h",
+      "include/Aspose/Slides/Foss/line_format.h",
+      "include/Aspose/Slides/Foss/line_join_style.h",
+      "include/Aspose/Slides/Foss/line_style.h",
+      "include/Aspose/Slides/Foss/master_layout_slide_collection.h",
+      "include/Aspose/Slides/Foss/master_slide.h",
+      "include/Aspose/Slides/Foss/master_slide_collection.h",
+      "include/Aspose/Slides/Foss/material_preset_type.h",
+      "include/Aspose/Slides/Foss/notes_size.h",
+      "include/Aspose/Slides/Foss/notes_slide.h",
+      "include/Aspose/Slides/Foss/notes_slide_header_footer_manager.h",
+      "include/Aspose/Slides/Foss/notes_slide_manager.h",
+      "include/Aspose/Slides/Foss/notes_slide_part.h",
+      "include/Aspose/Slides/Foss/nullable_bool.h",
+      "include/Aspose/Slides/Foss/numbered_bullet_style.h",
+      "include/Aspose/Slides/Foss/paragraph.h",
+      "include/Aspose/Slides/Foss/paragraph_collection.h",
+      "include/Aspose/Slides/Foss/paragraph_format.h",
+      "include/Aspose/Slides/Foss/pattern_format.h",
+      "include/Aspose/Slides/Foss/pattern_style.h",
+      "include/Aspose/Slides/Foss/picture.h",
+      "include/Aspose/Slides/Foss/picture_fill_format.h",
+      "include/Aspose/Slides/Foss/picture_fill_mode.h",
+      "include/Aspose/Slides/Foss/picture_frame.h",
+      "include/Aspose/Slides/Foss/picture_frame_lock.h",
+      "include/Aspose/Slides/Foss/picture_utilities.h",
+      "include/Aspose/Slides/Foss/portion.h",
+      "include/Aspose/Slides/Foss/portion_collection.h",
+      "include/Aspose/Slides/Foss/portion_format.h",
+      "include/Aspose/Slides/Foss/pp_image.h",
+      "include/Aspose/Slides/Foss/presentation.h",
+      "include/Aspose/Slides/Foss/preset_color.h",
+      "include/Aspose/Slides/Foss/preset_shadow_type.h",
+      "include/Aspose/Slides/Foss/pvi_object.h",
+      "include/Aspose/Slides/Foss/rectangle_alignment.h",
+      "include/Aspose/Slides/Foss/row.h",
+      "include/Aspose/Slides/Foss/row_collection.h",
+      "include/Aspose/Slides/Foss/row_format.h",
+      "include/Aspose/Slides/Foss/scheme_color.h",
+      "include/Aspose/Slides/Foss/shape.h",
+      "include/Aspose/Slides/Foss/shape_bevel.h",
+      "include/Aspose/Slides/Foss/shape_collection.h",
+      "include/Aspose/Slides/Foss/shape_frame.h",
+      "include/Aspose/Slides/Foss/shape_type.h",
+      "include/Aspose/Slides/Foss/simple_color_format.h",
+      "include/Aspose/Slides/Foss/slide.h",
+      "include/Aspose/Slides/Foss/slide_collection.h",
+      "include/Aspose/Slides/Foss/slide_layout_type.h",
+      "include/Aspose/Slides/Foss/source_format.h",
+      "include/Aspose/Slides/Foss/table.h",
+      "include/Aspose/Slides/Foss/table_format.h",
+      "include/Aspose/Slides/Foss/table_style_preset.h",
+      "include/Aspose/Slides/Foss/text_alignment.h",
+      "include/Aspose/Slides/Foss/text_anchor_type.h",
+      "include/Aspose/Slides/Foss/text_autofit_type.h",
+      "include/Aspose/Slides/Foss/text_cap_type.h",
+      "include/Aspose/Slides/Foss/text_frame.h",
+      "include/Aspose/Slides/Foss/text_frame_format.h",
+      "include/Aspose/Slides/Foss/text_shape_type.h",
+      "include/Aspose/Slides/Foss/text_strikethrough_type.h",
+      "include/Aspose/Slides/Foss/text_underline_type.h",
+      "include/Aspose/Slides/Foss/text_vertical_type.h",
+      "include/Aspose/Slides/Foss/theme/i_themeable.h",
+      "include/Aspose/Slides/Foss/three_d_format.h",
+      "include/Aspose/Slides/Foss/tile_flip.h",
+      "src/Aspose.Slides.Foss/_internal/export/exporter_base.cpp",
+      "src/Aspose.Slides.Foss/_internal/export/exporter_registry.cpp",
+      "src/Aspose.Slides.Foss/_internal/export/pptx_exporter.cpp",
+      "src/Aspose.Slides.Foss/_internal/opc/opc_package.cpp",
+      "src/Aspose.Slides.Foss/_internal/opc/part_utils.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/app_properties_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/bulk_text_format.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/comment_authors_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/comments_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/core_properties_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/custom_properties_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/layout_slide_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/master_slide_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/notes_slide_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/shape_factory.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/shape_factory.h",
+      "src/Aspose.Slides.Foss/_internal/pptx/shape_type_mapping.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/shape_type_mapping.h",
+      "src/Aspose.Slides.Foss/_internal/pptx/slide_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/table_style_mapping.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/table_style_mapping.h",
+      "src/Aspose.Slides.Foss/_internal/pptx/template.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/template.h",
+      "src/Aspose.Slides.Foss/adjust_value.cpp",
+      "src/Aspose.Slides.Foss/adjust_value_collection.cpp",
+      "src/Aspose.Slides.Foss/auto_shape.cpp",
+      "src/Aspose.Slides.Foss/base_handout_notes_slide_header_footer_manager.cpp",
+      "src/Aspose.Slides.Foss/bullet_format.cpp",
+      "src/Aspose.Slides.Foss/camera.cpp",
+      "src/Aspose.Slides.Foss/cell.cpp",
+      "src/Aspose.Slides.Foss/cell_collection.cpp",
+      "src/Aspose.Slides.Foss/cell_format.cpp",
+      "src/Aspose.Slides.Foss/column.cpp",
+      "src/Aspose.Slides.Foss/column_collection.cpp",
+      "src/Aspose.Slides.Foss/comment.cpp",
+      "src/Aspose.Slides.Foss/comment_author.cpp",
+      "src/Aspose.Slides.Foss/comment_author_collection.cpp",
+      "src/Aspose.Slides.Foss/comment_collection.cpp",
+      "src/Aspose.Slides.Foss/connector.cpp",
+      "src/Aspose.Slides.Foss/document_properties.cpp",
+      "src/Aspose.Slides.Foss/drawing/color.cpp",
+      "src/Aspose.Slides.Foss/drawing/point_f.cpp",
+      "src/Aspose.Slides.Foss/drawing/size.cpp",
+      "src/Aspose.Slides.Foss/drawing/size_f.cpp",
+      "src/Aspose.Slides.Foss/effect_format.cpp",
+      "src/Aspose.Slides.Foss/effects/blur.cpp",
+      "src/Aspose.Slides.Foss/effects/fill_overlay.cpp",
+      "src/Aspose.Slides.Foss/effects/glow.cpp",
+      "src/Aspose.Slides.Foss/effects/inner_shadow.cpp",
+      "src/Aspose.Slides.Foss/effects/outer_shadow.cpp",
+      "src/Aspose.Slides.Foss/effects/preset_shadow.cpp",
+      "src/Aspose.Slides.Foss/effects/reflection.cpp",
+      "src/Aspose.Slides.Foss/effects/soft_edge.cpp",
+      "src/Aspose.Slides.Foss/fill_format.cpp",
+      "src/Aspose.Slides.Foss/gradient_format.cpp",
+      "src/Aspose.Slides.Foss/gradient_stop.cpp",
+      "src/Aspose.Slides.Foss/gradient_stop_collection.cpp",
+      "src/Aspose.Slides.Foss/group_shape.cpp",
+      "src/Aspose.Slides.Foss/image.cpp",
+      "src/Aspose.Slides.Foss/image_collection.cpp",
+      "src/Aspose.Slides.Foss/image_utils.cpp",
+      "src/Aspose.Slides.Foss/images.cpp",
+      "src/Aspose.Slides.Foss/layout_slide.cpp",
+      "src/Aspose.Slides.Foss/light_rig.cpp",
+      "src/Aspose.Slides.Foss/line_format.cpp",
+      "src/Aspose.Slides.Foss/master_slide.cpp",
+      "src/Aspose.Slides.Foss/master_slide_collection.cpp",
+      "src/Aspose.Slides.Foss/notes_size.cpp",
+      "src/Aspose.Slides.Foss/notes_slide.cpp",
+      "src/Aspose.Slides.Foss/notes_slide_header_footer_manager.cpp",
+      "src/Aspose.Slides.Foss/notes_slide_manager.cpp",
+      "src/Aspose.Slides.Foss/paragraph.cpp",
+      "src/Aspose.Slides.Foss/paragraph_collection.cpp",
+      "src/Aspose.Slides.Foss/paragraph_format.cpp",
+      "src/Aspose.Slides.Foss/pattern_format.cpp",
+      "src/Aspose.Slides.Foss/picture.cpp",
+      "src/Aspose.Slides.Foss/picture_fill_format.cpp",
+      "src/Aspose.Slides.Foss/picture_frame_lock.cpp",
+      "src/Aspose.Slides.Foss/picture_utilities.cpp",
+      "src/Aspose.Slides.Foss/placeholder.cpp",
+      "src/Aspose.Slides.Foss/portion.cpp",
+      "src/Aspose.Slides.Foss/portion_collection.cpp",
+      "src/Aspose.Slides.Foss/portion_format.cpp",
+      "src/Aspose.Slides.Foss/pp_image.cpp",
+      "src/Aspose.Slides.Foss/presentation.cpp",
+      "src/Aspose.Slides.Foss/pvi_object.cpp",
+      "src/Aspose.Slides.Foss/row.cpp",
+      "src/Aspose.Slides.Foss/row_collection.cpp",
+      "src/Aspose.Slides.Foss/shape.cpp",
+      "src/Aspose.Slides.Foss/shape_bevel.cpp",
+      "src/Aspose.Slides.Foss/shape_collection.cpp",
+      "src/Aspose.Slides.Foss/slide.cpp",
+      "src/Aspose.Slides.Foss/slide_collection.cpp",
+      "src/Aspose.Slides.Foss/table.cpp",
+      "src/Aspose.Slides.Foss/table_format.cpp",
+      "src/Aspose.Slides.Foss/text_frame.cpp",
+      "src/Aspose.Slides.Foss/text_frame_format.cpp",
+      "src/Aspose.Slides.Foss/three_d_format.cpp"
+    ],
+    "test_paths": [
+      "tests/Aspose.Slides.Foss.IntegrationTests/comments_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/connector_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/document_properties_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/effect_format_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/fill_format_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/images_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/line_format_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/notes_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/presentation_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/shapes_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/slides_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/table_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/text_formatting_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/text_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/threed_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/adjust_value_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/app_properties_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/auto_shape_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/base_portion_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/base_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/blur_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/bullet_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/cell_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/cell_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/cell_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/color_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/column_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/column_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/comment_authors_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/comment_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/comments_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/connector_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/core_properties_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/custom_properties_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/document_properties_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/drawing_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/effect_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/enums_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/fill_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/fill_overlay_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/font_data_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/glow_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/gradient_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/gradient_stop_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/gradient_stop_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/graphical_object_lock_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/graphical_object_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_auto_shape_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_base_portion_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_bullet_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_cell_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_column_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_comment_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_geometry_shape_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_inner_shadow_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_layout_slide_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_layout_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_light_rig_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_line_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_master_slide_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_master_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_notes_size_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_notes_slide_manager_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_notes_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_outer_shadow_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_paragraph_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_paragraph_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_paragraph_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_pattern_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_picture_fill_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_picture_frame_lock_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_portion_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_portion_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_preset_shadow_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_reflection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_row_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_shape_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_shape_frame_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_shape_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_slide_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_slide_component_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_table_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_text_frame_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_text_frame_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/image_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/image_transform_operation_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/line_fill_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/line_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/master_slide_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/master_slide_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/notes_slide_header_footer_manager_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/notes_slide_manager_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/notes_slide_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/paragraph_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/paragraph_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/picture_frame_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/picture_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/picture_utilities_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/portion_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/portion_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/presentation_io_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/relationships_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/row_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/shape_bevel_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/shape_type_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/soft_edge_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/table_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/table_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/text_frame_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/text_frame_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/threed_format_test.cpp",
+      "tests/test_data/image_example.jpg",
+      "tests/test_data/lotus.png"
+    ]
+  },
+  "richness_tier": {
+    "code_evidence_sparse": false,
+    "reason": "api_methods=0(+0.00); formats=1(+0.02); api_conf=low(+0.00); snippets=9(+0.09); fmt_conf_avg=1.00(+0.15); code_evidence=9(example_files=0,non_test_snippets=9,sparse=False)",
+    "score": 26,
+    "tier": "C"
+  },
+  "snippets": [
+    {
+      "claim_ids": [
+        "CLM-slides-fa8517",
+        "CLM-slides-243e1a",
+        "CLM-slides-52188c",
+        "CLM-slides-3b246a",
+        "CLM-slides-9db4eb"
+      ],
+      "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nint main() {\n    // Open an existing presentation\n    Presentation pres(\"input.pptx\");\n    auto& slides = pres.slides();\n    // ... work with slides ...\n    pres.save(\"output.pptx\", SaveFormat::PPTX);\n\n    // Create a new presentation\n    Presentation new_pres;\n    auto& slide = new_pres.slides()[0];\n    new_pres.save(\"new.pptx\", SaveFormat::PPTX);\n}",
+      "language": "cpp",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-slides-fa8517",
+        "CLM-slides-243e1a",
+        "CLM-slides-3b246a",
+        "CLM-slides-47cc81",
+        "CLM-slides-9db4eb"
+      ],
+      "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/shape_type.h>\n#include <Aspose/Slides/Foss/auto_shape.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\nauto& slide = pres.slides()[0];\nauto& shape = slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 50, 50, 300, 100);\nshape.add_text_frame(\"Hello, world!\");\npres.save(\"shapes.pptx\", SaveFormat::PPTX);",
+      "language": "cpp",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-slides-fa8517",
+        "CLM-slides-243e1a",
+        "CLM-slides-d2bfac",
+        "CLM-slides-3b246a",
+        "CLM-slides-47cc81",
+        "CLM-slides-9db4eb",
+        "CLM-slides-924fc3"
+      ],
+      "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/shape_type.h>\n#include <Aspose/Slides/Foss/auto_shape.h>\n#include <Aspose/Slides/Foss/text_frame.h>\n#include <Aspose/Slides/Foss/paragraph.h>\n#include <Aspose/Slides/Foss/portion.h>\n#include <Aspose/Slides/Foss/portion_format.h>\n#include <Aspose/Slides/Foss/fill_type.h>\n#include <Aspose/Slides/Foss/nullable_bool.h>\n#include <Aspose/Slides/Foss/drawing/color.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\nusing namespace Aspose::Slides::Foss::Drawing;\n\nPresentation pres;\nauto& shape = pres.slides()[0].shapes().add_auto_shape(\n    ShapeType::RECTANGLE, 50, 50, 400, 150);\nauto& tf = shape.add_text_frame(\"Formatted text\");\nauto& fmt = tf.paragraphs()[0].portions()[0].portion_format();\nfmt.set_font_height(24.0f);\nfmt.set_font_bold(NullableBool::TRUE);\nfmt.fill_format().set_fill_type(FillType::SOLID);\nfmt.fill_format().solid_fill_color().set_color(Color::from_argb(255, 0, 70, 127));\npres.save(\"text.pptx\", SaveFormat::PPTX);",
+      "language": "cpp",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-slides-bbf153",
+        "CLM-slides-69bdbd",
+        "CLM-slides-84402d",
+        "CLM-slides-6bdf02"
+      ],
+      "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/table.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\nauto& table = pres.slides()[0].shapes().add_table(\n    50, 50, {120.0, 120.0, 120.0}, {40.0, 40.0});\ntable.rows()[0][0].text_frame().set_text(\"Name\");\ntable.rows()[0][1].text_frame().set_text(\"Value\");\npres.save(\"table.pptx\", SaveFormat::PPTX);",
+      "language": "cpp",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-slides-47cc81",
+        "CLM-slides-69bdbd",
+        "CLM-slides-84402d",
+        "CLM-slides-6bdf02"
+      ],
+      "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/shape_type.h>\n#include <Aspose/Slides/Foss/auto_shape.h>\n#include <Aspose/Slides/Foss/connector.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\nauto& slide = pres.slides()[0];\nauto& box1 = slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 50, 100, 150, 60);\nauto& box2 = slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 350, 100, 150, 60);\nauto& conn = slide.shapes().add_connector(\n    ShapeType::BENT_CONNECTOR3, 0, 0, 10, 10);\nconn.set_start_shape_connected_to(&box1);\nconn.set_start_shape_connection_site_index(3);  // right\nconn.set_end_shape_connected_to(&box2);\nconn.set_end_shape_connection_site_index(1);    // left\npres.save(\"connector.pptx\", SaveFormat::PPTX);",
+      "language": "cpp",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-slides-b21169",
+        "CLM-slides-69bdbd",
+        "CLM-slides-924fc3"
+      ],
+      "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/shape_type.h>\n#include <Aspose/Slides/Foss/auto_shape.h>\n#include <Aspose/Slides/Foss/fill_type.h>\n#include <Aspose/Slides/Foss/drawing/color.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\nusing namespace Aspose::Slides::Foss::Drawing;\n\nPresentation pres;\nauto& shape = pres.slides()[0].shapes().add_auto_shape(\n    ShapeType::RECTANGLE, 50, 50, 300, 150);\nshape.fill_format().set_fill_type(FillType::SOLID);\nshape.fill_format().solid_fill_color().set_color(Color::from_argb(255, 30, 120, 200));\npres.save(\"fill.pptx\", SaveFormat::PPTX);",
+      "language": "cpp",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-slides-84402d",
+        "CLM-slides-bbf153"
+      ],
+      "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/notes_slide_manager.h>\n#include <Aspose/Slides/Foss/notes_slide.h>\n#include <Aspose/Slides/Foss/text_frame.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\nauto& notes = pres.slides()[0].notes_slide_manager().add_notes_slide();\nnotes.notes_text_frame().set_text(\"Speaker notes go here.\");\npres.save(\"notes.pptx\", SaveFormat::PPTX);",
+      "language": "cpp",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-slides-52188c",
+        "CLM-slides-bbf153"
+      ],
+      "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/comment_author_collection.h>\n#include <Aspose/Slides/Foss/comment_author.h>\n#include <Aspose/Slides/Foss/comment_collection.h>\n#include <Aspose/Slides/Foss/drawing/point_f.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n#include <chrono>\n\nusing namespace Aspose::Slides::Foss;\nusing namespace Aspose::Slides::Foss::Drawing;\n\nPresentation pres;\nauto& author = pres.comment_authors().add_author(\"Jane Smith\", \"JS\");\nauto& slide = pres.slides()[0];\nauthor.comments().add_comment(\n    \"Review this slide\", &slide, PointF{2.0, 2.0},\n    std::chrono::system_clock::now());\npres.save(\"comments.pptx\", SaveFormat::PPTX);",
+      "language": "cpp",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    },
+    {
+      "claim_ids": [
+        "CLM-slides-52188c",
+        "CLM-slides-6bdf02"
+      ],
+      "code": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/document_properties.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\npres.document_properties().set_title(\"Q1 Results\");\npres.document_properties().set_author(\"Finance Team\");\npres.document_properties().set_custom_property_value(\"Version\", 3);\npres.save(\"deck.pptx\", SaveFormat::PPTX);",
+      "language": "cpp",
+      "line_end": null,
+      "line_start": null,
+      "snippet_id": "",
+      "source_file": "README.md",
+      "source_type": "extracted",
+      "syntax_valid": true
+    }
+  ]
+}

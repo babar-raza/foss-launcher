@@ -1,0 +1,102 @@
+---
+canonical: https://blog.aspose.org/email/python/email-key-features/
+canonical_import: aspose.email
+code_import: aspose.email
+date: '2026-03-24T16:46:41Z'
+dateModified: '2026-03-24T16:46:41Z'
+datePublished: '2026-03-24T16:46:41Z'
+description: It exposes low-level access to CFB (Compound File Binary) containers
+  and high-level message handling through the `MapiMessage` class.
+display_name: Aspose.Email FOSS
+family: email
+keywords:
+- email python
+- email python library
+- email python package
+- email python module
+- email python install
+- email python code
+- email python documentation
+- email python regex
+lastmod: '2026-03-24T16:46:41Z'
+page_role: feature_blog
+platform: python
+reading_time: 1
+robots: index, follow
+seoTitle: Aspose.Email FOSS Email Key Features
+slug: email-key-features
+title: Email Key Features
+type: feature_blog
+url: /blog.aspose.org/email/python/email-key-features/
+weight: 17
+---
+
+## Introduction
+
+If you have ever needed to parse Outlook MSG files or process MAPI message structures in Python without relying on Outlook or Exchange, Aspose.Email FOSS provides a lightweight, dependency-free solution. It exposes low-level access to CFB (Compound File Binary) containers and high-level message handling through the `MapiMessage` class.
+
+The library enables reading, inspecting, and writing Outlook message formats using standardized Python classes. Developers can extract headers, recipients, attachments, and embedded messages, or convert between MSG and `email.message.[identifier omitted]` for interoperability with Python’s built-in email tooling.
+
+- Read MSG and CFB containers using `MsgReader` and `CFBReader`
+- Inspect and modify message properties via `MapiMessage`, `MapiProperty`, and `MapiRecipient`
+- Convert messages to/from Python’s `email.message.EmailMessage` for integration with standard email workflows
+
+## Key Highlights
+
+If you have ever needed to inspect or manipulate Outlook MSG files programmatically in Python without relying on Outlook or Exchange, Aspose.Email FOSS provides low- and high-level APIs to read, modify, and write MAPI messages using the `MapiMessage` class and supporting CFB-based structures.
+
+- Parse MSG files using `MapiMessage.from_file()` to load Outlook messages directly from disk and access subject, body, and message class via read-only properties.
+- Convert between `MapiMessage` and Python’s standard `email.message.EmailMessage` using `from_email_message()` and `to_email_message()` (implied by conversion support) for interoperability with built-in email tooling.
+- Inspect low-level CFB structure with `CFBReader` and `CFBDocument` to debug malformed files or extract embedded streams not exposed at the high-level API.
+- Create new messages from scratch using `MapiMessage.create()` and attach files or embedded messages via `MapiAttachment` constructors.
+
+```python
+import aspose.email
+
+# Load an MSG file and read core properties
+msg = aspose.email.MapiMessage.from_file("sample.msg")
+print(f"Subject: {msg.subject}")
+print(f"Message Class: {msg.message_class}")
+print(f"Body length: {len(msg.body) if msg.body else 0}")
+
+# Iterate over MAPI properties
+for prop in msg.iter_properties():
+    print(f"Property tag: 0x{prop.property_tag:08X}")
+```
+
+The `MapiMessage` class serves as the primary high-level interface for working with Outlook messages. It exposes `subject`, `body`, and `message_class` as nullable `string` properties, and supports iteration over raw MAPI properties via `iter_properties()`. This enables developers to inspect or validate message metadata beyond what standard email libraries provide.
+
+For advanced scenarios—such as repairing corrupted MSG files or extracting embedded content—the `CFBReader` and `CFBDocument` classes expose the underlying Compound File Binary structure. `CFBReader.from_file()` opens the container, and methods like `get_stream_data()` and `iter_storages()` let you traverse the internal directory tree.
+
+## Getting Started
+
+If you have ever needed to read, inspect, or convert Outlook MSG files in Python without external dependencies, Aspose.Email FOSS provides low-level access to MAPI message structures through the `MapiMessage` class and Compound File Binary (CFB) parsing via `CFBReader` and `CFBDocument`. This enables programmatic handling of email metadata, attachments, and embedded content using only the core MSG/CFB APIs.
+
+- Read MSG files and extract subject, body, and message class using `MapiMessage.from_file()`
+- Parse raw CFB containers to inspect internal storages and streams with `CFBReader`
+- Convert between `MapiMessage` and Python's `email.message.EmailMessage` using `from_email_message()` and `to_email_message()`
+
+```python
+import aspose.email
+from pathlib import Path
+
+# Load an MSG file and extract core properties
+msg = aspose.email.MapiMessage.from_file(Path("sample.msg"))
+print(f"Subject: {msg.subject}")
+print(f"Message Class: {msg.message_class}")
+print(f"Body length: {len(msg.body) if msg.body else 0}")
+```
+
+The `MapiMessage.from_file()` method loads a MSG file and exposes high-level properties like `subject`, `body`, and `message_class`. This avoids manual CFB parsing when only message content is needed. For deeper inspection, `CFBReader` gives access to raw directory entries and stream data, supporting scenarios like forensic analysis or custom MSG repair tools.
+
+The `CFBReader` class reads the Compound File Binary header and exposes sector geometry via `sector_size`, `major_version`, and `fat_sector_count`. You can enumerate storages with `iter_storages()` and retrieve stream data using `get_stream_data()`, enabling custom processing of non-standard or corrupted MSG files.
+
+Next, explore how to `create` new messages from scratch or convert between MSG and standard email formats using the `MapiMessage` conversion methods.
+
+## See Also
+
+- [Explore the Python API](/blog.aspose.org/email/python/introducing-email-foss-python/)
+- [Convert email file formats](/kb.aspose.org/email/python/how-to-convert-files-python/)
+- [Fix common errors](/kb.aspose.org/email/python/how-to-fix-files-errors-python/)
+- [Load files efficiently](/kb.aspose.org/email/python/how-to-load-files-python/)
+- [Optimize performance](/kb.aspose.org/email/python/how-to-optimize-files-python/)

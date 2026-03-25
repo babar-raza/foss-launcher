@@ -1,0 +1,24 @@
+{
+  "budget_log_overflow_count": 0,
+  "build_systems": [
+    "pyproject"
+  ],
+  "by_category": {
+    "asset": 23,
+    "ci": 2,
+    "config": 3,
+    "doc": 3,
+    "example": 8,
+    "source": 16,
+    "test": 27
+  },
+  "content_used_bytes": 645092,
+  "files_enumerated": 82,
+  "files_read": 67,
+  "has_ci": true,
+  "has_docs_folder": false,
+  "has_examples_folder": true,
+  "has_tests": true,
+  "package_name": "aspose-note",
+  "primary_language": "python"
+}

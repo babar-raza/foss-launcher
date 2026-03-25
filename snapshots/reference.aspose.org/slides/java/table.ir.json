@@ -1,0 +1,423 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/slides/java/table/",
+    "canonical_import": "com.aspose.slides",
+    "code_import": "com.aspose.slides",
+    "date": "2026-03-24T17:06:48Z",
+    "dateModified": "2026-03-24T17:06:48Z",
+    "datePublished": "2026-03-24T17:06:48Z",
+    "description": "ColorFormat: Represents a color used in a presentation.",
+    "display_name": "Aspose.Slides FOSS for Java",
+    "family": "slides",
+    "keywords": [
+      "slides javascript",
+      "slides java",
+      "slides javascript library",
+      "slideshow javascript",
+      "javascript slides pdf",
+      "java slides pdf",
+      "slideshow javascript library",
+      "java slides ppt"
+    ],
+    "lastmod": "2026-03-24T17:06:48Z",
+    "page_role": "reference_object_page",
+    "platform": "java",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "The Table class allows adding tables via the addTable()",
+    "slug": "table",
+    "title": "The Table class allows adding tables via the addTable() method",
+    "type": "reference_object_page",
+    "url": "/reference.aspose.org/slides/java/table/",
+    "weight": 20
+  },
+  "page_id": "reference/table",
+  "page_role": "reference_object_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Aspose.Slides FOSS for Java -- Class or function purpose in 1-3 sentences.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-d807ae",
+            "CLM-slides-76c1ff"
+          ],
+          "content": "Aspose.Slides FOSS for Java BulletFormat.initInternal(): Initializes this bullet format from the given {@code } element. ColorFormat: Represents a color used in a presentation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-76c1ff",
+            "CLM-slides-9d44be",
+            "CLM-slides-ccae0f",
+            "CLM-slides-8145aa",
+            "CLM-slides-6b24e8",
+            "CLM-slides-e1d52a",
+            "CLM-slides-15c08b",
+            "CLM-slides-3ddc25",
+            "CLM-slides-9e5b38",
+            "CLM-slides-a852f3",
+            "CLM-slides-b676f1",
+            "CLM-slides-f5771f",
+            "CLM-slides-5401c7",
+            "CLM-slides-fb90a4",
+            "CLM-slides-329e6f",
+            "CLM-slides-7c2dd9",
+            "CLM-slides-b9f6c1",
+            "CLM-slides-0bece1",
+            "CLM-slides-d537ea",
+            "CLM-slides-1591c7",
+            "CLM-slides-b37638",
+            "CLM-slides-465a41",
+            "CLM-slides-731913",
+            "CLM-slides-7d755a",
+            "CLM-slides-7e1adb",
+            "CLM-slides-cd2c1d",
+            "CLM-slides-b09926",
+            "CLM-slides-8964aa",
+            "CLM-slides-cd1222",
+            "CLM-slides-9fa048",
+            "CLM-slides-ca5fb2"
+          ],
+          "content": "import org.aspose.slides.foss.*;\nimport org.aspose.slides.foss.drawing.Color;\nimport org.aspose.slides.foss.export.SaveFormat;\n\ntry (Presentation prs = new Presentation()) {\n    IAutoShape shape = prs.getSlides().get(0).getShapes()\n            .addAutoShape(ShapeType.RECTANGLE, 50, 50, 400, 150);\n    shape.addTextFrame(\"Formatted text\");\n    IPortionFormat fmt = shape.getTextFrame().getParagraphs().get(0)\n            .getPortions().get(0).getPortionFormat();\n    fmt.setFontHeight(24);\n    fmt.setFontBold(NullableBool.TRUE);\n    fmt.getFillFormat().setFillType(FillType.SOLID);\n    fmt.getFillFormat().getSolidFillColor().setColor(Color.fromArgb(255, 0, 70, 127));\n    prs.save(\"text.pptx\", SaveFormat.PPTX);\n}",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-76c1ff",
+            "CLM-slides-a85223",
+            "CLM-slides-d537ea",
+            "CLM-slides-21e1b4",
+            "CLM-slides-a09212",
+            "CLM-slides-ca5fb2",
+            "CLM-slides-e7c313",
+            "CLM-slides-49e34c",
+            "CLM-slides-8ac31a",
+            "CLM-slides-1da3e2",
+            "CLM-slides-7980dd",
+            "CLM-slides-20fda4",
+            "CLM-slides-c87524"
+          ],
+          "content": "import org.aspose.slides.foss.*;\nimport org.aspose.slides.foss.drawing.Color;\nimport org.aspose.slides.foss.export.SaveFormat;\n\ntry (Presentation prs = new Presentation()) {\n    IAutoShape shape = prs.getSlides().get(0).getShapes()\n            .addAutoShape(ShapeType.RECTANGLE, 50, 50, 300, 150);\n    shape.getFillFormat().setFillType(FillType.SOLID);\n    shape.getFillFormat().getSolidFillColor().setColor(Color.fromArgb(255, 30, 120, 200));\n    prs.save(\"fill.pptx\", SaveFormat.PPTX);\n}",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-d807ae",
+            "CLM-slides-cc08d2",
+            "CLM-slides-6e8f83",
+            "CLM-slides-c762f8",
+            "CLM-slides-857ecb",
+            "CLM-slides-3f635e",
+            "CLM-slides-2e8f73"
+          ],
+          "content": "import org.w3c.dom.Document;\nimport org.w3c.dom.Element;\nimport javax.xml.parsers.DocumentBuilderFactory;\nimport java.util.List;\nimport static org.assertj.core.api.Assertions.assertThat;\nimport static org.assertj.core.api.Assertions.assertThatThrownBy;\n\nElement avLst = createAvLstWithGds(2);\n        var collection = new AdjustValueCollection();\n        collection.initInternal(avLst, null);\n\n        IAdjustValue first = collection.get(0);\n\n        IAdjustValue second = collection.get(1);",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-d807ae",
+            "CLM-slides-cc08d2",
+            "CLM-slides-6e8f83",
+            "CLM-slides-c762f8",
+            "CLM-slides-857ecb",
+            "CLM-slides-2e8f73"
+          ],
+          "content": "import org.w3c.dom.Document;\nimport org.w3c.dom.Element;\nimport javax.xml.parsers.DocumentBuilderFactory;\nimport java.util.List;\nimport static org.assertj.core.api.Assertions.assertThat;\nimport static org.assertj.core.api.Assertions.assertThatThrownBy;\n\nElement avLst = createAvLstWithGds(3);\n        var collection = new AdjustValueCollection();\n        collection.initInternal(avLst, null);\n\n        List<IAdjustValue> list = collection.asICollection();",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-76c1ff",
+            "CLM-slides-63f06b",
+            "CLM-slides-d537ea",
+            "CLM-slides-bcf74a",
+            "CLM-slides-ca5fb2"
+          ],
+          "content": "import static org.assertj.core.api.Assertions.assertThat;\n\nvar color = new Color(0, 128, 255);",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-d807ae",
+            "CLM-slides-a85223"
+          ],
+          "content": "import org.aspose.slides.foss.IPresentationComponent;\nimport org.w3c.dom.Document;\nimport org.w3c.dom.Element;\nimport javax.xml.parsers.DocumentBuilderFactory;\nimport java.util.concurrent.atomic.AtomicInteger;\nimport static org.assertj.core.api.Assertions.assertThat;\nimport static org.assertj.core.data.Offset.offset;\n\nvar blur = new Blur(blurElement, null);\n        IPresentationComponent result = blur.asIPresentationComponent();",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-c85cb6"
+          ],
+          "content": "The `Table` class represents `a` table on `a` slide and provides the `addTable()` method to insert tables. Tables are constructed via `addTable()` on `a` `ShapeCollection` and initialized with grid dimensions and position.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-c85cb6"
+          ],
+          "content": "| Constructor | Parameters | Description |\n|-------------|------------|-------------|\n| `Table()` | — | Creates an empty `Table` with no backing element. |\n| `Table(x: double, y: double, width: double, height: double, columns: int, rows: int)` | x, y, width, height, columns, rows | Creates `a` new `Table` at the specified position and size with the given grid dimensions. |\n| `Table(x: double, y: double, width: double, height: double, columns: int, rows: int, tableStyle: ITableStyle)` | x, y, width, height, columns, rows, tableStyle | Creates `a` new `Table` with an initial style applied. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-c85cb6"
+          ],
+          "content": "import com.aspose.slides.*;\n\ntry (var pres = new Presentation()) {\n    var slide = pres.getSlides().get(0);\n    var table = slide.getShapes().addTable(100, 100, 400, 200, 3, 2);\n    table.getCell(0, 0).getTextFrame().setText(\"Header 1\");\n    table.getCell(0, 1).getTextFrame().setText(\"Header 2\");\n}",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Constructor",
+      "level": 2,
+      "section_id": "constructor"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-c85cb6"
+          ],
+          "content": "The `Table` class provides access to table structure through its properties. This section lists the properties exposed by the `Table` class in Aspose.Slides FOSS for Java.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-c85cb6"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| getRows() | `ICellCollection` | Returns the collection of rows in the table. |\n| `getColumns()` | `IColumnCollection` | Returns the collection of columns in the table. |\n| getLeft() | double | Returns the left position of the table. |\n| getTop() | double | Returns the top position of the table. |\n| getWidth() | double | Returns the width of the table. |\n| getHeight() | double | Returns the height of the table. |\n| getHasHeaderRow() | boolean | Indicates whether the table has `a` header row. |\n| getVerticalAlignment() | `TextVerticalType` | Returns the vertical alignment of text in the table cells. |\n| getCellMarginTop() | double | Returns the top margin of cells in the table. |\n| getCellMarginBottom() | double | Returns the bottom margin of cells in the table. |\n| getCellMarginLeft() | double | Returns the left margin of cells in the table. |\n| getCellMarginRight() | double | Returns the right margin of cells in the table. |\n| `getCellFormat()` | `ICellFormat` | Returns the cell format object for the table. |\n| getFormat() | IShapeFormat | Returns the shape format object for the table. |\n| getSlide() | `ISlide` | Returns the parent slide of the table. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-c85cb6"
+          ],
+          "content": "import com.aspose.slides.*;\n\ntry (Presentation pres = new Presentation()) {\n    ITable table = pres.getSlides().get(0).getShapes().addTable(50, 50, new double[]{120, 120}, new double[]{40, 40});\n    int rowCount = table.getRows().size();\n    int colCount = table.getColumns().size();\n    double width = table.getWidth();\n    pres.save(\"table.pptx\", SaveFormat.PPTX);\n}",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-70b0da",
+            "CLM-slides-cc08d2"
+          ],
+          "content": "The `Cell` class represents `a` single cell in `a` table and provides methods to initialize and access its underlying XML structure. It supports vertical text orientation and exposes the tcPr child element via getTcPr().",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-70b0da",
+            "CLM-slides-cc08d2"
+          ],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `Cell()` | `Cell` | Creates an empty `Cell` with no backing element. |\n| `initInternal(tcElement: Element, rowIndex, colIndex, saveCallback: Runnable, parentSlide: IBaseSlide, table: ITable)` | void | Initializes this cell from the given tc element and table context. |\n| save() | void | Persists changes by invoking the save callback if present. |\n| `findChild(parent: Element, localName: String)` | `Element` | Finds `a` child element by local name within the given parent. |\n| getTcPr() | `Element` | Returns the tcPr child element of the backing tc element. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-70b0da",
+            "CLM-slides-cc08d2"
+          ],
+          "content": "import org.w3c.dom.Element;\nimport com.aspose.slides.*;\n\nElement tc = createTcElement();\nCell cell = new Cell(tc, null);\ncell.setTextVerticalType(TextVerticalType.VERTICAL270);",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-da55e5",
+            "CLM-slides-c762f8"
+          ],
+          "content": "The `Column` class represents `a` table column and provides access to its width and associated cells. It is initialized with grid column data and table context.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-da55e5",
+            "CLM-slides-c762f8"
+          ],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `Column(gridColElement: Element, saveCallback: Runnable, cells)` | `Column` | Creates `a` new `Column` backed by the given gridCol element. |\n| `initInternal(gridColElement: Element, colIndex, tblElement: Element, saveCallback: Runnable, parentSlide: IBaseSlide, table: ITable)` | void | Initializes this column from the given gridCol element and table context. |\n| `[static] findChildren(parent: Element, localName: String)` | `List<Element>` | Finds all child elements with the specified local name. |\n| save() | void | Persists changes by invoking the save callback if present. |\n| getWidth() | double | Returns the width of the column. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-f24a3d"
+          ],
+          "content": "The `AdjustValue` class represents `a` single geometry adjustment value backed by an OOXML `a:gd` element, used in shape geometry definitions.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-f24a3d"
+          ],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `AdjustValue(gdElement: Element, saveCallback: Runnable)` | `AdjustValue` | Creates `a` new `AdjustValue` backed by the given `a:gd` element. |\n| save() | void | Persists changes by invoking the save callback if present. |\n| `findChild(parent: Element, localName: String)` | `Element` | Finds `a` child element by local name within the given parent. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-f24a3d"
+          ],
+          "content": "import org.w3c.dom.Element;\nimport com.aspose.slides.*;\n\nElement gd = doc.createElementNS(NS_A, \"a:gd\");\ndoc.appendChild(gd);\nAdjustValue adj = new AdjustValue(gd, null);",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-c85cb6",
+            "CLM-slides-cc08d2",
+            "CLM-slides-70b0da"
+          ],
+          "content": "The `Table` class enables adding tables to slides using the `addTable()` method. This example demonstrates creating `a` table, initializing its cells, and setting vertical text orientation.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-c85cb6",
+            "CLM-slides-cc08d2",
+            "CLM-slides-70b0da"
+          ],
+          "content": "import com.aspose.slides.*;\nimport org.w3c.dom.Element;\n\n// Create a table with 2 rows and 2 columns\nITable table = slide.getShapes().addTable(100, 100, 300, 300, new double[]{150, 150}, new double[]{50, 50});\n\n// Initialize and configure a cell\nCell cell = (Cell)table.getRows().get(0).getCells().get(0);\ncell.initInternal(null, 0, 0, null, slide, table);\ncell.setTextVerticalType(TextVerticalType.VERTICAL270);\n\n// Save the presentation\npresentation.save(\"output.pptx\", SaveFormat.PPTX);",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Example",
+      "level": 2,
+      "section_id": "example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-c85cb6",
+            "CLM-slides-6e8f83",
+            "CLM-slides-76c1ff"
+          ],
+          "content": "The `Table` class enables adding tables to slides using the `addTable()` method. Related classes include `Cell`, `Column`, and `ColorFormat`, which support table structure and formatting.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-c85cb6"
+          ],
+          "content": "import com.aspose.slides.*;\n\nvar pres = new Presentation();\nISlide slide = pres.getSlides().get(0);\nITable table = slide.getShapes().addTable(50, 50,\n    new double[]{120, 120, 120}, new double[]{40, 40});",
+          "items": [],
+          "language": "java",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Aspose.Slides FOSS for Java API reference](/reference.aspose.org/slides/java/api/)",
+            "[Presentation class overview](/blog.aspose.org/slides/java/slides-foss-java/)",
+            "[Key features overview](/blog.aspose.org/slides/java/slides-features/)",
+            "[Create presentations guide](/docs.aspose.org/slides/java/developer-guide/presentation-creation/)",
+            "[Work with slides guide](/docs.aspose.org/slides/java/developer-guide/slide-manipulation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "The Table class allows adding tables via the addTable() method"
+}

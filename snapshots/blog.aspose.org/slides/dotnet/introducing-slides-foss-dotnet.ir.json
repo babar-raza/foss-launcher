@@ -1,0 +1,228 @@
+{
+  "frontmatter": {
+    "canonical": "https://blog.aspose.org/slides/dotnet/introducing-slides-foss-dotnet/",
+    "canonical_import": "Aspose.Slides",
+    "code_import": "Aspose.Slides",
+    "date": "2026-03-24T17:07:48Z",
+    "dateModified": "2026-03-24T17:07:48Z",
+    "datePublished": "2026-03-24T17:07:48Z",
+    "description": "Aspose.Slides lets you create and manipulate presentations directly in .NET code—no GUI, no dependencies, just reliable file I/O.",
+    "display_name": "Aspose.Slides",
+    "family": "slides",
+    "keywords": [
+      "python slides",
+      "python slides for beginners",
+      "python slideshare",
+      "python slideshow",
+      "python slides ppt",
+      "python slides pdf",
+      "python slideshow py",
+      "python slideshow with transitions"
+    ],
+    "lastmod": "2026-03-24T17:07:48Z",
+    "page_role": "blog_announcement",
+    "platform": "dotnet",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "The library allows creating new presentations using the",
+    "slug": "introducing-slides-foss-dotnet",
+    "title": "The library allows creating new presentations using the Presentation class",
+    "type": "blog_announcement",
+    "url": "/blog.aspose.org/slides/dotnet/introducing-slides-foss-dotnet/",
+    "weight": 16
+  },
+  "page_id": "blog/introducing-slides-foss-dotnet",
+  "page_role": "blog_announcement",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-54614b"
+          ],
+          "content": "Generating a PowerPoint presentation programmatically shouldn’t require launching Microsoft Office or wrestling with COM interop. Aspose.Slides lets you create and manipulate presentations directly in .NET code—no GUI, no dependencies, just reliable file I/O.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-54614b"
+          ],
+          "content": "using Aspose.Slides;\n\nusing var newPrs = new Presentation();\nvar slide = newPrs.Slides[0];\nnewPrs.Save(\"new.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-764819"
+          ],
+          "content": "You can also open existing `.pptx` files, inspect their contents, and save changes—preserving all formatting, comments, and document properties. This round-trip capability makes Aspose.Slides ideal for templating, batch report generation, or updating slide decks without manual intervention.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-764819"
+          ],
+          "content": "using Aspose.Slides;\n\nusing var prs = new Presentation(\"input.pptx\");\nConsole.WriteLine($\"Slides: {prs.Slides.Count}\");\nprs.Save(\"output.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-764819"
+          ],
+          "content": "Custom document properties persist across saves and reloads—store version numbers, project IDs, or metadata as strings or integers. `Comments` attach to specific slides and authors, enabling collaborative review workflows directly in code.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Introduction",
+      "level": 2,
+      "section_id": "introduction"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-54614b",
+            "CLM-slides-764819"
+          ],
+          "content": "You don’t need a full office suite to generate or modify PowerPoint files — Aspose.Slides lets you build presentations programmatically in just a few lines of C#. Whether you’re generating reports, automating slide decks, or enriching existing presentations with comments and metadata, the Presentation class handles both new and existing files with consistent, predictable behavior.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-54614b",
+            "CLM-slides-764819"
+          ],
+          "content": "using Aspose.Slides;\n\n// Create a new presentation from scratch\nusing var newPrs = new Presentation();\nvar slide = newPrs.Slides[0];\nnewPrs.Save(\"new.pptx\", SaveFormat.Pptx);\n\n// Open and modify an existing presentation\nusing var prs = new Presentation(\"input.pptx\");\nConsole.WriteLine($\"Slides: {prs.Slides.Count}\");\nprs.Save(\"output.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-54614b",
+            "CLM-slides-764819"
+          ],
+          "content": "",
+          "items": [
+            "Create new presentations using the Presentation class and immediately access the first slide via `Slides[0]`.",
+            "Open existing `.pptx` files for reading or modification — changes persist correctly on save, including slide count and content.",
+            "Set document properties like Title, `Author`, and custom string or integer properties that survive round-trips.",
+            "Add comments with author metadata, including position, text, and timestamp, directly to slides.",
+            "Iterate and manipulate slides, shapes, and text using a fluent, object-oriented API designed for automation."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-764819"
+          ],
+          "content": "using Aspose.Slides;\n\nusing var prs = new Presentation();\nprs.DocumentProperties.Title = \"Q1 Results\";\nprs.DocumentProperties.Author = \"Finance Team\";\nprs.DocumentProperties.SetCustomPropertyValue(\"Version\", 3);\nprs.Save(\"deck.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Key Highlights",
+      "level": 2,
+      "section_id": "key_highlights"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-54614b"
+          ],
+          "content": "You need to generate a new PowerPoint presentation from scratch — maybe for automated reporting, slide generation, or template-based decks. Aspose.Slides makes this possible without requiring Microsoft PowerPoint or any external dependencies.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-54614b"
+          ],
+          "content": "using Aspose.Slides;\n\nusing var newPrs = new Presentation();\nvar slide = newPrs.Slides[0];\nnewPrs.Save(\"new.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-764819"
+          ],
+          "content": "The Presentation class handles both creating new decks and opening existing ones. When you instantiate it with a file path, it loads the `.pptx` file into memory, preserving all slides, shapes, and metadata. You can then inspect or modify it before saving.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-764819"
+          ],
+          "content": "using Aspose.Slides;\n\nusing var prs = new Presentation(\"input.pptx\");\nConsole.WriteLine($\"Slides: {prs.Slides.Count}\");\nprs.Save(\"output.pptx\", SaveFormat.Pptx);",
+          "items": [],
+          "language": "csharp",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Getting Started",
+      "level": 2,
+      "section_id": "getting_started"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "To get started with Aspose.Slides, explore the official documentation for hands-on guidance on building and modifying presentations programmatically. The changelog provides a clear record of new features, bug fixes, and breaking changes across releases.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Create new presentations](/products.aspose.org/slides/_index/)",
+            "[Explore key features](/blog.aspose.org/slides/dotnet/slides-key-features/)",
+            "[Create Presentations with Aspose.Slides](/docs.aspose.org/slides/dotnet/developer-guide/presentation-creation/)",
+            "[Work with slides programmatically](/docs.aspose.org/slides/dotnet/developer-guide/slide-manipulation/)",
+            "[Convert file formats easily](/kb.aspose.org/slides/dotnet/how-to-convert-png-to-pptx-dotnet/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "The library allows creating new presentations using the Presentation class"
+}

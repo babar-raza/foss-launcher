@@ -69,6 +69,12 @@
             "type": "integer",
             "minimum": 0,
             "description": "TC-3880 Wave 2 (F4): Total number of claims assigned to this page."
+          },
+          "assigned_claim_ids": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Claim IDs assigned to this page from the planner.",
+            "default": []
           }
         },
         "additionalProperties": false
@@ -286,6 +292,17 @@
         "additionalProperties": true
       },
       "default": {}
+    },
+    "richness_tier": {
+      "type": "string",
+      "default": "",
+      "description": "TC-FIX-217: Richness tier label (A/B/C)."
+    },
+    "api_fact_member_names": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "TC-FIX-217: Member names from api_facts for evaluate cross-check."
     }
   },
   "additionalProperties": false

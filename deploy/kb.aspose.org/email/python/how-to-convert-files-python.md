@@ -1,0 +1,41 @@
+---
+canonical: https://kb.aspose.org/email/python/convert-files-python/
+canonical_import: aspose.email_foss
+date: '2026-03-18T08:22:05Z'
+dateModified: '2026-03-18T08:22:05Z'
+datePublished: '2026-03-18T08:22:05Z'
+description: Additional documentation will be available when the source library includes
+  more detailed docstrings and examples.
+display_name: Aspose.Email FOSS
+family: email
+keywords:
+- aspose.email
+- foss
+lastmod: '2026-03-18T08:22:05Z'
+page_role: howto_article
+platform: python
+reading_time: 1
+robots: index, follow
+seoTitle: How to Convert File Formats with Aspose.Email FOSS | Guide
+slug: convert-files-python
+title: How to Convert File Formats with Aspose.Email FOSS
+type: howto_article
+url: /kb.aspose.org/email/python/convert-files-python/
+weight: 17
+---
+
+## Overview
+
+This page provides a minimal reference for How to Convert File Formats with Aspose.Email FOSS. Additional documentation will be available when the source library includes more detailed docstrings and examples.
+
+```python
+import aspose.email_foss
+```
+
+## See Also
+
+- [Frequently asked questions](/kb.aspose.org/email/python/faq/)
+- [Key capabilities overview](/blog.aspose.org/email/python/email-key-features/)
+- [Reading MSG files with MapiMessage](/blog.aspose.org/email/python/email-foss-python/)
+- [Real-world usage examples](/kb.aspose.org/email/python/developer-guide/use-cases/)
+- [Product overview and features](/products.aspose.org/email/_index/)

@@ -1,0 +1,1907 @@
+{
+  "api_surface_coverage": 1.0,
+  "cross_page_findings": [],
+  "gates": [],
+  "go_criteria": [
+    {
+      "actual": "0",
+      "criterion": "CRITICAL findings",
+      "passed": true,
+      "threshold": "0"
+    },
+    {
+      "actual": "16%",
+      "criterion": "A+B rate",
+      "passed": false,
+      "threshold": ">= 50%"
+    },
+    {
+      "actual": "32%",
+      "criterion": "D+F rate",
+      "passed": false,
+      "threshold": "<= 30%"
+    },
+    {
+      "actual": "32%",
+      "criterion": "Editorial-critical HIGH rate",
+      "passed": false,
+      "threshold": "<= 15%"
+    }
+  ],
+  "hallucination_rate": 0.0,
+  "pages": [
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "api_consistency": false,
+        "claim_coverage": false,
+        "code_correctness": false,
+        "code_formatting": false,
+        "completeness": false,
+        "factual_accuracy": false
+      },
+      "conformance_score": null,
+      "content_path": "products.aspose.org/email/_index",
+      "findings": [
+        {
+          "check": "claim_coverage",
+          "location": "_index",
+          "message": "15/24 assigned claims (62%) are not covered in the page body. Uncovered: MapiMessage: Mutable high-level MSG object with MSG and Emai, The CFBReader class provides access to the CFB header via th, MsgWriter: Serializer that writes a MsgDocument into a CFB-b ...",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": [
+            "MapiMessage: Mutable high-level MSG object with MSG and EmailMessage conversion support",
+            "The CFBReader class provides access to the CFB header via the header property, exposing sector_size, mini_sector_size, and major_version.",
+            "MsgWriter: Serializer that writes a MsgDocument into a CFB-backed .msg payload.",
+            "The CFBReader class supports reading stream data from CFB containers using get_stream_data() and resolving paths by name using resolve_path() and find_child_by_name().",
+            "MapiMessage.create() is part of the public API for Aspose.Email FOSS.",
+            "The CFBReader class exposes metadata about the CFB container including sector_size, mini_sector_size, fat_sector_count, directory_entry_count, and file_size.",
+            "Install Aspose.Email FOSS via: pip install aspose-email-foss>=26.3",
+            "MsgStream: Mutable MSG stream node with raw bytes and CFB metadata",
+            "MapiMessage: Mutable high-level MSG object with MSG and EmailMessage conversion support.",
+            "The MapiMessage class supports conversion between Outlook MSG and Python's email.message.EmailMessage via from_email_message() and to_email_message() methods.",
+            "The CFBDocument class represents a mutable Compound File Binary (CFB) document and can be constructed from a file or a CFBReader instance.",
+            "MsgStream: Mutable MSG stream node with raw bytes and CFB metadata.",
+            "The MapiMessage class supports opening MSG files from disk using the from_file() class method and provides context manager support via close().",
+            "MsgDocument: Mutable MSG document model that can be serialized through the CFB writer.",
+            "The CFBReader class provides methods to traverse the CFB directory tree, including iter_tree(), iter_storages(), iter_streams(), and iter_children(), enabling structured inspection of container contents."
+          ]
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `EmailMessage` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown member identifier in prose: `message` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Key Features section, bullet about conversion",
+          "message": "The prose references `EmailMessage` from the standard library, which is not part of the Aspose.Email FOSS API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Key Features section, conversion bullet",
+          "message": "The prose mentions a `message` member that does not exist in the documented API.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Overall page",
+          "message": "15 of the 24 assigned CLM claims are not covered anywhere on the page.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "All code examples",
+          "message": "Code blocks are missing language tags (e.g., ```python).",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Key Features section",
+          "message": "Reference to `EmailMessage` and its `message` attribute is outside the known API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Overview, Key Features, Quick Start sections",
+          "message": "API identifiers such as `MapiMessage`, `CFBReader`, `MapiAttachment` are not wrapped in backticks in the narrative text.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "D",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "factual_accuracy": false
+      },
+      "conformance_score": null,
+      "content_path": "docs.aspose.org/email/_index",
+      "findings": [
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `EmailMessage` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown member identifier in prose: `message` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Capabilities section, bullet list",
+          "message": "Reference to `EmailMessage` (Python stdlib) is not part of the Aspose.Email API surface and is presented as a library conversion target.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Developer Guide section, paragraph discussing conversion",
+          "message": "Mention of a `message` identifier (e.g., `email.message.[identifier omitted]`) is not defined in the known API surface.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "claim_coverage": true,
+        "completeness": true,
+        "content_density": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "docs.aspose.org/email/python/developer-guide/installation",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "installation",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "installation",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "claim_coverage",
+          "location": "installation",
+          "message": "1/2 assigned claim is not covered in the page body: Install Aspose.Email FOSS via: pip install aspose-email-foss>=26.3",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": [
+            "Install Aspose.Email FOSS via: pip install aspose-email-foss>=26.3"
+          ]
+        },
+        {
+          "check": "api_allowlist",
+          "location": "installation",
+          "message": "Unknown class identifier in prose: `EmailMessage` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "installation",
+          "message": "Unknown member identifier in prose: `cells` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "installation",
+          "message": "Unknown member identifier in prose: `cfb` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "installation",
+          "message": "Unknown member identifier in prose: `message` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "installation",
+          "message": "Unknown member identifier in prose: `msg` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "installation",
+          "message": "Unknown member identifier in prose: `pydrawing` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "Best Practices",
+          "message": "Section 'Best Practices' has 0 words (golden spec requires ≥30).",
+          "section_id": "Best Practices",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "FAQ section, paragraph discussing conversion to Python email objects",
+          "message": "Unknown class identifier `EmailMessage` appears in prose; it is not part of the Aspose.Email FOSS API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Callout after installation command",
+          "message": "Unknown member identifier `cells` appears in a callout warning about incorrect imports.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Callout after installation command",
+          "message": "Unknown member identifier `cfb` appears in the callout warning about incorrect imports.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Overview and Key Features sections",
+          "message": "Unknown member identifier `message` appears in prose describing usage patterns.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Multiple sections (Overview, Prerequisites, Code Examples)",
+          "message": "Unknown member identifier `msg` appears in prose and code comments.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Callout after installation command",
+          "message": "Unknown member identifier `pydrawing` appears in the callout warning about incorrect imports.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Overall page content",
+          "message": "The required claim to install Aspose.Email FOSS via `pip install aspose-email-foss>=26.3` is not explicitly covered in the page body.",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Best Practices section",
+          "message": "Section ‘Best Practices’ contains fewer than the required 30 words of explanatory prose.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "installation"
+    },
+    {
+      "check_results": {
+        "api_allowlist": true,
+        "api_consistency": false,
+        "api_identifier_unknown_method": true,
+        "code_correctness": false,
+        "code_formatting": true,
+        "content_density": true,
+        "factual_accuracy": false,
+        "route_consistency": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "docs.aspose.org/email/python/developer-guide/getting-started",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "getting-started",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "getting-started",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "getting-started",
+          "message": "Page body has 749 prose words; golden spec requires ≥994.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_identifier_unknown_method",
+          "location": "getting-started",
+          "message": "Code calls method `iter_attachments()` which is not in extracted API surface.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "getting-started",
+          "message": "Unknown member identifier in prose: `cells` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "getting-started",
+          "message": "Unknown member identifier in prose: `message` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "route_consistency",
+          "location": "getting-started",
+          "message": "Off-topic page: slug topic words ['getting', 'started'] not found in prose — claims may be misrouted",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "First Steps section, code block that iterates over attachments",
+          "message": "Method `iter_attachments()` is not defined in the Aspose.Email FOSS API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "First Steps section, attachment enumeration code block",
+          "message": "Code will raise an AttributeError because `MsgReader` does not have `iter_attachments()`.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Entire page",
+          "message": "Overall prose word count is 749, below the required minimum; several sections contain only a single sentence or brief list.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "First Steps section (code) and Callout block",
+          "message": "Reference to `iter_attachments()` and mention of `aspose.cells` are not part of the documented API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Prose surrounding the attachment enumeration example",
+          "message": "API identifiers such as `msg_reader` and `iter_attachments()` are not wrapped in backticks in the explanatory text.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "D",
+      "numeric_score": 0.0,
+      "slug": "getting-started"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "api_consistency": false,
+        "content_density": false,
+        "factual_accuracy": false
+      },
+      "conformance_score": null,
+      "content_path": "reference.aspose.org/email/_index",
+      "findings": [
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `EmailMessage` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown member identifier in prose: `message` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Capabilities section",
+          "message": "Prose references `EmailMessage` from `email.message`, which is not part of the Aspose.Email API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Capabilities section",
+          "message": "Prose uses the identifier `message` (e.g., `email.message`) that is not defined in the documented API surface.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Getting Started section",
+          "message": "The \"Getting Started\" section contains only one introductory sentence before the code example, providing insufficient explanatory text.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Capabilities section",
+          "message": "Reference to `email.message.EmailMessage` is not an Aspose.Email API class, violating API consistency.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "api_consistency": true,
+        "audience_appropriateness": false,
+        "canonical_import": false,
+        "claim_coverage": false,
+        "code_correctness": false,
+        "code_formatting": true,
+        "completeness": false,
+        "content_density": false,
+        "factual_accuracy": false,
+        "heading_quality": true,
+        "reference_completeness": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "reference.aspose.org/email/python/api-overview",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "api-overview",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "reference_completeness",
+          "location": "api-overview",
+          "message": "Reference page has no markdown tables or parameter lists",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "api-overview",
+          "message": "Page body has 203 prose words; golden spec requires ≥1770.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "claim_coverage",
+          "location": "api-overview",
+          "message": "17/33 assigned claims (52%) are not covered in the page body. Uncovered: MapiMessage: Mutable high-level MSG object with MSG and Emai, The CFBReader class provides access to the CFB header via th, MsgWriter: Serializer that writes a MsgDocument into a CFB-b ...",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": [
+            "MapiMessage: Mutable high-level MSG object with MSG and EmailMessage conversion support",
+            "The CFBReader class provides access to the CFB header via the header property, exposing sector_size, mini_sector_size, and major_version.",
+            "MsgWriter: Serializer that writes a MsgDocument into a CFB-backed .msg payload.",
+            "The CFBReader class supports reading stream data from CFB containers using get_stream_data() and resolving paths by name using resolve_path() and find_child_by_name().",
+            "MapiMessage.create() is part of the public API for Aspose.Email FOSS.",
+            "The CFBReader class supports opening CFB containers from files using the from_file() class method.",
+            "The CFBReader class exposes metadata about the CFB container including sector_size, mini_sector_size, fat_sector_count, directory_entry_count, and file_size.",
+            "The library supports reading Outlook .msg files through both high-level MapiMessage and low-level MsgReader APIs.",
+            "The MapiMessage class supports creating new messages programmatically using the static create() method and saving them as Outlook-compatible .msg files.",
+            "The MapiMessage class provides access to its internal MSG reader via the msg_reader property, enabling low-level inspection of property streams and container structure.",
+            "Install Aspose.Email FOSS via: pip install aspose-email-foss>=26.3",
+            "The library supports writing Outlook .msg files through both high-level MapiMessage and low-level MsgWriter APIs.",
+            "MapiMessage: Mutable high-level MSG object with MSG and EmailMessage conversion support.",
+            "The MapiMessage class supports conversion between Outlook MSG and Python's email.message.EmailMessage via from_email_message() and to_email_message() methods.",
+            "The library supports reading and writing Outlook MSG files through the high-level MapiMessage class.",
+            "The MapiMessage class supports opening MSG files from disk using the from_file() class method and provides context manager support via close().",
+            "The CFBReader class provides methods to traverse the CFB directory tree, including iter_tree(), iter_storages(), iter_streams(), and iter_children(), enabling structured inspection of container contents."
+          ]
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Overview section",
+          "message": "Paragraphs contain placeholder text (e.g., \"What this library provides — 1-3 sentences\") and do not describe real functionality.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "canonical_import",
+          "location": "Common Patterns code block",
+          "message": "Code block imports `aspose.email.msg` and `aspose.email.cfb` instead of the canonical `aspose.email` import.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "canonical_import",
+          "location": "See Also code block",
+          "message": "`from aspose.email import CFBReader` is invalid; `CFBReader` resides in `aspose.email.cfb`.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Entire page",
+          "message": "Only 17 of the 33 assigned claims are covered; major classes like `MapiMessage`, `MsgDocument`, `MsgReader` are omitted.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "heading_quality",
+          "location": "All H2 headings",
+          "message": "Headings are generic and do not describe the specific content of each section.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "All sections",
+          "message": "Each section contains fewer than 2 substantive paragraphs; total prose word count is ~203, well below the required ~1770.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "Common Patterns code block",
+          "message": "`from aspose.email.cfb import CFBReader` will raise ImportError because the package structure uses `aspose.email.cfb.CFBReader`.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Common Patterns prose",
+          "message": "API identifiers such as `CFBReader.iter_tree()` are mentioned without backticks and with inconsistent import paths.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "audience_appropriateness",
+          "location": "Overview and Public API sections",
+          "message": "Content consists of high‑level descriptions and placeholder sentences rather than concrete usage guidance for developers.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "All prose sections",
+          "message": "Class and method names in the narrative are not wrapped in backticks (e.g., `CFBReader`, `MapiMessage`).",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "D",
+      "numeric_score": 0.0,
+      "slug": "api-overview"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/email/_index",
+      "findings": [
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown class identifier in prose: `EmailMessage` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown member identifier in prose: `message` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/email/python/faq",
+      "findings": [
+        {
+          "check": "structure",
+          "location": "faq",
+          "message": "Heading too long (88 chars): 'Does Aspose.Email FOSS support converting between ...'",
+          "section_id": "Does Aspose.Email FOSS support converting between MSG and Python's [identifier omitted]?",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "faq",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "FAQ section 'Does Aspose.Email FOSS support converting between MSG and Python's ...', second paragraph",
+          "message": "The page claims a method `MapiMessage.to_email_message()` exists for converting MSG to a Python email object, but this method is not defined in the documented API.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Same as above",
+          "message": "Reference to `MapiMessage.to_email_message()` is inconsistent with the known API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "faq"
+    },
+    {
+      "check_results": {
+        "api_consistency": true,
+        "api_identifier_unknown_method": true,
+        "code_formatting": true,
+        "factual_accuracy": false,
+        "seo": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/email/python/troubleshooting",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "troubleshooting",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "troubleshooting",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_identifier_unknown_method",
+          "location": "troubleshooting",
+          "message": "Code calls method `to_document()` which is not in extracted API surface.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Common Issues, code block 1",
+          "message": "Code block uses a non‑existent method `to_document()` on `CFBReader`.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Common Issues, code block 1",
+          "message": "`to_document()` is not defined in the documented API surface.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Error Messages, table",
+          "message": "API class name `CFBError` in the error‑message table is not wrapped in backticks.",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "troubleshooting"
+    },
+    {
+      "check_results": {
+        "api_consistency": true,
+        "api_identifier_unknown_method": true,
+        "claim_coverage": false,
+        "code_correctness": true,
+        "completeness": false,
+        "content_density": true,
+        "heading_quality": true,
+        "route_consistency": false,
+        "seo": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/email/python/developer-guide/use-cases",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "use-cases",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "use-cases",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "claim_coverage",
+          "location": "use-cases",
+          "message": "14/24 assigned claims (58%) are not covered in the page body. Uncovered: The CFBReader class provides access to the CFB header via th, MsgWriter: Serializer that writes a MsgDocument into a CFB-b, The CFBReader class supports reading stream data from CFB co ...",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": [
+            "The CFBReader class provides access to the CFB header via the header property, exposing sector_size, mini_sector_size, and major_version.",
+            "MsgWriter: Serializer that writes a MsgDocument into a CFB-backed .msg payload.",
+            "The CFBReader class supports reading stream data from CFB containers using get_stream_data() and resolving paths by name using resolve_path() and find_child_by_name().",
+            "MapiMessage.create() is part of the public API for Aspose.Email FOSS.",
+            "The CFBReader class supports opening CFB containers from files using the from_file() class method.",
+            "The CFBReader class exposes metadata about the CFB container including sector_size, mini_sector_size, fat_sector_count, directory_entry_count, and file_size.",
+            "The MapiMessage class supports creating new messages programmatically using the static create() method and saving them as Outlook-compatible .msg files.",
+            "Install Aspose.Email FOSS via: pip install aspose-email-foss>=26.3",
+            "The MapiMessage class supports conversion between Outlook MSG and Python's email.message.EmailMessage via from_email_message() and to_email_message() methods.",
+            "The CFBDocument class represents a mutable Compound File Binary (CFB) document and can be constructed from a file or a CFBReader instance.",
+            "The CFBReader class provides low-level access to Compound File Binary (CFB) containers, enabling inspection of storages, streams, and directory entries.",
+            "The MapiMessage class supports opening MSG files from disk using the from_file() class method and provides context manager support via close().",
+            "MsgDocument: Mutable MSG document model that can be serialized through the CFB writer.",
+            "The CFBReader class provides methods to traverse the CFB directory tree, including iter_tree(), iter_storages(), iter_streams(), and iter_children(), enabling structured inspection of container contents."
+          ]
+        },
+        {
+          "check": "api_identifier_unknown_method",
+          "location": "use-cases",
+          "message": "Code calls method `to_file()` which is not in extracted API surface.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_identifier_unknown_method",
+          "location": "use-cases",
+          "message": "Code calls `msg_reader.iter_attachments()` but `iter_attachments` is not a known method of `MsgReader`. Known methods: ['iter_recipient_storages', 'parse_subobject_property_stream', 'parse_top_level_property_stream', 'strict', 'validation_issues']",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "route_consistency",
+          "location": "use-cases",
+          "message": "Off-topic page: slug topic words ['cases'] not found in prose — claims may be misrouted",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "entire page",
+          "message": "Only 10 of the 24 required claims are covered; the page omits many use‑case topics such as CFBReader access, property iteration, and attachment handling.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "How It Works section, code block 1",
+          "message": "Method `to_file()` is used on `MapiMessage` but is not listed in the known API surface.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "How It Works section, code block 2",
+          "message": "Method `iter_attachments()` is called on `MsgReader` but no such method exists in the documented API.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "all code blocks",
+          "message": "Code blocks are missing language identifiers (e.g., ```python```), which hinders syntax highlighting and validation.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Overview heading",
+          "message": "The Overview section contains only a single short sentence, providing insufficient context for developers.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "heading_quality",
+          "location": "section headings",
+          "message": "Headings like \"Overview\" and \"How It Works\" are overly generic and do not describe the specific content of the sections.",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "D",
+      "numeric_score": 0.0,
+      "slug": "use-cases"
+    },
+    {
+      "check_results": {
+        "api_identifier_unknown_method": true,
+        "evidence_adequacy": true,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/email/python/how-to-load-files-python",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "how-to-load-files-python",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_identifier_unknown_method",
+          "location": "how-to-load-files-python",
+          "message": "Code calls `reader.read_message()` but `read_message` is not a known method of `MsgReader`. Known methods: ['iter_recipient_storages', 'parse_subobject_property_stream', 'parse_top_level_property_stream', 'strict', 'validation_issues']",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "how-to-load-files-python",
+          "message": "Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_operation_examples, insufficient_snippets. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "See Also",
+          "message": "Section 'See Also' has 0 words (golden spec requires ≥30).",
+          "section_id": "See Also",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-load-files-python"
+    },
+    {
+      "check_results": {
+        "api_allowlist": true,
+        "api_consistency": false,
+        "api_identifier_unknown_method": true,
+        "content_density": false,
+        "evidence_adequacy": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/email/python/how-to-save-files-python",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "how-to-save-files-python",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_identifier_unknown_method",
+          "location": "how-to-save-files-python",
+          "message": "Code calls method `as_string()` which is not in extracted API surface.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-save-files-python",
+          "message": "Unknown member identifier in prose: `msg` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-save-files-python",
+          "message": "Unknown member identifier in prose: `sample` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "how-to-save-files-python",
+          "message": "Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_operation_examples, insufficient_snippets. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "See Also",
+          "message": "Section 'See Also' has 0 words (golden spec requires ≥30).",
+          "section_id": "See Also",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code Example section, paragraph describing EML export",
+          "message": "Method `as_string()` and variable names `msg`, `sample` are not defined in the Aspose.Email API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Prerequisites section",
+          "message": "Prerequisites section contains only a bullet list and lacks the required explanatory prose.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Export to EML code block and surrounding text",
+          "message": "Reference to `as_string()` method is not part of the documented Aspose.Email API.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-save-files-python"
+    },
+    {
+      "check_results": {
+        "api_identifier_unknown_class": false,
+        "api_identifier_unknown_method": true,
+        "completeness": true,
+        "evidence_adequacy": true,
+        "factual_accuracy": false,
+        "repetition": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/email/python/how-to-convert-files-python",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "how-to-convert-files-python",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "repetition",
+          "location": "how-to-convert-files-python",
+          "message": "Code block repeated 2 times: import aspose.email  msg = aspose.email.MapiMessage.from_file(\"input.msg\")...",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_identifier_unknown_class",
+          "location": "how-to-convert-files-python",
+          "message": "Code uses class `EmailMessage` which is not in extracted API surface. Known classes: ['CFBDocument', 'CFBError', 'CFBReader', 'CFBStorage', 'CFBStream']",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_identifier_unknown_method",
+          "location": "how-to-convert-files-python",
+          "message": "Code calls method `as_bytes()` which is not in extracted API surface.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "how-to-convert-files-python",
+          "message": "Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_operation_examples, insufficient_snippets. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "See Also",
+          "message": "Section 'See Also' has 0 words (golden spec requires ≥30).",
+          "section_id": "See Also",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Conversion Steps → Step 2 and Step 3 code blocks",
+          "message": "The article mentions an `EmailMessage` class that does not exist in the Aspose.Email FOSS API and calls `as_bytes()` on the result, which is not a documented Aspose method.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Overall article content",
+          "message": "The guide lacks coverage of converting from a standard email message back to MSG and does not disclose any known limitations of the conversion process.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "D",
+      "numeric_score": 0.0,
+      "slug": "how-to-convert-files-python"
+    },
+    {
+      "check_results": {
+        "content_density": false,
+        "evidence_adequacy": true,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/email/python/how-to-fix-files-errors-python",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "how-to-fix-files-errors-python",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "how-to-fix-files-errors-python",
+          "message": "Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_operation_examples, insufficient_snippets. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "See Also",
+          "message": "Section 'See Also' has 0 words (golden spec requires ≥30).",
+          "section_id": "See Also",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Symptoms section",
+          "message": "Symptoms section provides only one sentence of narrative before a bullet list, failing the minimum two‑sentence requirement.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "B",
+      "numeric_score": 0.0,
+      "slug": "how-to-fix-files-errors-python"
+    },
+    {
+      "check_results": {
+        "api_identifier_unknown_method": true,
+        "completeness": true,
+        "content_density": true,
+        "evidence_adequacy": true,
+        "factual_accuracy": false,
+        "opener_boilerplate": true,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/email/python/how-to-optimize-files-python",
+      "findings": [
+        {
+          "check": "opener_boilerplate",
+          "location": "how-to-optimize-files-python",
+          "message": "Section uses 'When working with...' as an opener (1 occurrence). Replace with a specific statement about what the page covers.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "how-to-optimize-files-python",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_identifier_unknown_method",
+          "location": "how-to-optimize-files-python",
+          "message": "Code calls method `perf_counter()` which is not in extracted API surface.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "how-to-optimize-files-python",
+          "message": "Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_operation_examples, insufficient_snippets. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "See Also",
+          "message": "Section 'See Also' has 0 words (golden spec requires ≥30).",
+          "section_id": "See Also",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code Example section, block 1",
+          "message": "The example uses `time.perf_counter()` which is not an Aspose.Email FOSS API method.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "See Also section",
+          "message": "The “See Also” section contains only a list of links with no descriptive text (0 words).",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Prerequisites section",
+          "message": "The “Prerequisites” section provides only a bullet list and lacks at least two explanatory sentences.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-optimize-files-python"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "api_consistency": false,
+        "factual_accuracy": false,
+        "seo": true
+      },
+      "conformance_score": null,
+      "content_path": "blog.aspose.org/email/python/introducing-email-foss-python",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "introducing-email-foss-python",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "introducing-email-foss-python",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "introducing-email-foss-python",
+          "message": "Unknown class identifier in prose: `EmailMessage` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "introducing-email-foss-python",
+          "message": "Unknown member identifier in prose: `message` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Introduction, paragraph 2",
+          "message": "Reference to `email.message.EmailMessage` (and its `message` member) is not part of the documented Aspose.Email FOSS API.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Key Highlights bullet list",
+          "message": "Prose mentions the external class `EmailMessage` which is not listed in the known API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "introducing-email-foss-python"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "evidence_adequacy": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "blog.aspose.org/email/python/email-key-features",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "email-key-features",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "email-key-features",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "email-key-features",
+          "message": "Unknown class identifier in prose: `EmailMessage` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "email-key-features",
+          "message": "Unknown member identifier in prose: `message` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "email-key-features",
+          "message": "Page role 'feature_blog' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_verified_claims. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "Introduction",
+          "message": "Section 'Introduction' has 0 words (golden spec requires ≥30).",
+          "section_id": "Introduction",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Key Highlights section, bullet list",
+          "message": "The prose references the external class `EmailMessage` without backticks and it is not part of the Aspose.Email FOSS API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Key Highlights section, bullet list",
+          "message": "The word `message` appears as an identifier in prose (e.g., `email.message.EmailMessage`) but is not a known member of the documented API surface.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "email-key-features"
+    },
+    {
+      "check_results": {
+        "claim_coverage": false,
+        "code_formatting": true,
+        "completeness": false,
+        "seo": true
+      },
+      "conformance_score": null,
+      "content_path": "reference.aspose.org/email/python/mapi-message",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "mapi-message",
+          "message": "Title too long: 80 chars (max 70)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "mapi-message",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "mapi-message",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "claim_coverage",
+          "location": "mapi-message",
+          "message": "3/5 assigned claims (60%) are not covered in the page body. Uncovered: The MapiMessage class provides access to its internal MSG re, The MapiMessage class provides methods to add recipients (ad, MapiMessage.create() is part of the public API for Aspose.Em",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": [
+            "The MapiMessage class provides access to its internal MSG reader via the msg_reader property, enabling low-level inspection of property streams and container structure.",
+            "The MapiMessage class provides methods to add recipients (add_recipient), file attachments (add_attachment), and embedded message attachments (add_embedded_message_attachment).",
+            "MapiMessage.create() is part of the public API for Aspose.Email FOSS."
+          ]
+        },
+        {
+          "check": "completeness",
+          "location": "Overall page content",
+          "message": "The page fails to cover three assigned claims (e.g., MapiMessage property access and related methods), leaving the documentation incomplete.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Constructor table, Properties table, Methods table",
+          "message": "Method and property names in the Constructor, Properties, and Methods tables are not enclosed in backticks.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "D",
+      "numeric_score": 0.0,
+      "slug": "mapi-message"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "claim_coverage": true,
+        "code_formatting": true,
+        "completeness": false,
+        "content_density": true,
+        "factual_accuracy": false,
+        "seo": true
+      },
+      "conformance_score": null,
+      "content_path": "reference.aspose.org/email/python/cfb-reader",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "cfb-reader",
+          "message": "Title too long: 80 chars (max 70)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "cfb-reader",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "cfb-reader",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "claim_coverage",
+          "location": "cfb-reader",
+          "message": "4/9 assigned claims are not covered in the page body. Uncovered: The CFBReader class provides access to the CFB header via th, The CFBReader class provides access to directory entries via ...",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": [
+            "The CFBReader class provides access to the CFB header via the header property, exposing sector_size, mini_sector_size, and major_version.",
+            "The CFBReader class provides access to directory entries via get_entry() and supports checking entry types using DirectoryEntry.is_storage(), is_stream(), and is_root() methods.",
+            "The CFBReader class supports reading stream data from CFB containers using get_stream_data() and resolving paths by name using resolve_path() and find_child_by_name().",
+            "The CFBReader class supports opening CFB containers from files using the from_file() class method."
+          ]
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Properties section, table rows",
+          "message": "Properties `root_storage`, `header`, `storages`, and `streams` are mentioned for `CFBDocument` but are not defined in the official API.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Overall page",
+          "message": "Four assigned claims (CLM-email-5ebce4, CLM-email-500ec1, CLM-email-2ce942, CLM-email-15641e) are not addressed anywhere in the page body.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Properties section",
+          "message": "The *Properties* section contains only a table and a code snippet; it lacks the required explanatory paragraphs.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Methods section",
+          "message": "The *Methods* section contains only a table and a code snippet; it lacks the required explanatory paragraphs.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Properties section",
+          "message": "References to non‑existent `CFBDocument` members break API consistency.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Constructor, Properties, Methods tables",
+          "message": "API identifiers in tables (e.g., `from_reader`, `from_file`) are not wrapped in backticks.",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "cfb-reader"
+    }
+  ],
+  "quality": {
+    "avg_word_count": 740.6,
+    "claim_coverage": 1.0,
+    "pages_by_grade": {
+      "B": 3,
+      "C": 10,
+      "D": 6
+    }
+  },
+  "root_cause_diagnosis": [
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "cfb-reader",
+        "mapi-message",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter claim_coverage constraints",
+      "issue": "claim_coverage: 15/24 assigned claims (62%) are not covered in the page body. Uncovered: MapiMessage: Mutable high-level MSG object with MSG and Emai, The CFBReader class provides access to the CFB header via th, MsgWriter: Serializer that writes a MsgDocument into a CFB-b ... (5 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'claim_coverage' found 5 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "email-key-features",
+        "getting-started",
+        "how-to-save-files-python",
+        "installation",
+        "introducing-email-foss-python"
+      ],
+      "fix": "Re-run generate worker with tighter api_allowlist constraints",
+      "issue": "api_allowlist: Unknown class identifier in prose: `EmailMessage` not in API surface (22 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'api_allowlist' found 22 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "cfb-reader",
+        "email-key-features",
+        "faq",
+        "getting-started",
+        "how-to-convert-files-python",
+        "how-to-optimize-files-python",
+        "how-to-save-files-python",
+        "installation",
+        "introducing-email-foss-python",
+        "troubleshooting"
+      ],
+      "fix": "Re-run understand worker with tighter factual_accuracy constraints",
+      "issue": "factual_accuracy: The prose references `EmailMessage` from the standard library, which is not part of the Aspose.Email FOSS API surface. (23 occurrences)",
+      "responsible_phase": "B_extract",
+      "responsible_worker": "understand",
+      "root_cause": "Check 'factual_accuracy' found 23 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "cfb-reader",
+        "how-to-convert-files-python",
+        "how-to-optimize-files-python",
+        "mapi-message",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter completeness constraints",
+      "issue": "completeness: 15 of the 24 assigned CLM claims are not covered anywhere on the page. (7 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'completeness' found 7 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "getting-started",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter code_correctness constraints",
+      "issue": "code_correctness: Code blocks are missing language tags (e.g., ```python). (4 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'code_correctness' found 4 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "cfb-reader",
+        "faq",
+        "getting-started",
+        "how-to-save-files-python",
+        "introducing-email-foss-python",
+        "troubleshooting",
+        "use-cases"
+      ],
+      "fix": "Re-run understand worker with tighter api_consistency constraints",
+      "issue": "api_consistency: Reference to `EmailMessage` and its `message` attribute is outside the known API surface. (11 occurrences)",
+      "responsible_phase": "B_extract",
+      "responsible_worker": "understand",
+      "root_cause": "Check 'api_consistency' found 11 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "getting-started",
+        "mapi-message"
+      ],
+      "fix": "Re-run generate worker with tighter code_formatting constraints",
+      "issue": "code_formatting: API identifiers such as `MapiMessage`, `CFBReader`, `MapiAttachment` are not wrapped in backticks in the narrative text. (4 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'code_formatting' found 4 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "cfb-reader",
+        "getting-started",
+        "how-to-fix-files-errors-python",
+        "how-to-optimize-files-python",
+        "how-to-save-files-python",
+        "installation",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter content_density constraints",
+      "issue": "content_density: Section ‘Best Practices’ contains fewer than the required 30 words of explanatory prose. (10 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'content_density' found 10 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "getting-started",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter route_consistency constraints",
+      "issue": "route_consistency: Off-topic page: slug topic words ['getting', 'started'] not found in prose — claims may be misrouted (2 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'route_consistency' found 2 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "api-overview"
+      ],
+      "fix": "Re-run generate worker with tighter reference_completeness constraints",
+      "issue": "reference_completeness: Reference page has no markdown tables or parameter lists (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'reference_completeness' found 1 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "api-overview"
+      ],
+      "fix": "Re-run understand worker with tighter canonical_import constraints",
+      "issue": "canonical_import: Code block imports `aspose.email.msg` and `aspose.email.cfb` instead of the canonical `aspose.email` import. (2 occurrences)",
+      "responsible_phase": "B_extract",
+      "responsible_worker": "understand",
+      "root_cause": "Check 'canonical_import' found 2 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "api-overview"
+      ],
+      "fix": "Re-run generate worker with tighter audience_appropriateness constraints",
+      "issue": "audience_appropriateness: Content consists of high‑level descriptions and placeholder sentences rather than concrete usage guidance for developers. (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'audience_appropriateness' found 1 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "how-to-convert-files-python"
+      ],
+      "fix": "Re-run generate worker with tighter repetition constraints",
+      "issue": "repetition: Code block repeated 2 times: import aspose.email  msg = aspose.email.MapiMessage.from_file(\"input.msg\")... (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'repetition' found 1 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "how-to-convert-files-python"
+      ],
+      "fix": "Re-run generate worker with tighter api_identifier_unknown_class constraints",
+      "issue": "api_identifier_unknown_class: Code uses class `EmailMessage` which is not in extracted API surface. Known classes: ['CFBDocument', 'CFBError', 'CFBReader', 'CFBStorage', 'CFBStream'] (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'api_identifier_unknown_class' found 1 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "api-overview",
+        "email-key-features",
+        "faq",
+        "getting-started",
+        "how-to-convert-files-python",
+        "how-to-fix-files-errors-python",
+        "how-to-load-files-python",
+        "how-to-optimize-files-python",
+        "how-to-save-files-python",
+        "installation"
+      ],
+      "fix": "Re-run generate worker with tighter structure constraints",
+      "issue": "structure: Section 'Best Practices' has 0 words (golden spec requires ≥30). (10 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'structure' found 10 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "getting-started",
+        "how-to-convert-files-python",
+        "how-to-load-files-python",
+        "how-to-optimize-files-python",
+        "how-to-save-files-python",
+        "troubleshooting",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter api_identifier_unknown_method constraints",
+      "issue": "api_identifier_unknown_method: Code calls method `iter_attachments()` which is not in extracted API surface. (8 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'api_identifier_unknown_method' found 8 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "api-overview"
+      ],
+      "fix": "Re-run generate worker with tighter heading_quality constraints",
+      "issue": "heading_quality: Headings are generic and do not describe the specific content of each section. (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'heading_quality' found 1 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "email-key-features",
+        "how-to-convert-files-python",
+        "how-to-fix-files-errors-python",
+        "how-to-load-files-python",
+        "how-to-optimize-files-python",
+        "how-to-save-files-python"
+      ],
+      "fix": "Re-run generate worker with tighter evidence_adequacy constraints",
+      "issue": "evidence_adequacy: Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_operation_examples, insufficient_snippets. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision. (6 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'evidence_adequacy' found 6 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "how-to-optimize-files-python"
+      ],
+      "fix": "Re-run generate worker with tighter opener_boilerplate constraints",
+      "issue": "opener_boilerplate: Section uses 'When working with...' as an opener (1 occurrence). Replace with a specific statement about what the page covers. (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'opener_boilerplate' found 1 issues",
+      "severity_weight": 1.0
+    }
+  ],
+  "verdict": "NO_GO"
+}

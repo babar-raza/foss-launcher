@@ -1,0 +1,1816 @@
+{
+  "api_surface_coverage": 1.0,
+  "cross_page_findings": [],
+  "gates": [],
+  "go_criteria": [
+    {
+      "actual": "1",
+      "criterion": "CRITICAL findings",
+      "passed": false,
+      "threshold": "0"
+    },
+    {
+      "actual": "19%",
+      "criterion": "A+B rate",
+      "passed": false,
+      "threshold": ">= 50%"
+    },
+    {
+      "actual": "19%",
+      "criterion": "D+F rate",
+      "passed": true,
+      "threshold": "<= 30%"
+    },
+    {
+      "actual": "14%",
+      "criterion": "Editorial-critical HIGH rate",
+      "passed": true,
+      "threshold": "<= 15%"
+    }
+  ],
+  "hallucination_rate": 0.0,
+  "pages": [
+    {
+      "check_results": {
+        "api_allowlist": true,
+        "api_consistency": false,
+        "claim_coverage": true,
+        "code_formatting": false,
+        "completeness": true,
+        "content_density": false,
+        "factual_accuracy": false
+      },
+      "conformance_score": null,
+      "content_path": "products.aspose.org/3d/_index",
+      "findings": [
+        {
+          "check": "claim_coverage",
+          "location": "_index",
+          "message": "5/13 assigned claims are not covered in the page body. Uncovered: Aspose.3D supports STL (.stl) format for writing, Install Aspose.3D via: mvn dependency:get -Dartifact=com.asp ...",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": [
+            "Aspose.3D supports STL (.stl) format for writing",
+            "Install Aspose.3D via: mvn dependency:get -Dartifact=com.aspose:aspose-3d-foss:26.1.0",
+            "Scene.createAnimationClip() is part of the public API for Aspose.3D.",
+            "Node.createChildNode() is part of the public API for Aspose.3D.",
+            "Aspose.3D supports OBJ (.obj) format for reading and writing"
+          ]
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown member identifier in prose: `build` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "_index",
+          "message": "Unknown member identifier in prose: `sh` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Key Features section, bullet list",
+          "message": "Methods `Scene.load()` and `Scene.save()` are referenced, but they are not defined in the documented API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Key Features section, paragraph about build scripts",
+          "message": "The words `build` and `sh` appear as if they were API identifiers (e.g., `build.sh`), which are not part of the API surface.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Overall page",
+          "message": "Claims CLM-3d-979537, CLM-3d-f9b8e1, CLM-3d-ffafd6, CLM-3d-2e0199, and CLM-3d-666b7b are not addressed anywhere in the page.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Overview heading",
+          "message": "The Overview section consists of a single sentence and does not provide enough explanatory prose for developers.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Key Features bullet list",
+          "message": "References to non‑existent methods `load()` and `save()` on `Scene` break API consistency.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Throughout the prose (Key Features, Quick Start, Overview)",
+          "message": "API identifiers such as `Transform`, `Scene`, `Node`, `createChildNode()`, `Geometry`, and `IExporter` are mentioned in the text without backticks.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "tone_and_style": true
+      },
+      "conformance_score": null,
+      "content_path": "docs.aspose.org/3d/_index",
+      "findings": [
+        {
+          "check": "tone_and_style",
+          "location": "Capabilities section, first paragraph",
+          "message": "First sentence starts with \"This section\", which violates the guideline against generic introductory phrasing.",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "A",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "api_allowlist": true,
+        "api_consistency": true,
+        "claim_coverage": true,
+        "code_formatting": true,
+        "completeness": true,
+        "content_density": false,
+        "density": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "docs.aspose.org/3d/java/developer-guide/installation",
+      "findings": [
+        {
+          "check": "density",
+          "location": "installation:section-3",
+          "message": "Section 'Prerequisites' has only 14 words",
+          "section_id": "Prerequisites",
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "installation",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "installation",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "claim_coverage",
+          "location": "installation",
+          "message": "4/9 assigned claims are not covered in the page body. Uncovered: Aspose.3D supports STL (.stl) format for writing, Install Aspose.3D via: mvn dependency:get -Dartifact=com.asp ...",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": [
+            "Aspose.3D supports STL (.stl) format for writing",
+            "Install Aspose.3D via: mvn dependency:get -Dartifact=com.aspose:aspose-3d-foss:26.1.0",
+            "Scene.createAnimationClip() is part of the public API for Aspose.3D.",
+            "Aspose.3D supports OBJ (.obj) format for reading and writing"
+          ]
+        },
+        {
+          "check": "api_allowlist",
+          "location": "installation",
+          "message": "Unknown member identifier in prose: `build` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "installation",
+          "message": "Unknown member identifier in prose: `sh` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "Best Practices",
+          "message": "Section 'Best Practices' has 0 words (golden spec requires ≥30).",
+          "section_id": "Best Practices",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "FAQ section, Q&A about OBJ export",
+          "message": "The page first states that OBJ export is not yet implemented, then later answers “Yes” to the question “Can I export to OBJ format?” – a direct contradiction.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Overall page content",
+          "message": "Four assigned claims (CLM-3d-f9b8e1, CLM-3d-8e73a1, CLM-3d-ffafd6, CLM-3d-2e0199) are not mentioned anywhere in the body.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Prerequisites and Best Practices sections",
+          "message": "The “Prerequisites” section contains only a single short paragraph (14 words). The “Best Practices” section has no explanatory text at all.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Key Features and Best Practices sections",
+          "message": "Prose includes the identifiers `build` and `sh`, which are not part of the documented API surface and appear to refer to shell scripts, not API members.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Multiple sections (Overview, Key Features, FAQ, etc.)",
+          "message": "Class and method names such as `Scene`, `StlSaveOptions`, `FileContentType` are mentioned in the narrative without backticks, violating the formatting rule.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "installation"
+    },
+    {
+      "check_results": {
+        "claim_coverage": false,
+        "code_correctness": false,
+        "code_formatting": true,
+        "completeness": false,
+        "content_density": false,
+        "factual_accuracy": false,
+        "heading_quality": true,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "docs.aspose.org/3d/java/developer-guide/getting-started",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "getting-started",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "getting-started",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "getting-started",
+          "message": "Page body has 570 prose words; golden spec requires ≥994.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "claim_coverage",
+          "location": "getting-started",
+          "message": "13/21 assigned claims (62%) are not covered in the page body. Uncovered: BooleanOperation is part of the Aspose.3D API, AxisSystem is part of the Aspose.3D API, Axis is part of the Aspose.3D API ...",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": [
+            "BooleanOperation is part of the Aspose.3D API",
+            "AxisSystem is part of the Aspose.3D API",
+            "Axis is part of the Aspose.3D API",
+            "Aspose.3D supports STL (.stl) format for writing",
+            "FileContentType is part of the Aspose.3D API",
+            "The library maintains API compatibility with Aspose.3D for Java 26.1.0 while excluding licensing, trial, and DRM-related functionality.",
+            "The library does not implement vertex deduplication for STL files, using separate vertices for each face instead.",
+            "Node.createChildNode() is part of the public API for Aspose.3D.",
+            "Mesh.createPolygon() is part of the public API for Aspose.3D.",
+            "StlSaveOptions.StlSaveOptions() is part of the public API for Aspose.3D.",
+            "The FbxLoadOptions class provides configuration options for loading FBX files, including coordinate system flipping via getFlipCoordinateSystem and setFlipCoordinateSystem methods.",
+            "The FbxSaveOptions class provides configuration options for saving FBX files, including coordinate system flipping via getFlipCoordinateSystem and setFlipCoordinateSystem methods.",
+            "Scene.createAnimationClip() is part of the public API for Aspose.3D."
+          ]
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Prerequisites section, first code block",
+          "message": "Import line `java.nio.file.[identifier omitted]` is not a valid Java import and makes the example non‑compilable.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "First Steps section, OBJ export code",
+          "message": "The call `scene.save(\"output.obj\", new FileFormat().getFormatByExtension(\".obj\"))` does not match the documented `save` overloads; a `SaveOptions` instance is required.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Entire page",
+          "message": "Claims such as CLM-3d-9be670 (BooleanOperation) and CLM-3d-1d7f4d (DracoFormat) are never mentioned.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "heading_quality",
+          "location": "Overview heading",
+          "message": "Section heading \"Overview\" is too generic and does not describe the content that follows.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "Prerequisites section, first code block",
+          "message": "Missing import for `StlSaveOptions` and `FileContentType` in the first code block; code will not compile.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "All prose sections",
+          "message": "The narrative sections contain only one or two short sentences; developers cannot act without external references.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "First Steps, Code Example, Next Steps sections",
+          "message": "Class names like `Scene` and `Mesh` are mentioned in prose without backticks.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "D",
+      "numeric_score": 0.0,
+      "slug": "getting-started"
+    },
+    {
+      "check_results": {},
+      "conformance_score": null,
+      "content_path": "reference.aspose.org/3d/_index",
+      "findings": [],
+      "grade": "A",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "audience_appropriateness": false,
+        "canonical_import": false,
+        "claim_coverage": false,
+        "code_formatting": true,
+        "completeness": false,
+        "content_density": false,
+        "factual_accuracy": false,
+        "heading_quality": true,
+        "seo": true,
+        "structure": true,
+        "tone_and_style": true
+      },
+      "conformance_score": null,
+      "content_path": "reference.aspose.org/3d/java/api-overview",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "api-overview",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "api-overview",
+          "message": "Page body has 301 prose words; golden spec requires ≥1770.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "claim_coverage",
+          "location": "api-overview",
+          "message": "Page does not address any of its 24 assigned claims. The content appears completely off-topic or is placeholder-only.",
+          "section_id": null,
+          "severity": "critical",
+          "uncovered_claim_texts": [
+            "BooleanOperation is part of the Aspose.3D API",
+            "AxisSystem is part of the Aspose.3D API",
+            "Axis is part of the Aspose.3D API",
+            "Aspose.3D supports STL (.stl) format for writing",
+            "AnimationClip is part of the Aspose.3D API",
+            "FileContentType is part of the Aspose.3D API",
+            "Camera is part of the Aspose.3D API",
+            "The library maintains API compatibility with Aspose.3D for Java 26.1.0 while excluding licensing, trial, and DRM-related functionality.",
+            "BoundingBox is part of the Aspose.3D API",
+            "The library provides a Scene class that can load 3D files from disk and save them to other formats, as demonstrated by the code examples.",
+            "The library supports creating child nodes in a scene hierarchy using the Node class and its createChildNode method.",
+            "A3DObject is part of the Aspose.3D API",
+            "CustomObject is part of the Aspose.3D API",
+            "CoordinateSystem is part of the Aspose.3D API",
+            "The library does not implement vertex deduplication for STL files, using separate vertices for each face instead.",
+            "Cancellation is part of the Aspose.3D API",
+            "AssetInfo is part of the Aspose.3D API",
+            "Example demonstrates saving files in STL format",
+            "The FileContentType enum defines two content types for file formats: BINARY and ASCII.",
+            "Mesh.createPolygon() is part of the public API for Aspose.3D.",
+            "StlSaveOptions.StlSaveOptions() is part of the public API for Aspose.3D.",
+            "Deformer is part of the Aspose.3D API",
+            "The library supports importing and exporting STL files (.stl) in both binary and ASCII formats.",
+            "The library supports exporting meshes to STL format with configurable content type (binary or ASCII) via StlSaveOptions."
+          ]
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Overview section, code block 1",
+          "message": "The page does not discuss any of the assigned claim IDs and includes a non‑existent method `Scene.save`.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "canonical_import",
+          "location": "All code examples",
+          "message": "Import statements omit the required `com.aspose.threed` package.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Entire page",
+          "message": "None of the 24 required claim identifiers are covered.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "heading_quality",
+          "location": "H2 headings",
+          "message": "Headings are overly generic and do not reflect specific content.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "All sections",
+          "message": "Prose word count is far below the required minimum; sections consist mainly of lists or single sentences.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "tone_and_style",
+          "location": "Overview and Public API sections",
+          "message": "Placeholder language and marketing‑style phrasing are present, not professional technical tone.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Code example in Overview",
+          "message": "References to `Scene.save` and other members not listed in the known API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "audience_appropriateness",
+          "location": "Entire page",
+          "message": "Content lacks actionable guidance for developers; it reads like a stub.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Prose throughout the page",
+          "message": "API class and method names in narrative text are not wrapped in backticks.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "F",
+      "numeric_score": 0.0,
+      "slug": "api-overview"
+    },
+    {
+      "check_results": {
+        "tone_and_style": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/3d/_index",
+      "findings": [
+        {
+          "check": "tone_and_style",
+          "location": "Capabilities section, first paragraph",
+          "message": "First sentence of the page body starts with \"This section\", which is prohibited by the opening‑sentence quality rule.",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "A",
+      "numeric_score": 0.0,
+      "slug": "_index"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "factual_accuracy": false,
+        "seo": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/3d/java/faq",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "faq",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code example under \"How do I `load` a 3D file using Aspose.3D in Java?\"",
+          "message": "`Scene.load` and `Scene.save` methods are not part of the documented API; the example suggests non‑existent functionality.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Prose and code block describing file loading/saving.",
+          "message": "API references to `load` and `save` on `Scene` conflict with the known API surface, which lists `open`, `fromFile`, etc., but no `load`/`save` methods.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "faq"
+    },
+    {
+      "check_results": {
+        "seo": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/3d/java/troubleshooting",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "troubleshooting",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "troubleshooting",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "A",
+      "numeric_score": 0.0,
+      "slug": "troubleshooting"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "claim_coverage": true,
+        "code_correctness": true,
+        "code_formatting": true,
+        "completeness": true,
+        "factual_accuracy": false,
+        "seo": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/3d/java/developer-guide/use-cases",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "use-cases",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "use-cases",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "claim_coverage",
+          "location": "use-cases",
+          "message": "13/27 assigned claims are not covered in the page body. Uncovered: BooleanOperation is part of the Aspose.3D API, AxisSystem is part of the Aspose.3D API ...",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": [
+            "BooleanOperation is part of the Aspose.3D API",
+            "AxisSystem is part of the Aspose.3D API",
+            "Axis is part of the Aspose.3D API",
+            "FileContentType is part of the Aspose.3D API",
+            "The library provides a Scene class that can load 3D files from disk and save them to other formats, as demonstrated by the code examples.",
+            "The library does not implement vertex deduplication for STL files, using separate vertices for each face instead.",
+            "Node.createChildNode() is part of the public API for Aspose.3D.",
+            "Mesh.createPolygon() is part of the public API for Aspose.3D.",
+            "StlSaveOptions.StlSaveOptions() is part of the public API for Aspose.3D.",
+            "The FbxLoadOptions class provides configuration options for loading FBX files, including coordinate system flipping via getFlipCoordinateSystem and setFlipCoordinateSystem methods.",
+            "Install Aspose.3D via: mvn dependency:get -Dartifact=com.aspose:aspose-3d-foss:26.1.0",
+            "The FbxSaveOptions class provides configuration options for saving FBX files, including coordinate system flipping via getFlipCoordinateSystem and setFlipCoordinateSystem methods.",
+            "Scene.createAnimationClip() is part of the public API for Aspose.3D."
+          ]
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Overview section, STL export code block",
+          "message": "The code calls `scene.save(...)`, but `save` is not a documented method of `Scene` in the provided API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Overview section, STL export code block",
+          "message": "Placeholder import `java.nio.file.[identifier omitted];` is not a valid Java import statement.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Overall page content",
+          "message": "13 of the 27 assigned claims (e.g., CLM-3d-9be670, CLM-3d-1d7f4d, CLM-3d-3cc559, etc.) are not addressed anywhere in the page.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Overview section, STL export code block",
+          "message": "`Scene.save` is used but not present in the known API surface; this indicates an inconsistency.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Throughout the narrative sections",
+          "message": "API identifiers such as `Scene`, `Mesh`, `StlSaveOptions`, and `FileContentType` appear in prose without backticks.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "Overview section, STL export code block",
+          "message": "The import list includes a static JUnit import that is unnecessary for the examples and may confuse readers.",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "use-cases"
+    },
+    {
+      "check_results": {
+        "code_correctness": false,
+        "content_density": false,
+        "evidence_adequacy": true,
+        "factual_accuracy": false,
+        "semantic_structure": false,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/3d/java/how-to-load-3d-models-java",
+      "findings": [
+        {
+          "check": "semantic_structure",
+          "location": "how-to-load-3d-models-java",
+          "message": "Duplicate H3 heading: 'Error Handling'",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "how-to-load-3d-models-java",
+          "message": "Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_verified_claims. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "See Also",
+          "message": "Section 'See Also' has 0 words (golden spec requires ≥30).",
+          "section_id": "See Also",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code Example section, line with `throw new [identifier omitted]`",
+          "message": "Placeholder exception class `[identifier omitted]` is not a real API type.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code Example section, entity iteration loop",
+          "message": "`scene.getRootNode().getChildNodes()` returns `Node` objects, not `Entity`; iterating as `Entity` is incorrect.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "Apply format‑specific `load` options subsection",
+          "message": "The code uses a non‑existent constructor `new Scene(String, FbxLoadOptions)` and method `scene.open(stream, options)` which are not defined in the API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Prerequisites heading",
+          "message": "Prerequisites section consists only of a bullet list with no explanatory prose.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Loading the File > Load a file from a file path",
+          "message": "Sub‑sections under Loading the File (e.g., \"Load a file from a file path\") contain only one sentence before the code block.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Loading the File > Error handling",
+          "message": "Error handling subsection provides only a single sentence before the try‑catch example.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Loading the File > Next steps",
+          "message": "Next steps subsection contains only one brief sentence.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-load-3d-models-java"
+    },
+    {
+      "check_results": {
+        "api_allowlist": false,
+        "evidence_adequacy": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/3d/java/how-to-save-3d-models-java",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "how-to-save-3d-models-java",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-save-3d-models-java",
+          "message": "Unknown class identifier in prose: `FBX` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-save-3d-models-java",
+          "message": "Unknown class identifier in prose: `GLTF` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-save-3d-models-java",
+          "message": "Unknown class identifier in prose: `PLY` not in API surface",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "how-to-save-3d-models-java",
+          "message": "Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_verified_claims. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "See Also",
+          "message": "Section 'See Also' has 0 words (golden spec requires ≥30).",
+          "section_id": "See Also",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Problem section and Saving the File section",
+          "message": "The terms `FBX`, `GLTF`, and `PLY` are presented as class identifiers in the text, but they are not defined in the Aspose.3D Java API surface, resulting in hallucinated API references.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-save-3d-models-java"
+    },
+    {
+      "check_results": {
+        "api_allowlist": true,
+        "evidence_adequacy": true,
+        "semantic_structure": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/3d/java/how-to-convert-fbx-to-gltf-java",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "how-to-convert-fbx-to-gltf-java",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "semantic_structure",
+          "location": "how-to-convert-fbx-to-gltf-java",
+          "message": "Duplicate H3 heading: 'Error Handling'",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "how-to-convert-fbx-to-gltf-java",
+          "message": "Unknown member identifier in prose: `gltf` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "how-to-convert-fbx-to-gltf-java",
+          "message": "Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_verified_claims. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "See Also",
+          "message": "Section 'See Also' has 0 words (golden spec requires ≥30).",
+          "section_id": "See Also",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-convert-fbx-to-gltf-java"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "code_correctness": true,
+        "completeness": false,
+        "content_density": true,
+        "evidence_adequacy": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/3d/java/how-to-fix-3d-models-errors-java",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "how-to-fix-3d-models-errors-java",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "how-to-fix-3d-models-errors-java",
+          "message": "Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_verified_claims. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "See Also",
+          "message": "Section 'See Also' has 0 words (golden spec requires ≥30).",
+          "section_id": "See Also",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code Example, block 2",
+          "message": "`scene.getImporter()` and `scene.getExporter()` are not defined in the Aspose.3D Java API.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Overall article",
+          "message": "`GltfSaveOptions` claim is not covered anywhere in the article.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "All code blocks",
+          "message": "Code blocks are missing language tags (e.g., ```java).",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Symptoms section",
+          "message": "Symptoms section provides only one sentence of explanatory text before a list.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Code Example, block 2",
+          "message": "`scene.getImporter()` and `scene.getExporter()` are not part of the documented API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-fix-3d-models-errors-java"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "code_correctness": false,
+        "code_formatting": true,
+        "completeness": true,
+        "content_density": true,
+        "evidence_adequacy": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "kb.aspose.org/3d/java/how-to-optimize-3d-models-java",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "how-to-optimize-3d-models-java",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "how-to-optimize-3d-models-java",
+          "message": "Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_verified_claims. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "See Also",
+          "message": "Section 'See Also' has 0 words (golden spec requires ≥30).",
+          "section_id": "See Also",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "multiple code blocks throughout the article",
+          "message": "References to non‑existent members such as `Entity.setVisible`, `Entity.getGeometry`, `Scene.load`, `scene.save`, `Node.getChildren().add`, and `groupNode.getExcluded().set`.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "all code examples",
+          "message": "Code samples will not compile because they call methods that are not defined in the Aspose.3D Java API.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "See Also section",
+          "message": "The “See Also” section provides only link titles with no descriptive text, failing the required minimum word count.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Problem, Prerequisites, Optimization Steps, Benchmarks",
+          "message": "Several sections contain only one sentence or a brief list, offering insufficient guidance for developers.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "multiple sections",
+          "message": "Inconsistent use of API names; e.g., `Node.getChildren()` does not exist, and `Entity.getGeometry()` is not part of the API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "throughout the article",
+          "message": "API identifiers are not enclosed in backticks in the narrative text.",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "how-to-optimize-3d-models-java"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "factual_accuracy": false,
+        "seo": true
+      },
+      "conformance_score": null,
+      "content_path": "blog.aspose.org/3d/java/introducing-3d-foss-java",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "introducing-3d-foss-java",
+          "message": "Title too long: 80 chars (max 70)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "introducing-3d-foss-java",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Introduction section, code example and surrounding paragraph",
+          "message": "The `Transform` class and its `setTranslation` method are not part of the Aspose.3D Java API, making the claim inaccurate.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Introduction and Getting Started sections",
+          "message": "References to `node.getTransform()` and the `Transform` type are not found in the documented API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "introducing-3d-foss-java"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "code_correctness": false,
+        "evidence_adequacy": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "blog.aspose.org/3d/java/3d-key-features",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "3d-key-features",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "3d-key-features",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "evidence_adequacy",
+          "location": "3d-key-features",
+          "message": "Page role 'feature_blog' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_verified_claims. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "Introduction",
+          "message": "Section 'Introduction' has 0 words (golden spec requires ≥30).",
+          "section_id": "Introduction",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Key Highlights section, code block 1",
+          "message": "The example uses `Scene.load(\"model.gltf\", opts)` and `scene.save(\"output.fbx\", new FbxSaveOptions())`, but the `Scene` class in the documented API does not provide `load` or `save` methods.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "Getting Started section, code block 1",
+          "message": "Because `Scene.load` and `scene.save` do not exist, the code will not compile or run.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Key Highlights and Getting Started sections",
+          "message": "References to `Scene.load` and `scene.save` are inconsistent with the known API surface; these methods are not defined for `Scene`.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "3d-key-features"
+    },
+    {
+      "check_results": {
+        "api_allowlist": true,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "docs.aspose.org/3d/java/developer-guide/model-loading",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "model-loading",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "model-loading",
+          "message": "Unknown member identifier in prose: `pom` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_allowlist",
+          "location": "model-loading",
+          "message": "Unknown member identifier in prose: `xml` not in API surface",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "Notes and Best Practices",
+          "message": "Section 'Notes and Best Practices' has 0 words (golden spec requires ≥30).",
+          "section_id": "Notes and Best Practices",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "model-loading"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "content_density": true,
+        "factual_accuracy": false,
+        "seo": true,
+        "structure": true
+      },
+      "conformance_score": null,
+      "content_path": "docs.aspose.org/3d/java/developer-guide/rendering",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "rendering",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "structure",
+          "location": "Best Practices",
+          "message": "Section 'Best Practices' has 0 words (golden spec requires ≥30).",
+          "section_id": "Best Practices",
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Overview section, code block 1",
+          "message": "Code examples call `scene.render(\"output.png\", options)` and `scene.getRenderer().render(stream, renderOpts)`, but the `Scene` class in the documented API does not have a `render` method.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Code Examples section, multiple code blocks",
+          "message": "`ImageRenderOptions` is used with methods like `setCamera`, `setRenderWidth`, and `setRenderHeight`, none of which are defined in the known API surface.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Best Practices heading",
+          "message": "The **Best Practices** section contains no prose (0 words), providing no guidance to the reader.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Best Practices and Troubleshooting sections",
+          "message": "References to `FileFormat.identify()` and `FileFormat.getCanImport()` are correct, but the page also mentions `FileFormat.identify()` (method not listed) and uses `LoadOptions.setFileFormat()` without showing the corresponding getter/setter signatures, causing inconsistency.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "C",
+      "numeric_score": 0.0,
+      "slug": "rendering"
+    },
+    {
+      "check_results": {
+        "api_consistency": false,
+        "claim_coverage": false,
+        "code_correctness": false,
+        "code_formatting": true,
+        "completeness": false,
+        "content_density": false,
+        "factual_accuracy": false,
+        "seo": true
+      },
+      "conformance_score": null,
+      "content_path": "reference.aspose.org/3d/java/scene",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "scene",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "scene",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "claim_coverage",
+          "location": "scene",
+          "message": "22/24 assigned claims (92%) are not covered in the page body. Uncovered: BooleanOperation is part of the Aspose.3D API, AxisSystem is part of the Aspose.3D API, Axis is part of the Aspose.3D API ...",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": [
+            "BooleanOperation is part of the Aspose.3D API",
+            "AxisSystem is part of the Aspose.3D API",
+            "Axis is part of the Aspose.3D API",
+            "Aspose.3D supports STL (.stl) format for writing",
+            "AnimationClip is part of the Aspose.3D API",
+            "FileContentType is part of the Aspose.3D API",
+            "Camera is part of the Aspose.3D API",
+            "The library maintains API compatibility with Aspose.3D for Java 26.1.0 while excluding licensing, trial, and DRM-related functionality.",
+            "BoundingBox is part of the Aspose.3D API",
+            "The library provides a Scene class that can load 3D files from disk and save them to other formats, as demonstrated by the code examples.",
+            "A3DObject is part of the Aspose.3D API",
+            "CustomObject is part of the Aspose.3D API",
+            "CoordinateSystem is part of the Aspose.3D API",
+            "Cancellation is part of the Aspose.3D API",
+            "AssetInfo is part of the Aspose.3D API",
+            "The FileContentType enum defines two content types for file formats: BINARY and ASCII.",
+            "The library supports exporting meshes to STL format with configurable content type (binary or ASCII) via StlSaveOptions.",
+            "Mesh.createPolygon() is part of the public API for Aspose.3D.",
+            "StlSaveOptions.StlSaveOptions() is part of the public API for Aspose.3D.",
+            "The library supports importing and exporting STL files (.stl) in both binary and ASCII formats.",
+            "Scene.createAnimationClip() is part of the public API for Aspose.3D.",
+            "The library does not implement vertex deduplication for STL files, using separate vertices for each face instead."
+          ]
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "Constructor section, table row 2",
+          "message": "Constructor table lists signatures such as `Scene(A3DObject)` and `Scene(AnimationClip)` that do not exist in the real API.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "factual_accuracy",
+          "location": "First code block, lines 3‑5",
+          "message": "Code example calls `scene.getAnimations()` and `scene.save(...)`, which are not defined in the documented API.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "completeness",
+          "location": "Entire page",
+          "message": "The claim about `BooleanOperation` is not addressed anywhere on the page.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_correctness",
+          "location": "Second code block, line 5",
+          "message": "Invalid import line `java.nio.file.[identifier omitted];` causes a syntax error.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "content_density",
+          "location": "Overview section",
+          "message": "Overview section contains only placeholder text and no explanatory paragraphs.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "api_consistency",
+          "location": "Properties table",
+          "message": "Properties such as `camera`, `axisSystem`, and `cancellation` are not part of the known Scene API.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Throughout the document",
+          "message": "API identifiers like `Scene`, `Node`, `Mesh` are not enclosed in backticks in the narrative text.",
+          "section_id": null,
+          "severity": "medium",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "D",
+      "numeric_score": 0.0,
+      "slug": "scene"
+    },
+    {
+      "check_results": {
+        "claim_coverage": false,
+        "code_formatting": false,
+        "completeness": false,
+        "seo": true
+      },
+      "conformance_score": null,
+      "content_path": "reference.aspose.org/3d/java/a3-d-object",
+      "findings": [
+        {
+          "check": "seo",
+          "location": "a3-d-object",
+          "message": "Title too long: 80 chars (max 70)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "a3-d-object",
+          "message": "Product name not in title",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "seo",
+          "location": "a3-d-object",
+          "message": "No keywords found in page body (first 2000 chars)",
+          "section_id": null,
+          "severity": "low",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "claim_coverage",
+          "location": "a3-d-object",
+          "message": "9/12 assigned claims (75%) are not covered in the page body. Uncovered: ExportException is part of the Aspose.3D API, Entity is part of the Aspose.3D API, FVector3 is part of the Aspose.3D API ...",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": [
+            "ExportException is part of the Aspose.3D API",
+            "Entity is part of the Aspose.3D API",
+            "FVector3 is part of the Aspose.3D API",
+            "Deformer is part of the Aspose.3D API",
+            "DracoFormat is part of the Aspose.3D API",
+            "FbxImporter is part of the Aspose.3D API",
+            "FbxExporter is part of the Aspose.3D API",
+            "FVector4 is part of the Aspose.3D API",
+            "FileFormat is part of the Aspose.3D API"
+          ]
+        },
+        {
+          "check": "completeness",
+          "location": "entire page",
+          "message": "The page does not cover 9 of the 12 assigned claims (e.g., CLM-3d-f2ef04, CLM-3d-455b75, etc.).",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        },
+        {
+          "check": "code_formatting",
+          "location": "Properties and Methods tables",
+          "message": "Class, method, and property names in tables (e.g., `Name`, `Duration`, `Channels`) are not enclosed in backticks.",
+          "section_id": null,
+          "severity": "high",
+          "uncovered_claim_texts": []
+        }
+      ],
+      "grade": "D",
+      "numeric_score": 0.0,
+      "slug": "a3-d-object"
+    }
+  ],
+  "quality": {
+    "avg_word_count": 826.7,
+    "claim_coverage": 1.0,
+    "pages_by_grade": {
+      "A": 4,
+      "C": 13,
+      "D": 3,
+      "F": 1
+    }
+  },
+  "root_cause_diagnosis": [
+    {
+      "affected_pages": [
+        "_index",
+        "a3-d-object",
+        "api-overview",
+        "getting-started",
+        "installation",
+        "scene",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter claim_coverage constraints",
+      "issue": "claim_coverage: 5/13 assigned claims are not covered in the page body. Uncovered: Aspose.3D supports STL (.stl) format for writing, Install Aspose.3D via: mvn dependency:get -Dartifact=com.asp ... (7 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'claim_coverage' found 7 issues",
+      "severity_weight": 3.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "how-to-convert-fbx-to-gltf-java",
+        "how-to-save-3d-models-java",
+        "installation",
+        "model-loading"
+      ],
+      "fix": "Re-run generate worker with tighter api_allowlist constraints",
+      "issue": "api_allowlist: Unknown member identifier in prose: `build` not in API surface (10 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'api_allowlist' found 10 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "3d-key-features",
+        "_index",
+        "api-overview",
+        "faq",
+        "getting-started",
+        "how-to-fix-3d-models-errors-java",
+        "how-to-load-3d-models-java",
+        "how-to-optimize-3d-models-java",
+        "how-to-save-3d-models-java",
+        "installation",
+        "introducing-3d-foss-java",
+        "rendering",
+        "scene",
+        "use-cases"
+      ],
+      "fix": "Re-run understand worker with tighter factual_accuracy constraints",
+      "issue": "factual_accuracy: Methods `Scene.load()` and `Scene.save()` are referenced, but they are not defined in the documented API surface. (20 occurrences)",
+      "responsible_phase": "B_extract",
+      "responsible_worker": "understand",
+      "root_cause": "Check 'factual_accuracy' found 20 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "a3-d-object",
+        "api-overview",
+        "getting-started",
+        "how-to-fix-3d-models-errors-java",
+        "how-to-optimize-3d-models-java",
+        "installation",
+        "scene",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter completeness constraints",
+      "issue": "completeness: Claims CLM-3d-979537, CLM-3d-f9b8e1, CLM-3d-ffafd6, CLM-3d-2e0199, and CLM-3d-666b7b are not addressed anywhere in the page. (9 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'completeness' found 9 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "api-overview",
+        "getting-started",
+        "how-to-fix-3d-models-errors-java",
+        "how-to-load-3d-models-java",
+        "how-to-optimize-3d-models-java",
+        "installation",
+        "rendering",
+        "scene"
+      ],
+      "fix": "Re-run generate worker with tighter content_density constraints",
+      "issue": "content_density: The Overview section consists of a single sentence and does not provide enough explanatory prose for developers. (12 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'content_density' found 12 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "3d-key-features",
+        "_index",
+        "api-overview",
+        "faq",
+        "how-to-fix-3d-models-errors-java",
+        "how-to-optimize-3d-models-java",
+        "installation",
+        "introducing-3d-foss-java",
+        "rendering",
+        "scene",
+        "use-cases"
+      ],
+      "fix": "Re-run understand worker with tighter api_consistency constraints",
+      "issue": "api_consistency: References to non‑existent methods `load()` and `save()` on `Scene` break API consistency. (11 occurrences)",
+      "responsible_phase": "B_extract",
+      "responsible_worker": "understand",
+      "root_cause": "Check 'api_consistency' found 11 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "_index",
+        "a3-d-object",
+        "api-overview",
+        "getting-started",
+        "installation",
+        "scene",
+        "use-cases"
+      ],
+      "fix": "Re-run generate worker with tighter code_formatting constraints",
+      "issue": "code_formatting: API identifiers such as `Transform`, `Scene`, `Node`, `createChildNode()`, `Geometry`, and `IExporter` are mentioned in the text without backticks. (7 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'code_formatting' found 7 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "3d-key-features",
+        "getting-started",
+        "how-to-fix-3d-models-errors-java",
+        "how-to-load-3d-models-java",
+        "how-to-optimize-3d-models-java",
+        "scene"
+      ],
+      "fix": "Re-run generate worker with tighter code_correctness constraints",
+      "issue": "code_correctness: Missing import for `StlSaveOptions` and `FileContentType` in the first code block; code will not compile. (6 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'code_correctness' found 6 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "api-overview"
+      ],
+      "fix": "Re-run understand worker with tighter canonical_import constraints",
+      "issue": "canonical_import: Import statements omit the required `com.aspose.threed` package. (1 occurrences)",
+      "responsible_phase": "B_extract",
+      "responsible_worker": "understand",
+      "root_cause": "Check 'canonical_import' found 1 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "api-overview"
+      ],
+      "fix": "Re-run generate worker with tighter audience_appropriateness constraints",
+      "issue": "audience_appropriateness: Content lacks actionable guidance for developers; it reads like a stub. (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'audience_appropriateness' found 1 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "how-to-convert-fbx-to-gltf-java",
+        "how-to-load-3d-models-java"
+      ],
+      "fix": "Re-run generate worker with tighter semantic_structure constraints",
+      "issue": "semantic_structure: Duplicate H3 heading: 'Error Handling' (2 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'semantic_structure' found 2 issues",
+      "severity_weight": 2.0
+    },
+    {
+      "affected_pages": [
+        "3d-key-features",
+        "api-overview",
+        "getting-started",
+        "how-to-convert-fbx-to-gltf-java",
+        "how-to-fix-3d-models-errors-java",
+        "how-to-load-3d-models-java",
+        "how-to-optimize-3d-models-java",
+        "how-to-save-3d-models-java",
+        "installation",
+        "model-loading",
+        "rendering"
+      ],
+      "fix": "Re-run generate worker with tighter structure constraints",
+      "issue": "structure: Section 'Best Practices' has 0 words (golden spec requires ≥30). (11 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'structure' found 11 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "api-overview",
+        "getting-started"
+      ],
+      "fix": "Re-run generate worker with tighter heading_quality constraints",
+      "issue": "heading_quality: Section heading \"Overview\" is too generic and does not describe the content that follows. (2 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'heading_quality' found 2 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "api-overview"
+      ],
+      "fix": "Re-run generate worker with tighter tone_and_style constraints",
+      "issue": "tone_and_style: Placeholder language and marketing‑style phrasing are present, not professional technical tone. (1 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'tone_and_style' found 1 issues",
+      "severity_weight": 1.0
+    },
+    {
+      "affected_pages": [
+        "3d-key-features",
+        "how-to-convert-fbx-to-gltf-java",
+        "how-to-fix-3d-models-errors-java",
+        "how-to-load-3d-models-java",
+        "how-to-optimize-3d-models-java",
+        "how-to-save-3d-models-java"
+      ],
+      "fix": "Re-run generate worker with tighter evidence_adequacy constraints",
+      "issue": "evidence_adequacy: Page role 'howto_article' was planned with insufficient evidence (evidence_sufficient=False). Missing signals: no_verified_claims. Grade may reflect upstream evidence deficit, not generation quality. Consider re-running Understand on a richer repository revision. (6 occurrences)",
+      "responsible_phase": "",
+      "responsible_worker": "generate",
+      "root_cause": "Check 'evidence_adequacy' found 6 issues",
+      "severity_weight": 1.0
+    }
+  ],
+  "verdict": "NO_GO"
+}

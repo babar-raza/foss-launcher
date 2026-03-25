@@ -1,5 +1,17 @@
 {
-  "last_scan_ts": "2026-03-12T21:14:58.251729+00:00",
-  "seen_repos": [],
-  "total_discovered": 0
+  "last_scan_ts": "2026-03-21T13:32:56.997552+00:00",
+  "seen_repos": [
+    "aspose-3d-foss/Aspose.3D-FOSS-for-.NET",
+    "aspose-3d-foss/Aspose.3D-FOSS-for-Java",
+    "aspose-3d-foss/Aspose.3D-FOSS-for-Python",
+    "aspose-3d-foss/Aspose.3D-FOSS-for-TypeScript",
+    "aspose-cells-foss/Aspose.Cells-FOSS-for-Python",
+    "aspose-email-foss/Aspose.Email-FOSS-for-Python",
+    "aspose-note-foss/Aspose.Note-FOSS-for-Python",
+    "aspose-slides-foss/Aspose.Slides-FOSS-for-.NET",
+    "aspose-slides-foss/Aspose.Slides-FOSS-for-Cpp",
+    "aspose-slides-foss/Aspose.Slides-FOSS-for-Java",
+    "aspose-slides-foss/Aspose.Slides-FOSS-for-Python"
+  ],
+  "total_discovered": 11
 }

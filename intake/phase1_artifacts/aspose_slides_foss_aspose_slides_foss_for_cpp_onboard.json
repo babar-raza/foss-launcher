@@ -1,0 +1,1058 @@
+{
+  "acquisition": {
+    "acquisition_confidence": "low",
+    "canonical_import": "Aspose::Slides",
+    "clone_cache_hit": true,
+    "discovered_at": "2026-03-21T13:33:10.939653+00:00",
+    "display_name": "Aspose.Slides FOSS for Cpp",
+    "failure_state": "",
+    "family": "slides",
+    "field_provenance": {
+      "canonical_import": "families_yaml",
+      "display_name": "families_yaml",
+      "runtime_import": "inferred_default"
+    },
+    "is_fresh_clone": false,
+    "launch_tier": "core",
+    "phase": "phase1_acquisition",
+    "platform": "cpp",
+    "repo_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\intake\\.clone_cache\\po_slides_cpp",
+    "repo_sha": "25adb25c8796f06d9b89cd5f8093e490091195ef",
+    "repo_signals": {
+      "detected_manifest_files": [],
+      "files_estimated": 13,
+      "inferred_language": "",
+      "is_empty_clone": false,
+      "readme_present": true
+    },
+    "repo_url": "https://github.com/aspose-slides-foss/Aspose.Slides-FOSS-for-Cpp",
+    "runtime_import": ""
+  },
+  "canonical_import": "Aspose::Slides",
+  "classification": {
+    "decision": "needs_review",
+    "full_name": "aspose-slides-foss/Aspose.Slides-FOSS-for-Cpp",
+    "reasons": [
+      "no known manifest file detected at repository root"
+    ]
+  },
+  "display_name": "Aspose.Slides FOSS for Cpp",
+  "family": "slides",
+  "phase": "phase1_inspection",
+  "platform": "cpp",
+  "repo": {
+    "archived": false,
+    "created_at": "2026-03-19T15:27:05Z",
+    "default_branch": "main",
+    "description": "The official open-source C++ library by Aspose.Slides for creating, reading, and editing PowerPoint (.pptx) presentations.",
+    "fork": false,
+    "full_name": "aspose-slides-foss/Aspose.Slides-FOSS-for-Cpp",
+    "html_url": "https://github.com/aspose-slides-foss/Aspose.Slides-FOSS-for-Cpp",
+    "id": 1186397596,
+    "is_template": false,
+    "language": "C++",
+    "license": {
+      "name": "MIT License",
+      "spdx_id": "MIT"
+    },
+    "name": "Aspose.Slides-FOSS-for-Cpp",
+    "owner": {
+      "login": "aspose-slides-foss",
+      "type": "Organization"
+    },
+    "pushed_at": "2026-03-19T17:07:53Z",
+    "size": 598,
+    "stargazers_count": 0,
+    "topics": [
+      "pptx",
+      "presentation",
+      "slides"
+    ],
+    "updated_at": "2026-03-20T18:17:39Z"
+  },
+  "runtime_import": "",
+  "scout": {
+    "budget_log": [
+      {
+        "category": "source",
+        "path": "src/Aspose.Slides.Foss/shape.cpp",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 14541
+      },
+      {
+        "category": "source",
+        "path": "src/Aspose.Slides.Foss/document_properties.cpp",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 16360
+      },
+      {
+        "category": "source",
+        "path": "include/Aspose/Slides/Foss/shape_type.h",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 16426
+      },
+      {
+        "category": "source",
+        "path": "src/Aspose.Slides.Foss/_internal/pptx/notes_slide_part.cpp",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 17199
+      },
+      {
+        "category": "source",
+        "path": "src/Aspose.Slides.Foss/_internal/pptx/comments_part.cpp",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 17210
+      },
+      {
+        "category": "source",
+        "path": "include/Aspose/Slides/Foss/_internal/pptx/constants.h",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 17754
+      },
+      {
+        "category": "source",
+        "path": "src/Aspose.Slides.Foss/master_slide_collection.cpp",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 17764
+      },
+      {
+        "category": "source",
+        "path": "src/Aspose.Slides.Foss/fill_format.cpp",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 17926
+      },
+      {
+        "category": "source",
+        "path": "include/Aspose/Slides/Foss/camera_preset_type.h",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 20090
+      },
+      {
+        "category": "source",
+        "path": "src/Aspose.Slides.Foss/slide_collection.cpp",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 32695
+      },
+      {
+        "category": "source",
+        "path": "src/Aspose.Slides.Foss/presentation.cpp",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 65873
+      },
+      {
+        "category": "source",
+        "path": "src/Aspose.Slides.Foss/shape_collection.cpp",
+        "reason": "file_too_large_for_remaining_budget",
+        "size_bytes": 68767
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_notes_size_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 1181
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_layout_slide_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 1371
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/graphical_object_lock_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 1517
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/graphical_object_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 1833
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_master_slide_collection_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 1913
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_master_slide_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 2108
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/glow_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 2158
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/notes_slide_manager_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 2224
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/base_slide_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 2237
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_notes_slide_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 2272
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_light_rig_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 2556
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/portion_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 2575
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/line_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 2616
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/picture_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 2621
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/image_transform_operation_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 2678
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_pattern_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 2701
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_notes_slide_manager_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 2795
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_slide_component_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 2916
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/paragraph_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 3035
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/blur_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 3078
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/soft_edge_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 3196
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_inner_shadow_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 3263
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/table_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 3266
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/master_slide_collection_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 3372
+      },
+      {
+        "category": "test",
+        "path": "tests/test_data/lotus.png",
+        "reason": "source_reserve",
+        "size_bytes": 3462
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/cell_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 3516
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_picture_frame_lock_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 3539
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/font_data_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 3565
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_paragraph_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 3660
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_layout_slide_collection_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 3709
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/presentation_io_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 3719
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/presentation_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 3829
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/line_fill_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 3836
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_shape_frame_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 3941
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/notes_slide_header_footer_manager_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 3988
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/connector_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4010
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/auto_shape_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4049
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/portion_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4087
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/picture_utilities_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4098
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/gradient_stop_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4171
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/document_properties_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4301
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/line_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4312
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_geometry_shape_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4313
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_slide_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4507
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/effect_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4541
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/notes_slide_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4552
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_portion_collection_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4570
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/column_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4625
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/gradient_stop_collection_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4645
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_comment_collection_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4701
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/threed_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4771
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_preset_shadow_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4832
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_auto_shape_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 4973
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/paragraph_slide_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 5138
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/row_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 5140
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/adjust_value_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 5273
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/threed_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 5307
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_slide_collection_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 5464
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_outer_shadow_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 5525
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/slides_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 5648
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/effect_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 5657
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/text_frame_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 5673
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/image_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 5755
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/text_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 5808
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_column_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 5835
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/cell_collection_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 5844
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/text_frame_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 5949
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_picture_fill_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 6082
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_reflection_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 6085
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/gradient_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 6110
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/shape_type_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 6190
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_text_frame_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 6338
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/fill_overlay_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 6424
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_line_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 6553
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_paragraph_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 6589
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/fill_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 6601
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/connector_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 6791
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/fill_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 6855
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/picture_frame_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 6957
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/shapes_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 6958
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_text_frame_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 7009
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/text_formatting_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 7141
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_table_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 7567
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/comments_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 7591
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_shape_collection_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 7641
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/master_slide_part_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 7670
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/table_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 7791
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_portion_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 7858
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/color_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 7957
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/drawing_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 7981
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/core_properties_part_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 8002
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_row_collection_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 8303
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/app_properties_part_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 8520
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/images_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 8522
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/column_collection_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 8566
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_shape_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 8712
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_paragraph_collection_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 8776
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.IntegrationTests/table_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 8980
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_base_portion_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 9021
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/comment_authors_part_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 9241
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_bullet_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 9291
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/i_cell_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 9396
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/cell_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 9935
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/enums_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 10559
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/relationships_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 10894
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/shape_bevel_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 11274
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/comment_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 12080
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/custom_properties_part_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 12102
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/bullet_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 12596
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/document_properties_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 14539
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/comments_part_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 14982
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/notes_slide_part_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 15556
+      },
+      {
+        "category": "test",
+        "path": "tests/Aspose.Slides.Foss.Tests/base_portion_format_test.cpp",
+        "reason": "source_reserve",
+        "size_bytes": 16712
+      },
+      {
+        "category": "test",
+        "path": "tests/test_data/image_example.jpg",
+        "reason": "source_reserve",
+        "size_bytes": 140425
+      },
+      {
+        "category": "asset",
+        "path": "LICENSE",
+        "reason": "source_reserve",
+        "size_bytes": 1092
+      },
+      {
+        "category": "asset",
+        "path": "CMakeLists.txt",
+        "reason": "source_reserve",
+        "size_bytes": 1453
+      },
+      {
+        "category": "asset",
+        "path": "THIRD_PARTY_NOTICES",
+        "reason": "source_reserve",
+        "size_bytes": 4472
+      },
+      {
+        "category": "asset",
+        "path": ".clone_timestamp",
+        "reason": "source_reserve",
+        "size_bytes": 32
+      },
+      {
+        "category": "asset",
+        "path": ".clone_sha",
+        "reason": "source_reserve",
+        "size_bytes": 40
+      },
+      {
+        "category": "asset",
+        "path": ".clone_url",
+        "reason": "source_reserve",
+        "size_bytes": 64
+      }
+    ],
+    "budget_log_overflow_count": 0,
+    "by_category": {
+      "asset": 6,
+      "config": 2,
+      "doc": 1,
+      "source": 354,
+      "test": 114
+    },
+    "content_used_bytes": 997233,
+    "doc_paths": [
+      "README.md"
+    ],
+    "doc_selection": [
+      {
+        "decision": "kept",
+        "importance_rank": 7,
+        "language": "",
+        "path": "README.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 7969
+      }
+    ],
+    "example_paths": [],
+    "example_selection": [],
+    "files_enumerated": 477,
+    "files_read": 345,
+    "selected_doc_count": 1,
+    "selected_example_count": 0,
+    "skip_counts_approximate": false,
+    "skip_reason_counts": {
+      "file_too_large_for_remaining_budget": 12,
+      "source_reserve": 120
+    },
+    "skipped_paths": [
+      "src/Aspose.Slides.Foss/shape.cpp",
+      "src/Aspose.Slides.Foss/document_properties.cpp",
+      "include/Aspose/Slides/Foss/shape_type.h",
+      "src/Aspose.Slides.Foss/_internal/pptx/notes_slide_part.cpp",
+      "src/Aspose.Slides.Foss/_internal/pptx/comments_part.cpp",
+      "include/Aspose/Slides/Foss/_internal/pptx/constants.h",
+      "src/Aspose.Slides.Foss/master_slide_collection.cpp",
+      "src/Aspose.Slides.Foss/fill_format.cpp",
+      "include/Aspose/Slides/Foss/camera_preset_type.h",
+      "src/Aspose.Slides.Foss/slide_collection.cpp",
+      "src/Aspose.Slides.Foss/presentation.cpp",
+      "src/Aspose.Slides.Foss/shape_collection.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_notes_size_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_layout_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/graphical_object_lock_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/graphical_object_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_master_slide_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_master_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/glow_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/notes_slide_manager_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/base_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_notes_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_light_rig_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/portion_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/line_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/picture_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/image_transform_operation_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_pattern_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_notes_slide_manager_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_slide_component_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/paragraph_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/blur_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/soft_edge_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_inner_shadow_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/table_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/master_slide_collection_test.cpp",
+      "tests/test_data/lotus.png",
+      "tests/Aspose.Slides.Foss.Tests/cell_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_picture_frame_lock_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/font_data_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_paragraph_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_layout_slide_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/presentation_io_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/presentation_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/line_fill_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_shape_frame_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/notes_slide_header_footer_manager_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/connector_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/auto_shape_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/portion_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/picture_utilities_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/gradient_stop_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/document_properties_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/line_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_geometry_shape_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/effect_format_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/notes_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_portion_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/column_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/gradient_stop_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_comment_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/threed_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_preset_shadow_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_auto_shape_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/paragraph_slide_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/row_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/adjust_value_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/threed_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_slide_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_outer_shadow_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/slides_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/effect_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/text_frame_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/image_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/text_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_column_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/cell_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/text_frame_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_picture_fill_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_reflection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/gradient_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/shape_type_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_text_frame_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/fill_overlay_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_line_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_paragraph_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/fill_format_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/connector_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/fill_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/picture_frame_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/shapes_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_text_frame_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/text_formatting_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_table_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/comments_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_shape_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/master_slide_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/table_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_portion_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/color_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/drawing_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/core_properties_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_row_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/app_properties_part_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/images_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/column_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_shape_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_paragraph_collection_test.cpp",
+      "tests/Aspose.Slides.Foss.IntegrationTests/table_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_base_portion_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/comment_authors_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_bullet_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/i_cell_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/cell_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/enums_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/relationships_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/shape_bevel_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/comment_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/custom_properties_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/bullet_format_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/document_properties_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/comments_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/notes_slide_part_test.cpp",
+      "tests/Aspose.Slides.Foss.Tests/base_portion_format_test.cpp",
+      "tests/test_data/image_example.jpg",
+      "LICENSE",
+      "CMakeLists.txt",
+      "THIRD_PARTY_NOTICES",
+      ".clone_timestamp",
+      ".clone_sha",
+      ".clone_url"
+    ],
+    "truncated_files": []
+  },
+  "shared_facts": {
+    "build_systems": [
+      "cmake"
+    ],
+    "dependencies": [],
+    "description": "",
+    "entrypoints": [],
+    "has_ci": false,
+    "has_docs_folder": false,
+    "has_examples_folder": false,
+    "has_tests": true,
+    "install_command": "",
+    "license_type": "",
+    "module_path": "",
+    "package_name": "UNKNOWN",
+    "primary_language": "c",
+    "python_requires": "",
+    "version": ""
+  }
+}

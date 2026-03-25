@@ -1,23 +1,24 @@
 ---
 canonical: https://kb.aspose.org/3d/_index/
 canonical_import: aspose.threed
-date: '2026-03-12T19:02:07Z'
-dateModified: '2026-03-12T19:02:07Z'
-datePublished: '2026-03-12T19:02:07Z'
-description: Developers can load, modify, and `save` 3D models in `formats` including
-  OBJ, GLTF, STL, and 3MF using the `FileFormat` class and `Scene.open()` /...
+code_import: aspose.threed
+date: '2026-03-24T16:58:09Z'
+dateModified: '2026-03-24T16:58:09Z'
+datePublished: '2026-03-24T16:58:09Z'
+description: The `library` supports core 3D operations including loading, saving,
+  and modifying 3D scenes using classes like `Scene`, `Node`, `Entity`, and `Geometry`.
 display_name: Aspose.3D
 family: 3d
 keywords:
-- python 3d game
-- python 3d engine
-- python 3d visualization
 - 3d python
-- 3d python game
 - 3d python game engine
+- 3d python game
 - 3d python logo
+- 3d python plot
 - 3d python library
-lastmod: '2026-03-12T19:02:07Z'
+- 3d python program
+- 3d python engine
+lastmod: '2026-03-24T16:58:09Z'
 page_role: toc
 platform: python
 reading_time: 1
@@ -32,50 +33,48 @@ weight: 7
 
 ## Capabilities
 
-Aspose.3D provides core 3D `scene` manipulation capabilities through classes like `Scene`, `Node`, `Entity`, and `Geometry`. Developers can load, modify, and `save` 3D models in `formats` including OBJ, GLTF, STL, and 3MF using the `FileFormat` class and `Scene.open()` / `Scene.save()` methods.
+This section covers the Python API for 3D `scene` manipulation, format conversion, and geometry handling in Aspose.3D. The `library` supports core 3D operations including loading, saving, and modifying 3D scenes using classes like `Scene`, `Node`, `Entity`, and `Geometry`.
 
-- Load and save 3D scenes in OBJ, GLTF, STL, and 3MF formats
-- Build and traverse scene hierarchies using `Node` and `Entity` objects
-- Create and edit geometry with vertex elements and control points via `Geometry` and `Mesh`
-- Animate scenes using `AnimationClip`, `AnimationNode`, and `BindPoint`
-- Access and modify scene metadata through `AssetInfo` and custom properties
-
-The `Scene` class serves as the root container for 3D content, with `root_node` providing access to the top-level hierarchy. Use `Node.add_entity()` to attach geometry or cameras, and `Node.create_child_node()` to build complex hierarchies. The `FileFormat.detect()` method identifies `formats` from streams or filenames before loading.
+- Open and save 3D scenes in formats including OBJ, GLTF, 3MF, and FBX
+- Build and modify scene hierarchies using `Node` and `Entity` objects
+- Create and edit geometry with vertex elements and control points
+- Manage animations via `AnimationClip`, `AnimationNode`, and `BindPoint`
+- Access scene metadata and asset information through `AssetInfo`
 
 ## Quick Install
 
-Install Aspose.3D for Python to work with 3D scenes, `entities`, nodes, and `animations`. The `library` supports Python 3D visualization, game development, and engine integration through its core classes like `Scene`, `Node`, `Entity`, and `FileFormat`.
+This section covers installation and setup for Aspose.3D, the Python `library` for 3D model processing, `scene` manipulation, and format conversion. Use pip to install the package, then verify the installation by importing the `library`.
 
 ```bash
 pip install aspose-3d
 ```
 
-After installation, verify the setup by importing the `library` and confirming the `Scene` class is accessible. Use `import aspose.threed` to ensure the correct module is loaded.
-
-```python
-import aspose.threed
-scene = aspose.threed.Scene()
-print(type(scene.root_node))
-```
+After installation, verify the setup by running `import aspose.threed` in a Python interpreter or script. No additional configuration is required.
 
 ## Getting Started
 
-Aspose.3D provides a Python API for loading, saving, and manipulating 3D scenes using classes like `Scene`, `Node`, `Entity`, and `FileFormat`. It supports common 3D `formats` including OBJ, GLTF, STL, and 3MF, making it suitable for 3D python visualization, python 3d game development, and python 3d engine integration.
+This section covers the Python API for 3D `scene` creation, loading, and saving using Aspose.3D. The `library` supports core 3D operations through classes like `Scene`, `Node`, `Entity`, `Geometry`, and `FileFormat`, enabling import and `export` of `formats` including OBJ, GLTF, STL, and 3MF.
+
+- Load and save 3D scenes in OBJ, GLTF, STL, and 3MF formats
+- Build scenes using `Scene`, `Node`, and `Entity` hierarchies
+- Access and modify geometry, materials, and animation clips
 
 ## Developer Guide
 
-Aspose.3D provides core 3D `scene` manipulation capabilities for Python 3D visualization and game development workflows. Developers use the `Scene`, `Node`, and `Entity` classes to build and modify 3D hierarchies, while `FileFormat` enables detection and serialization across OBJ, GLTF, 3MF, and FBX `formats`.
+This section covers the core classes and operations for loading, constructing, and manipulating 3D scenes in Aspose.3D using Python. It includes handling `scene` graphs via `Scene`, `Node`, and `Entity`, working with geometry via `Mesh` and `Geometry`, and managing `animations` through `AnimationClip` and `AnimationNode`.
 
-The `Scene` class serves as the root container, exposing `root_node`, `sub_scenes`, and `animation_clips` for organizing geometry and animation. Add geometry to a `scene` by creating `Mesh` or `Geometry` instances, wrapping them in `Entity`, and attaching them to `Node` objects via `add_entity()` or `create_child_node()`. Animation is managed through `AnimationClip` and `AnimationNode`, with keyframe sequences defined at the `BindPoint` level.
+Use `FileFormat` to `detect` and specify `formats` like `GLTF2`, `WAVEFRONT_OBJ`, and 3MF when opening or saving 3D files. The `Scene` class provides `open()` and `save()` methods to load from files or streams and `export` to supported `formats`. Animation support includes creating clips, nodes, and bind points for keyframe-based transformations.
 
-- Use `FileFormat.detect()` to infer format from stream or filename before loading
-- Call `Scene.open()` with detected format to load files, then `Scene.save()` with target `FileFormat` to export
-- Build geometry hierarchies using `Node.add_child_node()` and `Node.add_entity()`
-- Access bounding volumes via `Entity.get_bounding_box()` for culling or collision logic
+- Scene management — load, save, root node access via `Scene.root_node`
+- Entity and node hierarchy — add entities to nodes, build parent-child relationships
+- Geometry construction — create vertex elements, manage control points and polygons
+- Animation setup — define clips, nodes, bind points, and keyframe sequences
 
 ## See Also
 
-- Learn how to use the [`Scene`](Scene) class to load and save 3D scenes in formats like OBJ, GLTF, and 3MF
-- Explore [`Node`](Node) and [`Entity`](Entity) management for building hierarchical 3D structures in python 3d visualization
-- Understand animation workflows using [`AnimationClip`](AnimationClip), [`AnimationNode`](AnimationNode), and [`BindPoint`](BindPoint) for python 3d game development
-- Review [`FileFormat`](FileFormat) detection and supported extensions for robust 3d python file handling
+This section covers the Python API for 3D `scene` creation, manipulation, and format conversion using Aspose.3D. The `library` supports core 3D operations including `scene` graph management, geometry definition, animation, and import/`export` of `formats` like OBJ, GLTF, STL, and 3MF.
+
+- [Scene Management](scene.md) — load, save, and manipulate 3D scenes using the `Scene`, `Node`, and `Entity` classes.
+- [Geometry and Meshes](geometry.md) — define vertex data, polygons, and vertex elements using `Geometry` and `Mesh`.
+- [Animation Support](animation.md) — create and edit animation clips, nodes, and keyframe sequences using `AnimationClip`, `AnimationNode`, and `BindPoint`.
+- [Format Import/Export](formats.md) — convert between 3D formats including OBJ, GLTF, STL, and 3MF using `FileFormat` and `Scene.save()`.

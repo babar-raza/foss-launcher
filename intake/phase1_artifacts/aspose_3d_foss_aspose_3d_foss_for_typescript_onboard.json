@@ -1,0 +1,151 @@
+{
+  "acquisition": {
+    "acquisition_confidence": "low",
+    "canonical_import": "@aspose/3d",
+    "clone_cache_hit": true,
+    "discovered_at": "2026-03-21T13:32:59.086504+00:00",
+    "display_name": "Aspose.3D FOSS for Typescript",
+    "failure_state": "",
+    "family": "3d",
+    "field_provenance": {
+      "canonical_import": "families_yaml",
+      "display_name": "families_yaml",
+      "runtime_import": "inferred_default"
+    },
+    "is_fresh_clone": false,
+    "launch_tier": "core",
+    "phase": "phase1_acquisition",
+    "platform": "typescript",
+    "repo_dir": "C:\\Users\\prora\\OneDrive\\Documents\\GitHub\\foss-launcher\\intake\\.clone_cache\\po_3d_typescript",
+    "repo_sha": "227894a1120c22b9b6522564e23dc1d14c8fc39a",
+    "repo_signals": {
+      "detected_manifest_files": [
+        "package.json"
+      ],
+      "files_estimated": 12,
+      "inferred_language": "node/typescript",
+      "is_empty_clone": false,
+      "readme_present": true
+    },
+    "repo_url": "https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-TypeScript",
+    "runtime_import": ""
+  },
+  "canonical_import": "@aspose/3d",
+  "classification": {
+    "decision": "eligible",
+    "full_name": "aspose-3d-foss/Aspose.3D-FOSS-for-TypeScript",
+    "reasons": [
+      "source-grounded phase1 inspection passed"
+    ]
+  },
+  "display_name": "Aspose.3D FOSS for Typescript",
+  "family": "3d",
+  "phase": "phase1_inspection",
+  "platform": "typescript",
+  "repo": {
+    "archived": false,
+    "created_at": "2026-02-28T02:17:07Z",
+    "default_branch": "master",
+    "description": null,
+    "fork": false,
+    "full_name": "aspose-3d-foss/Aspose.3D-FOSS-for-TypeScript",
+    "html_url": "https://github.com/aspose-3d-foss/Aspose.3D-FOSS-for-TypeScript",
+    "id": 1168969375,
+    "is_template": false,
+    "language": "TypeScript",
+    "license": null,
+    "name": "Aspose.3D-FOSS-for-TypeScript",
+    "owner": {
+      "login": "aspose-3d-foss",
+      "type": "Organization"
+    },
+    "pushed_at": "2026-03-09T03:18:41Z",
+    "size": 173,
+    "stargazers_count": 0,
+    "topics": [],
+    "updated_at": "2026-03-09T03:18:45Z"
+  },
+  "runtime_import": "",
+  "scout": {
+    "budget_log": [
+      {
+        "category": "doc",
+        "path": "AGENTS.md",
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 1226
+      }
+    ],
+    "budget_log_overflow_count": 0,
+    "by_category": {
+      "asset": 3,
+      "config": 3,
+      "doc": 2,
+      "source": 152,
+      "test": 33
+    },
+    "content_used_bytes": 473001,
+    "doc_paths": [
+      "README.md"
+    ],
+    "doc_selection": [
+      {
+        "decision": "kept",
+        "importance_rank": 7,
+        "language": "",
+        "path": "README.md",
+        "readable_in_repo_content": true,
+        "reason": "selected",
+        "size_bytes": 6825
+      },
+      {
+        "decision": "skipped",
+        "importance_rank": 4,
+        "language": "",
+        "path": "AGENTS.md",
+        "readable_in_repo_content": false,
+        "reason": "doc_ineligible_meta",
+        "size_bytes": 1226
+      }
+    ],
+    "example_paths": [],
+    "example_selection": [],
+    "files_enumerated": 193,
+    "files_read": 192,
+    "selected_doc_count": 1,
+    "selected_example_count": 0,
+    "skip_counts_approximate": false,
+    "skip_reason_counts": {
+      "doc_ineligible_meta": 1
+    },
+    "skipped_paths": [
+      "AGENTS.md"
+    ],
+    "truncated_files": []
+  },
+  "shared_facts": {
+    "build_systems": [
+      "npm"
+    ],
+    "dependencies": [
+      "xmldom"
+    ],
+    "description": "Aspose.3D for TypeScript - 3D file format manipulation library",
+    "entrypoints": [
+      "build",
+      "test",
+      "lint",
+      "typecheck"
+    ],
+    "has_ci": false,
+    "has_docs_folder": false,
+    "has_examples_folder": false,
+    "has_tests": true,
+    "install_command": "npm install @aspose/3d",
+    "license_type": "MIT",
+    "module_path": "",
+    "package_name": "@aspose/3d",
+    "primary_language": "typescript",
+    "python_requires": "",
+    "version": "24.12.0"
+  }
+}
