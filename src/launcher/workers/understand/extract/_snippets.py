@@ -1249,11 +1249,131 @@ def _extract_snippets(
                 claim_ids=linked_claim_ids,
             ))
 
+    # UND-1 (TC-5205): Extract individual Python test function bodies from test files
+    # that were NOT already processed via BPW-02 promotion. This is additive — dedup
+    # via shared seen_hashes prevents double-counting files already in source_examples.
+    test_snippets = _extract_test_snippets(
+        repo_dir, repo_info, product, api_surface, claims, seen_hashes
+    )
+    if test_snippets:
+        snippets.extend(test_snippets)
+        logger.info(
+            "[Snippets] UND-1: added=%d test-function snippets (TC-5205)",
+            len(test_snippets),
+        )
+
     logger.info(
         "snippet_extraction: extracted=%d dedup_skipped=%d",
         len(snippets),
         dedup_skipped,
     )
+    return snippets
+
+
+# ---------------------------------------------------------------------------
+# UND-1 (TC-5205): Python test function snippet extraction
+# ---------------------------------------------------------------------------
+
+_UND1_MAX_TEST_FILES: int = 20
+_UND1_MAX_SLICES_PER_FILE: int = 3
+_UND1_MAX_NONCOMMENT_LINES: int = 60
+_UND1_MIN_NONCOMMENT_LINES: int = 3
+
+
+def _extract_test_snippets(
+    repo_dir: "Path",
+    repo_info: "RepoInfo",
+    product: "ProductIdentity",
+    api_surface: "ApiSurface",
+    claims: "list",
+    seen_hashes: "set[str]",
+) -> "list[Snippet]":
+    """UND-1 (TC-5205): Extract individual test_ function bodies from Python test files.
+
+    Finds Python test files in repo_info.test_paths, extracts functions with the
+    ``test_`` prefix, strips boilerplate (assertions, setUp/tearDown calls), applies
+    quality scoring via _score_python_test_slice(), and returns valid Snippet objects.
+
+    Quality criteria:
+    - Function name starts with ``test_``
+    - After boilerplate stripping: 3 ≤ non-comment lines ≤ 60
+    - _score_python_test_slice() > 0 (must reference a public API symbol or hint)
+    - ast.parse() succeeds on the candidate code
+
+    Deduplication uses the shared seen_hashes set from the parent _extract_snippets()
+    call so files already promoted via BPW-02 are not double-counted.
+    """
+    from launcher.workers.understand.file_classifier import LANG_BY_EXT
+
+    snippets: "list[Snippet]" = []
+
+    # Only process Python test files not already covered as source_examples above
+    python_test_paths = [
+        p for p in (repo_info.test_paths or [])
+        if LANG_BY_EXT.get(Path(p).suffix.lower(), "") == "python"
+    ][:_UND1_MAX_TEST_FILES]
+
+    if not python_test_paths:
+        return snippets
+
+    logger.debug("[UND-1] candidate test files: %d", len(python_test_paths))
+
+    for rel_path in python_test_paths:
+        file_path = repo_dir / rel_path
+        if not file_path.exists() or not file_path.is_file():
+            continue
+        try:
+            code = file_path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+
+        if not code.strip():
+            continue
+
+        # Use existing extractor — max_slices=3 per file for UND-1
+        slices = _extract_python_test_slices(code, api_surface, max_slices=_UND1_MAX_SLICES_PER_FILE)
+        if not slices:
+            continue
+
+        for candidate in slices:
+            # Length guard: count non-comment, non-empty lines
+            nc_lines = [
+                ln for ln in candidate.splitlines()
+                if ln.strip() and not ln.strip().startswith("#")
+            ]
+            if len(nc_lines) > _UND1_MAX_NONCOMMENT_LINES:
+                logger.debug("[UND-1] %s: slice too long (%d lines), skipping", rel_path, len(nc_lines))
+                continue
+            if len(nc_lines) < _UND1_MIN_NONCOMMENT_LINES:
+                logger.debug("[UND-1] %s: slice too short (%d lines), skipping", rel_path, len(nc_lines))
+                continue
+
+            # Syntax validation (already done in _extract_python_test_slices but guard here too)
+            if not _validate_python_syntax(candidate):
+                continue
+
+            # Normalize imports
+            normalized = _normalize_snippet_imports(candidate, api_surface, product)
+
+            # Dedup against shared hash set
+            h = _dedup_key(normalized.strip())
+            if h in seen_hashes:
+                logger.debug("[UND-1] %s: duplicate slice (hash=%s), skipping", rel_path, h)
+                continue
+            seen_hashes.add(h)
+
+            linked_claim_ids = _link_snippet_to_claims(normalized, claims)
+
+            snippets.append(Snippet(
+                code=normalized.strip(),
+                language="python",
+                source_type="extracted",
+                source_file=rel_path,
+                claim_ids=linked_claim_ids,
+                syntax_valid=True,
+            ))
+
+    logger.debug("[UND-1] extracted %d test-function snippets from %d files", len(snippets), len(python_test_paths))
     return snippets
 
 
