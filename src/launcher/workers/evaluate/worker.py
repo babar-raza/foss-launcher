@@ -1,6 +1,6 @@
 """Evaluate worker — quality assessment and GO/NO-GO decision.
 
-Phase A: Run 11 deterministic checks on each generated page.
+Phase A: Run deterministic checks on each generated page.
 Phase B: Optional LLM-based review for deeper evaluation.
 Grading: Assign A-F grades based on findings severity.
 Verdict: Evaluate GO/NO-GO criteria against aggregate results.
@@ -26,8 +26,10 @@ from launcher.models.evaluation import (
 )
 from launcher.orchestrator.worker_contract import SelfReviewResult, WorkerContext, WorkerContract
 from launcher.workers.evaluate.checks import (
+    check_api_allowlist,       # TC-REG-301: prose-level backtick identifier check
     check_api_identifiers,  # TC-HYBRID-05
     check_artifacts,
+    check_opener_boilerplate,  # TC-QG-01
     check_claim_coverage,  # TC-3880 Wave 2 (E4)
     check_claim_leakage,
     check_code,
@@ -48,6 +50,31 @@ from launcher.workers.evaluate.checks import (
     check_seo,
     check_spec_leakage,
     check_structure,
+    # --- TC-EVAL-500: Wire disconnected checks (Wave 1 — critical) ---
+    check_forbidden_content,
+    check_content_utility,
+    check_link_validity,
+    check_code_completeness_workflow,
+    check_faq_structure,
+    check_contract_compliance,
+    # --- TC-EVAL-500: Wire disconnected checks (Wave 2 — quality) ---
+    check_golden_conformance,
+    check_heading_echo,
+    check_prose_lead,
+    check_sentence_openings,
+    check_paragraph_monotony,
+    check_explanation_gap,
+    check_low_specificity,
+    # --- TC-EVAL-500: structure.py uncalled functions ---
+    check_section_order,
+    check_terminal_section,
+    check_duplicate_sections,
+    # --- TC-EVAL-500: hallucination_rate additional functions ---
+    check_content_grounding,
+    # --- TC-EVAL-502: New checks ---
+    check_code_platform,
+    check_unsourced_metrics,
+    check_content_viability,
 )
 from launcher.io.run_layout import RunLayout
 from launcher.util.errors import WorkerError
@@ -118,6 +145,31 @@ class EvaluateWorker(WorkerContract):
 
         context.log.info("[Evaluate] Starting evaluation of %d pages", len(manifest.pages))
         context.emit_event("worker_started", {"pages": len(manifest.pages)}, worker=self.name)
+
+        # TC-HO-09-R: Emit checkpoint_fallback for missing manifest fields
+        _emitted_pe_fallback = False
+        if not getattr(manifest, "api_fact_member_names", None):
+            context.emit_event("checkpoint_fallback", {
+                "field": "extraction_db",
+                "reason": "not_in_manifest",
+            }, worker=self.name)
+        _pe = getattr(manifest, "product_evidence", None)
+        if _pe is None or (hasattr(_pe, "limitations") and not _pe.limitations
+                           and not getattr(_pe, "capabilities", None)
+                           and not getattr(_pe, "install_recipe", None)
+                           and not getattr(_pe, "input_formats", None)
+                           and not getattr(_pe, "output_formats", None)):
+            context.emit_event("checkpoint_fallback", {
+                "field": "product_evidence",
+                "reason": "manifest_product_evidence_empty",
+            }, worker=self.name)
+            _emitted_pe_fallback = True
+        _as = getattr(manifest, "api_surface", None)
+        if _as is not None and not getattr(_as, "public_classes", None):
+            context.emit_event("checkpoint_fallback", {
+                "field": "api_surface",
+                "reason": "empty_in_manifest",
+            }, worker=self.name)
 
         import asyncio as _asyncio_eval
 
@@ -322,6 +374,23 @@ class EvaluateWorker(WorkerContract):
             except Exception:
                 logger.debug("[Evaluate] TC-HAL-09: hallucination_rate check skipped", exc_info=True)
 
+            # TC-5164: Evidence adequacy attribution (reads page_evidence_index from manifest)
+            _pei = getattr(manifest, "page_evidence_index", {}) or {}
+            if _pei:
+                try:
+                    from launcher.workers.evaluate.checks.evidence_adequacy import (
+                        check_evidence_adequacy as _check_ea,
+                    )
+                    for _ea_f in _check_ea(gen_page, _pei):
+                        findings.append(Finding(
+                            check=_ea_f["check"],
+                            message=_ea_f["message"],
+                            severity=_ea_f["severity"],
+                            location=_ea_f.get("location", ""),
+                        ))
+                except Exception:
+                    logger.debug("[Evaluate] TC-5164: evidence_adequacy check skipped", exc_info=True)
+
             # TC-3882 Wave 4 (E9): When PageIR is available, run section-level golden check
             # using check_block_spec_compliance (richer than markdown-based aggregation).
             # Replace any existing structure/golden findings from check_golden_spec_from_markdown
@@ -400,10 +469,16 @@ class EvaluateWorker(WorkerContract):
             })
             return (page_eval, gen_page.word_count, set(gen_page.claim_ids_used))
 
-        raw_eval_results = await _asyncio_eval.gather(
-            *[_evaluate_page_llm(gp) for gp in manifest.pages],
-            return_exceptions=True,
-        )
+        # TC-DET-001: Sequential page evaluation for deterministic ordering.
+        # Pages are evaluated in manifest order to eliminate concurrency-induced
+        # non-determinism (LLM review results depend on order when semaphore is shared).
+        raw_eval_results: list[tuple | BaseException] = []
+        for gp in manifest.pages:
+            try:
+                result = await _evaluate_page_llm(gp)
+                raw_eval_results.append(result)
+            except BaseException as exc:
+                raw_eval_results.append(exc)
 
         page_evals: list[PageEvaluation] = []
         total_words = 0
@@ -663,6 +738,7 @@ def _run_deterministic_checks(
     findings.extend(check_spec_leakage(content, slug, page_role=page_role))
     findings.extend(check_claim_leakage(content, slug))
     findings.extend(check_artifacts(content, slug, product_name=product_name))
+    findings.extend(check_opener_boilerplate(content, slug))
     findings.extend(check_safety(content, slug, page_role=page_role))
     findings.extend(check_seo(content, slug, product_name=product_name))
     findings.extend(check_repetition(content, slug, page_role=page_role))
@@ -676,6 +752,8 @@ def _run_deterministic_checks(
         findings.extend(check_claim_coverage(content, slug, claim_texts))
     # TC-HYBRID-05: API identifier verification (skips when api_surface is None/low confidence).
     findings.extend(check_api_identifiers(content, slug, api_surface=api_surface))
+    # TC-REG-301: Prose-level backtick identifier check (skips when api_surface is None).
+    findings.extend(check_api_allowlist(content, api_surface, slug))
     # TC-HYBRID-06: Format contradiction + truth checks (skip when no format_matrix).
     findings.extend(check_contradiction(content, slug, api_surface=api_surface))
     findings.extend(check_format_truth(content, slug, api_surface=api_surface))
@@ -685,6 +763,32 @@ def _run_deterministic_checks(
     findings.extend(check_limitations_contradiction(content, slug, product_evidence=product_evidence))
     # TC-HO-02: Install recipe — install pages must use the correct install command.
     findings.extend(check_install_recipe(content, slug, page_role=page_role, product_evidence=product_evidence))
+    # --- TC-EVAL-500: Wire disconnected checks (Wave 1 — critical) ---
+    findings.extend(check_forbidden_content(content, slug))
+    findings.extend(check_content_utility(content, slug))
+    findings.extend(check_link_validity(content, slug))
+    findings.extend(check_code_completeness_workflow(content, slug, page_role=page_role))
+    findings.extend(check_faq_structure(content, slug, page_role=page_role))
+    findings.extend(check_contract_compliance(content, slug, page_role=page_role, product_name=product_name))
+    # --- TC-EVAL-500: Wire disconnected checks (Wave 2 — quality) ---
+    findings.extend(check_golden_conformance(content, slug, page_role=page_role, golden_dir=golden_dir))
+    findings.extend(check_heading_echo(content, slug))
+    findings.extend(check_prose_lead(content, slug, page_role=page_role, product_name=product_name))
+    findings.extend(check_sentence_openings(content, slug, page_role=page_role))
+    findings.extend(check_paragraph_monotony(content, slug))
+    findings.extend(check_explanation_gap(content, slug, page_role=page_role))
+    findings.extend(check_low_specificity(content, slug, page_role=page_role))
+    # --- TC-EVAL-500: structure.py uncalled functions ---
+    findings.extend(check_section_order(content, slug, page_role=page_role))
+    findings.extend(check_terminal_section(content, slug))
+    findings.extend(check_duplicate_sections(content, slug))
+    # --- TC-EVAL-500: hallucination_rate — content grounding (conditional) ---
+    if claim_texts:
+        findings.extend(check_content_grounding(content, claim_texts, slug=slug))
+    # --- TC-EVAL-502: New checks ---
+    findings.extend(check_code_platform(content, slug, page_role=page_role))
+    findings.extend(check_unsourced_metrics(content, slug))
+    findings.extend(check_content_viability(content, slug))
     return findings
 
 
@@ -953,3 +1057,57 @@ def _aggregate_check_results(findings: list[Finding]) -> dict[str, bool]:
         if f.severity in ("critical", "high"):
             checks_seen[f.check] = False
     return checks_seen
+
+
+_SEVERITY_PENALTY: dict[str, int] = {
+    "critical": 25,
+    "high": 10,
+    "medium": 5,
+    "low": 2,
+}
+_CONFORMANCE_WEIGHT = 0.35
+_FINDINGS_WEIGHT = 0.65
+
+
+def _compute_numeric_score(
+    findings: "list[Finding]",
+    conformance: float | None,
+) -> float:
+    """Compute a 0-100 numeric quality score from findings + golden conformance.
+
+    TC-FIX-214: Blended score used by grading pipeline.
+    ``findings_base`` = 100 - sum(severity penalties).
+    When *conformance* is not None, blended as:
+        ``findings_base * 0.65 + conformance * 100 * 0.35``
+    """
+    penalty = sum(_SEVERITY_PENALTY.get(f.severity, 0) for f in findings)
+    base = max(0.0, 100.0 - penalty)
+
+    if conformance is None:
+        return base
+
+    return round(base * _FINDINGS_WEIGHT + conformance * 100 * _CONFORMANCE_WEIGHT, 2)
+
+
+def _compute_claim_coverage(
+    pages: "list[Any]",
+    page_evals: "list[PageEvaluation]",
+) -> float:
+    """Compute claim coverage ratio: (assigned - uncovered) / assigned.
+
+    TC-PA-01: Aggregates uncovered_claim_texts counts from claim_coverage findings
+    across all page evaluations relative to total assigned claims from page manifests.
+
+    Returns 1.0 when no claims are assigned (backward compat with old manifests).
+    """
+    total_assigned = sum(getattr(p, "assigned_claim_count", 0) for p in pages)
+    if total_assigned == 0:
+        return 1.0
+
+    total_uncovered = 0
+    for pe in page_evals:
+        for f in pe.findings:
+            if f.check == "claim_coverage":
+                total_uncovered += len(getattr(f, "uncovered_claim_texts", []))
+
+    return round(1.0 - (total_uncovered / total_assigned), 4)

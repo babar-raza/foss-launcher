@@ -21,9 +21,76 @@ SAFETY_CRITICAL_CHECKS: frozenset[str] = frozenset({
 # Grade D regardless of other findings. Distinct from safety-critical (which blocks
 # deployment for policy reasons); editorial-critical blocks for quality reasons.
 EDITORIAL_CRITICAL_CHECKS: frozenset[str] = frozenset({
-    "route_consistency",  # Slug topic words absent from prose — off-topic content
-    "claim_coverage",     # Assigned claims not addressed in page — hollow content
+    "route_consistency",              # Slug topic words absent from prose — off-topic content
+    "claim_coverage",                 # Assigned claims not addressed in page — hollow content
+    "code",                           # TC-REG-302: Python syntax errors (HIGH) — unparseable code
+    "api_identifier_unknown_class",   # TC-REG-301: hallucinated class names in code blocks (HIGH)
+    "api_property_called_as_method",  # TC-REG-301: property called as method in code blocks (HIGH)
+    "api_identifier_unknown_method",  # TC-EVAL-301: hallucinated methods on tracked receivers (HIGH)
 })
+
+
+# TC-5189: LLM-generated check names (prose review checks). These findings count toward
+# the LLM-specific grading thresholds, not the deterministic grading table.
+# Deterministic checks (not in this set) use the standard MEDIUM/HIGH severity escalation.
+_LLM_CHECK_NAMES: frozenset[str] = frozenset({
+    "prose_quality",
+    "prose_review",
+    "llm_prose",
+    "opener_boilerplate",
+    "content_tone",
+    "explanation_depth",
+    "api_consistency",   # TC-5199: LLM-subjective API consistency check
+    "content_density",   # TC-5199: LLM-subjective content density check
+})
+
+# TC-5199: Checks eligible for HIGH severity promotion when message contains
+# high-signal patterns (e.g., "no such method", "does not exist").
+_PROMOTED_LLM_CHECKS: frozenset[str] = frozenset({
+    "api_consistency",
+})
+
+# TC-5199: Message patterns that indicate a high-confidence LLM finding
+# worthy of retaining HIGH severity despite being from an LLM check.
+_PROMOTION_PATTERNS: tuple[str, ...] = (
+    "no such method",
+    "does not exist",
+    "not in api",
+    "property does not exist",
+)
+
+
+def _is_promoted_llm_finding(finding: Finding) -> bool:
+    """TC-5199: Return True if this LLM finding has a high-signal message.
+
+    A promoted LLM finding retains its HIGH severity instead of being capped
+    to MEDIUM. Only checks in _PROMOTED_LLM_CHECKS are eligible, and only
+    when the message contains specific patterns indicating a concrete API
+    discrepancy (not a vague style complaint).
+    """
+    if finding.check not in _PROMOTED_LLM_CHECKS:
+        return False
+    msg = (finding.message or "").lower()
+    if not msg:
+        return False
+    return any(p in msg for p in _PROMOTION_PATTERNS)
+
+
+def _effective_severity(finding: Finding) -> str:
+    """TC-5199: Return the effective severity after LLM check capping.
+
+    LLM-generated checks (_LLM_CHECK_NAMES) have their HIGH findings capped
+    to MEDIUM by default, unless _is_promoted_llm_finding returns True.
+    All other checks pass through unchanged.
+    """
+    if finding.check not in _LLM_CHECK_NAMES:
+        return finding.severity
+    if finding.severity != "high":
+        return finding.severity
+    # HIGH from an LLM check — cap to MEDIUM unless promoted
+    if _is_promoted_llm_finding(finding):
+        return "high"
+    return "medium"
 
 
 def _is_editorial_critical(finding: Finding) -> bool:
@@ -68,14 +135,17 @@ def grade_page(findings: list[Finding]) -> Grade:
     content_density HIGH (thin section) was grading the same as a safety violation.
     The split allows pages with minor density/completeness HIGHs to reach Grade B/C.
     """
-    critical = sum(1 for f in findings if f.severity == "critical")
-    safety_high = sum(1 for f in findings if f.severity == "high" and _is_safety_critical(f))
-    editorial_high = sum(1 for f in findings if f.severity == "high" and _is_editorial_critical(f))
+    # TC-5199: Use _effective_severity to cap LLM check HIGHs to MEDIUM
+    # unless the finding is promoted (high-signal pattern).
+    effective = [(f, _effective_severity(f)) for f in findings]
+    critical = sum(1 for _, sev in effective if sev == "critical")
+    safety_high = sum(1 for f, sev in effective if sev == "high" and _is_safety_critical(f))
+    editorial_high = sum(1 for f, sev in effective if sev == "high" and _is_editorial_critical(f))
     non_safety_high = sum(
-        1 for f in findings
-        if f.severity == "high" and not _is_safety_critical(f) and not _is_editorial_critical(f)
+        1 for f, sev in effective
+        if sev == "high" and not _is_safety_critical(f) and not _is_editorial_critical(f)
     )
-    medium = sum(1 for f in findings if f.severity == "medium")
+    medium = sum(1 for _, sev in effective if sev == "medium")
 
     if critical > 0:
         return Grade.F

@@ -168,3 +168,47 @@ def check_artifacts(content: str, slug: str, *, product_name: str = "") -> list[
         )
 
     return findings
+
+
+# ---------------------------------------------------------------------------
+# TC-QG-01: "When working with..." section-opener boilerplate detector
+# ---------------------------------------------------------------------------
+
+def check_opener_boilerplate(content: str, slug: str) -> list[Finding]:
+    """Detect 'When working with...' used as a section opener (TC-QG-01).
+
+    Fires when one or more paragraph-opening lines start with 'When working
+    with ...'. Mid-paragraph uses ("This is useful when working with large
+    files.") are not flagged — the phrase only becomes boilerplate when it
+    leads a section.
+
+    Severity:
+      medium — 1 or 2 occurrences
+      high   — 3 or more occurrences
+    """
+    # Strip frontmatter
+    body = re.sub(r"^---\n.*?\n---\n?", "", content, flags=re.DOTALL)
+    # Strip code fences so phrases in code comments don't fire
+    body = re.sub(r"```[^\n]*\n[\s\S]*?```", "", body, flags=re.DOTALL)
+
+    count = 0
+    for line in body.splitlines():
+        stripped = line.strip()
+        if re.match(r"when working with\b", stripped, re.IGNORECASE):
+            count += 1
+
+    if count == 0:
+        return []
+
+    severity = "high" if count >= 3 else "medium"
+    return [Finding(
+        check="opener_boilerplate",
+        message=(
+            f"{'Multiple sections use' if count >= 3 else 'Section uses'} "
+            f"'When working with...' as an opener ({count} "
+            f"occurrence{'s' if count != 1 else ''}). "
+            "Replace with a specific statement about what the page covers."
+        ),
+        severity=severity,
+        location=slug,
+    )]

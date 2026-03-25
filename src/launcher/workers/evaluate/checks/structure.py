@@ -160,6 +160,10 @@ def _split_markdown_sections(body: str) -> list[tuple[str, str]]:
     return parts
 
 
+# Public alias for cross-module import (used by golden_conformance.py)
+split_markdown_sections = _split_markdown_sections
+
+
 def check_golden_spec_from_markdown(
     content: str,
     slug: str,
@@ -352,4 +356,110 @@ def check_block_spec_compliance(
                     "location": heading,
                 })
 
+    return findings
+
+
+# ---------------------------------------------------------------------------
+# Section-order / terminal-section / duplicate-section checks (TC-QG-01)
+# ---------------------------------------------------------------------------
+
+# Canonical heading order per page role.  Only roles with a known skeleton
+# are enforced; unknown roles degrade gracefully (no findings).
+_PAGE_SKELETONS: dict[str, list[str]] = {
+    "landing": ["Overview", "Key Features", "Quick Start", "See Also"],
+    "getting-started": ["Overview", "Installation", "Quick Start", "See Also"],
+    "developer-guide": ["Overview", "Prerequisites", "Usage", "Examples", "See Also"],
+    "api-reference": ["Overview", "Classes", "Methods", "See Also"],
+    "faq": ["Overview", "Questions", "See Also"],
+    "how-to": ["Overview", "Prerequisites", "Steps", "See Also"],
+}
+
+# Headings that must be the very last H2 on the page (nothing after them).
+_TERMINAL_HEADINGS = {"see also", "related resources"}
+
+
+def _extract_h2_headings(content: str) -> list[str]:
+    """Return list of H2 heading texts from *content*, stripping frontmatter."""
+    body = re.sub(r"^---\n.*?\n---\n?", "", content, flags=re.DOTALL)
+    return re.findall(r"^##\s+(.+)$", body, re.MULTILINE)
+
+
+def check_section_order(
+    content: str,
+    slug: str,
+    *,
+    page_role: str = "",
+) -> list[Finding]:
+    """Check that H2 sections appear in the canonical order for *page_role*."""
+    skeleton = _PAGE_SKELETONS.get(page_role)
+    if skeleton is None:
+        return []
+
+    headings = _extract_h2_headings(content)
+    if not headings:
+        return []
+
+    # Build the subsequence of headings that appear in the skeleton
+    skeleton_lower = [h.lower() for h in skeleton]
+    matched_indices: list[int] = []
+    for h in headings:
+        h_low = h.lower()
+        if h_low in skeleton_lower:
+            matched_indices.append(skeleton_lower.index(h_low))
+
+    # If the matched indices are not strictly increasing, order is wrong
+    if matched_indices != sorted(matched_indices):
+        return [
+            Finding(
+                check="section_order",
+                message=f"H2 sections are out of canonical order for page role '{page_role}'",
+                severity="medium",
+                location=slug,
+            )
+        ]
+    return []
+
+
+def check_terminal_section(content: str, slug: str) -> list[Finding]:
+    """Detect H2 sections that appear after a terminal heading (See Also, etc.)."""
+    headings = _extract_h2_headings(content)
+    if not headings:
+        return []
+
+    findings: list[Finding] = []
+    seen_terminal = False
+    for h in headings:
+        if seen_terminal:
+            findings.append(
+                Finding(
+                    check="terminal_section",
+                    message=f"H2 '{h}' appears after terminal section",
+                    severity="high",
+                    location=slug,
+                )
+            )
+        if h.lower().strip() in _TERMINAL_HEADINGS:
+            seen_terminal = True
+    return findings
+
+
+def check_duplicate_sections(content: str, slug: str) -> list[Finding]:
+    """Detect duplicate H2 headings (case-insensitive)."""
+    headings = _extract_h2_headings(content)
+    seen: dict[str, int] = {}
+    findings: list[Finding] = []
+    for h in headings:
+        key = h.lower().strip()
+        seen[key] = seen.get(key, 0) + 1
+
+    for key, count in seen.items():
+        if count > 1:
+            findings.append(
+                Finding(
+                    check="duplicate_sections",
+                    message=f"Duplicate H2 heading '{key}' appears {count} times",
+                    severity="high",
+                    location=slug,
+                )
+            )
     return findings

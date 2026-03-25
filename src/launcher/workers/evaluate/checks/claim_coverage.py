@@ -73,6 +73,55 @@ def _strip_non_prose(content: str) -> str:
     return body.lower()
 
 
+# Minimum number of claims for CRITICAL severity on full-miss (TC-EV-03).
+# Pages with fewer assigned claims are "thin" — all-uncovered becomes HIGH not CRITICAL.
+_THIN_CLAIM_THRESHOLD: int = 3
+
+
+def _extract_claim_context(body: str, terms: list[str], window: int = 100) -> str:
+    """Extract context windows around all occurrences of key terms in body.
+
+    Returns a string containing the text surrounding each term match, with
+    all windows concatenated by a space. Returns empty string when no term
+    is found.
+
+    TC-5136 / TC-PA-02: Used by _verify_claim_depth and multi-term window tests.
+    """
+    if not body or not terms:
+        return ""
+    segments: list[str] = []
+    for term in terms:
+        idx = body.lower().find(term.lower())
+        while idx != -1:
+            start = max(0, idx - window)
+            end = min(len(body), idx + len(term) + window)
+            segments.append(body[start:end])
+            idx = body.lower().find(term.lower(), idx + 1)
+    return " ".join(segments)
+
+
+def _verify_claim_depth(claim: str, context: str) -> float:
+    """Compute depth score: fraction of claim key terms present as whole words in context.
+
+    Uses word-boundary matching to avoid counting "format" in "formats" as a match.
+    A score > 0.20 indicates the context substantively addresses the claim
+    rather than just casually mentioning its keywords.
+
+    TC-5136: Used for Pass 2 depth verification after Pass 1 keyword coverage.
+    """
+    if not claim or not context:
+        return 0.0
+    terms = _extract_key_terms(claim)
+    if not terms:
+        return 0.0
+    ctx_lower = context.lower()
+    matched = sum(
+        1 for t in terms
+        if re.search(rf"\b{re.escape(t)}\b", ctx_lower)
+    )
+    return matched / len(terms)
+
+
 def check_claim_coverage(
     content: str,
     slug: str,
@@ -85,6 +134,9 @@ def check_claim_coverage(
     - All claims are covered
 
     Returns Finding(s) when claims are not covered in the page body.
+
+    TC-EV-03: Pages with <_THIN_CLAIM_THRESHOLD claims that are all uncovered
+    are downgraded from CRITICAL to HIGH (thin claim assignment protection).
     """
     if not claim_texts:
         return []
@@ -108,11 +160,21 @@ def check_claim_coverage(
     fraction = n / total
 
     if fraction >= 1.0:
-        severity = "critical"
-        msg = (
-            f"Page does not address any of its {total} assigned claims. "
-            f"The content appears completely off-topic or is placeholder-only."
-        )
+        # TC-EV-03: Thin assignment protection — <3 claims all-uncovered → HIGH
+        if total < _THIN_CLAIM_THRESHOLD:
+            severity = "high"
+            msg = (
+                f"Page does not address any of its {total} assigned claims "
+                f"(downgraded from CRITICAL: thin claim assignment with "
+                f"{total} claim{'s' if total != 1 else ''}). "
+                f"Content may be off-topic or placeholder-only."
+            )
+        else:
+            severity = "critical"
+            msg = (
+                f"Page does not address any of its {total} assigned claims. "
+                f"The content appears completely off-topic or is placeholder-only."
+            )
     elif fraction > 0.5:
         severity = "high"
         msg = (
@@ -139,4 +201,5 @@ def check_claim_coverage(
         message=msg,
         severity=severity,
         location=slug,
+        uncovered_claim_texts=uncovered,
     )]

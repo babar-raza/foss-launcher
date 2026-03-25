@@ -57,6 +57,13 @@ def _build_patterns(product_name: str) -> list[tuple[re.Pattern[str], str]]:
         "Doubled qualifier (e.g. 'for Python for Python')",
     ))
 
+    # Space after dot: "Aspose. Cells" instead of "Aspose.Cells" (TC-QG-01)
+    if suffix:
+        patterns.append((
+            re.compile(rf"\b{re.escape(prefix)}\.\s+{re.escape(suffix)}\b"),
+            f"Space after dot in product name: '{prefix}. {suffix}' (should be '{product_name}')",
+        ))
+
     # Wrong case in prose: all-lowercase like "aspose.cells"
     if suffix and (prefix[0].isupper() or suffix[0].isupper()):
         patterns.append((
@@ -98,13 +105,14 @@ def check_product_names(
             )
 
         # Check body prose (code blocks already stripped)
+        # TC-QG-01: body misspellings escalated to HIGH severity
         matches = pat.findall(body_no_code)
         if matches:
             findings.append(
                 Finding(
                     check="product_names",
                     message=f"Body: {message}",
-                    severity="medium",
+                    severity="high",
                     location=slug,
                 )
             )

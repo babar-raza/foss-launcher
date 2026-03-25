@@ -25,6 +25,35 @@ logger = logging.getLogger(__name__)
 # Pattern to extract code blocks from markdown
 _CODE_BLOCK_RE = re.compile(r'```(?:python|py)\n(.*?)```', re.DOTALL)
 
+# EVL-2: Pattern to match string literals (triple-quoted first, then single-line)
+_STRING_RE = re.compile(
+    r'""".*?"""|' + r"'''.*?'''|" + r'"(?:[^"\\]|\\.)*"|' + r"'(?:[^'\\]|\\.)*'",
+    re.DOTALL,
+)
+
+
+def _strip_string_literals(code: str) -> str:
+    """Replace string literal content with empty strings to prevent false matches.
+
+    Handles triple-quoted strings, single-quoted strings, and escape sequences.
+    Used before class instantiation scanning to ensure formula names and cell
+    references embedded in string values are not matched by _CLASS_INSTANTIATION_RE.
+    """
+    return _STRING_RE.sub('""', code)
+
+
+# EVL-2: Common spreadsheet formula names — never flag these as unknown classes
+_SPREADSHEET_FORMULA_NAMES: frozenset[str] = frozenset({
+    "SUM", "AVERAGE", "COUNT", "COUNTA", "MAX", "MIN", "IF", "VLOOKUP",
+    "HLOOKUP", "INDEX", "MATCH", "SUMIF", "COUNTIF", "AVERAGEIF", "ROUND",
+    "ABS", "CONCATENATE", "LEFT", "RIGHT", "MID", "LEN", "TRIM", "UPPER",
+    "LOWER", "TODAY", "NOW", "DATE", "YEAR", "MONTH", "DAY", "TEXT",
+    "IFERROR", "AND", "OR", "NOT", "TRUE", "FALSE",
+})
+
+# EVL-2: Cell reference pattern — A1, BC123, AAA1234567 (but NOT WorkflowManager)
+_CELL_REF_RE = re.compile(r'^[A-Z]{1,3}\d{1,7}$')
+
 # Patterns to extract API calls from Python code
 # Class instantiation: ClassName(...)
 _CLASS_INSTANTIATION_RE = re.compile(r'\b([A-Z][a-zA-Z0-9]+)\s*\(')
@@ -208,9 +237,36 @@ def check_api_identifiers(
 
         # Check class instantiations — only flag when confidence is "high"
         if api_surface.confidence == "high":
-            for m in _CLASS_INSTANTIATION_RE.finditer(block):
+            # EVL-3: Build enum member set from api_surface class briefs so that
+            # enum values (e.g. Scatter, Histogram, Protection) are never flagged
+            known_enum_members: set[str] = set()
+            for _brief in getattr(api_surface, "class_briefs", []) or []:
+                for _enum in getattr(_brief, "enums", []) or []:
+                    for _member in getattr(_enum, "members", []) or []:
+                        _name = getattr(_member, "name", None)
+                        if _name:
+                            known_enum_members.add(_name)
+
+            # EVL-2: Strip string literals so formula names / cell refs inside
+            # strings (e.g. "=SUM(A1:B3)") do not produce false positives
+            stripped_block = _strip_string_literals(block)
+            for m in _CLASS_INSTANTIATION_RE.finditer(stripped_block):
                 cls_name = m.group(1)
                 if cls_name in _ALWAYS_ALLOWED_CLASSES:
+                    continue
+                # EVL-2: Skip spreadsheet formula names
+                if cls_name in _SPREADSHEET_FORMULA_NAMES:
+                    continue
+                # EVL-2: Skip cell references (A1, BC3, etc.)
+                if _CELL_REF_RE.match(cls_name):
+                    continue
+                # EVL-3: Skip enum members present in the extracted API surface
+                if cls_name in known_enum_members:
+                    continue
+                # EVL-4: Skip generic test-framework/user-defined test classes
+                # (TestCase is already in _ALWAYS_ALLOWED_CLASSES; this catches
+                # TestWorkbookCreation, TestDataValidation, etc.)
+                if cls_name.startswith("Test") and len(cls_name) > 4 and cls_name[4].isupper():
                     continue
                 if cls_name in known_classes:
                     continue
