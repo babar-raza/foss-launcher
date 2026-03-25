@@ -88,8 +88,9 @@ class TestHG16HallucinatedCodeBlockRepair:
         public_classes = {"Scene", "Node", "Mesh"}
         code = "import aspose.threed\nscene = ObjLoadOptions()"
         blocks = [self._make_code_block(code)]
-        result = _strip_hallucinated_code_blocks(blocks, public_classes)
-        assert len(result) == 0, "Code block with hallucinated class must be removed"
+        kept, stripped = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(kept) == 0, "Code block with hallucinated class must be removed"
+        assert len(stripped) == 1, "Stripped metadata must record the removed block"
 
     def test_valid_class_code_block_kept(self):
         """Code block using only known classes must be preserved."""
@@ -97,8 +98,9 @@ class TestHG16HallucinatedCodeBlockRepair:
         public_classes = {"Scene", "Node", "Mesh"}
         code = "import aspose.threed\nscene = Scene.from_file('input.fbx')"
         blocks = [self._make_code_block(code)]
-        result = _strip_hallucinated_code_blocks(blocks, public_classes)
-        assert len(result) == 1, "Code block with valid class must be kept"
+        kept, stripped = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(kept) == 1, "Code block with valid class must be kept"
+        assert len(stripped) == 0
 
     def test_non_python_block_preserved(self):
         """Non-Python code blocks must pass through unchanged regardless of class names."""
@@ -106,8 +108,9 @@ class TestHG16HallucinatedCodeBlockRepair:
         public_classes = {"Scene"}
         code = "const obj = new ObjLoadOptions();"
         blocks = [self._make_code_block(code, lang="typescript")]
-        result = _strip_hallucinated_code_blocks(blocks, public_classes)
-        assert len(result) == 1, "Non-Python block must pass through unchanged"
+        kept, stripped = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(kept) == 1, "Non-Python block must pass through unchanged"
+        assert len(stripped) == 0
 
     def test_empty_public_classes_skips_repair(self):
         """Empty public_classes must skip the repair pass entirely."""
@@ -115,16 +118,18 @@ class TestHG16HallucinatedCodeBlockRepair:
         public_classes: set = set()
         code = "import aspose.threed\nscene = ObjLoadOptions()"
         blocks = [self._make_code_block(code)]
-        result = _strip_hallucinated_code_blocks(blocks, public_classes)
-        assert len(result) == 1, "Empty public_classes must skip repair (no false positives)"
+        kept, stripped = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(kept) == 1, "Empty public_classes must skip repair (no false positives)"
+        assert len(stripped) == 0
 
     def test_prose_block_always_preserved(self):
         """Prose blocks must never be removed, even if they mention hallucinated names."""
         from launcher.workers.generate.section_validator import _strip_hallucinated_code_blocks
         public_classes = {"Scene"}
         blocks = [self._make_para_block("Use ObjLoadOptions to configure loading.")]
-        result = _strip_hallucinated_code_blocks(blocks, public_classes)
-        assert len(result) == 1, "Prose blocks must never be removed"
+        kept, stripped = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(kept) == 1, "Prose blocks must never be removed"
+        assert len(stripped) == 0
 
     # HG-17: comment false-positive tests
 
@@ -135,8 +140,9 @@ class TestHG16HallucinatedCodeBlockRepair:
         # 'Load' appears only in a comment; actual code uses only Scene
         code = "scene = Scene.from_file('input.fbx')\n# Load the scene file"
         blocks = [self._make_code_block(code)]
-        result = _strip_hallucinated_code_blocks(blocks, public_classes)
-        assert len(result) == 1, "Comment word 'Load' must not trigger block removal"
+        kept, stripped = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(kept) == 1, "Comment word 'Load' must not trigger block removal"
+        assert len(stripped) == 0
 
     def test_hallucinated_name_in_comment_only_is_preserved(self):
         """HG-17: Block where hallucinated class appears ONLY in comment is preserved."""
@@ -145,8 +151,9 @@ class TestHG16HallucinatedCodeBlockRepair:
         # ObjLoadOptions appears only in a comment; actual code uses only Scene
         code = "scene = Scene()\n# Use ObjLoadOptions for legacy formats"
         blocks = [self._make_code_block(code)]
-        result = _strip_hallucinated_code_blocks(blocks, public_classes)
-        assert len(result) == 1, "ObjLoadOptions in comment only must not remove block"
+        kept, stripped = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(kept) == 1, "ObjLoadOptions in comment only must not remove block"
+        assert len(stripped) == 0
 
     def test_hallucinated_class_in_code_not_comment_still_removed(self):
         """HG-17: Block where hallucinated name appears in actual code is still removed."""
@@ -155,8 +162,26 @@ class TestHG16HallucinatedCodeBlockRepair:
         # ObjLoadOptions is used in code (not just comment)
         code = "scene = Scene()\nobj = ObjLoadOptions()\n# Export scene"
         blocks = [self._make_code_block(code)]
-        result = _strip_hallucinated_code_blocks(blocks, public_classes)
-        assert len(result) == 0, "ObjLoadOptions in code (not comment) must trigger removal"
+        kept, stripped = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(kept) == 0, "ObjLoadOptions in code (not comment) must trigger removal"
+        assert len(stripped) == 1
+
+    # HG-17: stripped metadata content tests (GEN-4)
+
+    def test_stripped_metadata_contains_content_and_claim_ids(self):
+        """GEN-4: stripped_meta dict must contain content, claim_ids, and language."""
+        from launcher.workers.generate.section_validator import _strip_hallucinated_code_blocks
+        public_classes = {"Scene"}
+        code = "obj = ObjLoadOptions()"
+        block = BlockIR(type=BlockType.code, content=code, language="python",
+                        claim_ids=["CLM-001"])
+        kept, stripped = _strip_hallucinated_code_blocks([block], public_classes)
+        assert len(kept) == 0
+        assert len(stripped) == 1
+        meta = stripped[0]
+        assert meta["content"] == code
+        assert meta["claim_ids"] == ["CLM-001"]
+        assert meta["language"] == "python"
 
     # HG-18: CamelCase-only detection tests
 
@@ -167,8 +192,9 @@ class TestHG16HallucinatedCodeBlockRepair:
         # Author, Title — single-word capitalized, not CamelCase class names
         code = "Author = 'Aspose'\nTitle = 'Getting Started'\nscene = Scene()"
         blocks = [self._make_code_block(code)]
-        result = _strip_hallucinated_code_blocks(blocks, public_classes)
-        assert len(result) == 1, "Single-word capitalized variables (Author, Title) must not remove block"
+        kept, stripped = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(kept) == 1, "Single-word capitalized variables (Author, Title) must not remove block"
+        assert len(stripped) == 0
 
     def test_all_caps_constant_preserved(self):
         """HG-18: All-caps constants (STL, ASCII, STL_ASCII) must not trigger removal."""
@@ -176,8 +202,9 @@ class TestHG16HallucinatedCodeBlockRepair:
         public_classes = {"Scene"}
         code = "STL_FORMAT = 'stl'\nASCII_MODE = True\nscene = Scene()"
         blocks = [self._make_code_block(code)]
-        result = _strip_hallucinated_code_blocks(blocks, public_classes)
-        assert len(result) == 1, "All-caps constants (STL, ASCII) must not trigger removal"
+        kept, stripped = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(kept) == 1, "All-caps constants (STL, ASCII) must not trigger removal"
+        assert len(stripped) == 0
 
     # HG-20: PascalCase+digit detection tests
 
@@ -188,8 +215,9 @@ class TestHG16HallucinatedCodeBlockRepair:
         # Vector3 is NOT in public_classes — block must be removed
         code = "scene = Scene()\npos = Vector3(1.0, 2.0, 3.0)"
         blocks = [self._make_code_block(code)]
-        result = _strip_hallucinated_code_blocks(blocks, public_classes)
-        assert len(result) == 0, "Vector3 not in public_classes must trigger block removal"
+        kept, stripped = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(kept) == 0, "Vector3 not in public_classes must trigger block removal"
+        assert len(stripped) == 1
 
     def test_pascal_digit_in_public_classes_preserved(self):
         """HG-20: PascalCase+digit class in public_classes must NOT trigger removal."""
@@ -198,8 +226,9 @@ class TestHG16HallucinatedCodeBlockRepair:
         # Vector3 IS in public_classes — block must be preserved
         code = "scene = Scene()\npos = Vector3(1.0, 2.0, 3.0)"
         blocks = [self._make_code_block(code)]
-        result = _strip_hallucinated_code_blocks(blocks, public_classes)
-        assert len(result) == 1, "Vector3 in public_classes must preserve block"
+        kept, stripped = _strip_hallucinated_code_blocks(blocks, public_classes)
+        assert len(kept) == 1, "Vector3 in public_classes must preserve block"
+        assert len(stripped) == 0
 
 
 # ---------------------------------------------------------------------------

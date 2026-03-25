@@ -72,6 +72,11 @@ _TEMPLATE_LABEL_PATTERNS_INLINE: list[str] = [
 _MIN_SECTION_PROSE_WORDS: int = 30
 _MAX_SECTION_RETRIES: int = 2
 
+# GEN-6 (TC-5204): Terminal section headings that are bypassed for LLM generation.
+# The linker's inject_links() deterministically fills See Also sections with verified
+# cross-links after generation. Sending them to the LLM risks hallucinated URLs.
+_SKIP_LLM_HEADINGS: frozenset[str] = frozenset({"see also"})
+
 # TC-4220: Compiled regexes for prose word counting.
 _HEADING_RE = re.compile(r"^#{1,6}\s+")
 _BULLET_RE = re.compile(r"^\s*[-*+]\s+|^\s*\d+\.\s+")
@@ -1008,6 +1013,23 @@ async def _generate_page(
         section_ir: SectionIR | None = None
         section_prompt_str: str | None = None
 
+        # GEN-6 (TC-5204): Bypass LLM for "See Also" sections.
+        # The linker (Phase 2) deterministically injects verified cross-links
+        # into See Also sections.  Generating them via LLM risks invented URLs.
+        # We produce an empty SectionIR here; inject_links() will fill it.
+        if skel_section.heading.lower().strip() in _SKIP_LLM_HEADINGS:
+            logger.debug(
+                "[GEN-6] Bypassing LLM for terminal section %r (page=%s) — linker will inject links",
+                skel_section.heading,
+                page_plan.page_id,
+            )
+            return SectionIR(
+                section_id=skel_section.heading.lower().replace(" ", "_"),
+                heading=skel_section.heading,
+                level=skel_section.level,
+                blocks=[],
+            ), _llm, _fb
+
         async with _section_sem:
             if context.llm_config:
                 # TC-3882 Wave 4 (G6): In heal mode, inject cached section content for
@@ -1111,9 +1133,26 @@ async def _generate_page(
                         from launcher.workers.generate.section_validator import (
                             _strip_hallucinated_code_blocks,
                         )
-                        blocks = _strip_hallucinated_code_blocks(
+                        blocks, _hg16_stripped = _strip_hallucinated_code_blocks(
                             blocks, set(public_classes),
                         )
+                        # GEN-4 (TC-5203): After HG-16 strips a hallucinated block,
+                        # attempt snippet-pool replacement before discarding it.
+                        if _hg16_stripped and sec_snippets:
+                            for _meta in _hg16_stripped:
+                                _repl = _find_snippet_replacement(
+                                    sec_snippets,
+                                    _meta.get("claim_ids", []),
+                                    _meta.get("language", ""),
+                                )
+                                if _repl is not None:
+                                    blocks = list(blocks) + [_repl]
+                                    logger.info(
+                                        "[GEN-4] Replaced stripped hallucinated block"
+                                        " with snippet (claim_ids=%s, section=%s)",
+                                        _meta.get("claim_ids", []),
+                                        skel_section.heading,
+                                    )
                     # HG-21: Remove code blocks with invalid ALL-CAPS enum member access
                     if _class_enum_members:
                         from launcher.workers.generate.section_validator import (
@@ -1265,12 +1304,48 @@ async def _generate_page(
                         )
                         _retry_prompt = prompt + "\n\n" + "\n".join(_retry_additions)
                     else:
-                        # All retries exhausted — use whatever was produced
-                        logger.warning(
-                            "[Generate] Section %r still fails quality checks after %d retries — using last result",
-                            skel_section.heading,
-                            _MAX_SECTION_RETRIES,
-                        )
+                        # All retries exhausted.
+                        # EVL-1 (TC-5203): Strip syntax-invalid code blocks rather than
+                        # keeping them in the final SectionIR.  Invalid code blocks that
+                        # survive into the Evaluate worker cause code_correctness failures;
+                        # a missing block is better than an uncompilable one.
+                        if _has_syntax_errors:
+                            _evl1_kept: list[BlockIR] = []
+                            _evl1_stripped = 0
+                            for _blk in _candidate_ir.blocks:
+                                if _blk.type == BlockType.code:
+                                    _blk_lang = (
+                                        _blk.language
+                                        if _blk.language
+                                        else ("python" if _is_python_product else "")
+                                    )
+                                    if not _accept_code_block(_blk.content or "", _blk_lang):
+                                        _evl1_stripped += 1
+                                        logger.info(
+                                            "[EVL-1] Stripped syntax-invalid code block"
+                                            " after retry exhaustion (section=%r, %d chars)",
+                                            skel_section.heading,
+                                            len(_blk.content or ""),
+                                        )
+                                        continue
+                                _evl1_kept.append(_blk)
+                            if _evl1_stripped:
+                                logger.warning(
+                                    "[EVL-1] Stripped %d syntax-invalid block(s) from"
+                                    " section %r after %d retries",
+                                    _evl1_stripped,
+                                    skel_section.heading,
+                                    _MAX_SECTION_RETRIES,
+                                )
+                                _candidate_ir = _candidate_ir.model_copy(
+                                    update={"blocks": _evl1_kept}
+                                )
+                        else:
+                            logger.warning(
+                                "[Generate] Section %r still fails quality checks after %d retries — using last result",
+                                skel_section.heading,
+                                _MAX_SECTION_RETRIES,
+                            )
                         section_ir = _candidate_ir
 
             if section_ir is None:
@@ -1979,6 +2054,75 @@ def _accept_code_block(code: str, lang: str) -> bool:
         return True
     except SyntaxError:
         return False
+
+
+def _find_snippet_replacement(
+    snippets: "list[Any]",
+    claim_ids: list[str],
+    language: str,
+) -> "BlockIR | None":
+    """GEN-4 (TC-5203): Find a snippet from the pool to replace a stripped code block.
+
+    Matching strategy (first match wins):
+    1. claim_ids intersection — snippet whose claim_ids overlap with the stripped block's
+    2. language fallback — if no claim_ids overlap, use the first snippet with a matching
+       language (or any syntax-valid snippet if language is empty)
+
+    Parameters
+    ----------
+    snippets:
+        List of Snippet objects from the page plan (sec_snippets for this section).
+    claim_ids:
+        claim_ids from the stripped block (may be empty).
+    language:
+        language tag from the stripped block (may be empty string).
+
+    Returns
+    -------
+    BlockIR | None
+        A new code BlockIR built from the matching snippet, or None if no match.
+    """
+    if not snippets:
+        return None
+
+    claim_id_set = set(claim_ids)
+    lang_lower = language.lower() if language else ""
+
+    # Strategy 1: match by claim_ids intersection
+    if claim_id_set:
+        for snippet in snippets:
+            snippet_claims = set(getattr(snippet, "claim_ids", []) or [])
+            if snippet_claims & claim_id_set:
+                code = getattr(snippet, "code", "") or ""
+                if not code.strip():
+                    continue
+                snip_lang = getattr(snippet, "language", "python") or "python"
+                return BlockIR(
+                    type=BlockType.code,
+                    content=code,
+                    language=snip_lang,
+                    claim_ids=list(claim_id_set & snippet_claims),
+                )
+
+    # Strategy 2: language fallback — first snippet with matching language
+    for snippet in snippets:
+        code = getattr(snippet, "code", "") or ""
+        if not code.strip():
+            continue
+        snip_lang = (getattr(snippet, "language", "python") or "python").lower()
+        if lang_lower and snip_lang != lang_lower:
+            continue
+        # syntax_valid guard: only use validated snippets
+        if not getattr(snippet, "syntax_valid", True):
+            continue
+        return BlockIR(
+            type=BlockType.code,
+            content=code,
+            language=snip_lang,
+            claim_ids=[],
+        )
+
+    return None
 
 
 def _validate_identifiers(

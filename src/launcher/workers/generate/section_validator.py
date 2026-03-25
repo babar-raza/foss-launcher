@@ -755,7 +755,7 @@ _PYTHON_BUILTINS: frozenset[str] = STDLIB_PYTHON_NAMES
 def _strip_hallucinated_code_blocks(
     blocks: list[BlockIR],
     public_classes: set[str],
-) -> list[BlockIR]:
+) -> tuple[list[BlockIR], list[dict]]:
     """Remove Python code blocks that reference class names not in public_classes.
 
     Scans each Python code block for capitalized identifiers that look like
@@ -770,6 +770,9 @@ def _strip_hallucinated_code_blocks(
     Only Python code blocks are inspected (language in "python", "py",
     "python3", or empty string). Non-Python blocks pass through unchanged.
 
+    GEN-4 (TC-5203): Returns a tuple of (kept_blocks, stripped_metadata) so
+    the caller can attempt snippet-pool replacement for stripped blocks.
+
     Parameters
     ----------
     blocks:
@@ -780,13 +783,17 @@ def _strip_hallucinated_code_blocks(
 
     Returns
     -------
-    list[BlockIR]
-        Modified block list. Prose/list/table blocks are always preserved.
+    tuple[list[BlockIR], list[dict]]
+        (kept_blocks, stripped_metadata) where kept_blocks is the filtered
+        block list and stripped_metadata is a list of dicts with keys
+        ``content``, ``claim_ids``, and ``language`` for each removed block.
+        Prose/list/table blocks are always preserved.
     """
     if not public_classes:
-        return blocks
+        return blocks, []
 
     result: list[BlockIR] = []
+    stripped_meta: list[dict] = []
     removed_count = 0
 
     for block in blocks:
@@ -829,6 +836,12 @@ def _strip_hallucinated_code_blocks(
                 ", ".join(sorted(set(hallucinated))),
             )
             removed_count += 1
+            # GEN-4: Record metadata so caller can attempt snippet replacement.
+            stripped_meta.append({
+                "content": block.content or "",
+                "claim_ids": list(block.claim_ids or []),
+                "language": block.language or "",
+            })
             # Drop this block — do NOT append to result
         else:
             result.append(block)
@@ -836,7 +849,7 @@ def _strip_hallucinated_code_blocks(
     if removed_count:
         logger.info("[HG-16] Removed %d hallucinated Python code block(s)", removed_count)
 
-    return result
+    return result, stripped_meta
 
 
 # ---------------------------------------------------------------------------

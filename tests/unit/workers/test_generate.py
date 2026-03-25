@@ -1772,11 +1772,21 @@ class TestCountProseWords:
                 api_surface=api_surface,
             ))
 
-        # Each section: 1 initial + MAX_SECTION_RETRIES retries
+        # GEN-6 (TC-5204): "See Also" sections bypass LLM entirely; only count
+        # sections that are NOT in _SKIP_LLM_HEADINGS for expected call count.
+        from launcher.workers.generate.worker import _SKIP_LLM_HEADINGS
+        llm_sections = [
+            s for s in PAGE_ROLE_SKELETONS[page_role]
+            if s.heading.lower().strip() not in _SKIP_LLM_HEADINGS
+        ]
+        num_llm_sections = len(llm_sections)
+
+        # Each LLM section: 1 initial + MAX_SECTION_RETRIES retries
         calls_per_section = _MAX_SECTION_RETRIES + 1
-        expected_calls = calls_per_section * num_sections
+        expected_calls = calls_per_section * num_llm_sections
         assert call_count == expected_calls, (
             f"Expected {expected_calls} LLM calls "
-            f"({calls_per_section} per section × {num_sections} sections), "
+            f"({calls_per_section} per section × {num_llm_sections} LLM sections"
+            f" of {num_sections} total, GEN-6 bypasses 'See Also'), "
             f"got {call_count}"
         )
