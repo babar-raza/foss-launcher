@@ -186,3 +186,6 @@ class RunConfig(LauncherBaseModel):
     golden: GoldenConfig = Field(default_factory=GoldenConfig)
     telemetry: TelemetryConfig | None = None
     output: OutputConfig = Field(default_factory=OutputConfig)
+    # TC-5168: pipeline mode — create (default), verify, or maintain
+    # TC-5175: seed mode — stop after intake, force fresh clone to pre-populate .clone_cache/
+    pipeline_mode: Literal["create", "verify", "maintain", "seed"] = "create"

@@ -1,7 +1,7 @@
 """Plan bundle — output of the Planner worker."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import Field
 
@@ -41,6 +41,33 @@ class PlannedPage(LauncherBaseModel):
         default_factory=list,
         description="TC-3881 Wave 3 (G7): Section headings with no golden counterpart.",
     )
+    maintenance_action: Literal["create", "update", "enhance", "no-change", ""] = Field(
+        default="",
+        description="TC-5168: Action from maintenance planner (empty string = create mode, no filtering applied).",
+    )
+    evidence_score: float = Field(
+        default=1.0,
+        description="TC-FIX-214: Numeric evidence quality score (0-1) from page evidence index.",
+    )
+    evidence_sufficient: bool = Field(
+        default=True,
+        description="TC-FIX-214: Whether the page has sufficient evidence for generation.",
+    )
+    evidence_missing: list[str] = Field(
+        default_factory=list,
+        description="TC-FIX-214: List of missing evidence signals.",
+    )
+
+
+class GenerationContext(LauncherBaseModel):
+    """TC-4318: Context bundle passed from planner to generate worker."""
+
+    claims: list[Any] = Field(default_factory=list)
+    snippets: list[Any] = Field(default_factory=list)
+    product: dict[str, Any] = Field(default_factory=dict)
+    richness_tier: str = "A"
+    api_surface: dict[str, Any] = Field(default_factory=dict)
+    product_evidence: dict[str, Any] = Field(default_factory=dict)
 
 
 class PlanBundle(LauncherBaseModel):
@@ -48,3 +75,20 @@ class PlanBundle(LauncherBaseModel):
 
     pages: list[PlannedPage] = Field(default_factory=list)
     claim_assignment_index: dict[str, list[str]] = Field(default_factory=dict)
+
+
+class PageAction(LauncherBaseModel):
+    """TC-5168: Per-page action decision from the maintenance planner."""
+
+    content_path: str
+    action: Literal["create", "update", "enhance", "no-change"]
+    reason: str = ""
+
+
+class MaintenancePlan(LauncherBaseModel):
+    """TC-5168: Output of the maintenance planner — per-page action decisions."""
+
+    family: str
+    platform: str
+    planned_at: str
+    actions: list[PageAction] = Field(default_factory=list)

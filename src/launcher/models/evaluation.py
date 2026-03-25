@@ -34,6 +34,9 @@ class Finding(LauncherBaseModel):
     severity: Literal["critical", "high", "medium", "low"] = "medium"
     location: str = ""
     section_id: str | None = None
+    # TC-5128: structured list of uncovered claim texts for downstream reporting.
+    # Only populated by check_claim_coverage; other checks leave this as [].
+    uncovered_claim_texts: list[str] = Field(default_factory=list)
 
 
 class PageEvaluation(LauncherBaseModel):
@@ -47,6 +50,7 @@ class PageEvaluation(LauncherBaseModel):
     # TC-3879 Wave 1 (E1): Continuous quality score in [0, 100].
     # 100 - (safety_crit_high×25) - (non_crit_high×10) - (medium×5) - (low×1), clamped [0, 100].
     numeric_score: float = 0.0
+    conformance_score: float | None = None  # TC-FIX-214: golden conformance score [0.0, 1.0]
 
 
 class QualitySummary(LauncherBaseModel):

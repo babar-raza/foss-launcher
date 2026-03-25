@@ -51,6 +51,8 @@ class SharedFacts(LauncherBaseModel):
     python_requires: str = ""
     dependencies: list[str] = Field(default_factory=list)
     entrypoints: list[str] = Field(default_factory=list)
+    # SR-12: .NET target framework monikers from .csproj (e.g. ["net6.0", "netstandard2.0"])
+    target_frameworks: list[str] = Field(default_factory=list)
 
 
 class RepoInfo(LauncherBaseModel):
@@ -253,6 +255,7 @@ class SnippetFact(LauncherBaseModel):
     source_file: str = ""
     source_lines: tuple[int, int] = (0, 0)
     syntax_valid: bool = True
+    snippet_source_idx: int = -1      # TC-UND-113: index into source Snippet list (-1 = unknown)
     confidence: float = 1.0           # 1.0 test file, 0.9 example file, 0.7 readme block
 
 
@@ -331,6 +334,13 @@ class UnderstandingBundle(LauncherBaseModel):
         description=(
             "TC-4242: Structured facts extracted deterministically from the repository. "
             "Empty until upstream extraction produces it. Foundation for LLM-as-describer mode."
+        ),
+    )
+    extraction_degraded: bool = Field(
+        default=False,
+        description=(
+            "TC-PLT-213: True when tree-sitter was unavailable or failed for one or more files "
+            "during extraction. Signals that API surface may be incomplete."
         ),
     )
     page_evidence_index: dict[str, PageEvidenceScore] = Field(

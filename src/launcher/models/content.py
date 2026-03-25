@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 from launcher.models.base import LauncherBaseModel
@@ -19,6 +21,8 @@ class GeneratedPage(LauncherBaseModel):
     ir_path: str = ""
     md_path: str = ""
     claim_ids_used: list[str] = Field(default_factory=list)
+    # TC-5128: Full list of assigned claim IDs before generation (superset of claim_ids_used).
+    assigned_claim_ids: list[str] = Field(default_factory=list)
     word_count: int = 0
     code_block_count: int = 0
     # TC-3880 Wave 2 (F4): Claim text bodies for deterministic coverage check.
@@ -73,4 +77,20 @@ class ContentManifest(LauncherBaseModel):
             "graph-state delivery to the Evaluate worker. Defaults to empty ProductEvidence when "
             "the Generate worker did not populate it (backward compatibility)."
         ),
+    )
+    page_evidence_index: dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "TC-5163: page_evidence_index from the Understand worker, embedded for "
+            "schema-validated graph-state delivery to the Generate and Evaluate workers. "
+            "Keyed by page_role (str), values are PageEvidenceScore dicts "
+            "(evidence_sufficient, verified_claim_count, missing, etc.). "
+            "Defaults to empty dict for backward compatibility with runs produced "
+            "before TC-5163."
+        ),
+    )
+    richness_tier: str = ""  # TC-FIX-214: richness tier label (A/B/C)
+    api_fact_member_names: list[str] = Field(
+        default_factory=list,
+        description="TC-FIX-214: member names from api_facts for evaluate cross-check.",
     )
