@@ -1609,6 +1609,11 @@ async def _call_llm(prompt: str, context: WorkerContext, max_tokens: int | None 
 
     api_key = os.environ.get("litellm_key", "")
 
+    # ARC-2: On heal re-runs, use heal_temperature (0.3) so the LLM produces
+    # different output rather than reproducing the same deterministic result at temp=0.
+    _heal_temp = (context.heal_metadata or {}).get("heal_temperature")
+    _eff_temperature = _heal_temp if _heal_temp is not None else context.llm_config.temperature
+
     try:
         from launcher.clients.llm_provider import LLMProviderClient
 
@@ -1617,7 +1622,7 @@ async def _call_llm(prompt: str, context: WorkerContext, max_tokens: int | None 
             model=context.llm_config.primary.model,
             run_dir=context.run_dir,
             api_key=api_key,
-            temperature=context.llm_config.temperature,
+            temperature=_eff_temperature,
             max_tokens=context.llm_config.max_tokens,
             reasoning_model=(
                 context.llm_config.reasoning.model if context.llm_config.reasoning else None
@@ -1648,7 +1653,7 @@ async def _call_llm(prompt: str, context: WorkerContext, max_tokens: int | None 
                     model=context.llm_config.fallback.model,
                     run_dir=context.run_dir,
                     api_key=api_key,
-                    temperature=context.llm_config.temperature,
+                    temperature=_eff_temperature,
                     max_tokens=context.llm_config.max_tokens,
                     reasoning_model=(
                         context.llm_config.reasoning.model if context.llm_config.reasoning else None

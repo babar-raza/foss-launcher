@@ -801,15 +801,25 @@ def build_pipeline(
             max_re = evaluate_entry.max_re_runs
 
             eval_output = (state.get("worker_outputs") or {}).get("evaluate")
+            _report: "EvaluationReport | None" = None
             if not eval_output:
                 advice = _static_fallback(re_run_count, max_re)
             else:
                 try:
-                    report = EvaluationReport.model_validate(eval_output)
-                    advice = call_pipeline_advisor(report, re_run_count, max_re, run_dir_path)
+                    _report = EvaluationReport.model_validate(eval_output)
+                    advice = call_pipeline_advisor(_report, re_run_count, max_re, run_dir_path)
                 except Exception:
                     logger.warning("Advisor: failed to load eval report, using fallback")
                     advice = _static_fallback(re_run_count, max_re)
+
+            # ARC-2: Build heal directives from failing pages (claim_coverage uncovered texts).
+            # _build_heal_directives was previously defined but never called — wire it in now.
+            _heal_page_directives: list[str] = []
+            if _report is not None:
+                try:
+                    _heal_page_directives = _build_heal_directives(_report).get("page_directives", [])
+                except Exception:
+                    logger.warning("Advisor: _build_heal_directives failed — skipping directives")
 
             # Merge into heal_metadata for downstream workers
             updated_heal = {
@@ -818,6 +828,11 @@ def build_pipeline(
                 "target_pages": advice.target_pages,
                 "strategy": advice.strategy,
                 "priority_checks": advice.priority_checks,
+                # ARC-2: replace page_directives each pass (fresh directives per heal round)
+                "page_directives": _heal_page_directives,
+                # ARC-2: raise temperature on heal passes so deterministic temp=0 doesn't
+                # reproduce identical output on every re-run
+                "heal_temperature": 0.3,
             }
 
             return {
