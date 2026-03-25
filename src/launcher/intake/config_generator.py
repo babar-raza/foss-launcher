@@ -17,6 +17,7 @@ from typing import Any, Dict, Optional
 
 import yaml
 
+from launcher.phase1.acquisition import _extract_brand_from_org
 from launcher.shared.identity import resolve_identity
 
 logger = logging.getLogger(__name__)
@@ -165,9 +166,7 @@ def _derive_config_filename(
 
     owner = repo.get("owner", {})
     owner_login = owner.get("login", "") if isinstance(owner, dict) else ""
-    brand_parts = re.split(r"[.\-_\s]+", owner_login.lower())
-    stop_words = {"foss", "for", "python", "java", "net", "the", "a", "ai", "org"}
-    brand = next((p for p in brand_parts if p and p not in stop_words and len(p) > 1), "unknown")
+    brand = _extract_brand_from_org(owner_login)
 
     return f"{brand}-{family}-foss-{resolved_platform}"
 
@@ -193,10 +192,8 @@ def _derive_display_name(repo: Dict[str, Any]) -> str:
 
     owner = repo.get("owner", {})
     owner_login = owner.get("login", "") if isinstance(owner, dict) else ""
-    brand_parts = re.split(r"[.\-_\s]+", owner_login.lower())
-    stop_words = {"foss", "for", "python", "java", "net", "the", "a", "ai", "org"}
-    brand_raw = next((p for p in brand_parts if p and p not in stop_words and len(p) > 1), "")
-    brand = brand_raw.capitalize() if brand_raw else ""
+    brand_raw = _extract_brand_from_org(owner_login)
+    brand = brand_raw.capitalize() if brand_raw != "unknown" else ""
 
     return f"{brand}.{family_display}" if brand else family_display
 
@@ -223,9 +220,7 @@ def _derive_canonical_import(
     resolved_platform = platform or _extract_platform(repo)
     owner = repo.get("owner", {})
     owner_login = owner.get("login", "") if isinstance(owner, dict) else ""
-    brand_parts = re.split(r"[.\-_\s]+", owner_login.lower())
-    stop_words = {"foss", "for", "python", "java", "net", "the", "a", "ai", "org"}
-    brand = next((p for p in brand_parts if p and p not in stop_words and len(p) > 1), "unknown")
+    brand = _extract_brand_from_org(owner_login)
 
     # Attempt families.yaml lookup first for platform-correct import template
     _yaml_path = families_yaml_path or Path("configs/families.yaml")
@@ -247,15 +242,65 @@ def _derive_canonical_import(
     return f"{brand}_{family}"
 
 
-def _derive_product_name(repo: Dict[str, Any]) -> str:
-    """Derive a human-readable product name."""
-    desc = repo.get("description")
-    if desc and len(desc) > 5:
-        # Use first sentence/clause of description, capped at 80 chars
-        name = desc.split(".")[0].split(" - ")[0].strip()
+_TRAILING_PUNCT = re.compile(r"[\s#/\\,;:([\]]+$")
+# Strips a dangling space-separated single letter at end, e.g. "open-source C"
+# after '#' is stripped by _TRAILING_PUNCT. Anchored at $ to avoid mid-name initials.
+_TRAILING_LONE_CHAR = re.compile(r"\s+[A-Za-z]$")
+_SUSPICIOUS_ONLY = re.compile(
+    r"^(c#|vb\.net|c\+\+|f#|java|python|typescript|javascript)$",
+    re.IGNORECASE,
+)
+
+
+def _sanitize_name(name: str) -> str:
+    """Strip trailing punctuation fragments and dangling single-letter tokens."""
+    name = _TRAILING_PUNCT.sub("", name).strip()
+    name = _TRAILING_LONE_CHAR.sub("", name).strip()
+    return name
+
+
+def _derive_product_name(
+    repo: Dict[str, Any],
+    *,
+    brand: str = "",
+    family: str = "",
+    platform: str = "",
+) -> str:
+    """Derive a human-readable product name from GitHub description.
+
+    Splits at ' - ', '/', and '.' (in that order) to avoid truncating at
+    mid-word punctuation. Strips trailing punctuation fragments AND dangling
+    single-letter residuals (e.g. "open-source C" after stripping '#' from
+    "C#/VB.NET"). Falls back to a canonical template when the result is too
+    short or consists only of a bare language token.
+    """
+    desc = repo.get("description") or ""
+    desc = desc.strip()
+    if len(desc) > 5:
+        # Split order: ' - ' first (subtitle separator), then '/', then '.'
+        name = desc.split(" - ")[0].split("/")[0].split(".")[0].strip()
+        name = _sanitize_name(name)
         if len(name) > 80:
             name = name[:77] + "..."
-        return name
+        if len(name) >= 8 and not _SUSPICIOUS_ONLY.match(name):
+            return name
+        # Sanitization produced a bad result — log and fall through to canonical fallback
+        reason = "too_short" if len(name) < 8 else "suspicious_token"
+        logger.warning(
+            "product_name_sanitizer_fallback repo=%s sanitized=%r reason=%s",
+            repo.get("name", "unknown"),
+            name,
+            reason,
+        )
+
+    if brand and family and platform:
+        return f"{brand} {family.title()} FOSS for {platform.title()}"
+
+    if desc:  # had a description but kwargs not wired — log the degradation
+        logger.warning(
+            "product_name_sanitizer_unknown repo=%s — brand/family/platform unavailable",
+            repo.get("name", "unknown"),
+        )
     return repo.get("name", "Unknown Product")
 
 
@@ -364,7 +409,10 @@ def generate_config(
 
     family = _extract_family(repo)
     platform = platform or _extract_platform(repo, default_platform=default_platform)
-    product_name = _derive_product_name(repo)
+    _owner = repo.get("owner", {})
+    _owner_login = _owner.get("login", "") if isinstance(_owner, dict) else ""
+    brand = _extract_brand_from_org(_owner_login)
+    product_name = _derive_product_name(repo, brand=brand, family=family, platform=platform)
     html_url = repo.get("html_url", "")
 
     # TC-4070: Use shared identity derivation — single source of truth for both

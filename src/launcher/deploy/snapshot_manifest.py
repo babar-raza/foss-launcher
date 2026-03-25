@@ -41,11 +41,13 @@ class SnapshotManifest(LauncherBaseModel, frozen=False):
     to phase_store/.
     """
 
-    schema_version: str = "1.0"
+    schema_version: str = "1.1"
     pages: Dict[str, SnapshotIREntry] = Field(default_factory=dict)
     majority_run_id: str = ""
     majority_run_ir_count: int = 0
+    majority_run_quality_score: float = 0.0  # TC-FIX-215: quality-weighted majority
     run_ir_counts: Dict[str, int] = Field(default_factory=dict)
+    run_quality_scores: Dict[str, float] = Field(default_factory=dict)  # TC-FIX-215
     last_promotion: str = ""
     promotion_count: int = 0
 

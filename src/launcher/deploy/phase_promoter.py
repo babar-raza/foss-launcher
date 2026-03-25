@@ -40,6 +40,19 @@ from .snapshot_manifest import (
 
 logger = logging.getLogger(__name__)
 
+# TC-FIX-215: Grade weights for quality-weighted majority scoring
+# A=5, B=4, C=3, D=1, F=0 — 40 A-pages (score=200) beats 60 C-pages (score=180)
+_GRADE_WEIGHT: dict[Grade, float] = {
+    Grade.A: 5.0,
+    Grade.B: 4.0,
+    Grade.C: 3.0,
+    Grade.D: 1.0,
+    Grade.F: 0.0,
+}
+
+# TC-FIX-215: Rolling window — max tracked runs before eviction
+_MAX_TRACKED_RUNS = 10
+
 
 class IRPromotionAction(str, Enum):
     """Actions taken during IR promotion decisions."""
@@ -108,18 +121,21 @@ def _find_eval_report(run_dir: Path) -> Path | None:
     return summary if summary.exists() else None
 
 
-def _update_phase_store_metadata(
+def update_phase_store_metadata(
     run_dir: Path,
     phase_store_dir: Path,
     family: str,
     platform: str,
 ) -> None:
-    """Copy pipeline metadata phase JSONs unconditionally on every complete run.
+    """Copy pipeline metadata phase JSONs whenever scout/understand artifacts exist.
 
     Scout and Understand phase JSONs are infrastructure metadata (files_enumerated,
     format_matrix_count, claims), NOT content quality indicators. They must be updated
-    on every complete run, regardless of whether the run wins the majority-run gate.
-    TC-4105
+    on every run where those workers completed, regardless of whether the run wins
+    the majority-run gate or even whether the full pipeline finished.
+
+    TC-4105: Original implementation.
+    TC-5190: Lifted to public API; called from run_loop for partial runs too.
     """
     from launcher.io.run_layout import RunLayout
 
@@ -162,7 +178,7 @@ def _update_phase_store(
     Source filenames are derived from RunLayout (single source of truth).
     Each file is written via a temp-file + os.replace() to avoid partial writes.
     Only called for the majority run (most IR slots won). TC-3906-H4
-    Note: scout.json and understand.json are handled by _update_phase_store_metadata()
+    Note: scout.json and understand.json are handled by update_phase_store_metadata()
     which is called unconditionally for all complete runs. TC-4105
     """
     from launcher.io.run_layout import RunLayout
@@ -170,7 +186,7 @@ def _update_phase_store(
     layout = RunLayout(run_dir=run_dir)
 
     # Canonical source → destination name mapping, derived from RunLayout
-    # scout.json + understand.json intentionally excluded — see _update_phase_store_metadata()
+    # scout.json + understand.json intentionally excluded — see update_phase_store_metadata()
     phase_sources: dict[str, Path] = {
         "plan.json": run_dir / "planner_checkpoint.json",
         "generate.json": run_dir / "generate_checkpoint.json",
@@ -259,7 +275,7 @@ def promote_phase_snapshots(
     # complete run, regardless of majority-run gate. These are infrastructure metadata,
     # not content quality indicators.
     if not dry_run:
-        _update_phase_store_metadata(run_dir, phase_store_dir, family, platform)
+        update_phase_store_metadata(run_dir, phase_store_dir, family, platform)
 
     if not eval_report.pages:
         return report
@@ -273,6 +289,12 @@ def promote_phase_snapshots(
 
     now = datetime.now(timezone.utc).isoformat()
     ir_won_this_run = 0
+    quality_score_this_run = 0.0  # TC-FIX-215: accumulate grade-weighted score
+
+    # TC-FIX-215: Backward-compat migration — old manifests have run_ir_counts but no run_quality_scores
+    if manifest.run_ir_counts and not manifest.run_quality_scores:
+        for rid, count in manifest.run_ir_counts.items():
+            manifest.run_quality_scores[rid] = count * 3.0  # assume average C-grade
 
     for page_eval in eval_report.pages:
         content_path = page_eval.content_path or page_eval.slug
@@ -370,6 +392,7 @@ def promote_phase_snapshots(
         )
 
         ir_won_this_run += 1
+        quality_score_this_run += _GRADE_WEIGHT.get(grade, 3.0)  # TC-FIX-215
         report.ir_promoted += 1
         report.details.append(IRPromotionResult(
             content_path=content_path,
@@ -379,19 +402,28 @@ def promote_phase_snapshots(
             source_run_id=run_id,
         ))
 
-    # Accumulate per-run IR counts and determine majority run (TC-3906-H1 fix).
+    # Accumulate per-run IR counts and quality scores (TC-3906-H1 + TC-FIX-215).
     # Correct across backfill: compare cumulative totals, not per-call counts.
     manifest.run_ir_counts[run_id] = manifest.run_ir_counts.get(run_id, 0) + ir_won_this_run
+    manifest.run_quality_scores[run_id] = manifest.run_quality_scores.get(run_id, 0.0) + quality_score_this_run
     run_total = manifest.run_ir_counts[run_id]
-    if run_total > manifest.majority_run_ir_count:
+    run_quality = manifest.run_quality_scores[run_id]
+
+    # TC-FIX-215: Quality-weighted majority — quality score is primary, IR count is tiebreaker
+    is_new_majority = (
+        run_quality > manifest.majority_run_quality_score
+        or (run_quality == manifest.majority_run_quality_score and run_total > manifest.majority_run_ir_count)
+    )
+    if is_new_majority:
         manifest.majority_run_id = run_id
         manifest.majority_run_ir_count = run_total
+        manifest.majority_run_quality_score = run_quality
         if not dry_run:
             _update_phase_store(run_dir, phase_store_dir, family, platform)
             report.phase_jsons_updated = True
             logger.info(
-                "Run %s is new majority run (%d IR slots cumulative) — phase_store updated",
-                run_id, run_total,
+                "Run %s is new majority run (quality=%.1f, %d IR slots) — phase_store updated",
+                run_id, run_quality, run_total,
             )
             if events_path is not None:
                 _emit_event(
@@ -403,12 +435,27 @@ def promote_phase_snapshots(
                         "family": family,
                         "platform": platform,
                         "ir_won_count": run_total,
+                        "quality_score": run_quality,
                         "phase_files_written": [
-                            "scout.json", "understand.json", "plan.json",
-                            "generate.json", "evaluate.json",
+                            "plan.json", "generate.json", "evaluate.json",
                         ],
                     },
                 )
+
+    # TC-FIX-215: Rolling window eviction — keep at most _MAX_TRACKED_RUNS
+    if len(manifest.run_ir_counts) > _MAX_TRACKED_RUNS:
+        # Evict runs with lowest quality scores (never evict current majority)
+        sorted_runs = sorted(
+            manifest.run_quality_scores.items(),
+            key=lambda x: x[1],
+        )
+        for evict_id, _ in sorted_runs:
+            if len(manifest.run_ir_counts) <= _MAX_TRACKED_RUNS:
+                break
+            if evict_id == manifest.majority_run_id:
+                continue
+            manifest.run_ir_counts.pop(evict_id, None)
+            manifest.run_quality_scores.pop(evict_id, None)
 
     # Save manifest
     if not dry_run and report.ir_promoted > 0:
