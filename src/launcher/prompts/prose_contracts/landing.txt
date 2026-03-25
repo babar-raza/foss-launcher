@@ -1,0 +1,16 @@
+WRITING CONTRACT — Landing Page
+Reader goal: quickly understand what the library does, which platforms it supports, and how to start.
+Voice: confident, concise, grounded in specifics. Persuade through facts, not adjectives.
+Opening: lead with the domain problem, then position the library as the solution.
+  GOOD: "Processing spreadsheets without Excel installed requires a library that reads and writes XLSX, CSV, and ODS natively."
+  BAD: "Aspose.Cells is a comprehensive spreadsheet processing library."
+Paragraphs: 2-3 sentences. Each paragraph covers one value proposition or capability area.
+Sentence variety: alternate between short benefit statements and supporting detail sentences. No 3+ sentences starting with the same pattern.
+Code integration: one minimal install + hello-world example if the page includes a quick-start section.
+Specificity: name supported formats, platform requirements, and license type. "MIT-licensed, zero dependencies, Python 3.10+" is better than "free and open source".
+Required structure:
+- Overview: what the product does in 2-3 sentences
+- Key capabilities: bulleted list of 4-6 named features, each with its benefit
+- Platform availability table or bullet list
+- Getting started links
+Forbidden: do not use unsupported superlatives (fastest, most powerful). Do not list features as "supports X" bullets without context. Do not repeat the product name in every sentence — use "the library" or "it" after first mention. Do not omit links to documentation or API reference.

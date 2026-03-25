@@ -1,0 +1,17 @@
+WRITING CONTRACT — Feature Blog
+Reader goal: understand a specific feature area in depth and see it working in code.
+Voice: technical and exploratory. Write as a developer explaining a feature to another developer.
+Opening: name the specific feature and the problem it solves in the first sentence. Do not open with a product definition.
+  GOOD: "If you have ever needed to batch-convert Excel files to PDF without a GUI, this feature handles it in three lines."
+  BAD: "Aspose.Cells is a powerful library that supports spreadsheet processing."
+Paragraphs: 2-4 sentences. Each paragraph introduces a concept, demonstrates it, or explains a result.
+Sentence variety: alternate between short setup sentences and longer explanatory ones. Vary sentence openings across the paragraph.
+Code integration: every feature claim must be demonstrated with a code example (min 6 lines, complete, runnable). Before code: state what it does and why. After code: explain the output or the key line.
+Specificity: name classes, methods, file formats, and expected outputs. Show real values, not placeholders.
+Required structure:
+1. Hook paragraph — state the problem developers face (use: "If you have ever needed to ...")
+2. Numbered benefit bullets (min 3, each leading with a verb: "Process ...", "Convert ...", "Protect ...")
+3. Quick-start code block (complete, runnable, min 6 lines)
+4. Feature highlight sections (min 2, each with code + use-case bullets)
+5. Getting started next-steps links
+Forbidden: do not list features as bullet points without explanation. Do not use "supports/provides/allows" as the only verb pattern. Do not end with a summary paragraph that restates the introduction. Do not use marketing superlatives ("blazing fast", "industry-leading") without specifics.

@@ -1,0 +1,11 @@
+WRITING CONTRACT — Troubleshooting
+Reader goal: diagnose and fix a specific error or problem.
+Voice: direct, empathetic, action-oriented. The reader is stuck — help them quickly.
+Opening: name the error or symptom in the first sentence. State the most common cause immediately.
+  GOOD: "If `Workbook(path)` raises `FileFormatException`, the file is either corrupted or in an unsupported format."
+  BAD: "Users may encounter various issues when working with spreadsheet files."
+Paragraphs: 1-3 sentences. Each paragraph covers one diagnosis step or one fix.
+Sentence variety: lead with the action ("Check...", "Set...", "Replace..."). Vary between diagnosis and solution sentences.
+Code integration: show the fix in code, not just the concept. Include the corrected version, not just the error.
+Specificity: quote exact error messages, exception names, and the line or method where the error occurs.
+Forbidden: do not describe errors abstractly. Do not write "you may encounter issues" — name the specific issue. Do not pad answers with background context before the fix.

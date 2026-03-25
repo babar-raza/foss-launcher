@@ -1,0 +1,20 @@
+WRITING CONTRACT — How-To Article
+Reader goal: solve a specific task step by step.
+Voice: direct, instructional, second-person ("you").
+Opening: state what the reader will accomplish in the first sentence. Name the concrete operation and output.
+  GOOD: "You will load a CSV file and convert it to JSON using the Workbook class."
+  BAD: "Aspose.Cells provides various methods for working with spreadsheet data."
+Paragraphs: short (2-4 sentences). Each paragraph advances one step or explains one concept.
+Sentence variety: vary openings — no 3+ consecutive sentences starting with the same subject pattern.
+Code integration: before each code block, state what it does in one sentence. After, state the expected result or output. Each step must include a code block.
+  GOOD: "Step 2: Load the file. Call `Workbook(path)` to open the spreadsheet." [code block] "This returns a Workbook object with all sheets loaded."
+  BAD: A step heading with no code block, or a code block with no preceding explanation.
+Specificity: name file formats, classes, methods, and outputs — never say "supports many formats" without listing them.
+Required structure:
+1. Prerequisites list (bulleted, min 2 items)
+2. Step 1..N headings (### Step N: ...) with code block per step — headings must be imperative
+3. Code Breakdown section explaining what each step does
+4. Batch/Advanced variant section showing production-scale usage
+5. Error Handling section with explicit exception types (not bare except)
+6. Conclusion with next steps links
+Forbidden: do not list features without connecting them to the task. Do not start sections with "{display_name} is a library that...". Do not write generic transitions like "Let's look at how to..." — just show the step. Do not use bare except or pass-only handlers.

@@ -160,7 +160,8 @@ def _strip_md_heading_prefix(text: str) -> str:
     return re.sub(r"^#+\s*", "", text.strip())
 
 
-_CLM_COMMENT_RE = re.compile(r"^\s*#\s*Claims:\s*CLM-")
+# SRP-03 (2026-03-24): Also strip "# source: snippet_N" metadata comments.
+_CLM_COMMENT_RE = re.compile(r"^\s*#\s*(?:Claims:\s*CLM-|source:\s*snippet_)")
 _CLM_CITATION_RE = re.compile(r"\s*\[CLM-[^\]]*\]")
 
 # TC-3873: dict-literal anchor pattern --- matches [{'key': ...}](url) artifacts.
@@ -231,15 +232,31 @@ def _validate_table_content(content: str) -> str:
     if _PIPE_ROW_RE.search(stripped):
         return content
 
-    # Try to parse as JSON array of dicts (LLM sometimes outputs these)
+    # Try to parse as JSON array of dicts or list-of-lists (LLM sometimes outputs these)
     if stripped.startswith("["):
         try:
             json_str = stripped.replace("'", '"')
             rows = json.loads(json_str)
-            if isinstance(rows, list) and rows and isinstance(rows[0], dict):
-                table = _json_array_to_markdown_table(rows)
-                logger.info("Converted JSON array (%d rows) to markdown table", len(rows))
-                return table
+            if isinstance(rows, list) and rows:
+                if isinstance(rows[0], dict):
+                    table = _json_array_to_markdown_table(rows)
+                    logger.info("Converted JSON array (%d rows) to markdown table", len(rows))
+                    return table
+                # SRP-03 (2026-03-24): list-of-lists → first row = headers, rest = data
+                if isinstance(rows[0], list) and len(rows) >= 2:
+                    headers = [str(h) for h in rows[0]]
+                    header_line = "| " + " | ".join(headers) + " |"
+                    separator = "| " + " | ".join("---" for _ in headers) + " |"
+                    data_lines = []
+                    for row in rows[1:]:
+                        cells = [str(c).replace("|", "\\|") for c in row]
+                        # Pad or truncate to match header count
+                        while len(cells) < len(headers):
+                            cells.append("")
+                        cells = cells[:len(headers)]
+                        data_lines.append("| " + " | ".join(cells) + " |")
+                    logger.info("Converted list-of-lists (%d rows) to markdown table", len(rows) - 1)
+                    return "\n".join([header_line, separator] + data_lines)
         except (json.JSONDecodeError, ValueError):
             pass
 
@@ -729,27 +746,10 @@ def deduplicate_sections(
 # Does NOT match: V3 (no lowercase after uppercase), STL3 (no lowercase run)
 _CLASS_USAGE_RE = re.compile(r'\b([A-Z][a-z]+(?:[A-Z][a-z0-9]*)+|[A-Z][a-z]+\d+)\b')
 
-_PYTHON_BUILTINS: frozenset[str] = frozenset({
-    "True", "False", "None", "Ellipsis",
-    "int", "float", "complex", "str", "bytes", "bytearray",
-    "list", "dict", "tuple", "set", "frozenset", "bool",
-    "type", "object", "super",
-    "Exception", "BaseException", "ValueError", "TypeError", "KeyError",
-    "AttributeError", "NotImplementedError", "RuntimeError", "OSError",
-    "IOError", "IndexError", "StopIteration", "NameError", "ImportError",
-    "ZeroDivisionError", "OverflowError", "FileNotFoundError",
-    "PermissionError", "TimeoutError", "MemoryError", "RecursionError",
-    "SystemExit", "KeyboardInterrupt", "GeneratorExit",
-    "Path", "PurePath", "Enum", "Flag", "IntEnum",
-    "ABC", "ABCMeta",
-    "Optional", "Union", "List", "Dict", "Tuple", "Set", "FrozenSet",
-    "Any", "Callable", "Iterator", "Generator", "Sequence", "Mapping",
-    "ClassVar", "Final", "Literal", "TypeVar", "Generic",
-    "NamedTuple", "TypedDict", "Protocol",
-    "datetime", "date", "time", "timedelta", "timezone",
-    "StringIO", "BytesIO",
-    "Thread", "Lock", "Event",
-})
+# SRP-01 (2026-03-24): Shared source in launcher.shared.python_names.
+from launcher.shared.python_names import STDLIB_PYTHON_NAMES
+
+_PYTHON_BUILTINS: frozenset[str] = STDLIB_PYTHON_NAMES
 
 
 def _strip_hallucinated_code_blocks(
@@ -948,6 +948,149 @@ def _correct_method_names_in_code(
     return result
 
 
+# ---------------------------------------------------------------------------
+# HG-22: Post-generate method verification against class_briefs
+# ---------------------------------------------------------------------------
+
+# Regex patterns copied from evaluate/checks/api_verification.py to avoid
+# cross-layer import coupling.  Keep in sync if the evaluate patterns change.
+_HG22_ASSIGNMENT_RE = re.compile(
+    r'\b([a-z_][a-zA-Z0-9_]*)\s*(?::\s*\w+\s*)?=\s*(?:\w+\.)*([A-Z][a-zA-Z0-9]+)\s*\('
+)
+_HG22_RECEIVER_METHOD_RE = re.compile(
+    r'\b([a-z_][a-zA-Z0-9_]*)\.([a-z_][a-zA-Z0-9_]*)\s*\('
+)
+
+
+def _strip_hallucinated_method_calls(
+    blocks: list[BlockIR],
+    class_method_map: dict[str, frozenset[str]],
+    public_classes: set[str],
+) -> list[BlockIR]:
+    """Remove or comment-out hallucinated method calls on tracked library instances.
+
+    HG-22 (TC-GEN-301): Complements HG-16 (class-level) by checking method calls.
+    For each Python code block, tracks ``var = KnownClass()`` assignments and verifies
+    ``receiver.method()`` calls against ``class_method_map[tracked_class]``.
+
+    Decision logic per block:
+    - 2+ unknown tracked methods → strip entire block (same as HG-16 for classes)
+    - 1 unknown tracked method → comment out the offending line
+    - 0 unknown → pass through unchanged
+
+    Non-Python blocks and untracked receivers pass through without inspection.
+
+    Parameters
+    ----------
+    blocks:
+        BlockIR list from parse_and_validate_blocks().
+    class_method_map:
+        ``{ClassName: frozenset(method_names | property_names)}`` from class_briefs.
+    public_classes:
+        Known class names from api_surface.public_classes.
+    """
+    if not class_method_map or not public_classes:
+        return blocks
+
+    # Build case-insensitive class name lookup for receiver matching
+    class_name_lower: dict[str, str] = {c.lower(): c for c in public_classes}
+
+    result: list[BlockIR] = []
+    stripped_count = 0
+    commented_count = 0
+
+    for block in blocks:
+        if block.type != BlockType.code:
+            result.append(block)
+            continue
+
+        lang = (block.language or "").lower()
+        if lang not in ("python", "py", "python3", ""):
+            result.append(block)
+            continue
+
+        code = block.content or ""
+        if not code.strip():
+            result.append(block)
+            continue
+
+        # HG-17 pattern: strip comments before scanning
+        code_for_scanning = "\n".join(
+            line.split("#")[0] for line in code.split("\n")
+        )
+
+        # Track var → ClassName assignments
+        var_class_map: dict[str, str] = {}
+        for m in _HG22_ASSIGNMENT_RE.finditer(code_for_scanning):
+            var_name, cls_name = m.group(1), m.group(2)
+            if cls_name in public_classes:
+                var_class_map[var_name] = cls_name
+
+        # Find unknown method calls on tracked receivers
+        unknown_lines: set[int] = set()
+        unknown_methods: list[str] = []
+
+        lines = code.split("\n")
+        scan_lines = code_for_scanning.split("\n")
+        for line_idx, scan_line in enumerate(scan_lines):
+            for m in _HG22_RECEIVER_METHOD_RE.finditer(scan_line):
+                receiver = m.group(1)
+                method_name = m.group(2)
+                if method_name.startswith("_"):
+                    continue
+
+                # Determine tracked class
+                tracked_class = var_class_map.get(receiver)
+                if tracked_class is None:
+                    matched_cls = class_name_lower.get(receiver)
+                    if matched_cls:
+                        tracked_class = matched_cls
+
+                if tracked_class is None:
+                    continue  # Untracked — skip
+
+                class_members = class_method_map.get(tracked_class, frozenset())
+                if method_name not in class_members:
+                    unknown_lines.add(line_idx)
+                    unknown_methods.append(method_name)
+
+        if len(unknown_methods) >= 2:
+            # Strip entire block
+            logger.info(
+                "[HG-22] Removing code block with %d hallucinated method(s): %s",
+                len(unknown_methods),
+                ", ".join(sorted(set(unknown_methods))),
+            )
+            stripped_count += 1
+            continue  # Drop block
+
+        if len(unknown_methods) == 1:
+            # Comment out the offending line
+            new_lines: list[str] = []
+            for idx, line in enumerate(lines):
+                if idx in unknown_lines:
+                    new_lines.append(f"# HG-22: {line.lstrip()}")
+                    commented_count += 1
+                else:
+                    new_lines.append(line)
+            new_code = "\n".join(new_lines)
+            logger.debug(
+                "[HG-22] Commented out hallucinated method '%s' in code block",
+                unknown_methods[0],
+            )
+            result.append(block.model_copy(update={"content": new_code}))
+        else:
+            result.append(block)
+
+    if stripped_count or commented_count:
+        logger.info(
+            "[HG-22] Method verification: %d blocks stripped, %d lines commented",
+            stripped_count, commented_count,
+        )
+
+    return result
+
+
 def _normalize_imports(
     code: str, canonical_import: str, import_allowlist: list[str],
     runtime_import: str = "",
@@ -996,7 +1139,7 @@ def _normalize_imports(
 
             # Rewrite aspose.cells / aspose_cells_foss variants to effective_import
             # (runtime_import takes precedence so we emit e.g. "aspose.threed" not "aspose_3d_foss")
-            if base == "aspose" or module.startswith("aspose."):
+            if base.lower() == "aspose" or module.lower().startswith("aspose."):
                 if keyword == "import":
                     rest = line[import_match.end():]
                     normalized.append(f"{indent}import {effective_import}{rest}")
@@ -1024,3 +1167,104 @@ def _normalize_imports(
         normalized.append(line)
 
     return "\n".join(normalized)
+
+
+# ---------------------------------------------------------------------------
+# TC-FIX-214: Product name canonicalization
+# ---------------------------------------------------------------------------
+
+_ASPOSE_MISSPELLINGS = re.compile(
+    r"\b(Aspire|Aspuse|Apose|Aspsoe|Asopse)\.",
+    re.IGNORECASE,
+)
+_ASPOSE_SPACE_DOT = re.compile(r"\bAspose\.\s+", re.IGNORECASE)
+_DOUBLED_QUALIFIER = re.compile(r"\b(for \w+)\s+\1\b", re.IGNORECASE)
+# Match code blocks to exclude them from canonicalization
+_CODE_FENCE = re.compile(r"```[\s\S]*?```", re.MULTILINE)
+
+
+def _canonicalize_product_name(content: str, product_name: str) -> str:
+    """Fix common LLM misspellings of Aspose product names in prose.
+
+    Code blocks (```...```) are excluded from replacement.
+    """
+    if not content or not product_name or "." not in product_name:
+        return content
+
+    # Extract code blocks, replace in prose only
+    code_blocks: list[tuple[int, int, str]] = []
+    for m in _CODE_FENCE.finditer(content):
+        code_blocks.append((m.start(), m.end(), m.group()))
+
+    # Split content around code blocks
+    parts: list[str] = []
+    last_end = 0
+    for start, end, block_text in code_blocks:
+        prose = content[last_end:start]
+        # Fix misspellings in prose
+        prose = _ASPOSE_MISSPELLINGS.sub("Aspose.", prose)
+        prose = _ASPOSE_SPACE_DOT.sub("Aspose.", prose)
+        prose = _DOUBLED_QUALIFIER.sub(r"\1", prose)
+        parts.append(prose)
+        parts.append(block_text)  # Code block unchanged
+        last_end = end
+
+    # Handle trailing prose after last code block
+    trailing = content[last_end:]
+    trailing = _ASPOSE_MISSPELLINGS.sub("Aspose.", trailing)
+    trailing = _ASPOSE_SPACE_DOT.sub("Aspose.", trailing)
+    trailing = _DOUBLED_QUALIFIER.sub(r"\1", trailing)
+    parts.append(trailing)
+
+    return "".join(parts)
+
+
+# ---------------------------------------------------------------------------
+# TC-FIX-214: Opener boilerplate stripping
+# ---------------------------------------------------------------------------
+
+_WHEN_WORKING_WITH = re.compile(
+    r"When working with\s[^.]*\.\s*",
+    re.IGNORECASE,
+)
+
+
+def _strip_opener_boilerplate(content: str) -> str:
+    """Remove 'When working with ...' opener sentences after H2 headings.
+
+    Only strips when the phrase is at the start of the first paragraph
+    following an H2 heading. Content without H2 headings is returned unchanged.
+    """
+    if not content:
+        return ""
+    if "## " not in content:
+        return content
+
+    lines = content.split("\n")
+    result_lines: list[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        result_lines.append(line)
+        # If this is an H2 heading, look at the next non-empty line
+        if line.strip().startswith("## "):
+            i += 1
+            # Skip blank lines between heading and paragraph
+            while i < len(lines) and not lines[i].strip():
+                result_lines.append(lines[i])
+                i += 1
+            if i < len(lines):
+                para_line = lines[i]
+                if para_line.strip().lower().startswith("when working with"):
+                    # Strip the opener sentence
+                    cleaned = _WHEN_WORKING_WITH.sub("", para_line, count=1).strip()
+                    if cleaned:
+                        result_lines.append(cleaned)
+                    # else: entire line was the opener, skip it
+                else:
+                    result_lines.append(para_line)
+                i += 1
+        else:
+            i += 1
+
+    return "\n".join(result_lines)

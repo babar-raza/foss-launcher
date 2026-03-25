@@ -1,0 +1,13 @@
+WRITING CONTRACT — Table of Contents / Index Page
+Reader goal: scan available topics and navigate to the right page quickly.
+Voice: minimal, navigational. Each entry should be self-explanatory without reading the target page.
+Opening: one sentence stating the scope — what documentation area this index covers.
+  GOOD: "This section covers the Python API for spreadsheet creation, reading, and conversion."
+  BAD: "Aspose.Cells is a library that provides comprehensive spreadsheet processing features."
+Paragraphs: 1-2 sentences maximum per topic group. The links carry the information; prose introduces groups.
+Sentence variety: not a priority — clarity and scannability matter more than stylistic variation.
+Code integration: none required. TOC pages should not contain code blocks.
+Specificity: each link description should name the specific operation or concept, not repeat the page title.
+  GOOD: "Formula Calculation — evaluate formulas, resolve cell references, and compute results."
+  BAD: "Formula Calculation — learn about formula calculation."
+Forbidden: do not write narrative paragraphs explaining features — that belongs on the target pages. Do not duplicate content from linked pages. Do not use "{display_name} is a library that..." as an introduction.

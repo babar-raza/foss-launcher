@@ -1,0 +1,11 @@
+WRITING CONTRACT — Blog Announcement
+Reader goal: decide whether this library solves their problem and get started quickly.
+Voice: warm but technically precise. Conversational — address the reader as a peer developer.
+Opening: lead with the problem the library solves or the task it enables. Do not open with a product definition.
+  GOOD: "Converting spreadsheets to PDF in a Python script usually means installing a full office suite — or writing fragile parsing code."
+  BAD: "Aspose.Cells is a library that provides spreadsheet processing capabilities."
+Paragraphs: 3-5 sentences each. Alternate between explaining what something does and why it matters to the developer.
+Sentence variety: mix short declarative statements with longer explanatory sentences. No 3+ consecutive sentences with the same subject.
+Code integration: show a minimal working example early. Explain what each code block produces — name the output file, format, or console result.
+Specificity: ground every capability in a concrete use case. "Convert XLSX to CSV in three lines" is better than "supports spreadsheet conversion".
+Forbidden: do not restate content from earlier sections in the "See Also" block. Do not use marketing adjectives (powerful, robust, comprehensive) without backing them with specifics. Do not open the first sentence with the product name.

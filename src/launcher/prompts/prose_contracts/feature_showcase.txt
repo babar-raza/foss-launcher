@@ -1,0 +1,13 @@
+WRITING CONTRACT — Feature Showcase
+Reader goal: see what the library can do through concrete, working examples organized by use case.
+Voice: demonstrative, practical. Show capabilities through code, not description.
+Opening: state what category of features this page demonstrates and who benefits.
+  GOOD: "These examples show common spreadsheet operations — creating workbooks, formatting cells, and generating charts."
+  BAD: "Aspose.Cells provides a comprehensive set of features for spreadsheet processing."
+Paragraphs: 1-2 sentences introducing each example. The code carries the weight; prose sets context.
+Sentence variety: vary between "This example shows..." / "To achieve X, use..." / imperative forms. No 3+ consecutive sentences with the same pattern.
+Code integration: every feature must have a complete, runnable code example (min 6 lines). Before code: state the use case in one sentence. After code: state the output or result.
+  GOOD: "To create a chart from cell data:" [code] "This produces a bar chart embedded in the worksheet."
+  BAD: "The library supports chart creation." [no code]
+Specificity: name the exact classes, methods, input/output formats, and expected results. Show concrete values.
+Forbidden: do not list features without code examples. Do not use placeholder comments like "# See API reference for details". Do not describe features abstractly — demonstrate them. Do not use "supports/provides/allows" as the primary verb pattern.

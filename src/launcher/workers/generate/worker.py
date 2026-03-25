@@ -617,7 +617,8 @@ class GenerateWorker(WorkerContract):
                 word_count=word_count,
                 code_block_count=code_block_count,
                 claim_texts=claim_texts,  # TC-4219: verified claim texts for coverage check
-                assigned_claim_count=len(claim_ids_used),  # TC-4219: actual cited claim count
+                assigned_claim_ids=page_plan.assigned_claims,          # TC-5195: wire planner's full claim list
+                assigned_claim_count=len(page_plan.assigned_claims),   # TC-5195: planner's assigned count (was len(claim_ids_used))
             ))
             await _safe_stream_event("page_generated", {
                 "slug": slug,
@@ -721,7 +722,7 @@ class GenerateWorker(WorkerContract):
             })
 
         # Check 3: Code blocks in workflow pages
-        workflow_roles = {"workflow_page", "howto_article"}
+        workflow_roles = {"workflow_page", "howto_article", "getting_started"}  # TC-5196
         for page in manifest.pages:
             if page.page_role in workflow_roles and page.code_block_count == 0:
                 findings.append({
@@ -953,6 +954,20 @@ async def _generate_page(
             if len(_matches) == 1:
                 _method_corrections[_ident] = _matches[0]
 
+    # HG-22 (TC-GEN-301): Build per-class method+property lookup for post-generate
+    # method verification. Maps ClassName → frozenset(method_names | property_names).
+    _class_method_map: dict[str, frozenset[str]] = {}
+    if class_briefs:
+        for _brief in class_briefs:
+            _members: set[str] = set(_brief.methods)
+            for _tm in (_brief.typed_methods or []):
+                _members.add(_tm.name)
+            for _p in (_brief.properties or []):
+                _members.add(_p)
+            for _tp in (_brief.typed_properties or []):
+                _members.add(_tp.name)
+            _class_method_map[_brief.name] = frozenset(_members)
+
     async def _generate_section(skel_section: SkeletonSection, idx: int):
         """Generate one section. Returns (section_ir, llm_calls_delta, fallback_delta)."""
         _llm = 0
@@ -1068,8 +1083,11 @@ async def _generate_page(
                     if not blocks:
                         break
 
-                    # FPR-03: Warn about PascalCase identifiers not in api_surface BEFORE
-                    # HG-16 removes the blocks, so violations appear in run logs.
+                    # FPR-03 / FPRSR-04: Warn about PascalCase identifiers not in api_surface
+                    # BEFORE HG-16 removes the blocks. Accumulate violations so a retry
+                    # directive with the correct class list can be injected below.
+                    _has_api_violations = False
+                    _api_violation_names: list[str] = []
                     if public_classes:
                         _pc_set = set(public_classes)
                         for _blk in blocks:
@@ -1078,6 +1096,8 @@ async def _generate_page(
                                     _blk.content, _pc_set,
                                 )
                                 if _unknown_ids:
+                                    _has_api_violations = True
+                                    _api_violation_names.extend(_unknown_ids)
                                     logger.warning(
                                         "[Generate] FPR-03: api_surface_violation: %s not in"
                                         " public_classes (section '%s', page '%s')",
@@ -1110,6 +1130,14 @@ async def _generate_page(
                         blocks = _correct_method_names_in_code(
                             blocks, _method_corrections,
                         )
+                    # HG-22 (TC-GEN-301): Strip/comment-out hallucinated method calls
+                    if _class_method_map and public_classes:
+                        from launcher.workers.generate.section_validator import (
+                            _strip_hallucinated_method_calls,
+                        )
+                        blocks = _strip_hallucinated_method_calls(
+                            blocks, _class_method_map, set(public_classes),
+                        )
                     if api_identifiers:
                         blocks = _validate_identifiers(blocks, api_identifiers)
                     blocks = _strip_commercial_urls(blocks)
@@ -1117,14 +1145,24 @@ async def _generate_page(
                         blocks, product.runtime_import or product.canonical_import, import_allowlist,
                     )
 
-                    # FPR-04: Detect Python syntax errors in code blocks.
-                    # Only code blocks with an explicit Python language tag are checked;
-                    # empty-language blocks and non-Python blocks pass through.
+                    # FPR-04 / FPRSR-02: Detect Python syntax errors in code blocks.
+                    # Explicit python/py/python3 blocks are always checked.
+                    # Empty-language blocks are also checked on Python products so that
+                    # LLM output without a language tag is not silently accepted.
+                    _is_python_product = (
+                        getattr(product, "language_tag", "") or ""
+                    ).lower() in ("python", "py")
                     _has_syntax_errors = any(
-                        not _accept_code_block(b.content or "", b.language or "")
+                        not _accept_code_block(
+                            b.content or "",
+                            b.language if b.language else ("python" if _is_python_product else ""),
+                        )
                         for b in blocks
                         if b.type == BlockType.code
-                        and (b.language or "").lower() in ("python", "py", "python3")
+                        and (
+                            (b.language or "").lower() in ("python", "py", "python3")
+                            or (_is_python_product and not b.language)
+                        )
                     )
 
                     _candidate_ir = SectionIR(
@@ -1157,11 +1195,29 @@ async def _generate_page(
                             _needs_code_retry = True
 
                     _prose_ok = _prose_count >= _MIN_SECTION_PROSE_WORDS or _is_optional
-                    if _prose_ok and not _needs_code_retry and not _has_syntax_errors:
+                    if _prose_ok and not _needs_code_retry and not _has_syntax_errors and not _has_api_violations:
                         section_ir = _candidate_ir
                         break
                     if _attempt < _MAX_SECTION_RETRIES:
                         _retry_additions = []
+                        if _has_api_violations:
+                            logger.warning(
+                                "[Generate] FPR-03/FPRSR-04: api_surface_retry: section '%s'"
+                                " page '%s' attempt %d/%d — injecting class list",
+                                skel_section.heading,
+                                page_plan.page_id,
+                                _attempt + 1,
+                                _MAX_SECTION_RETRIES,
+                            )
+                            _retry_additions.append(
+                                "CRITICAL: Only use these known API classes: "
+                                + ", ".join(sorted(public_classes)[:20])
+                                + ". Do NOT invent class names. "
+                                + "The following names are NOT valid API classes: "
+                                + ", ".join(sorted(set(_api_violation_names))[:5])
+                                + "."
+                            )
+                            _api_violation_names = []  # reset for next attempt
                         if _has_syntax_errors:
                             logger.warning(
                                 "[Generate] FPR-04: code_block_syntax_reject: section '%s'"
@@ -1244,8 +1300,8 @@ async def _generate_page(
             if final_blocks != list(section_ir.blocks):
                 section_ir = section_ir.model_copy(update={"blocks": final_blocks})
 
-            # Ensure all code blocks have a language tag; default to "python" (TC-3887).
-            normed_blocks = _normalize_code_languages(list(section_ir.blocks))
+            # Ensure all code blocks have a language tag; default per platform (TC-3887, TC-PLT-213).
+            normed_blocks = _normalize_code_languages(list(section_ir.blocks), platform=product.platform)
             if normed_blocks != list(section_ir.blocks):
                 section_ir = section_ir.model_copy(update={"blocks": normed_blocks})
 
@@ -1498,24 +1554,62 @@ def _gap_fill_code_block(
     section_ir: SectionIR,
     product: ProductIdentity,
     section_snippets: "list | None" = None,
+    *,
+    api_surface: "Any | None" = None,
+    page_role: str = "unknown",
+    claims: "list | None" = None,
 ) -> SectionIR:
     """Deterministically add a minimal code block to a section that requires one.
 
     TC-3878 (W2): Prefers extracted snippets (source_type=="extracted") when available,
-    as they contain real validated code. Falls back to a generic placeholder otherwise.
+    as they contain real validated code.
+    TC-DFR-007: Falls back to synthesis from api_surface if available.
+    TC-5112: Prepends section heading as a comment label.
 
-    Returns a new SectionIR with a placeholder code block appended.
+    Returns a new SectionIR with a code block appended.
     """
+    heading_label = f"# {section_ir.heading}\n" if section_ir.heading else ""
+    _MAX_CODE_LEN = 2000  # TC-5110: skip oversized snippets
+
     # TC-3878: Prefer extracted snippets — real validated code over placeholder
     if section_snippets:
         for snippet in section_snippets:
             if getattr(snippet, "source_type", None) == "extracted":
                 code_content = getattr(snippet, "code", None) or ""
+                if not code_content.strip() or len(code_content) > _MAX_CODE_LEN:
+                    continue
+                gap_block = BlockIR(
+                    type=BlockType.code,
+                    content=heading_label + code_content,
+                    language=getattr(snippet, "language", "python") or "python",
+                    claim_ids=[],
+                )
+                new_blocks = list(section_ir.blocks) + [gap_block]
+                return SectionIR(
+                    section_id=section_ir.section_id,
+                    heading=section_ir.heading,
+                    level=section_ir.level,
+                    blocks=new_blocks,
+                )
+
+    # TC-DFR-007: Attempt synthesis from api_surface
+    if api_surface is not None:
+        try:
+            from launcher.workers.generate._code_synthesis import synthesize_section_snippet
+            synth = synthesize_section_snippet(
+                api_surface,
+                section_heading=section_ir.heading or "",
+                page_role=page_role,
+                product=product,
+                claims=claims or [],
+            )
+            if synth is not None:
+                code_content = getattr(synth, "code", None) or ""
                 if code_content.strip():
                     gap_block = BlockIR(
                         type=BlockType.code,
-                        content=code_content,
-                        language=getattr(snippet, "language", "python") or "python",
+                        content=heading_label + code_content,
+                        language=getattr(synth, "language", "python") or "python",
                         claim_ids=[],
                     )
                     new_blocks = list(section_ir.blocks) + [gap_block]
@@ -1525,9 +1619,11 @@ def _gap_fill_code_block(
                         level=section_ir.level,
                         blocks=new_blocks,
                     )
+        except Exception:
+            pass  # Non-fatal — fall to placeholder
 
     placeholder_code = (
-        f"# Example usage\nimport {product.runtime_import or product.canonical_import or 'package'}\n"
+        f"{heading_label}# Example usage\nimport {product.runtime_import or product.canonical_import or 'package'}\n"
         "# See API reference for complete examples"
     )
     gap_block = BlockIR(
@@ -1760,32 +1856,10 @@ _BUILTIN_IDENTIFIERS = frozenset({
 # FPRSR-01 (2026-03-23): Superset of _BUILTIN_IDENTIFIERS used by
 # _scan_code_block_api_identifiers to suppress false positives.
 # _BUILTIN_IDENTIFIERS is still used by _validate_identifiers — do not merge them.
-_SCAN_BUILTINS: frozenset[str] = _BUILTIN_IDENTIFIERS | frozenset({
-    # Exception hierarchy
-    "Exception", "BaseException", "ValueError", "TypeError", "KeyError",
-    "IndexError", "AttributeError", "RuntimeError", "NotImplementedError",
-    "StopIteration", "GeneratorExit", "SystemExit", "KeyboardInterrupt",
-    "OSError", "IOError", "FileNotFoundError", "PermissionError",
-    "TimeoutError", "MemoryError", "RecursionError", "OverflowError",
-    "ZeroDivisionError", "FloatingPointError", "ArithmeticError",
-    "LookupError", "NameError", "UnboundLocalError", "ImportError",
-    "ModuleNotFoundError", "AssertionError", "BufferError",
-    "EOFError", "ConnectionError", "BrokenPipeError",
-    "ConnectionResetError", "StopAsyncIteration",
-    # ABC / meta
-    "ABC", "ABCMeta",
-    # Enum
-    "Enum", "Flag", "IntEnum", "IntFlag",
-    # Typing extras
-    "NamedTuple", "TypedDict", "Protocol", "TypeVar", "Generic",
-    # Datetime
-    "datetime", "date", "time", "timedelta", "timezone",
-    # IO / threading / collections
-    "StringIO", "BytesIO", "Thread", "Lock", "Event", "Queue",
-    "Counter", "OrderedDict", "Decimal",
-    # Path extras
-    "PurePath", "PureWindowsPath", "PurePosixPath",
-})
+# SRP-01 (2026-03-24): Shared source in launcher.shared.python_names.
+from launcher.shared.python_names import STDLIB_PYTHON_NAMES  # noqa: E402
+
+_SCAN_BUILTINS: frozenset[str] = _BUILTIN_IDENTIFIERS | STDLIB_PYTHON_NAMES
 
 
 _IDENTIFIER_OMITTED_SENTINEL = "[identifier omitted]"
@@ -1987,27 +2061,40 @@ def _strip_commercial_urls(blocks: list[BlockIR]) -> list[BlockIR]:
     return result
 
 
-_SHELL_PREFIXES = ("pip ", "pip3 ", "npm ", "npx ", "apt ", "apt-get ", "brew ", "conda ", "yarn ")
+_SHELL_PREFIXES = ("pip ", "pip3 ", "npm ", "npx ", "apt ", "apt-get ", "brew ", "conda ", "yarn ",
+                   "dotnet ", "mvn ", "gradle ", "nuget ", "cmake ")
+
+# TC-PLT-213: Platform-to-default-language mapping for code blocks
+_PLATFORM_DEFAULT_LANG: dict[str, str] = {
+    "python": "python",
+    "dotnet": "csharp",
+    "java": "java",
+    "cpp": "cpp",
+    "node": "javascript",
+    "typescript": "typescript",
+}
 
 
-def _normalize_code_languages(blocks: list[BlockIR]) -> list[BlockIR]:
-    """Ensure all code blocks have a correct language tag (TC-3887, TC-3908).
+def _normalize_code_languages(blocks: list[BlockIR], platform: str = "python") -> list[BlockIR]:
+    """Ensure all code blocks have a correct language tag (TC-3887, TC-3908, TC-PLT-213).
 
     When the section-writer LLM omits the ``language`` field, the IR renderer
     produces bare triple-backtick fences which the LLM reviewer flags as
     ``code_correctness HIGH``.
 
-    TC-3908 extension: also corrects explicitly wrong python/py tags when the
-    block content is a shell command (pip install, npm, apt, etc.). The LLM
-    sometimes generates ```python\npip install foo``` which the evaluate worker
-    flags as a shell command inside a Python-tagged block.
+    TC-3908 extension: also corrects explicitly wrong tags when the
+    block content is a shell command (pip install, npm, dotnet, mvn, etc.).
+
+    TC-PLT-213: Default language is now platform-aware instead of hardcoded "python".
 
     Heuristic:
-    - If ``block.language`` is already set AND is not a wrong python tag → leave unchanged.
-    - If the first non-empty line starts with a shell prefix (pip, npm, apt…)
-      → set ``language = "bash"``.
-    - Otherwise → set ``language = "python"``.
+    - If ``block.language`` is already set AND is not a wrong tag → leave unchanged.
+    - If the first non-empty line starts with a shell prefix → set ``language = "bash"``.
+    - Otherwise → set ``language`` to the platform default.
     """
+    default_lang = _PLATFORM_DEFAULT_LANG.get(platform, "python")
+    # Tags that indicate a wrong language when content is actually a shell command
+    _wrong_shell_tags = {"python", "py", "csharp", "java", "cpp", "javascript", "typescript"}
     result: list[BlockIR] = []
     for block in blocks:
         if block.type != "code":
@@ -2016,12 +2103,12 @@ def _normalize_code_languages(blocks: list[BlockIR]) -> list[BlockIR]:
         first_line = (block.content or "").lstrip().split("\n")[0].lstrip()
         is_shell = any(first_line.startswith(p) for p in _SHELL_PREFIXES)
         # Leave block unchanged if language is already set correctly.
-        # Exception (TC-3908): if tagged as python/py but content is a shell command,
+        # Exception (TC-3908): if tagged as a code language but content is a shell command,
         # correct to bash.
-        if block.language and not (is_shell and block.language in ("python", "py")):
+        if block.language and not (is_shell and block.language in _wrong_shell_tags):
             result.append(block)
             continue
-        lang = "bash" if is_shell else "python"
+        lang = "bash" if is_shell else default_lang
         result.append(BlockIR(
             type=block.type,
             content=block.content,
@@ -2185,10 +2272,12 @@ def _sanitize_code_blocks(
     if not canonical_import:
         return blocks
 
-    # Build set of allowed import prefixes
-    allowed = {canonical_import.split(".")[0]}
+    # TC-GEN-302: Build set of allowed full import paths (case-insensitive).
+    # Previous prefix-only matching (split(".")[0]) caused "aspose" to match
+    # any Aspose.* variant, letting wrong imports like Aspose.FakeModule pass.
+    allowed_full = {canonical_import.lower()}
     for imp in import_allowlist:
-        allowed.add(imp.split(".")[0])
+        allowed_full.add(imp.lower())
 
     # Common wrong patterns the LLM generates
     _WRONG_IMPORT_RE = re.compile(
@@ -2200,10 +2289,10 @@ def _sanitize_code_blocks(
     stripped = 0
     for block in blocks:
         if block.type == BlockType.code and block.content:
-            # Check for wrong imports
+            # Check for wrong imports against full dotted paths
             wrong = _WRONG_IMPORT_RE.findall(block.content)
             has_wrong = any(
-                w.split(".")[0].lower() not in {a.lower() for a in allowed}
+                w.lower() not in allowed_full
                 for w in wrong
             )
             if has_wrong:
@@ -2234,4 +2323,347 @@ def _load_pipeline_config() -> dict:
         logger.debug("[Generate] Could not load pipeline.yaml, using linker defaults")
     return {}
 
+
+# ---------------------------------------------------------------------------
+# TC-FIX-214: Missing symbols required by test suite
+# ---------------------------------------------------------------------------
+
+import re as _re_mod
+
+# Terminal section headings (case-insensitive)
+_TERMINAL_HEADINGS = frozenset({
+    "see also", "references", "related topics", "further reading",
+    "related resources",
+})
+
+
+def _reorder_terminal_sections(sections: "list[SectionIR]") -> "list[SectionIR]":
+    """Move terminal sections to the end while preserving relative order.
+
+    Terminal headings: See Also, References, Related Topics, Further Reading.
+    """
+    if not sections:
+        return []
+    non_terminal = []
+    terminal = []
+    for s in sections:
+        if s.heading.strip().lower() in _TERMINAL_HEADINGS:
+            terminal.append(s)
+        else:
+            non_terminal.append(s)
+    return non_terminal + terminal
+
+
+# Scaffold / template patterns for stripping
+_SCAFFOLD_PATTERNS_BASIC = _re_mod.compile(
+    r"^(?:"
+    r"\s*TODO\b"
+    r"|\s*TBD\b"
+    r"|\s*\[placeholder\]"
+    r"|\s*\[section title\]"
+    r"|\s*\[content to be generated\]"
+    r"|\s*\[content\]"
+    r")",
+    _re_mod.IGNORECASE,
+)
+
+_SCAFFOLD_PATTERNS_EXTENDED = _re_mod.compile(
+    r"(?:"
+    r"\bTODO\b"
+    r"|\bTBD\b"
+    r"|\[placeholder\]"
+    r"|\[section title\]"
+    r"|\[content to be generated\]"
+    r"|content to be generated"
+    r"|section title here"
+    r"|in 1-3 sentences"
+    r"|what the reader will build"
+    r"|class or function purpose"
+    r"|\[fill in"
+    r"|fill in\b"
+    r")",
+    _re_mod.IGNORECASE,
+)
+
+
+def _strip_template_echo_from_blocks(blocks: "list[BlockIR]") -> "list[BlockIR]":
+    """Remove scaffold/template text from paragraph blocks.
+
+    Code blocks are never modified. For multi-line paragraphs, only scaffold
+    lines are removed. If all lines are scaffold, the entire block is dropped.
+    """
+    if not blocks:
+        return []
+    result: list[BlockIR] = []
+    for block in blocks:
+        if block.type != "paragraph":
+            result.append(block)
+            continue
+        if not block.content:
+            result.append(block)
+            continue
+        lines = block.content.split("\n")
+        clean_lines = []
+        for line in lines:
+            stripped = line.strip()
+            if not stripped:
+                clean_lines.append(line)
+                continue
+            if _SCAFFOLD_PATTERNS_BASIC.search(stripped):
+                continue
+            clean_lines.append(line)
+        if not any(l.strip() for l in clean_lines):
+            continue  # All scaffold → drop block
+        new_content = "\n".join(clean_lines).strip()
+        if not new_content:
+            continue
+        result.append(BlockIR(
+            type=block.type,
+            content=new_content,
+            claim_ids=block.claim_ids,
+            items=block.items,
+            level=block.level,
+            language=block.language,
+        ))
+    return result
+
+
+def _sanitize_scaffold_text(blocks: "list[BlockIR]") -> "tuple[list[BlockIR], bool]":
+    """Strip scaffold/template phrases from prose blocks.
+
+    Returns (cleaned_blocks, had_scaffold). Code blocks are exempt.
+    Extended patterns: TODO, TBD, Fill in, Content to be generated,
+    Section title here, in 1-3 sentences, What the reader will build,
+    Class or function purpose.
+    """
+    if not blocks:
+        return [], False
+    had_scaffold = False
+    result: list[BlockIR] = []
+    for block in blocks:
+        if block.type in ("code",):
+            result.append(block)
+            continue
+        if block.type != "paragraph":
+            result.append(block)
+            continue
+        if not block.content:
+            result.append(block)
+            continue
+        lines = block.content.split("\n")
+        clean_lines = []
+        for line in lines:
+            stripped = line.strip()
+            if not stripped:
+                clean_lines.append(line)
+                continue
+            if _SCAFFOLD_PATTERNS_EXTENDED.search(stripped):
+                had_scaffold = True
+                continue
+            clean_lines.append(line)
+        new_content = "\n".join(clean_lines).strip()
+        if not new_content:
+            continue  # All lines were scaffold → drop block
+        result.append(BlockIR(
+            type=block.type,
+            content=new_content,
+            claim_ids=block.claim_ids,
+            items=block.items,
+            level=block.level,
+            language=block.language,
+        ))
+    return result, had_scaffold
+
+
+def _canonicalize_python_imports(
+    blocks: "list[BlockIR]",
+    canonical_import: str,
+    runtime_import: str,
+) -> "list[BlockIR]":
+    """Rewrite pip-package-name imports to runtime form in code blocks.
+
+    E.g., ``import aspose_cells_foss`` → ``import aspose.cells_foss``
+    when canonical='aspose_cells_foss' and runtime='aspose.cells_foss'.
+    Paragraph blocks are never modified.
+    """
+    if not canonical_import or not runtime_import:
+        return blocks
+    if canonical_import == runtime_import:
+        return blocks
+
+    result: list[BlockIR] = []
+    for block in blocks:
+        if block.type != "code":
+            result.append(block)
+            continue
+        if not block.content:
+            result.append(block)
+            continue
+        # Replace canonical with runtime in import statements
+        new_content = block.content.replace(canonical_import, runtime_import)
+        result.append(BlockIR(
+            type=block.type,
+            content=new_content,
+            claim_ids=block.claim_ids,
+            items=block.items,
+            level=block.level,
+            language=block.language,
+        ))
+    return result
+
+
+_EVIDENCE_MIN_SNIPPETS: dict[str, int] = {
+    "howto_article": 2,
+    "getting_started": 1,
+    "installation": 1,
+    "developer_guide": 1,
+    "blog_announcement": 1,
+    "feature_blog": 1,
+    "workflow_page": 1,
+    "reference_object_page": 0,
+    "api_reference": 0,
+    "landing": 0,
+    "toc": 0,
+    "faq": 0,
+    "troubleshooting": 0,
+    "feature_showcase": 0,
+}
+
+_EVIDENCE_MIN_CLAIMS: dict[str, int] = {
+    "howto_article": 5,
+    "getting_started": 3,
+    "installation": 2,
+    "developer_guide": 3,
+    "blog_announcement": 3,
+    "feature_blog": 3,
+    "reference_object_page": 3,
+    "api_reference": 2,
+    "faq": 3,
+    "troubleshooting": 3,
+}
+
+_EVIDENCE_SCORE_THRESHOLD_DEFAULT = 0.3
+_EVIDENCE_SCORE_THRESHOLD_HIGH: dict[str, float] = {
+    "howto_article": 0.6,
+    "developer_guide": 0.6,
+    "blog_announcement": 0.5,
+    "feature_blog": 0.5,
+}
+
+
+def _check_evidence_adequacy(
+    page: "PlannedPage",
+    claims_by_id: "dict[str, Any]",
+) -> "tuple[bool, str]":
+    """Pre-generation gate: check if page has enough evidence for quality content.
+
+    Returns (True, '') on pass, (False, reason) on fail.
+    """
+    role = getattr(page, "page_role", "") or ""
+    assigned_claims = getattr(page, "assigned_claims", []) or []
+    assigned_snippets = getattr(page, "assigned_snippets", []) or []
+    n_claims = len(assigned_claims)
+    n_snippets = len(assigned_snippets)
+
+    # Check evidence_sufficient flag
+    evidence_sufficient = getattr(page, "evidence_sufficient", True)
+    if not evidence_sufficient:
+        evidence_missing = getattr(page, "evidence_missing", []) or []
+        missing_str = ", ".join(str(m) for m in evidence_missing) if evidence_missing else "unknown"
+        return False, f"evidence_sufficient=False missing=[{missing_str}]"
+
+    # Check evidence_score threshold (role-specific or default)
+    evidence_score = getattr(page, "evidence_score", 1.0)
+    score_threshold = _EVIDENCE_SCORE_THRESHOLD_HIGH.get(role, _EVIDENCE_SCORE_THRESHOLD_DEFAULT)
+    if evidence_score < score_threshold:
+        return False, f"evidence_score={evidence_score} below threshold={score_threshold}"
+
+    # Role-specific snippet minimum
+    min_snippets = _EVIDENCE_MIN_SNIPPETS.get(role, 0)
+    if n_snippets < min_snippets:
+        return False, f"snippets={n_snippets} below min={min_snippets} for role={role}"
+
+    # Role-specific claim minimum
+    min_claims = _EVIDENCE_MIN_CLAIMS.get(role, 2)
+    if n_claims < min_claims:
+        return False, f"claims={n_claims} below min={min_claims} for role={role}"
+
+    # FAQ-specific: require 3+ limitation/troubleshoot claims
+    if role == "faq":
+        _LIMITATION_KINDS = {"limitation", "troubleshoot", "config"}
+        n_lim = sum(
+            1 for cid in assigned_claims
+            if cid in claims_by_id and getattr(claims_by_id[cid], "kind", "") in _LIMITATION_KINDS
+        )
+        if n_lim < 3:
+            return False, f"faq_limitation_claims={n_lim} below min=3"
+
+    return True, ""
+
+
+def _make_understand_from_context(
+    claims: list,
+    snippets: list,
+    product: "Any | None",
+    richness_tier_str: str,
+    product_evidence_dict: "dict | None" = None,
+    api_surface_dict: "dict | None" = None,
+) -> "SimpleNamespace":
+    """TC-4318: Reconstruct an understand-like namespace from GenerationContext fields.
+
+    Deserializes product_evidence and api_surface from JSON-safe dicts back into
+    pydantic models for use by the generate worker.
+    """
+    from types import SimpleNamespace
+    from launcher.models.understanding import ProductEvidence
+    from launcher.models.product import ApiSurface
+
+    # Deserialize ProductEvidence
+    pe = ProductEvidence()
+    if product_evidence_dict:
+        try:
+            pe = ProductEvidence.model_validate(product_evidence_dict)
+        except Exception as exc:
+            logger.warning("TC-4318: malformed product_evidence_dict, falling back to empty: %s", exc)
+
+    # Deserialize ApiSurface — always return an ApiSurface (never None)
+    api_surface = ApiSurface(public_classes=[], import_allowlist=[], confidence="low")
+    if api_surface_dict:
+        try:
+            api_surface = ApiSurface.model_validate(api_surface_dict)
+        except Exception as exc:
+            logger.warning("TC-4318: malformed api_surface_dict, falling back to empty: %s", exc)
+            api_surface = ApiSurface(public_classes=[], import_allowlist=[], confidence="low")
+
+    return SimpleNamespace(
+        product_evidence=pe,
+        api_surface=api_surface,
+        extraction_db=None,  # TC-4272: fast path — no extraction_db in context mode
+        claims=claims,
+        snippets=snippets,
+        product=product,
+        richness_tier=richness_tier_str,
+    )
+
+
+def _validate_understand_namespace(ns: "Any", source: str) -> None:
+    """TC-4319: Observability checks for understand namespace completeness."""
+    pe = getattr(ns, "product_evidence", None)
+    if pe is not None:
+        # Check if product_evidence is effectively empty (all defaults)
+        has_content = bool(
+            getattr(pe, "limitations", None)
+            or getattr(pe, "capabilities", None)
+            or getattr(pe, "install_recipe", None)
+            or getattr(pe, "input_formats", None)
+            or getattr(pe, "output_formats", None)
+        )
+        if not has_content:
+            logger.warning("TC-4319: product_evidence is empty in understand namespace from %s", source)
+    elif pe is None:
+        logger.warning("TC-4319: product_evidence is missing from understand namespace from %s", source)
+
+    edb = getattr(ns, "extraction_db", None)
+    if edb is None:
+        logger.debug("TC-4319: extraction_db is None in understand namespace from %s", source)
 

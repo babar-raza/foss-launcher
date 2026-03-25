@@ -1,0 +1,11 @@
+WRITING CONTRACT — API Reference (Object Page)
+Reader goal: find the exact signature, parameters, return type, and a usage example for a class or method.
+Voice: terse, precise, factual. No narrative beyond what explains the API.
+Opening: one sentence stating what the class does and its primary use case.
+  GOOD: "The Cell class represents a single cell in a worksheet and provides methods to get and set values, formulas, and formatting."
+  BAD: "This section provides information about the Cell class and its various capabilities."
+Paragraphs: 1-2 sentences maximum before tables or code. Tables carry the information; prose introduces them.
+Sentence variety: not a priority — consistency and precision matter more than stylistic variation.
+Code integration: every section should include a minimal, runnable code example showing the API in action. Keep examples to 5-15 lines.
+Specificity: use exact parameter names, types, and return types. Show default values where relevant.
+Forbidden: do not write feature lists or marketing language. Do not explain concepts that belong in a developer guide. Do not pad with "this class provides..." — just show what it does. Do not repeat property names as their descriptions.

@@ -1,0 +1,23 @@
+WRITING CONTRACT — API Reference
+Reader goal: find the exact signature, parameters, return type, and a usage example for a class or method.
+Voice: terse, precise, factual. No narrative beyond what explains the API.
+Opening: one sentence stating what the class does and its primary use case.
+  GOOD: "The Workbook class represents an Excel file and provides methods to load, modify, and save spreadsheets."
+  BAD: "This section provides information about the Workbook class and its various capabilities."
+Paragraphs: 1-2 sentences maximum before tables or code. Tables carry the information; prose introduces them.
+Sentence variety: not a priority — consistency and precision matter more than stylistic variation.
+Code integration: every section should include a minimal, runnable code example showing the API in action. Keep examples to 5-15 lines.
+Specificity: use exact parameter names, types, and return types. Show default values where relevant.
+Required structure:
+1. Namespace and assembly line
+2. One-line class description
+3. Code block showing the class declaration
+4. Inheritance chain
+5. Properties section (### Properties) with type declarations
+6. Methods section (### Methods) with signature and return type
+7. Remarks subsections where semantics require clarification
+Required prose patterns:
+- Each property: one-line description, type block, Remarks if needed
+- Each method: signature block, parameter table, return value, Remarks
+- Use present tense: "Returns ...", "Gets ...", "Sets ..."
+Forbidden: do not write feature lists or marketing language. Do not explain concepts that belong in a developer guide. Do not pad with "this class provides..." — just show what it does. Do not repeat property names as their descriptions.

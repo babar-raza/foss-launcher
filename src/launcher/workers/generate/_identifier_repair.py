@@ -7,7 +7,7 @@ and ``Worksheet`` exist). This module provides a single deterministic pass that:
 1. Builds a "known" set from the extracted ``ApiSurface``.
 2. Builds an "exempt" set of Python builtins, primitives, and generic proper nouns.
 3. Scans prose segments for PascalCase identifiers not in known/exempt sets.
-4. In prose: replaces the token with ``[identifier omitted]``.
+4. In prose: strips the hallucinated token (TC-EVAL-501: no visible sentinel).
 5. In code blocks: appends a comment noting the unknown identifier.
 6. Returns the repaired text and an audit list of every replacement made.
 
@@ -381,9 +381,13 @@ def _repair_prose_segment(
             if _is_substring_of_known(token, known_set):
                 return token
             repairs.append(token)
-            return "[identifier omitted]"
+            return ""  # TC-EVAL-501: strip hallucinated token instead of inserting sentinel
 
         new_line = _PASCAL_RE.sub(_replace_token, line)
+        # TC-EVAL-501: clean up artifacts from token removal (double spaces, orphan punctuation)
+        new_line = re.sub(r"  +", " ", new_line)  # collapse multiple spaces
+        new_line = re.sub(r" ([.,;:!?])", r"\1", new_line)  # remove space before punctuation
+        new_line = re.sub(r"^\s+$", "\n", new_line) if new_line.strip() == "" else new_line
         repaired_lines.append(new_line)
 
     return "".join(repaired_lines), repairs

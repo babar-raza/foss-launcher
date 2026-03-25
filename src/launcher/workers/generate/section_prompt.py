@@ -17,10 +17,122 @@ from launcher.models.product import (
 )
 from launcher.models.understanding import PlannedPage
 from launcher.shared.page_skeletons import SkeletonSection
-from launcher.shared.platform_utils import get_lang_tag
+from launcher.shared.platform_utils import get_install_cmd, get_lang_tag
 
 
 _PROMPT_PATH = Path(__file__).resolve().parents[2] / "prompts" / "section_writer.txt"
+
+# TC-CPP-411: Platform-aware language tag for verification code fences.
+_VERIFICATION_LANG: dict[str, str] = {
+    "python": "python",
+    "dotnet": "csharp",
+    "java": "java",
+    "cpp": "cpp",
+    "node": "javascript",
+    "typescript": "typescript",
+}
+
+# ---------------------------------------------------------------------------
+# TC-FIX-214: Prose contract loading
+# ---------------------------------------------------------------------------
+
+_PROSE_CONTRACTS_DIR: Path = Path(__file__).resolve().parents[2] / "prompts" / "prose_contracts"
+_prose_contract_cache: dict[str, str] = {}
+
+
+def _load_prose_contract(page_role: str) -> str:
+    """Load the prose contract for *page_role*, falling back to ``_default.txt``."""
+    if page_role in _prose_contract_cache:
+        return _prose_contract_cache[page_role]
+
+    path = _PROSE_CONTRACTS_DIR / f"{page_role}.txt"
+    if not path.is_file():
+        path = _PROSE_CONTRACTS_DIR / "_default.txt"
+    if not path.is_file():
+        _prose_contract_cache[page_role] = ""
+        return ""
+
+    text = path.read_text(encoding="utf-8").strip()
+    _prose_contract_cache[page_role] = text
+    return text
+
+
+# ---------------------------------------------------------------------------
+# TC-GEN-212: Platform-aware import conventions for section_writer.txt
+# ---------------------------------------------------------------------------
+
+_IMPORT_KEYWORD: dict[str, str] = {
+    "python": "import",
+    "java": "import",
+    "dotnet": "using",
+    "cpp": "#include",
+    "node": "require/import",
+    "typescript": "import",
+}
+
+
+def _build_import_statement(platform: str, code_import: str) -> str:
+    """Build the canonical import statement for the platform."""
+    kw = _IMPORT_KEYWORD.get(platform, "import")
+    if platform == "dotnet":
+        return f"using {code_import};"
+    if platform == "cpp":
+        return f'#include <{code_import}>'
+    if platform in ("node", "typescript"):
+        return f'import {{ ... }} from "{code_import}";'
+    if platform == "java":
+        return f"import {code_import}.*;"
+    # python and fallback
+    return f"{kw} {code_import}"
+
+
+def _build_wrong_import_warning(platform: str, code_import: str) -> str:
+    """Build a platform-appropriate wrong-import warning, or empty string."""
+    if platform == "python" and "aspose" in code_import.lower():
+        return ' If you write "import aspose.cells" or any dotted Aspose path that differs from the one above, your output is wrong.'
+    if platform == "cpp":
+        return (
+            f' Do NOT append, modify, or extend the namespace. '
+            f'For example, NEVER write `{code_import}::Foss` or any sub-namespace not listed in the API SURFACE.'
+        )
+    return ""
+
+
+def _build_import_rule_block(platform: str, code_import: str) -> str:
+    """Build the CRITICAL IMPORT RULE block for section_writer.txt."""
+    if platform == "python":
+        return (
+            f"CRITICAL IMPORT RULE: The ONLY valid Python import for this product is "
+            f"`{code_import}`. NEVER write `import aspose.cells`, `import aspose.pydrawing`, "
+            f"`import Aspose.Cells`, or any dotted Aspose path that differs from `{code_import}`. "
+            f"ALWAYS write: `import {code_import}`. Any other import path is WRONG and will be rejected"
+        )
+    if platform == "dotnet":
+        return (
+            f"CRITICAL IMPORT RULE: The ONLY valid .NET using directive for this product is "
+            f"`using {code_import};`. NEVER write `using Aspose.Cells`, `using aspose_cells_foss`, "
+            f"or any namespace not matching `{code_import}`. ALWAYS write: `using {code_import};`"
+        )
+    if platform == "java":
+        return (
+            f"CRITICAL IMPORT RULE: The ONLY valid Java import for this product is "
+            f"`import {code_import}.*;` (or specific classes). NEVER write `import aspose.cells`, "
+            f"`import Aspose.Cells`, or any package path not starting with `{code_import}`. "
+            f"ALWAYS write: `import {code_import}.*;<your specific class imports>`"
+        )
+    if platform == "cpp":
+        return (
+            f"CRITICAL IMPORT RULE: The ONLY valid C++ namespace for this product is "
+            f"`{code_import}`. All `#include` directives and `using namespace` declarations "
+            f"MUST use exactly `{code_import}`. Do NOT append, modify, or extend the namespace "
+            f"(e.g., do NOT use `{code_import}::Foss` or any other variant). "
+            f"NEVER write Python-style imports or .NET-style using directives"
+        )
+    # Fallback for node/typescript/unknown
+    return (
+        f"CRITICAL IMPORT RULE: The ONLY valid import for this product is `{code_import}`. "
+        f"Do NOT use any other import path"
+    )
 
 # ---------------------------------------------------------------------------
 # Reference-page role awareness (TC-3801)
@@ -50,7 +162,7 @@ _FORMAT_ELIGIBLE_ROLES: frozenset[str] = frozenset({
 _INSTALL_REFERENCE_PAGE_ROLES: frozenset[str] = frozenset({
     "install",
     "installation",
-    "getting-started",
+    "getting_started",
 })
 
 _REFERENCE_PREAMBLE: str = (
@@ -986,7 +1098,7 @@ def build_section_prompt(
         effective_max = min(effective_max, tier_max)
 
     # Load and format prompt template
-    # Use runtime_import for Python code; canonical_import for other platforms
+    # TC-GEN-212: code_import = what to write in code; canonical_import = pip package name
     code_import = product.runtime_import or product.canonical_import
     template = _PROMPT_PATH.read_text(encoding="utf-8")
     # TC-5160: Context-aware empty-claims fallback.
@@ -1008,9 +1120,18 @@ def build_section_prompt(
     else:
         _claims_fallback = claims_block
 
+    # TC-GEN-212: Build platform-aware import convention strings
+    _import_statement = _build_import_statement(product.platform, code_import)
+    _wrong_import_warning = _build_wrong_import_warning(product.platform, code_import)
+    _import_rule_block = _build_import_rule_block(product.platform, code_import)
+
     result = template.format(
         display_name=product.display_name,
-        canonical_import=code_import,
+        canonical_import=product.canonical_import,
+        code_import=code_import,
+        import_statement=_import_statement,
+        wrong_import_warning=_wrong_import_warning,
+        import_rule_block=_import_rule_block,
         platform=product.platform,
         page_title=page.title,
         page_role=_page_role_str,
@@ -1032,19 +1153,43 @@ def build_section_prompt(
         skills_block=skills_block,
         skip_instruction=skip_instruction,
         evidence_note=evidence_note,  # TC-5161: injected via template placeholder
+        prose_contract_block=_load_prose_contract(_page_role_str),
     )
 
-    # TC-4227: Inject a prominent CANONICAL IMPORT reminder at the very top of the prompt.
-    # The template already mentions canonical_import in CONTEXT and STRICT RULES, but LLMs
-    # with strong world knowledge still default to `import aspose.cells`. Prepending a
-    # dedicated reminder block — naming BOTH the correct and wrong import explicitly —
-    # overrides the world-knowledge bias. Keep it short (<5 lines) to avoid token waste.
-    _wrong_import_example = "aspose.cells" if "aspose" in code_import.lower() else f"import_{code_import.replace('_', '.')}"
-    _canonical_reminder = (
-        f"CANONICAL IMPORT REMINDER — THIS OVERRIDES YOUR WORLD KNOWLEDGE:\n"
-        f"CORRECT:  import {code_import}\n"
-        f"WRONG:    import {_wrong_import_example}  ← NEVER write this\n\n"
-    )
+    # TC-4227 + TC-GEN-212: Platform-aware canonical import reminder at the top.
+    # Overrides LLM world-knowledge bias toward commercial import paths.
+    _kw = _IMPORT_KEYWORD.get(product.platform, "import")
+    if product.platform == "python":
+        _wrong_import_example = "aspose.cells" if "aspose" in code_import.lower() else f"import_{code_import.replace('_', '.')}"
+        _canonical_reminder = (
+            f"CANONICAL IMPORT REMINDER — THIS OVERRIDES YOUR WORLD KNOWLEDGE:\n"
+            f"CORRECT:  import {code_import}\n"
+            f"WRONG:    import {_wrong_import_example}  \u2190 NEVER write this\n\n"
+        )
+    elif product.platform == "dotnet":
+        _canonical_reminder = (
+            f"CANONICAL IMPORT REMINDER — THIS OVERRIDES YOUR WORLD KNOWLEDGE:\n"
+            f"CORRECT:  using {code_import};\n"
+            f"WRONG:    import {code_import}  \u2190 NEVER write Python-style imports\n\n"
+        )
+    elif product.platform == "java":
+        _canonical_reminder = (
+            f"CANONICAL IMPORT REMINDER — THIS OVERRIDES YOUR WORLD KNOWLEDGE:\n"
+            f"CORRECT:  import {code_import}.*;\n"
+            f"WRONG:    using {code_import}  \u2190 NEVER write .NET-style directives\n\n"
+        )
+    elif product.platform == "cpp":
+        _canonical_reminder = (
+            f"CANONICAL IMPORT REMINDER \u2014 THIS OVERRIDES YOUR WORLD KNOWLEDGE:\n"
+            f"CORRECT:  using namespace {code_import};\n"
+            f"WRONG:    using namespace {code_import}::Foss;  \u2190 NEVER extend the namespace\n"
+            f"WRONG:    import {code_import}  \u2190 NEVER write Python-style imports\n\n"
+        )
+    else:
+        _canonical_reminder = (
+            f"CANONICAL IMPORT REMINDER:\n"
+            f"CORRECT:  {_import_statement}\n\n"
+        )
     result = _canonical_reminder + result
 
     # TC-HYBRID-04: Inject install recipe block for install/getting-started pages.
@@ -1057,7 +1202,7 @@ def build_section_prompt(
         )
         if getattr(install_recipe, "verification_code", ""):
             _install_block += (
-                "```python\n" + install_recipe.verification_code + "\n```\n"
+                f"```{_VERIFICATION_LANG.get(product.platform, 'python')}\n" + install_recipe.verification_code + "\n```\n"
             )
         result = result + _install_block
 
@@ -1168,7 +1313,7 @@ def build_section_prompt(
     # in the first paragraph so the intro reads as a proper getting-started guide.
     # NOTE: route_consistency evaluator already skips getting_started pages (_SKIP_ROLES);
     # this directive is for prose quality, not evaluator compliance.
-    if section_index == 0 and getattr(page, "page_role", "") in ("getting_started", "getting-started"):
+    if section_index == 0 and getattr(page, "page_role", "") == "getting_started":  # TC-5196: canonical form only
         _intro_product_name = product.display_name
         result = result + (
             f"\n\nINTRO QUALITY REQUIREMENT: Your introduction paragraph MUST mention"
@@ -1184,24 +1329,55 @@ def build_section_prompt(
     return result
 
 
+# ---------------------------------------------------------------------------
+# TC-FIX-214: Affinity-based claim routing
+# ---------------------------------------------------------------------------
+
+_TAG_CLAIM_AFFINITY: dict[str, set[str]] = {
+    "faq": {"troubleshoot", "feature", "config"},
+    "install": {"config"},
+    "methods": {"api"},
+    "formats": {"format"},
+    "overview": {"feature", "api", "format", "computation"},
+    "troubleshooting": {"troubleshoot", "config"},
+    "examples": {"api", "feature", "computation"},
+    "see_also": set(),
+}
+
+
 def _distribute_claims(
-    claims: list[Claim], section_idx: int, total_sections: int
+    claims: list[Claim],
+    section_idx: int,
+    total_sections: int,
+    *,
+    semantic_tag: str = "",
 ) -> list[Claim]:
-    """Distribute claims across sections.
+    """Distribute claims across sections with optional affinity routing.
 
     TC-3879 Wave 1 (Gap1): When fewer claims than sections, return ALL claims to every
     under-provisioned section so each section has full context to write from.
-    Previously returned a single round-robin pick which caused 0-unique-claim sections
-    and boilerplate content. The section heading and directive differentiate output;
-    cross-section deduplication handles any resulting similarity.
 
-    When claims >= sections: round-robin assignment (each section gets its own slice).
+    TC-FIX-214: When *semantic_tag* matches a key in ``_TAG_CLAIM_AFFINITY``,
+    filter claims to matching kinds first. Falls back to round-robin if affinity
+    yields nothing (starvation guard).
+
+    When claims >= sections and no affinity: round-robin assignment.
     """
     if not claims or total_sections <= 0:
         return []
     if len(claims) < total_sections:
         # All claims to every under-provisioned section — let heading+directive differentiate
         return list(claims)
+
+    # Affinity routing: filter by kind when tag is known
+    if semantic_tag and semantic_tag in _TAG_CLAIM_AFFINITY:
+        wanted_kinds = _TAG_CLAIM_AFFINITY[semantic_tag]
+        if wanted_kinds:
+            matched = [c for c in claims if c.kind in wanted_kinds]
+            if matched:
+                return matched
+
+    # Default: round-robin
     return [c for i, c in enumerate(claims) if i % total_sections == section_idx]
 
 

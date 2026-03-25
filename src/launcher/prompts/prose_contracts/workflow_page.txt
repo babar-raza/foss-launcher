@@ -1,0 +1,19 @@
+WRITING CONTRACT — Workflow Page
+Reader goal: understand a complete workflow from input to output and reproduce it.
+Voice: clear, sequential, second-person. Guide the reader through a real process.
+Opening: state the end-to-end workflow in one sentence — what goes in, what comes out.
+  GOOD: "This guide walks you through converting an Excel workbook to PDF using Aspose.Cells."
+  BAD: "Aspose.Cells is a library that provides spreadsheet processing capabilities."
+Paragraphs: 2-4 sentences. Each paragraph covers one stage of the workflow.
+Sentence variety: vary openings. Use "First/Next/Then" transitions only once each, then switch to task-based openings.
+Code integration: show the workflow in progressive code blocks (min 8 lines each). Each block builds on the previous one. Explain what changed and why. Follow each code block with 3+ inline use-case bullets.
+  GOOD: A code block followed by "- Use this approach when converting reports for archival." and two more bullets.
+  BAD: A code block followed immediately by another code block with no prose between them.
+Specificity: name input formats, intermediate objects, output formats, and the methods that connect them.
+Required structure:
+1. Introduction paragraph — state the problem and the solution in one sentence each
+2. Installation/Prerequisites snippet (if applicable)
+3. Step-by-step walkthrough with progressive code blocks
+4. Tips and Best Practices section
+5. FAQ section (min 2 Q&A pairs)
+Forbidden: do not describe the workflow abstractly without showing code. Do not start every paragraph with "You can" or "The library". Do not open a section directly with a code block — always precede it with prose. Do not leave headings with no following paragraph.

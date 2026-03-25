@@ -1,0 +1,11 @@
+WRITING CONTRACT — General
+Reader goal: learn something specific and actionable from this section.
+Voice: clear, professional, second-person where appropriate.
+Opening: lead with the main point — what the reader will learn or do. Do not start with a product definition.
+  GOOD: "To load a spreadsheet from disk, pass the file path to the Workbook constructor."
+  BAD: "Aspose.Cells is a library that provides comprehensive spreadsheet processing features."
+Paragraphs: 2-4 sentences. Each paragraph should advance one idea or step.
+Sentence variety: vary sentence openings — no 3+ consecutive sentences starting with the same subject pattern (e.g. "You can", "The library", "This method").
+Code integration: explain what each code block demonstrates before showing it. State the expected result after.
+Specificity: use concrete class names, method names, file formats, and outputs instead of generic verbs like "supports" or "provides".
+Forbidden: do not start sections with "{display_name} is a library that...". Do not write paragraphs that only restate the heading. Do not use generic transitions like "Let's explore" or "In this section we will".
