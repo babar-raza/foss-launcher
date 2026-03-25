@@ -14,7 +14,12 @@
       "Bash(ls c:/Users/prora/OneDrive/Documents/GitHub/foss-launcher-v2/plans/taskcards/TC-3*.md)",
       "Bash(PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/orchestrator/test_stream_progress.py tests/unit/orchestrator/test_langgraph_checkpointer.py tests/unit/orchestrator/test_publish_gate.py -v)",
       "Bash(PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/workers/test_publish.py -v)",
-      "Bash(grep -v '```')"
+      "Bash(grep -v '```')",
+      "Bash(PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/workers/understand/test_extract.py::TestCSharpTestSlicing -v --tb=short)",
+      "Bash(PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/workers/generate/test_claim_confidence_disclosure.py -v)",
+      "Bash(python -c \":*)",
+      "Bash(ls \"c:\\\\Users\\\\prora\\\\OneDrive\\\\Documents\\\\GitHub\\\\foss-launcher\\\\plans\\\\taskcards\"\" | grep -oP \"TC-d+ \")",
+      "Bash(sort -t- -k2 -n)"
     ]
   }
 }

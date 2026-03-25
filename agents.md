@@ -359,6 +359,30 @@ eligible repos in one command.
 | `--template` | No | Custom base template YAML for generated configs |
 | `--verbose / -v` | No | Debug logging |
 
+### Clone Cache Architecture
+
+`clone_repo_cached()` (in `src/launcher/workers/intake/acquisition.py`) stores clones at:
+
+```
+{work_dir.parent.parent}/.clone_cache/{brand}_{family}_{platform}/
+```
+
+The cache root depends on `work_dir`, which differs between workflows:
+
+| Workflow | `work_dir` | Resolved cache root |
+|----------|-----------|---------------------|
+| Pipeline (`run_loop`) | `runs/{run_id}/work/` | `runs/.clone_cache/` |
+| Pre-pipeline scripts (`intake onboard`, `migrate_clone_cache.py`) | `intake/phase1_artifacts/…/work/` | `intake/.clone_cache/` |
+
+**Both caches are real and actively used.** A migration or cleanup targeting one
+does not affect the other. Stale cache eviction (`_STALE_CACHE_DAYS = 7`) applies
+to both via the `.clone_timestamp` marker written inside each cache directory.
+
+To audit cache health across all runs:
+```bash
+.venv/Scripts/python.exe scripts/audit_clone_cache.py
+```
+
 ---
 
 ## 3. The Sandwich Model (Rule 5)
@@ -473,10 +497,39 @@ has: `content_path`, `action`, `old_grade`, `new_grade`, `source_run_id`.
 `PromotionAction` values: `promoted`, `skipped_grade_low`,
 `skipped_no_improvement`, `skipped_same_hash`, `skipped_missing_file`.
 
-To manually trigger promotion:
+To manually trigger content promotion:
 ```bash
 .venv/Scripts/python.exe -m launcher.cli.main deploy promote --run-dir runs/<run-id>
 ```
+
+### Metadata Promotion (phase_store/)
+
+**Automatic behavior** (TC-5190): `run_loop.execute_run()` promotes
+`scout.json` and `understand.json` to `phase_store/{family}/{platform}/`
+after every run where those workers completed — including partial runs
+(`--stop-after understand`). This is separate from content/IR promotion.
+
+| Run type | Content/IR promoted? | Metadata promoted? |
+|----------|:--------------------:|:------------------:|
+| Full run (all workers) | Yes (grade-gated) | Yes |
+| Partial (`--stop-after understand`) | No | Yes |
+| Partial (`--stop-after scout`) | No | Yes (scout.json only) |
+
+**Why metadata is not grade-gated**: Scout and Understand phase JSONs are
+infrastructure metadata (files_enumerated, format_matrix, claims). They
+reflect the repo's current state, not content quality. They must be updated
+on every run where those workers completed.
+
+**Idempotency**: Uses atomic `os.replace()` — safe to call multiple times.
+Full runs promote metadata twice (run_loop + promote_phase_snapshots); this
+is harmless.
+
+To manually trigger metadata promotion:
+```bash
+.venv/Scripts/python.exe -m launcher.cli.main deploy metadata-promote <run-dir>
+```
+
+Auto-detects `family` and `platform` from `run_config.json` in the run directory.
 
 ### Content Repo Push (deploy/ → aspose.org git repo)
 
@@ -636,6 +689,16 @@ PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/unit/shared/ -v
 PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest -k "slug" -v           # keyword filter
 PYTHONHASHSEED=0 .venv/Scripts/python.exe -m pytest tests/integration/ -v
 ```
+
+### Test Reliability — Cache Cleanup
+
+Before large test runs (especially after switching branches or after many file changes), clear the bytecode cache to avoid false failures:
+
+```bash
+find . -name '__pycache__' -exec rm -rf {} + 2>/dev/null; true
+```
+
+Then run the full suite. This adds ~3 seconds but prevents stale `.pyc` false negatives.
 
 ### Mock LLM provider pattern
 
