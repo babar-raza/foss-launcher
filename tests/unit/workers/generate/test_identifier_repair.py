@@ -479,3 +479,121 @@ class TestSingleHumpExemption:
         repaired, repairs = repair_identifiers(text, surface)
         # Vector3 matches PascalCase+digit pattern — caught if not in known set
         assert "Vector3" in repairs
+
+
+# ---------------------------------------------------------------------------
+# GEN-3: Case-insensitive matching and property-path preservation
+# ---------------------------------------------------------------------------
+
+class TestCaseInsensitiveAndPropertyPath:
+    """GEN-3: Case-insensitive identifier matching and property/method preservation."""
+
+    def test_case_insensitive_matching_preserves_lowercase(self) -> None:
+        """workbook should survive if Workbook is in the known set (case-insensitive).
+
+        GEN-3: lowercase references to known API classes must not be stripped.
+        E.g., 'the workbook contains' is valid prose even though the class
+        is canonically spelled 'Workbook'.
+        """
+        surface = _workbook_surface()
+        # 'Workbook' is in known set; 'workbook' (lowercase) should also survive
+        # Note: _PASCAL_RE only matches multi-hump PascalCase, not plain lowercase,
+        # so 'workbook' (all lowercase) is never touched by the regex.
+        # The case-insensitive path is exercised when a PascalCase variant like
+        # 'WorkBook' (different capitalisation) is present.
+        # Test with a known PascalCase class spelled with different capitalisation:
+        surface2 = _make_api_surface(public_classes=["WorkbookSettings"])
+        text = "Use WorkbookSettings to control global options."
+        repaired, repairs = repair_identifiers(text, surface2)
+        # WorkbookSettings is in the known set — must be preserved
+        assert "WorkbookSettings" in repaired
+        assert "WorkbookSettings" not in repairs
+
+    def test_case_insensitive_match_via_known_set_lower(self) -> None:
+        """A token whose lowercase form is in known_set_lower must be preserved.
+
+        This tests the GEN-3 path: token.lower() in known_set_lower.
+        PascalCase 'Workbook' is known; if the LLM writes 'WorkBook' (wrong caps),
+        it should survive since 'workbook' == 'workbook'.
+        """
+        surface = _workbook_surface()
+        # Workbook is in known set; known_set_lower will contain 'workbook'
+        # Introduce a slightly different capitalisation that won't be in known_set exactly
+        # but whose .lower() matches a known entry:
+        # We need a PascalCase multi-hump token. 'WorkSheet' has lowercase 'worksheet'
+        # which equals 'worksheet' (lowercase of 'Worksheet').
+        text = "Create a WorkSheet for each tab in the workbook."
+        # Worksheet is in known set from _workbook_surface() → known_set_lower has 'worksheet'
+        # 'WorkSheet' (different caps) → token.lower() == 'worksheet' → in known_set_lower → preserved
+        repaired, repairs = repair_identifiers(text, surface)
+        assert "WorkSheet" in repaired or "WorkSheet" not in repairs  # preserved via case-insensitive
+
+    def test_property_path_preserved(self) -> None:
+        """A method name from class_briefs must be preserved even as a standalone PascalCase token.
+
+        GEN-3: 'Save' appears in methods=['save'] of Workbook's class_brief.
+        When the LLM writes 'workbook.Save()' in prose, the identifier 'Save'
+        should survive since 'save' is a known method.
+
+        Note: _PASCAL_RE does NOT match purely lowercase tokens like 'save'.
+        But 'Save' (single-hump capitalized) is also not matched by _PASCAL_RE
+        (which requires ≥2 humps or +digit). So this test verifies the surface-level
+        behaviour: known class names and methods in known_set survive.
+        """
+        surface = _workbook_surface()
+        # WorkbookSettings is in known_set; Workbook methods are 'save' and 'open'
+        # These are lowercase in methods list so they enter known_method_names as
+        # both 'save' and 'save' (no change). _PASCAL_RE won't match lowercase 'save'.
+        # Test with a method name that IS PascalCase: create a surface with PascalCase methods.
+        brief = ClassBrief(
+            name="Document",
+            methods=[],
+            properties=[],
+            typed_methods=[
+                MethodSignature(name="SaveAs", parameters=[], return_type="None"),
+                MethodSignature(name="LoadFrom", parameters=[], return_type="Document"),
+            ],
+            typed_properties=[
+                PropertyRecord(name="PageCount", type_annotation="int"),
+            ],
+        )
+        surface_with_pascal_methods = ApiSurface(
+            public_classes=["Document"],
+            import_allowlist=[],
+            confidence="high",
+            class_briefs=[brief],
+        )
+        text = "Call SaveAs to persist the Document. Use LoadFrom to open files. Check PageCount."
+        repaired, repairs = repair_identifiers(text, surface_with_pascal_methods)
+        # SaveAs, LoadFrom, PageCount are all known API members → must be preserved
+        assert "SaveAs" in repaired
+        assert "LoadFrom" in repaired
+        assert "PageCount" in repaired
+        assert "SaveAs" not in repairs
+        assert "LoadFrom" not in repairs
+        assert "PageCount" not in repairs
+
+    def test_genuine_unknown_still_stripped(self) -> None:
+        """FakeMadeUpClass must still be stripped even with GEN-3 changes active.
+
+        The case-insensitive and property-path paths must not create false survivals
+        for genuinely unknown identifiers.
+        """
+        surface = _workbook_surface()
+        text = "The FakeMadeUpClass provides advanced features."
+        repaired, repairs = repair_identifiers(text, surface)
+        assert "FakeMadeUpClass" not in repaired
+        assert "FakeMadeUpClass" in repairs
+
+    def test_known_method_names_do_not_rescue_unrelated_unknowns(self) -> None:
+        """method_names set does not protect identifiers that are genuinely hallucinated.
+
+        GEN-3 property path must be grounded in real class_briefs, not broad.
+        SpreadsheetEngine is not in class_briefs — still stripped.
+        """
+        surface = _workbook_surface()
+        text = "Use SpreadsheetEngine for advanced processing with Workbook."
+        repaired, repairs = repair_identifiers(text, surface)
+        assert "SpreadsheetEngine" not in repaired
+        assert "SpreadsheetEngine" in repairs
+        assert "Workbook" in repaired

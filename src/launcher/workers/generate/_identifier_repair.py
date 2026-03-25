@@ -317,6 +317,45 @@ def _build_known_set(api_surface: "ApiSurface") -> frozenset[str]:
     return frozenset(known)
 
 
+def _build_known_set_lower(known_set: frozenset[str]) -> frozenset[str]:
+    """Build a lowercase version of the known set for case-insensitive matching.
+
+    GEN-3: Allows lowercase references (e.g. ``workbook``) to survive when
+    ``Workbook`` is in the known set.  This prevents over-stripping of valid
+    lowercase API references in prose.
+    """
+    return frozenset(k.lower() for k in known_set)
+
+
+def _build_method_names_set(api_surface: "ApiSurface") -> frozenset[str]:
+    """Build a set of all method and property names (lower and original case).
+
+    GEN-3: Preserves property-path tokens like ``save`` or ``worksheets`` when
+    they appear as method/property names in any ``class_briefs`` entry.  Both
+    original case and lowercase are included so the check is case-insensitive.
+    """
+    method_names: set[str] = set()
+    for brief in (api_surface.class_briefs or []):
+        for method in (brief.typed_methods or []):
+            if method.name:
+                method_names.add(method.name)
+                method_names.add(method.name.lower())
+        for prop in (brief.typed_properties or []):
+            if prop.name:
+                method_names.add(prop.name)
+                method_names.add(prop.name.lower())
+        # Legacy string lists
+        for m in (brief.methods or []):
+            if m:
+                method_names.add(m)
+                method_names.add(m.lower())
+        for p in (brief.properties or []):
+            if p:
+                method_names.add(p)
+                method_names.add(p.lower())
+    return frozenset(method_names)
+
+
 def _build_exempt_set(product_display_name: str = "") -> frozenset[str]:
     """Build the complete exempt set including product display name tokens."""
     exempt: set[str] = set()
@@ -356,12 +395,23 @@ def _repair_prose_segment(
     segment: str,
     known_set: frozenset[str],
     exempt_set: frozenset[str],
+    known_set_lower: frozenset[str] | None = None,
+    known_method_names: frozenset[str] | None = None,
 ) -> tuple[str, list[str]]:
     """Replace hallucinated PascalCase tokens in a prose segment.
 
     Skips markdown header lines.
     Returns (repaired_segment, repairs_list).
+
+    GEN-3 additions:
+    - ``known_set_lower``: frozenset of lowercase identifiers for case-insensitive
+      matching.  ``workbook`` survives if ``Workbook`` is known.
+    - ``known_method_names``: frozenset of method/property names (lower + original)
+      from class_briefs.  Tokens matching a real API method/property are preserved.
     """
+    _ksl = known_set_lower or frozenset()
+    _kmn = known_method_names or frozenset()
+
     lines = segment.splitlines(keepends=True)
     repaired_lines: list[str] = []
     repairs: list[str] = []
@@ -380,6 +430,12 @@ def _repair_prose_segment(
                 return token
             if _is_substring_of_known(token, known_set):
                 return token
+            # GEN-3: case-insensitive match — preserve lowercase refs to known identifiers
+            if token.lower() in _ksl:
+                return token
+            # GEN-3: property/method name match — preserve known API member names
+            if token.lower() in _kmn or token in _kmn:
+                return token
             repairs.append(token)
             return ""  # TC-EVAL-501: strip hallucinated token instead of inserting sentinel
 
@@ -397,6 +453,8 @@ def _repair_code_segment(
     segment: str,
     known_set: frozenset[str],
     exempt_set: frozenset[str],
+    known_set_lower: frozenset[str] | None = None,
+    known_method_names: frozenset[str] | None = None,
 ) -> tuple[str, list[str]]:
     """Annotate hallucinated PascalCase tokens in a code segment with comments.
 
@@ -404,7 +462,13 @@ def _repair_code_segment(
     For each hallucinated token in a code line, append a comment to that line.
     Only the first hallucinated token per line is annotated to avoid cluttered output.
     Returns (repaired_segment, repairs_list).
+
+    GEN-3 additions: ``known_set_lower`` and ``known_method_names`` applied
+    consistently with ``_repair_prose_segment``.
     """
+    _ksl = known_set_lower or frozenset()
+    _kmn = known_method_names or frozenset()
+
     lines = segment.splitlines(keepends=True)
     repaired_lines: list[str] = []
     repairs: list[str] = []
@@ -426,6 +490,12 @@ def _repair_code_segment(
             if token in exempt_set:
                 continue
             if _is_substring_of_known(token, known_set):
+                continue
+            # GEN-3: case-insensitive match
+            if token.lower() in _ksl:
+                continue
+            # GEN-3: property/method name match
+            if token.lower() in _kmn or token in _kmn:
                 continue
             hallucinated.append(token)
 
@@ -492,6 +562,9 @@ def repair_identifiers(
 
     known_set = _build_known_set(api_surface)
     exempt_set = _build_exempt_set(product_display_name)
+    # GEN-3: build lowercase and method-name sets for softened matching
+    known_set_lower = _build_known_set_lower(known_set)
+    known_method_names = _build_method_names_set(api_surface)
 
     # Split text into alternating prose / code-fence segments.
     # We walk line-by-line to track fence state.
@@ -529,9 +602,13 @@ def repair_identifiers(
 
     for seg_text, is_code in segments:
         if is_code:
-            repaired, repairs = _repair_code_segment(seg_text, known_set, exempt_set)
+            repaired, repairs = _repair_code_segment(
+                seg_text, known_set, exempt_set, known_set_lower, known_method_names
+            )
         else:
-            repaired, repairs = _repair_prose_segment(seg_text, known_set, exempt_set)
+            repaired, repairs = _repair_prose_segment(
+                seg_text, known_set, exempt_set, known_set_lower, known_method_names
+            )
         repaired_parts.append(repaired)
         all_repairs.extend(repairs)
 

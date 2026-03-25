@@ -12,8 +12,9 @@ CONTEXT:
 - Page title: {page_title}
 - Section position: {section_index} of {section_count}
 
-SECTION GUIDANCE:
-{content_hint}
+SECTION GUIDANCE (these are instructions for YOU as the writer — NEVER copy or paraphrase this guidance text into your output):
+Goal: {content_hint}
+DO NOT echo, quote, or restate the goal above. Write original technical prose that fulfills the goal.
 {structure_directive}
 
 {golden_reference_block}
@@ -56,6 +57,7 @@ SEO KEYWORDS (incorporate these terms naturally into your prose where they fit t
 - Heading blocks must use level >= 3 (the section heading at level 2 is added automatically)
 - Do NOT emit a heading block for the section heading "{section_heading}" — it is added automatically
 - Output ONLY a valid JSON array of BlockIR objects — no wrapper, no explanation
+- NEVER write a sentence of the form "{display_name} -- [description of what to write]". That pattern means you are outputting the section guidance instead of real content. Write REAL CONTENT.
 
 HALLUCINATION PREVENTION — THESE OVERRIDE ALL OTHER INSTRUCTIONS:
 - In code blocks: ONLY call methods and access properties listed in the API SURFACE above. If you need to demonstrate functionality but the required method is not in the API SURFACE, describe it in prose WITHOUT a code example instead of inventing a code call
