@@ -59,7 +59,10 @@ class ScoutWorker(WorkerContract):
 
         from launcher.workers.scout.scout import build_scout_inventory, run_scout
 
-        repo_info, repo_content, budget_log, budget_log_overflow = await run_scout(repo_dir)
+        repo_info, repo_content, budget_log, budget_log_overflow = await run_scout(
+            repo_dir, platform=intake.platform or "",
+            canonical_import=intake.canonical_import or "",
+        )
 
         # Set in-memory content for Understand (same-process fresh run)
         context.repo_content = repo_content
@@ -178,7 +181,7 @@ class ScoutWorker(WorkerContract):
                 ),
             })
 
-        meta_docs = [path for path in bundle.repo_info.doc_paths if _doc_skip_reason(path)]
+        meta_docs = [path for path in bundle.repo_info.doc_paths if _doc_skip_reason(path, is_external_repo=True)]
         if meta_docs:
             findings.append({
                 "category": "scout_meta_docs_selected",
@@ -229,6 +232,34 @@ class ScoutWorker(WorkerContract):
                 "message": (
                     f"Scout budget skipped {bundle.repo_info.important_files_skipped} "
                     f"high-rank file(s) (rank>=4). Check repo_info.skipped_paths for details."
+                ),
+            })
+
+        # Check 7: TC-5189 — C# repo should have "dotnet" in build_systems
+        if (
+            bundle.repo_info.shared_facts.primary_language == "csharp"
+            and "dotnet" not in bundle.repo_info.shared_facts.build_systems
+        ):
+            findings.append({
+                "category": "scout_csharp_no_build_system",
+                "severity": "medium",
+                "message": (
+                    "C# repo detected (primary_language='csharp') but 'dotnet' not "
+                    "in build_systems. Expected .csproj detection to populate this."
+                ),
+            })
+
+        # Check 8: Java repo should have "maven" or "gradle" in build_systems
+        if (
+            bundle.repo_info.shared_facts.primary_language == "java"
+            and not {"maven", "gradle"} & set(bundle.repo_info.shared_facts.build_systems)
+        ):
+            findings.append({
+                "category": "scout_java_no_build_system",
+                "severity": "medium",
+                "message": (
+                    "Java repo detected (primary_language='java') but neither 'maven' "
+                    "nor 'gradle' in build_systems."
                 ),
             })
 

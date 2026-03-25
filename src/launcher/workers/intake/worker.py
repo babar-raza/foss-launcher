@@ -57,11 +57,16 @@ class IntakeWorker(WorkerContract):
 
         try:
             allowed_orgs = load_allowed_org_prefixes(_INTAKE_CONFIG_PATH) or None
+            # TC-5175: seed mode forces a fresh clone to pre-populate .clone_cache/
+            force_seed = getattr(config, "pipeline_mode", "create") == "seed"
+            if force_seed:
+                logger.info("[Intake] seed mode — forcing fresh clone for %s", config.repo_url)
             repo_dir, repo_sha, is_fresh_clone = clone_repo_cached(
                 config.repo_url,
                 family=config.family,
                 platform=config.platform,
                 work_dir=context.run_dir / "work",
+                force_refresh=force_seed,
                 allowed_org_prefixes=list(allowed_orgs) if allowed_orgs else None,
             )
         except Exception as exc:

@@ -46,6 +46,8 @@ _BUDGET_LOG_MAX = 500
 
 async def run_scout(
     repo_dir: Path,
+    platform: str = "",  # SR-03: drives platform-aware budget selection
+    canonical_import: str = "",  # TC-5189: threaded to csproj selection
 ) -> tuple[RepoInfo, dict[str, str], list[dict], int]:
     """Fingerprint a pre-cloned repository and extract structural metadata.
 
@@ -53,6 +55,14 @@ async def run_scout(
     ----------
     repo_dir:
         Path to the cloned repository (provided by Intake worker).
+    platform:
+        Optional platform string (e.g. ``"cpp"``, ``"java"``, ``"dotnet"``).
+        Used to select a platform-appropriate content budget via
+        ``_PLATFORM_BUDGETS``. Unknown values fall back to the 1 MB default.
+    canonical_import:
+        Optional canonical import string (e.g. ``"Aspose.ThreeD"``).
+        TC-5189: Used for canonical_import-aware .csproj selection in
+        multi-project .NET repos.
 
     Returns
     -------
@@ -60,18 +70,27 @@ async def run_scout(
         - RepoInfo with file_tree, file_index, categorized paths, shared_facts
         - repo_content: dict[rel_path, content] for all text files under budget
     """
+    # SR-03: select budget based on platform; unknown platform → 1 MB default
+    budget_bytes = _PLATFORM_BUDGETS.get(platform, _DEFAULT_BUDGET_BYTES)
+    logger.info("[Scout] budget=%d bytes for platform=%r", budget_bytes, platform)
+
     # 1. Walk file tree with classification
     file_tree, file_index = _walk_file_tree(repo_dir)
 
+    # TC-FIX-01: Detect whether this is a cloned external product repo so the
+    # exact-name meta-doc filter is scoped correctly (see _doc_skip_reason).
+    _is_external_repo = ".clone_cache" in str(repo_dir).replace("\\", "/")
+
     # 2. Bulk read everything under budget (README will be read here, sanitized)
     repo_content, sanitize_redactions, sanitize_truncated, budget_log, budget_log_overflow, dropped_by_category, important_skipped = _read_repo_content(
-        repo_dir, file_index
+        repo_dir, file_index, budget_bytes=budget_bytes, is_external_repo=_is_external_repo
     )
 
     # 3. Selected evidence paths
     doc_paths = [
         p for p, e in file_index.items()
-        if e.category == FileCategory.doc and p in repo_content and not _doc_skip_reason(p)
+        if e.category == FileCategory.doc and p in repo_content
+        and not _doc_skip_reason(p, is_external_repo=_is_external_repo)
     ]
     example_paths = [
         p for p, e in file_index.items()
@@ -94,7 +113,7 @@ async def run_scout(
             break
 
     # 5. Extract shared facts (multi-platform)
-    shared_facts = _extract_shared_facts(repo_dir, file_tree, file_index)
+    shared_facts = _extract_shared_facts(repo_dir, file_tree, file_index, canonical_import=canonical_import)
 
     # TC-4056 Fix 7: Collect truly-skipped paths (budget exhausted, not just truncated).
     # Files with reason "per_file_cap" ARE in repo_content (just shortened) — exclude those.
@@ -204,6 +223,8 @@ def build_scout_inventory(
         "doc_selection": _selection_rows(FileCategory.doc, set(repo_info.doc_paths)),
         "example_selection": _selection_rows(FileCategory.example, set(repo_info.example_paths)),
         "truncated_files": [entry for entry in budget_log if entry.get("reason") == "per_file_cap"],
+        # TC-5192: Top-level count for quick diagnostics
+        "truncated_file_count": skip_reason_counts.get("per_file_cap", 0),
     }
 
 
@@ -266,6 +287,15 @@ def _walk_file_tree(
 
 _DEFAULT_BUDGET_BYTES = 1_000_000
 
+# SR-03: Platform-aware budget. C++ and large Java repos exceed the 1 MB default;
+# increasing the budget prevents core API files from being skipped.
+_PLATFORM_BUDGETS: dict[str, int] = {
+    "cpp": 4_000_000,        # C++ repos have large .cpp/.hpp files (65 KB+)
+    "java": 2_000_000,       # Large Java repos (Presentation.java 36 KB+)
+    "dotnet": 2_000_000,     # C# repos similar to Java in file density
+    "typescript": 1_500_000, # TS repos with bundled .d.ts files
+}
+
 # Priority order for reading files when budget is limited
 _CATEGORY_PRIORITY: list[FileCategory] = [
     FileCategory.doc,       # docs are highest priority
@@ -290,7 +320,18 @@ _DOC_IMPORTANCE_STEMS: frozenset[str] = frozenset({
 _SOURCE_IMPORTANCE_STEMS: frozenset[str] = frozenset({
     # Pre-normalized: "__init__" → "init" after underscore stripping.
     # IU-07: was "__init__" (with underscores) — never matched after normalization.
+    # Generic / Python entry points:
     "init", "main", "core", "base", "client", "api", "index",
+    # High-value Java / C++ / .NET library class names (SR-04).
+    # These appear as top-level public API classes in Aspose-style SDKs;
+    # ranking them higher ensures they are read before lower-value files
+    # when scout budget is limited.
+    "presentation", "workbook", "document", "scene", "spreadsheet",
+    "slide", "cell", "email", "message", "shape", "chart", "page",
+    "notebook", "drawing", "diagram",
+    # Common public-API gateway names across Java / C++ / .NET:
+    "factory", "builder", "converter", "loader", "parser", "renderer",
+    "exporter", "importer",
 })
 
 _STANDARD_DOC_EXTS: frozenset[str] = frozenset({".md", ".rst", ".txt"})
@@ -301,9 +342,13 @@ _STANDARD_SRC_EXTS: frozenset[str] = frozenset({
 _SIZE_SIGNAL_MIN: int = 200        # below = stub, no size bonus
 _SIZE_SIGNAL_MAX: int = 50_000     # above = likely generated, no size bonus
 _EXAMPLE_SCAFFOLD_NAMES: frozenset[str] = frozenset({"__init__.py", "conftest.py"})
-_META_DOC_EXACT_NAMES: frozenset[str] = frozenset({
+# CI/AI meta-files that must never be treated as product evidence in any repo.
+# These are operator-instructions files (Claude Code, Copilot, LLMs.txt) added
+# to repos as tooling configuration — they contain no product API evidence.
+_ALWAYS_SKIP_META_DOCS: frozenset[str] = frozenset({
     "agents.md", "claude.md", "copilot-instructions.md", "llms.md",
 })
+_META_DOC_EXACT_NAMES: frozenset[str] = frozenset()  # all names promoted to _ALWAYS_SKIP_META_DOCS
 _META_DOC_ROOT_KEYWORDS: frozenset[str] = frozenset({
     "readiness", "implementation", "summary", "status", "backlog",
     "roadmap", "plan", "notes",
@@ -314,11 +359,24 @@ def _normalized_stem(rel_path: str) -> str:
     return Path(rel_path).stem.lower().replace("-", "").replace("_", "")
 
 
-def _doc_skip_reason(rel_path: str) -> str:
-    """Return a deterministic skip reason for non-product documentation."""
+def _doc_skip_reason(rel_path: str, *, is_external_repo: bool = False) -> str:
+    """Return a deterministic skip reason for non-product documentation.
+
+    ``_ALWAYS_SKIP_META_DOCS`` (``agents.md``, ``claude.md``) are excluded from
+    all repos — internal and external — because they are foss-launcher operational
+    files added to every product repo and contain no product evidence.
+
+    For all other names in ``_META_DOC_EXACT_NAMES``, the filter is only applied
+    when ``is_external_repo=False`` (the launcher's own repo), preserving the
+    TC-FIX-01 behaviour for the remaining meta-doc names.
+    """
     lower = rel_path.lower().replace("\\", "/")
     name = Path(lower).name
-    if name in _META_DOC_EXACT_NAMES:
+    # TC-5170: Always skip launcher-operational meta-docs in every repo.
+    if name in _ALWAYS_SKIP_META_DOCS:
+        return "doc_ineligible_meta"
+    # TC-FIX-01: Skip exact-name filter for external (cloned product) repos.
+    if not is_external_repo and name in _META_DOC_EXACT_NAMES:
         return "doc_ineligible_meta"
     if "/" not in lower and _normalized_stem(lower) != "readme":
         if any(keyword in _normalized_stem(lower) for keyword in _META_DOC_ROOT_KEYWORDS):
@@ -421,6 +479,7 @@ def _read_repo_content(
     file_index: dict[str, FileEntry],
     *,
     budget_bytes: int = _DEFAULT_BUDGET_BYTES,
+    is_external_repo: bool = False,
 ) -> tuple[dict[str, str], int, int, list[dict], int, dict[str, int], int]:
     """Read all text files under the budget.
 
@@ -521,7 +580,7 @@ def _read_repo_content(
         for rel_path, entry in tier_files:
             skip_reason = ""
             if category == FileCategory.doc:
-                skip_reason = _doc_skip_reason(rel_path)
+                skip_reason = _doc_skip_reason(rel_path, is_external_repo=is_external_repo)
             elif category == FileCategory.example:
                 skip_reason = _example_skip_reason(rel_path)
             if skip_reason:
@@ -780,6 +839,7 @@ _INSTALL_CMD_MAP: dict[str, str] = {
     "rust": "cargo add {package}",
     "ruby": "gem install {package}",
     "php": "composer require {package}",
+    "cpp": "vcpkg install {package}",
 }
 
 
@@ -795,6 +855,7 @@ _LANG_MANIFEST_PRIORITY: dict[str, list[str]] = {
     "rust":       ["cargo_toml"],
     "ruby":       ["gemspec"],
     "php":        ["composer_json"],
+    "cpp":        [],
 }
 _ALL_MANIFEST_KEYS: list[str] = [
     "pyproject", "setup_cfg", "setup_py", "package_json",
@@ -806,6 +867,7 @@ def _extract_shared_facts(
     repo_dir: Path,
     file_tree: list[str],
     file_index: dict[str, FileEntry],
+    canonical_import: str = "",
 ) -> SharedFacts:
     """Extract deterministic facts from repository metadata files (multi-platform)."""
     filenames = {Path(p).name for p in file_tree}
@@ -815,6 +877,10 @@ def _extract_shared_facts(
         _BUILD_SYSTEM_MAP[name]
         for name in filenames & set(_BUILD_SYSTEM_MAP)
     )
+    # TC-4306: .csproj files have varying names so they can't match via filename set.
+    # Detect dotnet build system by extension pattern instead.
+    if any(name.endswith(".csproj") for name in file_tree) and "dotnet" not in build_systems:
+        build_systems = sorted(set(build_systems) | {"dotnet"})
 
     # Primary language from file_index (more accurate than just extensions)
     lang_counts: dict[str, int] = {}
@@ -855,7 +921,52 @@ def _extract_shared_facts(
     (
         package_name, version, license_type, module_path,
         description, python_requires, dependencies, entrypoints,
-    ) = _extract_package_metadata(repo_dir, primary_language)
+    ) = _extract_package_metadata(repo_dir, primary_language, canonical_import=canonical_import)
+
+    # SR-08: C++ CMake metadata — fills package_name/version/build_systems when
+    # the manifest-based extraction above returns nothing (C++ has no pyproject/pom).
+    cmake_path = repo_dir / "CMakeLists.txt"
+    if cmake_path.exists():
+        cmake_data = _parse_cmake(cmake_path)
+        if cmake_data.get("project_name") and (not package_name or package_name == "UNKNOWN"):
+            package_name = cmake_data["project_name"]
+        if cmake_data.get("version") and not version:
+            version = cmake_data["version"]
+        if "cmake" not in build_systems:
+            build_systems = sorted(set(build_systems) | {"cmake"})
+
+    # SR-12: extract TargetFramework(s) from .csproj for .NET repos
+    target_frameworks: list[str] = []
+    if primary_language == "csharp" or any(name.endswith(".csproj") for name in file_tree):
+        csproj_files = sorted(repo_dir.glob("**/*.csproj"))
+        _main_csproj = _select_main_csproj(csproj_files, repo_dir=repo_dir, canonical_import=canonical_import)
+        if _main_csproj:
+            try:
+                _csproj_content = _main_csproj.read_text(encoding="utf-8", errors="replace")
+                # <TargetFramework>net6.0</TargetFramework> (single)
+                _single_m = _re.search(
+                    r"<TargetFramework>\s*([^<\s]+)\s*</TargetFramework>",
+                    _csproj_content, _re.IGNORECASE,
+                )
+                if _single_m:
+                    _tf = _single_m.group(1).strip()
+                    if not _tf.startswith("$("):  # skip MSBuild variables
+                        target_frameworks = [_tf]
+                else:
+                    # <TargetFrameworks>net6.0;netstandard2.0</TargetFrameworks> (multi)
+                    _multi_m = _re.search(
+                        r"<TargetFrameworks>\s*([^<]+)\s*</TargetFrameworks>",
+                        _csproj_content, _re.IGNORECASE,
+                    )
+                    if _multi_m:
+                        target_frameworks = [
+                            f.strip() for f in _multi_m.group(1).split(";")
+                            if f.strip() and not f.strip().startswith("$(")
+                        ]
+                if target_frameworks:
+                    logger.debug("[Scout] .NET target_frameworks: %s from %s", target_frameworks, _main_csproj.name)
+            except Exception:
+                pass
 
     # Install command from primary language
     install_command = ""
@@ -883,14 +994,85 @@ def _extract_shared_facts(
         python_requires=python_requires,
         dependencies=dependencies,
         entrypoints=entrypoints,
+        target_frameworks=target_frameworks,
     )
 
 
-def _parse_csproj_first(repo_dir: Path) -> tuple[str, str, str, str, list[str], list[str]]:
-    """Find first *.csproj and parse it, returning a 6-tuple."""
-    csproj_files = list(repo_dir.glob("**/*.csproj"))
-    if csproj_files:
-        return _parse_csproj(csproj_files[0])
+def _select_main_csproj(
+    csproj_files: list[Path],
+    repo_dir: Path | None = None,
+    canonical_import: str = "",
+) -> Path | None:
+    """TC-4306/TC-5189: Select the main library .csproj from a multi-project repo.
+
+    Ranking (highest to lowest priority):
+    1. Non-test, non-exe project whose AssemblyName/PackageId matches canonical_import (+10)
+    2. Non-test, non-exe project (prefer shortest path)
+    3. Any non-test project
+    4. First file as last resort
+
+    Uses repo-relative paths for test detection to avoid false positives
+    from test-named directories in the filesystem above the repo root.
+
+    Returns None if csproj_files is empty.
+    """
+    if not csproj_files:
+        return None
+    if len(csproj_files) == 1:
+        return csproj_files[0]
+
+    ci_norm = canonical_import.lower().replace("-", ".").replace("_", ".") if canonical_import else ""
+
+    candidates = []
+    for csproj in csproj_files:
+        # Use repo-relative path for "test" detection; fall back to filename only.
+        try:
+            rel = csproj.relative_to(repo_dir) if repo_dir else csproj
+        except ValueError:
+            rel = csproj
+        parts_lower = [p.lower() for p in rel.parts]
+        is_test = any("test" in p for p in parts_lower)
+        is_exe = False
+        content = ""
+        try:
+            content = csproj.read_text(encoding="utf-8", errors="replace")
+            is_exe = bool(_re.search(r"<OutputType>\s*Exe\s*</OutputType>", content, _re.IGNORECASE))
+        except Exception:
+            pass
+
+        # TC-5189: Score by canonical_import match (mirrors _dotnet.py:detect_package_root)
+        ci_score = 0
+        if ci_norm and content and not is_test and not is_exe:
+            for tag in ("AssemblyName", "PackageId"):
+                m = _re.search(rf"<{tag}>\s*([^<]+)\s*</{tag}>", content, _re.IGNORECASE)
+                if m:
+                    val = m.group(1).strip().lower().replace("-", ".").replace("_", ".")
+                    if ci_norm in val or val in ci_norm or ci_norm.startswith(val) or val.startswith(ci_norm):
+                        ci_score = 10
+                        break
+
+        candidates.append((csproj, is_test, is_exe, ci_score, len(rel.parts)))
+
+    # Prefer non-test, non-exe; fall back to non-test; fall back to all
+    lib = [(p, t, e, s, d) for p, t, e, s, d in candidates if not t and not e]
+    if not lib:
+        lib = [(p, t, e, s, d) for p, t, e, s, d in candidates if not t]
+    if not lib:
+        lib = candidates
+
+    # Sort by: canonical_import score descending, then path depth ascending, then path alpha
+    lib.sort(key=lambda x: (-x[3], x[4], str(x[0])))
+    return lib[0][0]
+
+
+def _parse_csproj_first(
+    repo_dir: Path, canonical_import: str = "",
+) -> tuple[str, str, str, str, list[str], list[str]]:
+    """Find and parse the main *.csproj using TC-4306/TC-5189 ranking, returning a 6-tuple."""
+    csproj_files = sorted(repo_dir.glob("**/*.csproj"))
+    selected = _select_main_csproj(csproj_files, repo_dir=repo_dir, canonical_import=canonical_import)
+    if selected:
+        return _parse_csproj(selected)
     return "", "", "", "", [], []
 
 
@@ -905,6 +1087,7 @@ def _parse_gemspec_first(repo_dir: Path) -> tuple[str, str, str, str, list[str],
 def _extract_package_metadata(
     repo_dir: Path,
     primary_language: str = "",
+    canonical_import: str = "",
 ) -> tuple[str, str, str, str, str, str, list[str], list[str]]:
     """Try all known manifest formats to extract package metadata.
 
@@ -925,7 +1108,7 @@ def _extract_package_metadata(
         "cargo_toml":    lambda: _parse_cargo_toml(repo_dir / "Cargo.toml"),
         "composer_json": lambda: _parse_composer_json(repo_dir / "composer.json"),
         "pom_xml":       lambda: _parse_pom_xml(repo_dir / "pom.xml"),
-        "csproj":        lambda: _parse_csproj_first(repo_dir),
+        "csproj":        lambda: _parse_csproj_first(repo_dir, canonical_import=canonical_import),
         "gemspec":       lambda: _parse_gemspec_first(repo_dir),
     }
 
@@ -1182,6 +1365,81 @@ def _parse_composer_json(path: Path) -> tuple[str, str, str, str, list[str], lis
         description = ""
     deps = list((data.get("require") or {}).keys())
     return data.get("name", ""), data.get("version", ""), lic, description, deps, []
+
+
+# SR-08: C++ CMake metadata constants and parser
+_CMAKE_PSEUDO_TARGETS: frozenset[str] = frozenset({
+    "INTERFACE", "SHARED", "STATIC", "MODULE", "OBJECT", "ALIAS",
+})
+
+
+def _parse_cmake(cmake_path: Path) -> dict[str, Any]:
+    """Parse CMakeLists.txt for C++ library identity information.
+
+    Extracts:
+    - project_name: from project(NAME ...) or project(NAME VERSION X)
+    - version: from project(... VERSION X.Y.Z) or set_target_properties
+    - library_target: first add_library(TARGET ...) target name
+    - public_include_dirs: from target_include_directories(... PUBLIC ...)
+
+    Returns an empty dict on any parse failure.
+    """
+    result: dict[str, Any] = {}
+    try:
+        content = cmake_path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return result
+
+    # project(MyLib VERSION 24.1.0) or project(MyLib)
+    m = _re.search(
+        r"project\s*\(\s*([A-Za-z_][A-Za-z0-9_.-]*)"
+        r"(?:[^)]*VERSION\s+([\d.]+))?",
+        content, _re.IGNORECASE,
+    )
+    if m:
+        result["project_name"] = m.group(1).strip()
+        if m.group(2):
+            result["version"] = m.group(2).strip()
+
+    # add_library(TargetName [SHARED|STATIC|...] ...)
+    lib_m = _re.search(
+        r"add_library\s*\(\s*([A-Za-z_][A-Za-z0-9_.-]*)",
+        content, _re.IGNORECASE,
+    )
+    if lib_m:
+        target_name = lib_m.group(1).strip()
+        if target_name.upper() not in _CMAKE_PSEUDO_TARGETS:
+            result["library_target"] = target_name
+
+    # target_include_directories(TARGET PUBLIC dir1 dir2)
+    inc_m = _re.search(
+        r"target_include_directories\s*\([^)]*\bPUBLIC\b([^)]+)\)",
+        content, _re.IGNORECASE | _re.DOTALL,
+    )
+    if inc_m:
+        raw_dirs = inc_m.group(1).split()
+        public_dirs = [
+            d.strip('"') for d in raw_dirs
+            if d and d not in {"PRIVATE", "INTERFACE", "PUBLIC"}
+            and not d.startswith("$<")  # skip generator expressions
+        ]
+        if public_dirs:
+            result["public_include_dirs"] = public_dirs
+
+    # Version fallback: set_target_properties(TARGET PROPERTIES VERSION X.Y.Z)
+    if "version" not in result:
+        ver_m = _re.search(
+            r"set_target_properties\s*\([^)]*\bVERSION\s+([\d.]+)",
+            content, _re.IGNORECASE,
+        )
+        if ver_m:
+            result["version"] = ver_m.group(1).strip()
+
+    logger.debug(
+        "[Scout] cmake: project=%s version=%s target=%s",
+        result.get("project_name", ""), result.get("version", ""), result.get("library_target", ""),
+    )
+    return result
 
 
 def _parse_pom_xml(path: Path) -> tuple[str, str, str, str, list[str], list[str]]:

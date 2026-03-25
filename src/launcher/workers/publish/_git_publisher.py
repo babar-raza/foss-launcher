@@ -6,6 +6,7 @@ execution from untrusted ingested-repo directories).
 """
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 import shutil
@@ -32,6 +33,42 @@ def resolve_content_repo_dir(raw: str) -> Path:
     return Path(expanded).resolve()
 
 
+def _sha256_file(path: Path) -> str:
+    """Return the SHA-256 hex digest of a file's contents.
+
+    Args:
+        path: Absolute path to the file.
+
+    Returns:
+        Lowercase hexadecimal SHA-256 digest string.
+    """
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _has_manual_override(path: Path) -> bool:
+    """Return True if the file's first 20 lines contain a manual-override marker.
+
+    Files that contain ``# manual-override: true`` near the top are managed
+    by humans and must not be overwritten by the pipeline.
+
+    Args:
+        path: Absolute path to the file.
+
+    Returns:
+        True when the marker is present, False otherwise.
+    """
+    try:
+        with path.open(encoding="utf-8", errors="replace") as fh:
+            for _i, line in enumerate(fh):
+                if _i >= 20:
+                    break
+                if "manual-override: true" in line:
+                    return True
+    except OSError:
+        pass
+    return False
+
+
 def copy_to_content_repo(
     deploy_dir: Path,
     content_repo_dir: Path,
@@ -42,6 +79,12 @@ def copy_to_content_repo(
     Only copies files listed in promoted_content_paths (content_path strings
     without the .md suffix).  Creates parent directories as needed.
 
+    Files are skipped when:
+    - The destination already exists with identical SHA-256 content (TC-5166
+      fingerprint delta sync — avoids spurious commits).
+    - The destination contains ``# manual-override: true`` in its first 20
+      lines (TC-5166 manual override preservation).
+
     Args:
         deploy_dir: Root of the local deploy/ staging directory.
         content_repo_dir: Root of the cloned content repo.
@@ -49,7 +92,7 @@ def copy_to_content_repo(
             (e.g. ``"docs.aspose.org/3d/python/developer-guide/features"``).
 
     Returns:
-        List of absolute destination paths that were written.
+        List of absolute destination paths that were written (excludes skips).
     """
     written: list[Path] = []
     for content_path in promoted_content_paths:
@@ -59,6 +102,27 @@ def copy_to_content_repo(
             continue
         dest = content_repo_dir / (content_path + ".md")
         dest.parent.mkdir(parents=True, exist_ok=True)
+
+        # TC-5166: skip manual-override files
+        if dest.exists() and _has_manual_override(dest):
+            logger.warning(
+                "[GitPublisher] Skipped manual-override: %s",
+                dest.relative_to(content_repo_dir),
+            )
+            continue
+
+        # TC-5166: skip files with identical content (delta sync)
+        if dest.exists():
+            try:
+                if _sha256_file(src) == _sha256_file(dest):
+                    logger.debug(
+                        "[GitPublisher] Skipped unchanged: %s",
+                        dest.relative_to(content_repo_dir),
+                    )
+                    continue
+            except OSError:
+                pass  # fall through to unconditional copy on read error
+
         shutil.copy2(src, dest)
         written.append(dest)
         logger.debug("[GitPublisher] Copied %s → %s", src.name, dest.relative_to(content_repo_dir))

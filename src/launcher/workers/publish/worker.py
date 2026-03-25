@@ -18,6 +18,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+try:
+    import yaml as _yaml  # optional — used only for content_index.yaml
+except ImportError:
+    _yaml = None  # type: ignore[assignment]
+
 from launcher.models.base import LauncherBaseModel
 from launcher.models.content import ContentManifest, GeneratedPage
 from launcher.models.evaluation import EvaluationReport, Verdict
@@ -63,6 +68,10 @@ class PublishWorker(WorkerContract):
         promotion_report = None
         if context.config.output.deploy_dir:
             promotion_report, deployed_count = await _promote_to_deploy(context)
+
+        # TC-5166: Write content_index.yaml to knowledge/ for drift detection
+        if promotion_report and deployed_count > 0:
+            _write_content_index(promotion_report, manifest, context)
 
         # Copy promoted files to content repo and open MR (if configured)
         merge_request_url = ""
@@ -515,3 +524,123 @@ async def _push_to_content_repo(
         )
 
     return first_url, branch_name if first_url else ""
+
+
+# ---------------------------------------------------------------------------
+# TC-5166: Content Index — knowledge/ link
+# ---------------------------------------------------------------------------
+
+
+def _write_content_index(
+    promotion_report: Any,
+    manifest: ContentManifest | None,
+    context: WorkerContext,
+) -> None:
+    """Write knowledge/{family}/{platform}/content_index.yaml after a successful promote.
+
+    Builds a per-page link table between the deployed content files and the
+    knowledge/ evidence store.  The Verify worker (TC-5167) reads this file
+    to detect drift between repo truth and live aspose.org/content pages.
+
+    Silently no-ops when yaml is unavailable, knowledge_dir cannot be created,
+    or the deploy_dir is not configured.  Never raises.
+
+    Args:
+        promotion_report: PromotionReport from _promote_to_deploy().
+        manifest: ContentManifest with per-page metadata (page_role, slug, etc.).
+        context: Worker execution context (config, run_dir, log).
+    """
+    if _yaml is None:
+        logger.debug("[Publish] yaml unavailable — skipping content_index write")
+        return
+
+    try:
+        from launcher.deploy.promoter import PromotionAction
+
+        config = context.config
+        family = config.family
+        platform = config.platform
+
+        # Resolve knowledge directory
+        project_root = Path(context.run_dir).parent.parent
+        knowledge_dir = project_root / "knowledge" / family / platform
+        try:
+            knowledge_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            logger.warning("[Publish] Cannot create knowledge_dir %s: %s", knowledge_dir, exc)
+            return
+
+        # Resolve deploy_dir
+        deploy_dir_str = config.output.deploy_dir
+        if not deploy_dir_str:
+            logger.debug("[Publish] deploy_dir not configured — skipping content_index write")
+            return
+        deploy_dir = Path(deploy_dir_str)
+        if not deploy_dir.is_absolute():
+            deploy_dir = Path.cwd() / deploy_dir
+
+        # Build page_role lookup from manifest
+        role_by_path: dict[str, str] = {}
+        slug_by_path: dict[str, str] = {}
+        if manifest is not None:
+            for page in manifest.pages:
+                if page.content_path:
+                    role_by_path[page.content_path] = page.page_role
+                    slug_by_path[page.content_path] = page.slug
+
+        # Try to read repo_sha from understand checkpoint
+        repo_sha = ""
+        understand_cp = context.run_dir / "understand_checkpoint.json"
+        if understand_cp.exists():
+            try:
+                uc_data = json.loads(understand_cp.read_text(encoding="utf-8"))
+                repo_sha = (uc_data.get("product") or {}).get("repo_sha", "")
+            except Exception:
+                pass
+
+        now = datetime.now(timezone.utc).isoformat()
+
+        # Build page entries for promoted files only
+        page_entries = []
+        for detail in promotion_report.details:
+            if detail.action != PromotionAction.PROMOTED:
+                continue
+            content_path = detail.content_path
+            deployed_file = deploy_dir / (content_path + ".md")
+            content_sha = ""
+            if deployed_file.exists():
+                content_sha = "sha256:" + hashlib.sha256(deployed_file.read_bytes()).hexdigest()
+            page_entries.append({
+                "content_path": content_path,
+                "page_role": role_by_path.get(content_path, ""),
+                "slug": slug_by_path.get(content_path, content_path.rsplit("/", 1)[-1]),
+                "content_sha": content_sha,
+                "repo_sha_when_generated": repo_sha,
+                "generated_at": now,
+                "status": "live",
+            })
+
+        if not page_entries:
+            logger.debug("[Publish] No promoted pages — skipping content_index write")
+            return
+
+        index_data = {
+            "family": family,
+            "platform": platform,
+            "last_sync": now,
+            "pages": page_entries,
+        }
+
+        index_path = knowledge_dir / "content_index.yaml"
+        index_path.write_text(
+            _yaml.dump(index_data, default_flow_style=False, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
+        )
+        logger.info(
+            "[Publish] Wrote content_index.yaml: %d pages → %s",
+            len(page_entries),
+            index_path,
+        )
+
+    except Exception as exc:
+        logger.warning("[Publish] Failed to write content_index.yaml: %s", exc)
