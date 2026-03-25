@@ -112,14 +112,15 @@ class TestGettingStartedMinimumClaims:
 
     def test_fallback_fires_when_all_claims_exhausted(self):
         """Fallback runs when all claims have exhausted _MAX_CLAIM_PAGES from prior mandatory pages."""
-        claims = _make_claims(3)
+        # kind="workflow" so workflow_page drain pages actually consume claims
+        # (workflow_page eligible_kinds includes "workflow" but not "feature")
+        claims = _make_claims(3, kind="workflow")
         # Pre-exhaust every claim on _MAX_CLAIM_PAGES mandatory pages before getting-started
         drain_pages = [
             _make_page(f"drain-{i}", "workflow_page", mandatory=True)
             for i in range(_MAX_CLAIM_PAGES)
         ]
         gs_page = _make_page("getting-started", "getting_started", mandatory=True)
-        # mandatory=True for all pages — sorted_pages puts them all first, drains consume claims first
         result_pages, _ = _assign_claims(drain_pages + [gs_page], claims, [])
         gs = next(p for p in result_pages if p.page_role == "getting_started")
         # All 3 claims were at _MAX_CLAIM_PAGES limit when getting_started ran
@@ -131,7 +132,8 @@ class TestGettingStartedMinimumClaims:
     def test_non_floor_role_page_not_boosted(self):
         """A page whose role is not in _CLAIM_FLOOR_ROLES gets 0 claims when budget is exhausted."""
         assert "faq" not in _CLAIM_FLOOR_ROLES  # pre-condition
-        claims = _make_claims(3)
+        # kind="workflow" so workflow_page drain pages actually consume claims
+        claims = _make_claims(3, kind="workflow")
         drain_pages = [
             _make_page(f"drain-{i}", "workflow_page", mandatory=True)
             for i in range(_MAX_CLAIM_PAGES)
@@ -162,3 +164,51 @@ class TestGettingStartedMinimumClaims:
     def test_fallback_page_cap_constant_defined(self):
         """_CLAIM_FLOOR_PAGE_CAP must equal _MAX_CLAIM_PAGES + 1."""
         assert _CLAIM_FLOOR_PAGE_CAP == _MAX_CLAIM_PAGES + 1
+
+    def test_warning_when_fallback_exhausted(self, caplog):
+        """SRP-04: WARNING emitted when all claims at page cap and getting_started gets 0."""
+        import logging
+
+        # kind="workflow" so workflow_page drain pages actually consume claims
+        claims = _make_claims(3, kind="workflow")
+        # Drain to _MAX_CLAIM_PAGES, then install consumes grace slot
+        drain_pages = [
+            _make_page(f"drain-{i}", "workflow_page", mandatory=True)
+            for i in range(_MAX_CLAIM_PAGES)
+        ]
+        install_page = _make_page("install", "install", mandatory=True)
+        gs_page = _make_page("getting-started", "getting_started", mandatory=True)
+        with caplog.at_level(logging.WARNING):
+            _assign_claims(drain_pages + [install_page, gs_page], claims, [])
+        assert any(
+            "claim_floor_fallback exhausted" in r.message
+            for r in caplog.records
+        ), "Expected WARNING with 'claim_floor_fallback exhausted' not found in logs"
+
+    def test_fallback_respects_page_cap(self):
+        """SRP-02: Claims at _CLAIM_FLOOR_PAGE_CAP usage are blocked by the fallback guard.
+
+        Setup: drain pages exhaust normal _MAX_CLAIM_PAGES cap → first floor-role
+        page (install) consumes the grace slot via fallback → second floor-role
+        page (getting-started) should get 0 because all claims are at
+        _CLAIM_FLOOR_PAGE_CAP.
+        """
+        # kind="workflow" so workflow_page drain pages actually consume claims
+        claims = _make_claims(3, kind="workflow")
+        # Normal-assignment drain: each claim reaches _MAX_CLAIM_PAGES usage
+        drain_pages = [
+            _make_page(f"drain-{i}", "workflow_page", mandatory=True)
+            for i in range(_MAX_CLAIM_PAGES)
+        ]
+        # First floor-role page consumes the grace slot (usage → _CLAIM_FLOOR_PAGE_CAP)
+        install_page = _make_page("install", "install", mandatory=True)
+        # Second floor-role page should be fully blocked by cap guard
+        gs_page = _make_page("getting-started", "getting_started", mandatory=True)
+        result_pages, _ = _assign_claims(
+            drain_pages + [install_page, gs_page], claims, [],
+        )
+        gs = next(p for p in result_pages if p.page_role == "getting_started")
+        # All claims now at _CLAIM_FLOOR_PAGE_CAP — guard must block all
+        assert len(gs.assigned_claims) == 0, (
+            f"Cap guard failed: expected 0 claims, got {len(gs.assigned_claims)}"
+        )

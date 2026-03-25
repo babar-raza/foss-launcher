@@ -85,10 +85,10 @@ class TestPipelineConfig:
             pytest.skip("pipeline.yaml not found")
         topology = load_pipeline_config(config_path)
         assert topology.version == "2.0"
-        # TC-4077: scout added between intake and understand → 7 workers total
-        assert len(topology.workers) == 7
+        # TC-4077: scout added; verify added between scout and understand → 8 workers total
+        assert len(topology.workers) == 8
         names = [w.name for w in topology.workers]
-        assert names == ["intake", "scout", "understand", "planner", "generate", "evaluate", "publish"]
+        assert names == ["intake", "scout", "verify", "understand", "planner", "generate", "evaluate", "publish"]
 
     def test_evaluate_has_rerun_targets(self):
         config_path = Path("configs/pipeline.yaml")
@@ -251,12 +251,12 @@ class TestStopAfter:
     def test_stop_after_truncates_topology(self):
         """Verify truncation produces correct worker count.
 
-        TC-4077: Full pipeline now has 7 workers (scout added between intake and understand).
+        TC-4077: Full pipeline now has 8 workers (scout + verify added).
         """
         config_path = self._skip_if_no_config()
         topology = load_pipeline_config(config_path)
-        # Full pipeline has 7 workers (intake, scout, understand, planner, generate, evaluate, publish)
-        assert len(topology.workers) == 7
+        # Full pipeline has 8 workers (intake, scout, verify, understand, planner, generate, evaluate, publish)
+        assert len(topology.workers) == 8
 
         # build_pipeline with stop_after="understand" should not require
         # workers beyond understand — only intake+scout+understand needed

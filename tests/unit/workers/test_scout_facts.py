@@ -237,3 +237,155 @@ end'''
         fi = _build_file_index(["pyproject.toml"])
         facts = _extract_shared_facts(repo_dir, list(fi.keys()), fi)
         assert facts.package_name == "my-python-lib"
+
+    # TC-4306 tests
+
+    def test_dotnet_build_system_detected(self, repo_dir: Path) -> None:
+        """TC-4306: .csproj file in file_tree should add 'dotnet' to build_systems."""
+        (repo_dir / "MyLib.csproj").write_text('<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><AssemblyName>MyLib</AssemblyName></PropertyGroup></Project>')
+        fi = _build_file_index(["MyLib.csproj"])
+        facts = _extract_shared_facts(repo_dir, list(fi.keys()), fi)
+        assert "dotnet" in facts.build_systems
+
+    def test_multi_csproj_selects_library_not_exe(self, repo_dir: Path) -> None:
+        """TC-4306: Converter (Exe) + Library (.dll) → library is selected."""
+        lib_dir = repo_dir / "src" / "main" / "MyLib"
+        lib_dir.mkdir(parents=True)
+        exe_dir = repo_dir / "src" / "converter"
+        exe_dir.mkdir(parents=True)
+        lib_csproj = lib_dir / "MyLib.csproj"
+        exe_csproj = exe_dir / "Converter.csproj"
+        lib_csproj.write_text('<Project><PropertyGroup><AssemblyName>MyLib</AssemblyName><Version>1.0.0</Version></PropertyGroup></Project>')
+        exe_csproj.write_text('<Project><PropertyGroup><OutputType>Exe</OutputType><AssemblyName>Converter</AssemblyName></PropertyGroup></Project>')
+        fi = _build_file_index(["src/main/MyLib/MyLib.csproj", "src/converter/Converter.csproj"])
+        facts = _extract_shared_facts(repo_dir, list(fi.keys()), fi)
+        assert facts.package_name == "MyLib"
+
+    def test_test_csproj_excluded_when_lib_present(self, repo_dir: Path) -> None:
+        """TC-4306: Test project excluded when a library project is available."""
+        lib_dir = repo_dir / "src" / "main"
+        lib_dir.mkdir(parents=True)
+        test_dir = repo_dir / "src" / "tests"
+        test_dir.mkdir(parents=True)
+        (lib_dir / "MyLib.csproj").write_text('<Project><PropertyGroup><AssemblyName>MyLib</AssemblyName><Version>2.0.0</Version></PropertyGroup></Project>')
+        (test_dir / "MyLib.Tests.csproj").write_text('<Project><PropertyGroup><AssemblyName>MyLib.Tests</AssemblyName></PropertyGroup></Project>')
+        fi = _build_file_index(["src/main/MyLib.csproj", "src/tests/MyLib.Tests.csproj"])
+        facts = _extract_shared_facts(repo_dir, list(fi.keys()), fi)
+        assert facts.package_name == "MyLib"
+
+    # TC-5189 tests
+
+    def test_canonical_import_selects_matching_csproj(self, repo_dir: Path) -> None:
+        """TC-5189: canonical_import should prefer matching AssemblyName over shorter path."""
+        # Converter has a shorter path but the library matches canonical_import
+        conv_dir = repo_dir / "src" / "converter"
+        conv_dir.mkdir(parents=True)
+        lib_dir = repo_dir / "src" / "main" / "Aspose.ThreeD"
+        lib_dir.mkdir(parents=True)
+        conv_csproj = conv_dir / "Converter.csproj"
+        lib_csproj = lib_dir / "Aspose.ThreeD.csproj"
+        conv_csproj.write_text(
+            '<Project><PropertyGroup><AssemblyName>Aspose.3D.Converter</AssemblyName>'
+            '</PropertyGroup></Project>'
+        )
+        lib_csproj.write_text(
+            '<Project><PropertyGroup><AssemblyName>Aspose.ThreeD</AssemblyName>'
+            '<Version>1.0.0</Version></PropertyGroup></Project>'
+        )
+        fi = _build_file_index([
+            "src/converter/Converter.csproj",
+            "src/main/Aspose.ThreeD/Aspose.ThreeD.csproj",
+        ])
+        facts = _extract_shared_facts(
+            repo_dir, list(fi.keys()), fi, canonical_import="Aspose.ThreeD",
+        )
+        assert facts.package_name == "Aspose.ThreeD"
+        assert "dotnet" in facts.build_systems
+
+    def test_canonical_import_empty_falls_back_to_shortest(self, repo_dir: Path) -> None:
+        """TC-5189: Without canonical_import, shortest non-test non-exe path wins."""
+        short_dir = repo_dir / "src" / "A"
+        short_dir.mkdir(parents=True)
+        long_dir = repo_dir / "src" / "deep" / "nested" / "B"
+        long_dir.mkdir(parents=True)
+        (short_dir / "A.csproj").write_text(
+            '<Project><PropertyGroup><AssemblyName>A</AssemblyName>'
+            '<Version>1.0.0</Version></PropertyGroup></Project>'
+        )
+        (long_dir / "B.csproj").write_text(
+            '<Project><PropertyGroup><AssemblyName>B</AssemblyName>'
+            '<Version>2.0.0</Version></PropertyGroup></Project>'
+        )
+        fi = _build_file_index([
+            "src/A/A.csproj",
+            "src/deep/nested/B/B.csproj",
+        ])
+        # No canonical_import — should pick shorter path (A)
+        facts = _extract_shared_facts(repo_dir, list(fi.keys()), fi)
+        assert facts.package_name == "A"
+
+
+class TestSelectMainCsproj:
+    """TC-5189: Unit tests for _select_main_csproj canonical_import scoring."""
+
+    def test_canonical_import_beats_shorter_path(self, tmp_path: Path) -> None:
+        from launcher.workers.scout.scout import _select_main_csproj
+
+        short = tmp_path / "src" / "short"
+        short.mkdir(parents=True)
+        deep = tmp_path / "src" / "main" / "deep"
+        deep.mkdir(parents=True)
+        (short / "Short.csproj").write_text(
+            '<Project><PropertyGroup><AssemblyName>Short</AssemblyName></PropertyGroup></Project>'
+        )
+        (deep / "MyLib.csproj").write_text(
+            '<Project><PropertyGroup><AssemblyName>MyLib</AssemblyName></PropertyGroup></Project>'
+        )
+        result = _select_main_csproj(
+            sorted(tmp_path.glob("**/*.csproj")),
+            repo_dir=tmp_path,
+            canonical_import="MyLib",
+        )
+        assert result is not None
+        assert result.name == "MyLib.csproj"
+
+    def test_no_canonical_import_picks_shortest(self, tmp_path: Path) -> None:
+        from launcher.workers.scout.scout import _select_main_csproj
+
+        short = tmp_path / "src" / "A"
+        short.mkdir(parents=True)
+        deep = tmp_path / "src" / "x" / "y" / "B"
+        deep.mkdir(parents=True)
+        (short / "A.csproj").write_text(
+            '<Project><PropertyGroup><AssemblyName>A</AssemblyName></PropertyGroup></Project>'
+        )
+        (deep / "B.csproj").write_text(
+            '<Project><PropertyGroup><AssemblyName>B</AssemblyName></PropertyGroup></Project>'
+        )
+        result = _select_main_csproj(
+            sorted(tmp_path.glob("**/*.csproj")),
+            repo_dir=tmp_path,
+        )
+        assert result is not None
+        assert result.name == "A.csproj"
+
+    def test_canonical_import_normalized_matching(self, tmp_path: Path) -> None:
+        """Dashes, underscores, and dots normalize for matching."""
+        from launcher.workers.scout.scout import _select_main_csproj
+
+        d = tmp_path / "src"
+        d.mkdir(parents=True)
+        (d / "Aspose.ThreeD.csproj").write_text(
+            '<Project><PropertyGroup><AssemblyName>Aspose.ThreeD</AssemblyName></PropertyGroup></Project>'
+        )
+        (d / "Other.csproj").write_text(
+            '<Project><PropertyGroup><AssemblyName>Other</AssemblyName></PropertyGroup></Project>'
+        )
+        # canonical_import uses dashes — should still match dot-separated AssemblyName
+        result = _select_main_csproj(
+            sorted(tmp_path.glob("**/*.csproj")),
+            repo_dir=tmp_path,
+            canonical_import="Aspose-ThreeD",
+        )
+        assert result is not None
+        assert result.name == "Aspose.ThreeD.csproj"

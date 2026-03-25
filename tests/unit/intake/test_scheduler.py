@@ -100,11 +100,50 @@ class TestSortRepos:
 
 
 class TestSchedule:
+    @pytest.fixture(autouse=True)
+    def _mock_inspection(self, monkeypatch, tmp_path):
+        """Mock inspect_repo to avoid network calls (git clone).
+
+        SR-01: scheduler unit tests must not hit the network.
+        """
+        def _fake_inspect_repo(repo, *, work_dir, platform=None, **kw):
+            return {
+                "repo": repo,
+                "platform": platform or "python",
+                "family": "cells",
+                "display_name": "Test",
+                "canonical_import": "aspose_cells_foss",
+                "runtime_import": "",
+                "shared_facts": {
+                    "primary_language": platform or "python",
+                    "package_name": "aspose-cells-foss",
+                },
+                "acquisition": {
+                    "repo_sha": "abc123",
+                    "repo_signals": {
+                        "readme_present": True,
+                        "detected_manifest_files": ["pyproject.toml"],
+                    },
+                },
+                "scout": {},
+            }
+
+        def _fake_write_artifact(path, **kw):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("{}", encoding="utf-8")
+
+        monkeypatch.setattr(
+            "launcher.phase1.onboarding.inspect_repo", _fake_inspect_repo,
+        )
+        monkeypatch.setattr(
+            "launcher.phase1.onboarding.write_inspection_artifact", _fake_write_artifact,
+        )
+
     def test_basic_schedule(self, tmp_path):
         repos = [_make_repo(full_name="org/A", stars=50)]
         output_dir = tmp_path / "configs"
 
-        report = schedule(repos, output_dir=output_dir, batch_size=5)
+        report = schedule(repos, output_dir=output_dir, artifact_dir=tmp_path / "artifacts", batch_size=5)
 
         assert report["summary"]["total_scanned"] == 1
         assert report["summary"]["eligible"] == 1
@@ -116,7 +155,7 @@ class TestSchedule:
         repos = [_make_repo(full_name="org/A")]
         output_dir = tmp_path / "configs"
 
-        report = schedule(repos, output_dir=output_dir, dry_run=True)
+        report = schedule(repos, output_dir=output_dir, artifact_dir=tmp_path / "artifacts", dry_run=True)
 
         assert report["dry_run"] is True
         assert report["processed"][0]["action"] == "would_generate"
@@ -130,7 +169,7 @@ class TestSchedule:
         ]
         output_dir = tmp_path / "configs"
 
-        report = schedule(repos, output_dir=output_dir, batch_size=3)
+        report = schedule(repos, output_dir=output_dir, artifact_dir=tmp_path / "artifacts", batch_size=3)
 
         assert report["summary"]["processed"] == 3
 
@@ -141,7 +180,7 @@ class TestSchedule:
         repos[0]["license"] = None
         output_dir = tmp_path / "configs"
 
-        report = schedule(repos, output_dir=output_dir)
+        report = schedule(repos, output_dir=output_dir, artifact_dir=tmp_path / "artifacts")
 
         assert report["summary"]["eligible"] == 0
         assert report["summary"]["ineligible"] == 1
@@ -152,10 +191,10 @@ class TestSchedule:
         output_dir = tmp_path / "configs"
 
         # First schedule — creates config
-        schedule(repos, output_dir=output_dir)
+        schedule(repos, output_dir=output_dir, artifact_dir=tmp_path / "artifacts")
 
         # Second schedule — should skip
-        report = schedule(repos, output_dir=output_dir)
+        report = schedule(repos, output_dir=output_dir, artifact_dir=tmp_path / "artifacts")
         assert report["summary"]["skipped_dedup"] == 1
         assert report["summary"]["processed"] == 0
 
@@ -165,7 +204,7 @@ class TestSchedule:
         state_dir = tmp_path / "state"
 
         report = schedule(
-            repos, output_dir=output_dir, state_dir=state_dir
+            repos, output_dir=output_dir, artifact_dir=tmp_path / "artifacts", state_dir=state_dir
         )
 
         # Check report file
@@ -190,7 +229,7 @@ class TestSchedule:
         output_dir = tmp_path / "configs"
 
         report = schedule(
-            repos, output_dir=output_dir, sort_by="stars", sort_order="desc", batch_size=1
+            repos, output_dir=output_dir, artifact_dir=tmp_path / "artifacts", sort_by="stars", sort_order="desc", batch_size=1
         )
 
         # Should process the highest-star repo first
@@ -207,7 +246,7 @@ class TestSchedule:
         repos[1]["license"] = None
         output_dir = tmp_path / "configs"
 
-        report = schedule(repos, output_dir=output_dir)
+        report = schedule(repos, output_dir=output_dir, artifact_dir=tmp_path / "artifacts")
 
         # TC-4071: require_python default is now False — JavaScript repo is eligible
         assert report["summary"]["eligible"] == 2
@@ -229,6 +268,7 @@ class TestSchedule:
         report = schedule(
             repos,
             output_dir=output_dir,
+            artifact_dir=tmp_path / "artifacts",
             classifier_config=ClassifierConfig(require_python=True),
         )
 
@@ -240,7 +280,7 @@ class TestSchedule:
         repos = [_make_repo(full_name="org/Aspose.Cells-FOSS-for-Python")]
         output_dir = tmp_path / "configs"
 
-        report = schedule(repos, output_dir=output_dir, dry_run=True)
+        report = schedule(repos, output_dir=output_dir, artifact_dir=tmp_path / "artifacts", dry_run=True)
 
         assert report["processed"][0]["platform"] == "python"
 
@@ -250,7 +290,7 @@ class TestSchedule:
         output_dir = tmp_path / "configs"
 
         report = schedule(
-            repos, output_dir=output_dir, dry_run=True, default_platform="java",
+            repos, output_dir=output_dir, artifact_dir=tmp_path / "artifacts", dry_run=True, default_platform="java",
             classifier_config=ClassifierConfig(require_python=False),
         )
 
@@ -274,7 +314,7 @@ class TestSchedule:
         }
 
         report = schedule(
-            repos, output_dir=output_dir, dry_run=True,
+            repos, output_dir=output_dir, artifact_dir=tmp_path / "artifacts", dry_run=True,
             org_configs=org_configs,
         )
 
@@ -298,7 +338,7 @@ class TestSchedule:
         }
 
         report = schedule(
-            repos, output_dir=output_dir, dry_run=True,
+            repos, output_dir=output_dir, artifact_dir=tmp_path / "artifacts", dry_run=True,
             classifier_config=ClassifierConfig(require_python=False),
             org_configs=org_configs,
         )
@@ -321,7 +361,7 @@ class TestSchedule:
         }
 
         report = schedule(
-            repos, output_dir=output_dir, dry_run=True,
+            repos, output_dir=output_dir, artifact_dir=tmp_path / "artifacts", dry_run=True,
             org_configs=org_configs,
             classifier_config=ClassifierConfig(require_python=False),
         )

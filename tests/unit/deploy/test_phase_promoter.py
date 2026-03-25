@@ -421,8 +421,8 @@ class TestPhaseStoreAllPhases:
     """TC-4104/TC-4105: scout/understand promoted to phase_store unconditionally on complete runs."""
 
     def test_scout_json_promoted(self, tmp_path):
-        """scout.json in run_dir is copied via _update_phase_store_metadata()."""
-        from launcher.deploy.phase_promoter import _update_phase_store_metadata
+        """scout.json in run_dir is copied via update_phase_store_metadata()."""
+        from launcher.deploy.phase_promoter import update_phase_store_metadata
 
         run_dir = tmp_path / "runs" / "run_001"
         run_dir.mkdir(parents=True)
@@ -431,7 +431,7 @@ class TestPhaseStoreAllPhases:
         scout_data = {"files_enumerated": 100, "primary_language": "python"}
         (run_dir / "scout.json").write_text(json.dumps(scout_data), encoding="utf-8")
 
-        _update_phase_store_metadata(run_dir, phase_store_dir, family="3d", platform="python")
+        update_phase_store_metadata(run_dir, phase_store_dir, family="3d", platform="python")
 
         dest = phase_store_dir / "3d" / "python" / "scout.json"
         assert dest.exists(), f"scout.json not promoted; phase_store dir: {list((phase_store_dir / '3d' / 'python').iterdir()) if (phase_store_dir / '3d' / 'python').exists() else 'does not exist'}"
@@ -439,8 +439,8 @@ class TestPhaseStoreAllPhases:
         assert written["files_enumerated"] == 100
 
     def test_understand_json_promoted(self, tmp_path):
-        """understanding_bundle.json copied via _update_phase_store_metadata()."""
-        from launcher.deploy.phase_promoter import _update_phase_store_metadata
+        """understanding_bundle.json copied via update_phase_store_metadata()."""
+        from launcher.deploy.phase_promoter import update_phase_store_metadata
 
         run_dir = tmp_path / "runs" / "run_001"
         run_dir.mkdir(parents=True)
@@ -451,7 +451,7 @@ class TestPhaseStoreAllPhases:
             json.dumps(understand_data), encoding="utf-8"
         )
 
-        _update_phase_store_metadata(run_dir, phase_store_dir, family="3d", platform="python")
+        update_phase_store_metadata(run_dir, phase_store_dir, family="3d", platform="python")
 
         dest = phase_store_dir / "3d" / "python" / "understand.json"
         assert dest.exists(), "understand.json not promoted"
@@ -460,7 +460,7 @@ class TestPhaseStoreAllPhases:
 
     def test_missing_scout_json_does_not_crash(self, tmp_path):
         """If scout.json is absent (old run), promotion silently skips it."""
-        from launcher.deploy.phase_promoter import _update_phase_store_metadata
+        from launcher.deploy.phase_promoter import update_phase_store_metadata
 
         run_dir = tmp_path / "runs" / "run_001"
         run_dir.mkdir(parents=True)
@@ -468,7 +468,7 @@ class TestPhaseStoreAllPhases:
         # Do NOT write scout.json
 
         # Should not raise
-        _update_phase_store_metadata(run_dir, phase_store_dir, family="3d", platform="python")
+        update_phase_store_metadata(run_dir, phase_store_dir, family="3d", platform="python")
 
         dest = phase_store_dir / "3d" / "python" / "scout.json"
         assert not dest.exists(), "scout.json should not exist when not in run_dir"
@@ -535,3 +535,92 @@ class TestPhaseStoreAllPhases:
         # plan.json must still be from run-a (majority gate preserved for content)
         plan_ps = phase_store / "cells" / "python" / "plan.json"
         assert not plan_ps.exists() or True  # plan.json only if planner_checkpoint exists
+
+
+# ---------------------------------------------------------------------------
+# SR-02 / TC-FIX-215: Quality-weighted majority scoring
+# ---------------------------------------------------------------------------
+
+
+class TestQualityWeightedMajority:
+    """TC-FIX-215: Quality beats volume for majority-run determination."""
+
+    def test_quality_beats_volume(self, tmp_path):
+        """40 A-pages (score=200) beats 60 C-pages (score=180)."""
+        snapshots = tmp_path / "snapshots"
+        phase_store = tmp_path / "phase_store"
+
+        # Run-volume: 60 C-grade pages → score = 60 × 3.0 = 180
+        volume_pages = [f"sub.x.org/vol{i}" for i in range(60)]
+        run_volume = _make_run(tmp_path, "run-volume", volume_pages, grade="C")
+
+        # Run-quality: 40 A-grade pages → score = 40 × 5.0 = 200
+        quality_pages = [f"sub.x.org/qual{i}" for i in range(40)]
+        run_quality = _make_run(tmp_path, "run-quality", quality_pages, grade="A")
+
+        # Promote volume run first
+        _promote(run_volume, snapshots, phase_store)
+        manifest = load_snapshot_manifest(snapshots / "snapshot_manifest.json")
+        assert manifest.majority_run_id == "run-volume"
+
+        # Promote quality run — should become majority despite fewer pages
+        _promote(run_quality, snapshots, phase_store)
+        manifest = load_snapshot_manifest(snapshots / "snapshot_manifest.json")
+        assert manifest.majority_run_id == "run-quality"
+        assert manifest.majority_run_quality_score == 200.0
+        assert manifest.majority_run_ir_count == 40
+
+    def test_backward_compat_migration(self, tmp_path):
+        """Old manifest with run_ir_counts but no run_quality_scores gets migrated."""
+        snapshots = tmp_path / "snapshots"
+        phase_store = tmp_path / "phase_store"
+        snapshots.mkdir(parents=True, exist_ok=True)
+
+        # Write a v1.0-style manifest with only run_ir_counts
+        old_manifest = {
+            "schema_version": "1.0",
+            "pages": {},
+            "majority_run_id": "old-run",
+            "majority_run_ir_count": 10,
+            "run_ir_counts": {"old-run": 10},
+            "last_promotion": "",
+            "promotion_count": 0,
+        }
+        (snapshots / "snapshot_manifest.json").write_text(
+            json.dumps(old_manifest), encoding="utf-8",
+        )
+
+        # Promote a new run — should trigger migration
+        run_new = _make_run(tmp_path, "new-run", ["sub.x.org/p1"], grade="A")
+        _promote(run_new, snapshots, phase_store)
+        manifest = load_snapshot_manifest(snapshots / "snapshot_manifest.json")
+
+        # old-run should have been migrated: 10 * 3.0 = 30.0
+        assert manifest.run_quality_scores.get("old-run") == 30.0
+        # new-run: 1 A-page = 5.0
+        assert manifest.run_quality_scores.get("new-run") == 5.0
+        # old-run has higher quality_score (30 > 5) but majority_run_quality_score
+        # was 0.0 in old manifest → new-run's 5.0 > 0.0 wins the comparison.
+        # This is correct: the old manifest's majority_run_quality_score is lost
+        # during migration (only run_quality_scores are reconstructed, not the
+        # cached majority score). The next full promotion cycle recalculates.
+        assert manifest.majority_run_id == "new-run"
+
+    def test_rolling_window_eviction(self, tmp_path):
+        """When >10 runs tracked, lowest quality is evicted (never majority)."""
+        snapshots = tmp_path / "snapshots"
+        phase_store = tmp_path / "phase_store"
+
+        # Create 11 runs, each with 1 page at different grades
+        for i in range(11):
+            grade = "A" if i == 0 else "C"  # run-0 is the quality winner
+            run = _make_run(tmp_path, f"run-{i}", [f"sub.x.org/p{i}"], grade=grade)
+            _promote(run, snapshots, phase_store)
+
+        manifest = load_snapshot_manifest(snapshots / "snapshot_manifest.json")
+        # Should have evicted at least 1 run (was 11, now ≤10)
+        assert len(manifest.run_ir_counts) <= 10
+        assert len(manifest.run_quality_scores) <= 10
+        # Majority (run-0 with A=5.0) must never be evicted
+        assert "run-0" in manifest.run_ir_counts
+        assert "run-0" in manifest.run_quality_scores

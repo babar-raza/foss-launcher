@@ -454,3 +454,147 @@ class TestUnittestStdlibAllowlist:
         assert os_findings == [], (
             f"Unexpected os.path false positives: {os_findings}"
         )
+
+
+# ---------------------------------------------------------------------------
+# TC-5200 / EVL-234: False-positive reduction — string literals, enum members,
+#                     Test class filter
+# ---------------------------------------------------------------------------
+
+def _make_brief_with_enums(
+    name: str,
+    methods: list[str] | None = None,
+    enum_members: list[str] | None = None,
+) -> SimpleNamespace:
+    """Build a class brief that includes enum members (EVL-3 helper)."""
+    members = [SimpleNamespace(name=m) for m in (enum_members or [])]
+    enum_obj = SimpleNamespace(members=members)
+    return SimpleNamespace(
+        name=name,
+        methods=methods or [],
+        properties=[],
+        typed_methods=[],
+        typed_properties=[],
+        enums=[enum_obj] if members else [],
+    )
+
+
+class TestFalsePositiveFixes:
+    """TC-5200 / EVL-234: String-aware scan, enum member recognition, Test class filter."""
+
+    # ---- EVL-2: string literal stripping ----
+
+    def test_formula_name_in_string_not_flagged(self):
+        """SUM inside a string literal must not be flagged as an unknown class."""
+        brief = _make_brief("Workbook", methods=["save"])
+        surface = _make_surface(
+            public_classes=["Workbook"],
+            class_briefs=[brief],
+        )
+        # SUM appears inside a string — should NOT trigger api_identifier_unknown_class
+        code = 'ws["A1"].value = "=SUM(A1:B3)"\nwb = Workbook()\nwb.save("out.xlsx")'
+        content = _md(code)
+        findings = check_api_identifiers(content, "test-slug", api_surface=surface)
+        class_findings = [f for f in findings if f.check == "api_identifier_unknown_class"]
+        formula_findings = [f for f in class_findings if "SUM" in f.message]
+        assert formula_findings == [], (
+            f"Formula name SUM was incorrectly flagged: {formula_findings}"
+        )
+
+    def test_cell_reference_in_string_not_flagged(self):
+        """Cell reference A1 inside a string literal must not be flagged."""
+        brief = _make_brief("Workbook", methods=["save"])
+        surface = _make_surface(
+            public_classes=["Workbook"],
+            class_briefs=[brief],
+        )
+        # A1 appears inside a string subscript — after stripping should produce no match
+        code = 'wb = Workbook()\nws["A1"] = 5\nwb.save("out.xlsx")'
+        content = _md(code)
+        findings = check_api_identifiers(content, "test-slug", api_surface=surface)
+        class_findings = [f for f in findings if f.check == "api_identifier_unknown_class"]
+        cell_findings = [f for f in class_findings if "A1" in f.message]
+        assert cell_findings == [], (
+            f"Cell reference A1 was incorrectly flagged: {cell_findings}"
+        )
+
+    def test_average_formula_in_string_not_flagged(self):
+        """AVERAGE inside a formula string must not produce a class finding."""
+        brief = _make_brief("Workbook", methods=["save"])
+        surface = _make_surface(
+            public_classes=["Workbook"],
+            class_briefs=[brief],
+        )
+        code = 'cell.formula = "=AVERAGE(B1:B10)"\nwb = Workbook()\nwb.save("out.xlsx")'
+        content = _md(code)
+        findings = check_api_identifiers(content, "test-slug", api_surface=surface)
+        class_findings = [f for f in findings if f.check == "api_identifier_unknown_class"]
+        avg_findings = [f for f in class_findings if "AVERAGE" in f.message]
+        assert avg_findings == [], (
+            f"Formula name AVERAGE was incorrectly flagged: {avg_findings}"
+        )
+
+    # ---- EVL-3: enum member recognition ----
+
+    def test_enum_member_not_flagged(self):
+        """Enum member (Scatter) present in api_surface must not be flagged."""
+        chart_brief = _make_brief_with_enums(
+            "ChartType",
+            methods=[],
+            enum_members=["Scatter", "Histogram", "Bar", "Line"],
+        )
+        wb_brief = _make_brief("Workbook", methods=["save"])
+        surface = _make_surface(
+            public_classes=["Workbook", "ChartType"],
+            class_briefs=[wb_brief, chart_brief],
+        )
+        # Scatter is used as if constructing an object — but it's an enum member
+        code = "chart_type = Scatter()\nwb = Workbook()\nwb.save('out.xlsx')"
+        content = _md(code)
+        findings = check_api_identifiers(content, "test-slug", api_surface=surface)
+        class_findings = [f for f in findings if f.check == "api_identifier_unknown_class"]
+        scatter_findings = [f for f in class_findings if "Scatter" in f.message]
+        assert scatter_findings == [], (
+            f"Enum member Scatter was incorrectly flagged: {scatter_findings}"
+        )
+
+    # ---- EVL-4: Test class filter ----
+
+    def test_generic_test_class_not_flagged(self):
+        """TestWorkbookCreation() must not produce an api_identifier_unknown_class finding."""
+        brief = _make_brief("Workbook", methods=["save"])
+        surface = _make_surface(
+            public_classes=["Workbook"],
+            class_briefs=[brief],
+        )
+        code = (
+            "class TestWorkbookCreation(unittest.TestCase):\n"
+            "    def test_create(self):\n"
+            "        wb = TestWorkbookCreation()\n"
+            "        wb2 = Workbook()\n"
+            "        wb2.save('out.xlsx')\n"
+        )
+        content = _md(code)
+        findings = check_api_identifiers(content, "test-slug", api_surface=surface)
+        class_findings = [f for f in findings if f.check == "api_identifier_unknown_class"]
+        test_findings = [f for f in class_findings if "TestWorkbookCreation" in f.message]
+        assert test_findings == [], (
+            f"TestWorkbookCreation was incorrectly flagged: {test_findings}"
+        )
+
+    # ---- Regression: genuine unknown class still flagged ----
+
+    def test_genuine_unknown_class_still_flagged(self):
+        """FakeMadeUpClass() (no Test prefix, not in surface) must still be flagged HIGH."""
+        brief = _make_brief("Workbook", methods=["save"])
+        surface = _make_surface(
+            public_classes=["Workbook"],
+            class_briefs=[brief],
+        )
+        code = "mgr = FakeMadeUpClass()\nwb = Workbook()\nwb.save('out.xlsx')"
+        content = _md(code)
+        findings = check_api_identifiers(content, "test-slug", api_surface=surface)
+        class_findings = [f for f in findings if f.check == "api_identifier_unknown_class"]
+        fake_findings = [f for f in class_findings if "FakeMadeUpClass" in f.message]
+        assert len(fake_findings) >= 1, "Expected FakeMadeUpClass to be flagged HIGH"
+        assert fake_findings[0].severity == "high"

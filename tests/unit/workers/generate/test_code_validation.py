@@ -33,6 +33,14 @@ class TestStripSourceComments:
         result = _strip_claim_comments(code)
         assert "# This is a user comment" in result
 
+    def test_source_comment_stripped(self):
+        """SRP-03: '# source: snippet_N' metadata comments are stripped."""
+        from launcher.workers.generate.section_validator import _strip_claim_comments
+        code = "# source: snippet_3\nfrom aspose.threed import Scene"
+        result = _strip_claim_comments(code)
+        assert "# source:" not in result
+        assert "from aspose.threed import Scene" in result
+
 
 class TestListOfListsTable:
     """TC-SAN-01: _validate_table_content handles JSON array-of-dicts and pipe tables."""
@@ -49,6 +57,41 @@ class TestListOfListsTable:
         content = "| A | B |\n| --- | --- |\n| 1 | 2 |"
         result = _validate_table_content(content)
         assert result == content
+
+    def test_list_of_lists_converted(self):
+        """SRP-03: list-of-lists JSON is converted to a pipe-delimited table."""
+        from launcher.workers.generate.section_validator import _validate_table_content
+        content = '[["Format", "Extension"], ["Excel", ".xlsx"], ["CSV", ".csv"]]'
+        result = _validate_table_content(content)
+        assert "| Format | Extension |" in result
+        assert "| Excel | .xlsx |" in result
+        assert "| CSV | .csv |" in result
+
+
+# ===========================================================================
+# SRP-01: Drift prevention — _SCAN_BUILTINS must be a superset of _PYTHON_BUILTINS
+# ===========================================================================
+
+
+class TestStdlibNamesDriftPrevention:
+    """SRP-01 (2026-03-24): Prevent _SCAN_BUILTINS and _PYTHON_BUILTINS from drifting."""
+
+    def test_scan_builtins_superset_of_python_builtins(self):
+        """_SCAN_BUILTINS must contain every name in _PYTHON_BUILTINS."""
+        from launcher.workers.generate.section_validator import _PYTHON_BUILTINS
+        from launcher.workers.generate.worker import _SCAN_BUILTINS
+
+        missing = _PYTHON_BUILTINS - _SCAN_BUILTINS
+        assert not missing, f"_SCAN_BUILTINS is missing names from _PYTHON_BUILTINS: {sorted(missing)}"
+
+    def test_both_import_from_shared_module(self):
+        """Both sets derive from STDLIB_PYTHON_NAMES in launcher.shared.python_names."""
+        from launcher.shared.python_names import STDLIB_PYTHON_NAMES
+        from launcher.workers.generate.section_validator import _PYTHON_BUILTINS
+        from launcher.workers.generate.worker import _SCAN_BUILTINS
+
+        assert STDLIB_PYTHON_NAMES <= _SCAN_BUILTINS
+        assert STDLIB_PYTHON_NAMES <= _PYTHON_BUILTINS
 
 
 # ===========================================================================

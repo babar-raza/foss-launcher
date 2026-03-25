@@ -400,7 +400,7 @@ class TestSectionPrompt:
         )
         page = PlannedPage(
             page_id="docs-getting-started",
-            page_role="getting-started",
+            page_role="getting_started",  # TC-5196: canonical underscore form
             title="Getting Started",
             assigned_claims=[],
             assigned_snippets=[],

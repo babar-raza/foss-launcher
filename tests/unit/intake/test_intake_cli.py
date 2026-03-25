@@ -517,6 +517,104 @@ class TestIntakeOnboard:
         assert "Processed" in result.stdout
         assert "would_generate" not in result.stdout
 
+    # ------------------------------------------------------------------
+    # TC-5173: scan_state.json persistence
+    # ------------------------------------------------------------------
+
+    @patch("launcher.cli.intake._repo_root")
+    @patch("launcher.phase1.onboarding.inspect_repo")
+    @patch("launcher.intake.org_scanner.requests.get")
+    def test_onboard_persists_scan_state(self, mock_get, mock_inspect, mock_repo_root, tmp_path):
+        """TC-5173: intake onboard (non-dry-run) writes scan_state.json with discovered repos."""
+        import json as _json
+
+        def _resp(json_data=None):
+            m = MagicMock()
+            m.status_code = 200
+            m.json.return_value = json_data or []
+            m.headers = {}
+            m.text = ""
+            return m
+
+        repo = _make_repo()
+        mock_get.return_value = _resp(json_data=[repo])
+        mock_inspect.return_value = _make_inspection(repo)
+        mock_repo_root.return_value = tmp_path
+
+        result = runner.invoke(
+            app,
+            ["intake", "onboard", "--orgs", "myorg", "--output", str(tmp_path / "pilots")],
+        )
+        assert result.exit_code == 0, result.output
+
+        scan_state = tmp_path / "intake" / "scan_state.json"
+        assert scan_state.exists(), "scan_state.json must be written on non-dry-run onboard"
+        state = _json.loads(scan_state.read_text(encoding="utf-8"))
+        assert "myorg/MyRepo" in state["seen_repos"]
+        assert "last_scan_ts" in state
+
+    @patch("launcher.cli.intake._repo_root")
+    @patch("launcher.phase1.onboarding.inspect_repo")
+    @patch("launcher.intake.org_scanner.requests.get")
+    def test_onboard_no_duplicate_seen_repos_on_rerun(self, mock_get, mock_inspect, mock_repo_root, tmp_path):
+        """TC-5173: re-running intake onboard doesn't duplicate seen_repos entries."""
+        import json as _json
+
+        def _resp(json_data=None):
+            m = MagicMock()
+            m.status_code = 200
+            m.json.return_value = json_data or []
+            m.headers = {}
+            m.text = ""
+            return m
+
+        repo = _make_repo()
+        mock_inspect.return_value = _make_inspection(repo)
+        mock_repo_root.return_value = tmp_path
+        output_dir = tmp_path / "pilots"
+
+        mock_get.return_value = _resp(json_data=[repo])
+        runner.invoke(app, ["intake", "onboard", "--orgs", "myorg", "--output", str(output_dir)])
+
+        # Second run: same repo already in seen_repos → scan_org skips it
+        mock_get.return_value = _resp(json_data=[repo])
+        runner.invoke(app, ["intake", "onboard", "--orgs", "myorg", "--output", str(output_dir)])
+
+        state = _json.loads((tmp_path / "intake" / "scan_state.json").read_text(encoding="utf-8"))
+        assert state["seen_repos"].count("myorg/MyRepo") == 1
+
+    @patch("launcher.cli.intake._repo_root")
+    @patch("launcher.phase1.onboarding.inspect_repo")
+    @patch("launcher.intake.org_scanner.requests.get")
+    def test_onboard_creates_scan_state_if_absent(self, mock_get, mock_inspect, mock_repo_root, tmp_path):
+        """TC-5173: intake onboard creates scan_state.json from scratch when file absent."""
+        import json as _json
+
+        def _resp(json_data=None):
+            m = MagicMock()
+            m.status_code = 200
+            m.json.return_value = json_data or []
+            m.headers = {}
+            m.text = ""
+            return m
+
+        repo = _make_repo()
+        mock_get.return_value = _resp(json_data=[repo])
+        mock_inspect.return_value = _make_inspection(repo)
+        mock_repo_root.return_value = tmp_path
+
+        assert not (tmp_path / "intake" / "scan_state.json").exists()
+
+        result = runner.invoke(
+            app,
+            ["intake", "onboard", "--orgs", "myorg", "--output", str(tmp_path / "pilots")],
+        )
+        assert result.exit_code == 0, result.output
+        scan_state = tmp_path / "intake" / "scan_state.json"
+        assert scan_state.exists()
+        state = _json.loads(scan_state.read_text(encoding="utf-8"))
+        assert len(state["seen_repos"]) >= 1
+
 
 # ---------------------------------------------------------------------------
 # Tests: Intake telemetry event emission (SRI-10)
@@ -617,3 +715,88 @@ class TestIntakeTelemetry:
         assert event["worker"] == "intake"
         assert event["data"]["org_count"] == 2
         assert event["data"]["repo_count"] == 5
+
+
+# ---------------------------------------------------------------------------
+# TC-5190: --force flag for intake generate (needs_review bypass)
+# ---------------------------------------------------------------------------
+
+
+class TestIntakeGenerateForce:
+    """TC-5190: --force bypasses needs_review classification."""
+
+    def _make_needs_review_inspection(self):
+        """Return an inspection dict that triggers needs_review (is_template=True)."""
+        return {
+            "repo": {**_make_repo(), "is_template": True},
+            "repo_url": "https://github.com/myorg/MyRepo",
+            "acquisition": {
+                "repo_signals": {
+                    "readme_present": True,
+                    "is_empty_clone": False,
+                    "detected_manifest_files": ["pyproject.toml"],
+                }
+            },
+            "shared_facts": {"package_name": "myrepo", "license_type": "MIT", "primary_language": "python"},
+            "platform": "python",
+        }
+
+    @patch("launcher.phase1.inspection.inspect_repo")
+    @patch("launcher.intake.org_scanner.scan_org")
+    def test_force_bypasses_needs_review(self, mock_scan_org, mock_inspect_repo, tmp_path):
+        """TC-5190: --force generates config even when classification=needs_review."""
+        mock_scan_org.return_value = [_make_repo()]
+        mock_inspect_repo.return_value = self._make_needs_review_inspection()
+
+        result = runner.invoke(app, [
+            "intake", "generate",
+            "--repo", "https://github.com/myorg/MyRepo",
+            "--output", str(tmp_path),
+            "--force",
+        ])
+        assert result.exit_code == 0
+        assert "force-generated" in result.stdout.lower() or "generated" in result.stdout.lower()
+
+    @patch("launcher.phase1.inspection.inspect_repo")
+    @patch("launcher.intake.org_scanner.scan_org")
+    def test_without_force_needs_review_exits(self, mock_scan_org, mock_inspect_repo, tmp_path):
+        """TC-5190: without --force, needs_review exits with code 1."""
+        mock_scan_org.return_value = [_make_repo()]
+        mock_inspect_repo.return_value = self._make_needs_review_inspection()
+
+        result = runner.invoke(app, [
+            "intake", "generate",
+            "--repo", "https://github.com/myorg/MyRepo",
+            "--output", str(tmp_path),
+        ])
+        assert result.exit_code == 1
+        assert "not generated" in result.stdout.lower() or "needs_review" in result.stdout.lower()
+
+    @patch("launcher.phase1.inspection.inspect_repo")
+    @patch("launcher.intake.org_scanner.scan_org")
+    def test_force_does_not_bypass_ineligible(self, mock_scan_org, mock_inspect_repo, tmp_path):
+        """TC-5190: --force does NOT bypass ineligible classification."""
+        mock_scan_org.return_value = [_make_repo()]
+        # archived=True → ineligible
+        inspection = {
+            "repo": {**_make_repo(), "archived": True},
+            "repo_url": "https://github.com/myorg/MyRepo",
+            "acquisition": {
+                "repo_signals": {
+                    "readme_present": True,
+                    "is_empty_clone": False,
+                    "detected_manifest_files": ["pyproject.toml"],
+                }
+            },
+            "shared_facts": {"package_name": "myrepo", "license_type": "MIT", "primary_language": "python"},
+            "platform": "python",
+        }
+        mock_inspect_repo.return_value = inspection
+
+        result = runner.invoke(app, [
+            "intake", "generate",
+            "--repo", "https://github.com/myorg/MyRepo",
+            "--output", str(tmp_path),
+            "--force",
+        ])
+        assert result.exit_code == 1

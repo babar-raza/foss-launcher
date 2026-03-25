@@ -63,7 +63,7 @@ class TestProseRepair:
     """Test A: prose hallucination replaced, known API classes preserved."""
 
     def test_hallucinated_class_replaced_in_prose(self) -> None:
-        """SpreadsheetManager (hallucinated) → [identifier omitted]; Workbook preserved."""
+        """SpreadsheetManager (hallucinated) → stripped from prose; Workbook preserved."""
         surface = _workbook_surface()
         text = (
             "Use SpreadsheetManager to create a new spreadsheet. "
@@ -71,7 +71,7 @@ class TestProseRepair:
         )
         repaired, repairs = repair_identifiers(text, surface)
         assert "SpreadsheetManager" not in repaired
-        assert "[identifier omitted]" in repaired
+        assert "[identifier omitted]" not in repaired  # TC-EVAL-501: no sentinel
         assert "Workbook" in repaired
         assert "SpreadsheetManager" in repairs
 
@@ -392,8 +392,8 @@ class TestEdgeCases:
             "Use Workbook instead."
         )
         repaired, repairs = repair_identifiers(text, surface)
-        # Prose: SpreadsheetManager replaced
-        assert "SpreadsheetManager" not in repaired or "[identifier omitted]" in repaired
+        # Prose: SpreadsheetManager stripped (TC-EVAL-501: no sentinel)
+        assert "SpreadsheetManager" not in repaired
         # Code: RowIterator annotated
         assert "RowIterator" in repairs or "# RowIterator" in repaired
         # Known classes preserved in both contexts
@@ -470,7 +470,7 @@ class TestSingleHumpExemption:
         text = "Use ObjLoadOptions to configure the OBJ importer."
         repaired, repairs = repair_identifiers(text, surface)
         assert "ObjLoadOptions" in repairs
-        assert "[identifier omitted]" in repaired
+        assert "ObjLoadOptions" not in repaired  # TC-EVAL-501: stripped, not sentinel
 
     def test_pascal_digit_still_caught(self) -> None:
         """PascalCase+digit like Vector3 is still caught if not in known set."""

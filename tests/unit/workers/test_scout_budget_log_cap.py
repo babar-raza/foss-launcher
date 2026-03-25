@@ -162,9 +162,10 @@ class TestImportantFilesSkipped:
         """Root-level .md files (rank=3: root+ext, no keyword) are counted when budget hit."""
         from launcher.models.understanding import FileCategory, FileEntry
         # Create 5 root-level .md files each ~5KB — should be rank 3 (root+ext, no keyword)
+        # Use "data_" prefix (not "notes_") to avoid _META_DOC_ROOT_KEYWORDS filter.
         index = {}
         for i in range(5):
-            fname = f"notes_{i}.md"
+            fname = f"data_{i}.md"
             p = tmp_path / fname
             p.write_text("x" * 5_000, encoding="utf-8")
             index[fname] = FileEntry(category=FileCategory.doc, size_bytes=p.stat().st_size, language="")

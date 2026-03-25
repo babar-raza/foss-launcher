@@ -640,7 +640,7 @@ class TestCheckProductNames:
         content = "---\ntitle: Test\n---\n## Info\n\nUse Aspire.Cells for spreadsheet work.\n"
         findings = check_product_names(content, "test", product_name="Aspose.Cells")
         assert any("Aspire" in f.message for f in findings)
-        assert any(f.severity == "medium" for f in findings)
+        assert any(f.severity == "high" for f in findings)  # TC-QG-01: body escalated to HIGH
 
     def test_misspelled_prefix_in_title(self):
         content = "---\ntitle: Getting Started with Aspire.Cells\n---\n## Heading\n\nBody text here.\n"
@@ -1005,9 +1005,10 @@ class TestGrader:
 
     def test_two_non_safety_highs_grade_c(self):
         # TC-3879 Wave 1 (E1): 2+ non-safety-critical HIGHs → Grade C
+        # Note: "code" is editorial-critical (TC-4031 Wave 4F), so use truly non-safety checks
         findings = [
             Finding(check="density", message="thin", severity="high"),
-            Finding(check="code", message="syntax error", severity="high"),
+            Finding(check="product_names", message="misspelling", severity="high"),
         ]
         assert grade_page(findings) == Grade.C
 
@@ -1880,7 +1881,7 @@ class TestRunDeterministicChecks:
         findings = _run_deterministic_checks(content, "test", product_name="Aspose.Cells")
         wrong_case = [f for f in findings if "Wrong case" in f.message]
         assert len(wrong_case) > 0
-        assert any(f.severity == "medium" for f in wrong_case)
+        assert any(f.severity == "high" for f in wrong_case)  # TC-QG-01: body escalated to HIGH
 
     def test_medium_severity_near_duplicate(self):
         # Need 4 near-dupe + 2 unique = 6 sentences → 6/15 = 40% near-dupe rate → medium

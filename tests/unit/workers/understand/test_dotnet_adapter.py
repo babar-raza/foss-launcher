@@ -207,3 +207,196 @@ class TestDotNetAdapterTypedMethods:
 
         # Must not raise; fallback should return list
         assert isinstance(classes, list)
+
+
+# ===========================================================================
+# UND-02: XML doc comment extraction tests
+# ===========================================================================
+
+
+class TestXmlDocCommentExtraction:
+    """UND-02: Verify XML doc comment extraction and enrichment."""
+
+    def test_extract_xml_doc_comment_basic(self):
+        from launcher.workers.understand.adapters._dotnet import _extract_xml_doc_comment
+        lines = [
+            "    /// <summary>",
+            "    /// Represents a 3D scene.",
+            "    /// </summary>",
+            "    public class Scene",
+        ]
+        doc = _extract_xml_doc_comment(lines, 3)
+        assert "Represents a 3D scene" in doc
+
+    def test_extract_xml_doc_comment_multiline(self):
+        from launcher.workers.understand.adapters._dotnet import _extract_xml_doc_comment
+        lines = [
+            "    /// <summary>",
+            "    /// Loads a model from file.",
+            "    /// Supports FBX and OBJ formats.",
+            "    /// </summary>",
+            "    public void Open(string path)",
+        ]
+        doc = _extract_xml_doc_comment(lines, 4)
+        assert "Loads a model" in doc
+        assert "FBX" in doc
+
+    def test_extract_xml_doc_comment_none_present(self):
+        from launcher.workers.understand.adapters._dotnet import _extract_xml_doc_comment
+        lines = [
+            "    public int Count { get; set; }",
+            "    public class Scene",
+        ]
+        doc = _extract_xml_doc_comment(lines, 1)
+        assert doc == ""
+
+    def test_extract_xml_doc_comment_with_see_cref(self):
+        from launcher.workers.understand.adapters._dotnet import _extract_xml_doc_comment
+        lines = [
+            '    /// <summary>',
+            '    /// Opens the <see cref="Scene"/> from a stream.',
+            '    /// </summary>',
+            '    public void Load(Stream s)',
+        ]
+        doc = _extract_xml_doc_comment(lines, 3)
+        assert "<see" not in doc, "XML tags should be stripped"
+        assert "Opens" in doc
+
+    def test_extract_xml_doc_comment_attribute_between(self):
+        from launcher.workers.understand.adapters._dotnet import _extract_xml_doc_comment
+        lines = [
+            "    /// <summary>",
+            "    /// Test method doc.",
+            "    /// </summary>",
+            "    [Obsolete]",
+            "    public class OldScene",
+        ]
+        doc = _extract_xml_doc_comment(lines, 4)
+        assert "Test method doc" in doc
+
+    def test_enrich_populates_docstring_on_class(self):
+        import tempfile
+        from pathlib import Path
+        from launcher.workers.understand.adapters._dotnet import DotNetExtractor
+
+        content = (
+            "namespace Aspose.ThreeD {\n"
+            "    /// <summary>\n"
+            "    /// The main scene container.\n"
+            "    /// </summary>\n"
+            "    public class Scene {\n"
+            "    }\n"
+            "}\n"
+        )
+        with tempfile.NamedTemporaryFile(suffix=".cs", mode="w", delete=False, encoding="utf-8") as f:
+            f.write(content)
+            f.flush()
+            file_path = Path(f.name)
+
+        try:
+            extractor = DotNetExtractor()
+            classes = [{"name": "Scene"}]
+            enriched = extractor._enrich_with_xml_doc_comments(file_path, classes)
+            assert enriched[0].get("docstring"), "Should populate docstring from XML doc comment"
+            assert "main scene container" in enriched[0]["docstring"]
+        finally:
+            file_path.unlink(missing_ok=True)
+
+    def test_enrich_does_not_overwrite_existing_docstring(self):
+        import tempfile
+        from pathlib import Path
+        from launcher.workers.understand.adapters._dotnet import DotNetExtractor
+
+        content = (
+            "namespace Aspose.ThreeD {\n"
+            "    /// <summary>\n"
+            "    /// New doc.\n"
+            "    /// </summary>\n"
+            "    public class Scene {\n"
+            "    }\n"
+            "}\n"
+        )
+        with tempfile.NamedTemporaryFile(suffix=".cs", mode="w", delete=False, encoding="utf-8") as f:
+            f.write(content)
+            f.flush()
+            file_path = Path(f.name)
+
+        try:
+            extractor = DotNetExtractor()
+            classes = [{"name": "Scene", "docstring": "Existing doc"}]
+            enriched = extractor._enrich_with_xml_doc_comments(file_path, classes)
+            assert enriched[0]["docstring"] == "Existing doc", "Should not overwrite existing docstring"
+        finally:
+            file_path.unlink(missing_ok=True)
+
+
+# ── SR-12: TargetFramework extraction ────────────────────────────────
+
+
+class TestParseCsprojTargetFramework:
+    """Verify shared_facts.target_frameworks is populated from .csproj."""
+
+    def _make_csproj(self, tmp_path: Path, content: str) -> Path:
+        csproj = tmp_path / "MyLib" / "MyLib.csproj"
+        csproj.parent.mkdir(parents=True, exist_ok=True)
+        csproj.write_text(content, encoding="utf-8")
+        return csproj
+
+    def test_single_target_framework(self, tmp_path):
+        from launcher.workers.scout.scout import _extract_shared_facts, _walk_file_tree
+
+        self._make_csproj(tmp_path, """\
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <PackageId>MyLib</PackageId>
+  </PropertyGroup>
+</Project>
+""")
+        file_tree, file_index = _walk_file_tree(tmp_path)
+        sf = _extract_shared_facts(tmp_path, file_tree, file_index)
+        assert sf.target_frameworks == ["net6.0"]
+
+    def test_multi_target_frameworks_split(self, tmp_path):
+        from launcher.workers.scout.scout import _extract_shared_facts, _walk_file_tree
+
+        self._make_csproj(tmp_path, """\
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net6.0;netstandard2.0</TargetFrameworks>
+    <PackageId>MyLib</PackageId>
+  </PropertyGroup>
+</Project>
+""")
+        file_tree, file_index = _walk_file_tree(tmp_path)
+        sf = _extract_shared_facts(tmp_path, file_tree, file_index)
+        assert "net6.0" in sf.target_frameworks
+        assert "netstandard2.0" in sf.target_frameworks
+
+    def test_no_target_framework_returns_empty(self, tmp_path):
+        from launcher.workers.scout.scout import _extract_shared_facts, _walk_file_tree
+
+        self._make_csproj(tmp_path, """\
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>MyLib</PackageId>
+  </PropertyGroup>
+</Project>
+""")
+        file_tree, file_index = _walk_file_tree(tmp_path)
+        sf = _extract_shared_facts(tmp_path, file_tree, file_index)
+        assert sf.target_frameworks == []
+
+    def test_msbuild_variable_filtered_out(self, tmp_path):
+        from launcher.workers.scout.scout import _extract_shared_facts, _walk_file_tree
+
+        self._make_csproj(tmp_path, """\
+<Project>
+  <PropertyGroup>
+    <TargetFramework>$(DefaultTargetFramework)</TargetFramework>
+  </PropertyGroup>
+</Project>
+""")
+        file_tree, file_index = _walk_file_tree(tmp_path)
+        sf = _extract_shared_facts(tmp_path, file_tree, file_index)
+        assert sf.target_frameworks == []

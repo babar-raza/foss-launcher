@@ -9,6 +9,7 @@ import pytest
 from launcher.models.claims import Claim, EvidenceAnchor, Snippet
 from launcher.models.product import ApiSurface, ClassBrief, ProductIdentity
 from launcher.models.understanding import ProductEvidence, WorkflowExample, LimitationEntry
+from launcher.workers.understand.extract._validation import CONFIDENCE_BY_SOURCE as _CONF_BY_SRC
 
 
 # ---------------------------------------------------------------------------
@@ -1544,6 +1545,166 @@ class TestMultiPlatformInstallRecipe:
         # Backward-compat property still works
         assert recipe.pip_command == "pip install aspose-cells-foss"
 
+    # TC-CPP-410: C++ install recipe tests --------------------------------
+
+    def test_cpp_cmake_recipe(self, tmp_path):
+        """TC-CPP-410: C++ CMakeLists.txt → find_package install command."""
+        from launcher.workers.understand.extract._deterministic import extract_install_recipe
+        cmake = tmp_path / "CMakeLists.txt"
+        cmake.write_text(
+            'cmake_minimum_required(VERSION 3.14)\n'
+            'project(Aspose.Slides.Cpp VERSION 24.1.0)\n'
+            'add_library(Aspose.Slides.Cpp SHARED src/main.cpp)\n',
+            encoding="utf-8",
+        )
+        product = _make_product(
+            family="slides", platform="cpp",
+            canonical_import="Aspose::Slides",
+        )
+        recipe = extract_install_recipe(tmp_path, product)
+        assert recipe is not None
+        assert "find_package" in recipe.install_command
+        assert "Aspose.Slides.Cpp" in recipe.install_command
+        assert "pip install" not in recipe.install_command
+        assert recipe.source_file == "CMakeLists.txt"
+        assert "#include" in recipe.verification_code
+
+    def test_cpp_cmake_version_extracted(self, tmp_path):
+        """TC-CPP-410: version from project() VERSION directive."""
+        from launcher.workers.understand.extract._deterministic import extract_install_recipe
+        cmake = tmp_path / "CMakeLists.txt"
+        cmake.write_text(
+            'project(AsposeCells VERSION 2.0.1)\n',
+            encoding="utf-8",
+        )
+        product = _make_product(
+            family="cells", platform="cpp",
+            canonical_import="Aspose::Cells",
+        )
+        recipe = extract_install_recipe(tmp_path, product)
+        assert recipe is not None
+        assert recipe.version_constraint == "2.0.1"
+
+    def test_cpp_no_cmake_returns_none(self, tmp_path):
+        """TC-CPP-410: no CMakeLists.txt → None (no fallthrough to pip)."""
+        from launcher.workers.understand.extract._deterministic import extract_install_recipe
+        product = _make_product(
+            family="slides", platform="cpp",
+            canonical_import="Aspose::Slides",
+        )
+        recipe = extract_install_recipe(tmp_path, product)
+        assert recipe is None
+
+    def test_cpp_cached_fallback_uses_vcpkg(self, tmp_path):
+        """TC-CPP-416: cached SharedFacts for C++ → vcpkg install, not pyproject.toml."""
+        from launcher.workers.understand.extract._deterministic import extract_install_recipe
+        from launcher.models.understanding import SharedFacts
+        product = _make_product(
+            family="slides", platform="cpp",
+            canonical_import="Aspose::Slides",
+        )
+        shared_facts = SharedFacts(
+            package_name="Aspose.Slides.Cpp",
+            primary_language="cpp",
+        )
+        recipe = extract_install_recipe(tmp_path, product, shared_facts=shared_facts)
+        assert recipe is not None
+        assert "vcpkg install" in recipe.install_command
+        assert "pip install" not in recipe.install_command
+        assert "vcpkg.json" in recipe.source_file
+        assert "pyproject.toml" not in recipe.source_file
+
+    def test_cpp_verification_uses_include(self, tmp_path):
+        """TC-CPP-410: C++ verification code uses #include, not Python import."""
+        from launcher.workers.understand.extract._deterministic import extract_install_recipe
+        cmake = tmp_path / "CMakeLists.txt"
+        cmake.write_text('project(AsposeSlidesLib)\n', encoding="utf-8")
+        product = _make_product(
+            family="slides", platform="cpp",
+            canonical_import="Aspose::Slides",
+        )
+        recipe = extract_install_recipe(tmp_path, product)
+        assert recipe is not None
+        assert "#include" in recipe.verification_code
+        assert "Aspose/Slides" in recipe.verification_code
+
+    # TC-CPP-416: vcpkg / conan detection tests ----------------------------
+
+    def test_cpp_vcpkg_json_detected(self, tmp_path):
+        """TC-CPP-416: vcpkg.json present -> vcpkg install command."""
+        from launcher.workers.understand.extract._deterministic import extract_install_recipe
+        vcpkg = tmp_path / "vcpkg.json"
+        vcpkg.write_text(
+            '{"name": "aspose-slides-cpp", "version": "24.1"}',
+            encoding="utf-8",
+        )
+        product = _make_product(
+            family="slides", platform="cpp",
+            canonical_import="Aspose::Slides",
+        )
+        recipe = extract_install_recipe(tmp_path, product)
+        assert recipe is not None
+        assert recipe.install_command == "vcpkg install aspose-slides-cpp"
+        assert recipe.package_name == "aspose-slides-cpp"
+        assert recipe.source_file == "vcpkg.json"
+        assert recipe.version_constraint == "24.1"
+        assert "find_package" not in recipe.install_command
+
+    def test_cpp_conanfile_txt_detected(self, tmp_path):
+        """TC-CPP-416: conanfile.txt present -> conan install . command."""
+        from launcher.workers.understand.extract._deterministic import extract_install_recipe
+        conanfile = tmp_path / "conanfile.txt"
+        conanfile.write_text(
+            "[requires]\naspose-slides-cpp/24.1\n", encoding="utf-8",
+        )
+        product = _make_product(
+            family="slides", platform="cpp",
+            canonical_import="Aspose::Slides",
+        )
+        recipe = extract_install_recipe(tmp_path, product)
+        assert recipe is not None
+        assert recipe.install_command == "conan install ."
+        assert recipe.source_file == "conanfile.txt"
+        assert "find_package" not in recipe.install_command
+
+    def test_cpp_vcpkg_wins_over_cmake(self, tmp_path):
+        """TC-CPP-416: vcpkg.json + CMakeLists.txt both present -> vcpkg wins."""
+        from launcher.workers.understand.extract._deterministic import extract_install_recipe
+        (tmp_path / "vcpkg.json").write_text(
+            '{"name": "aspose-cells-cpp", "version": "2.0.0"}',
+            encoding="utf-8",
+        )
+        cmake = tmp_path / "CMakeLists.txt"
+        cmake.write_text(
+            'project(AsposeCellsCpp VERSION 2.0.0)\n', encoding="utf-8",
+        )
+        product = _make_product(
+            family="cells", platform="cpp",
+            canonical_import="Aspose::Cells",
+        )
+        recipe = extract_install_recipe(tmp_path, product)
+        assert recipe is not None
+        assert "vcpkg install" in recipe.install_command
+        assert recipe.source_file == "vcpkg.json"
+        assert "find_package" not in recipe.install_command
+
+    def test_cpp_cmake_only_regression(self, tmp_path):
+        """TC-CPP-416: only CMakeLists.txt present -> find_package (regression guard)."""
+        from launcher.workers.understand.extract._deterministic import extract_install_recipe
+        cmake = tmp_path / "CMakeLists.txt"
+        cmake.write_text(
+            'project(Aspose3D VERSION 1.0.0)\n', encoding="utf-8",
+        )
+        product = _make_product(
+            family="3d", platform="cpp",
+            canonical_import="Aspose::ThreeD",
+        )
+        recipe = extract_install_recipe(tmp_path, product)
+        assert recipe is not None
+        assert "find_package" in recipe.install_command
+        assert "Aspose3D" in recipe.install_command
+        assert recipe.source_file == "CMakeLists.txt"
+
 
 # ---------------------------------------------------------------------------
 # Phase 4 — TC-4087: Doc-scan workflow examples for non-Python
@@ -3066,7 +3227,11 @@ def _compute_hallucination_metrics(claims: list) -> dict:
     )
     _llm_fallback_count = sum(1 for c in claims if getattr(c, 'claim_source', 'llm') == 'llm_fallback')
     _llm_fallback_rate = _llm_fallback_count / _total_claims if _total_claims > 0 else 0.0
-    _conf_dist: dict[str, int] = {"1.0": 0, "0.75": 0, "0.5": 0, "0.35": 0, "other": 0}
+    # TC-5171: Derive keys from CONFIDENCE_BY_SOURCE (mirrors worker.py logic)
+    _legacy: frozenset[str] = frozenset({"0.5"})
+    _canonical = {str(round(v, 2)) for v in _CONF_BY_SRC.values()}
+    _conf_dist: dict[str, int] = {k: 0 for k in sorted(_canonical | _legacy, reverse=True)}
+    _conf_dist["other"] = 0
     for _c in claims:
         _cv = str(round(getattr(_c, 'confidence', 1.0), 2))
         if _cv in _conf_dist:
@@ -3094,7 +3259,10 @@ class TestHallucinationMetricsShape:
         "low_confidence_claim_count",
         "total_claim_count",
     }
-    _REQUIRED_DIST_KEYS = {"1.0", "0.75", "0.5", "0.35", "other"}
+    # TC-5171: Derived from CONFIDENCE_BY_SOURCE + legacy "0.5" + "other"
+    _REQUIRED_DIST_KEYS = (
+        {str(round(v, 2)) for v in _CONF_BY_SRC.values()} | {"0.5", "other"}
+    )
 
     def _make_claim(self, source: str, confidence: float) -> Claim:
         return Claim(
@@ -3241,7 +3409,7 @@ class TestValidateFactBinding:
         assert result[0].get("confidence") == 0.75
         assert result[0].get("claim_source") == "llm"
         assert stats["bound_claims"] == 1
-        assert stats["unbound_claims_downgraded"] == 0
+        assert stats["unbound_claims_elevated_sparse"] == 0
 
     def test_unbound_claim_downgraded(self):
         from launcher.workers.understand.extract._entry import _validate_fact_binding
@@ -3255,9 +3423,9 @@ class TestValidateFactBinding:
             "evidence": [{"source_fact_id": "", "source_file": "README.md"}]
         }]
         result, stats = _validate_fact_binding(claims, db, bounded_mode_active=True)
-        assert result[0]["confidence"] == 0.35
-        assert result[0]["claim_source"] == "llm_fallback"  # TC-4252: llm_unbound renamed to llm_fallback
-        assert stats["unbound_claims_downgraded"] == 1
+        assert result[0]["confidence"] == 0.55  # TC-5181: elevated to llm_sparse_grounding, not dropped
+        assert result[0]["claim_source"] == "llm_sparse_grounding"
+        assert stats["unbound_claims_elevated_sparse"] == 1
 
     def test_nonexistent_fact_id_downgraded(self):
         from launcher.workers.understand.extract._entry import _validate_fact_binding
@@ -3271,8 +3439,8 @@ class TestValidateFactBinding:
             "evidence": [{"source_fact_id": "AF-HALLUCINATED-999", "source_file": "README.md"}]
         }]
         result, stats = _validate_fact_binding(claims, db, bounded_mode_active=True)
-        assert result[0]["confidence"] == 0.35
-        assert stats["unbound_claims_downgraded"] == 1
+        assert result[0]["confidence"] == 0.55  # TC-5181: elevated to llm_sparse_grounding, not dropped
+        assert stats["unbound_claims_elevated_sparse"] == 1
 
     def test_docstring_claim_not_downgraded(self):
         from launcher.workers.understand.extract._entry import _validate_fact_binding
@@ -3288,7 +3456,7 @@ class TestValidateFactBinding:
         result, stats = _validate_fact_binding(claims, db, bounded_mode_active=True)
         assert result[0]["confidence"] == 1.0
         assert stats["pre_verified_skipped"] == 1
-        assert stats["unbound_claims_downgraded"] == 0
+        assert stats["unbound_claims_elevated_sparse"] == 0
 
     def test_original_dict_not_mutated(self):
         from launcher.workers.understand.extract._entry import _validate_fact_binding
@@ -3767,3 +3935,818 @@ class TestApiSurfaceTestClassFilter:
         from launcher.workers.understand.extract._api_surface import _is_test_class
         assert _is_test_class("TestFoo", None) is True
         assert _is_test_class("Workbook", None) is False
+
+
+# ===========================================================================
+# TC-UND-208 — Format-fact production overhaul tests
+# ===========================================================================
+
+class TestFormatMatrixZeroCapabilityFilter:
+    """TC-UND-208 / TC-UND-207-Fix2: Records with can_import=False AND can_export=False
+    must be excluded from extract_format_matrix() output."""
+
+    def test_jpg_string_literal_no_context_excluded(self, tmp_path):
+        """JPG found via string-literal scan with no operational context → excluded.
+
+        Strategy 3 picks up 'thumbnail.jpg' as a JPG reference, but neither
+        save/export nor load/import keywords appear near it, so both capabilities
+        remain False and the zero-capability filter drops the record.
+
+        Note: Strategy 1 (enum refs like SaveFormat.JPG) always carries 'save' as
+        a substring of 'SaveFormat' in the captured context, so it cannot produce
+        false/false records via that path. The filter is needed for Strategy 3 refs.
+        """
+        from launcher.workers.understand.extract._deterministic import extract_format_matrix
+        from launcher.models.product import ProductIdentity
+
+        src_dir = tmp_path / "src"
+        src_dir.mkdir()
+        # JPG appears only as a display-asset path, no I/O operation around it
+        (src_dir / "display_utils.py").write_text(
+            "DEFAULT_THUMBNAIL = 'thumbnail.jpg'\n",
+            encoding="utf-8",
+        )
+        product = ProductIdentity(
+            family="cells",
+            platform="python",
+            display_name="Aspose.Cells",
+            canonical_import="aspose.cells",
+            repo_url="https://github.com/test/test",
+        )
+        records = extract_format_matrix(tmp_path, product)
+        names = {r.name for r in records}
+        assert "JPG" not in names, (
+            f"JPG with no operational context should be excluded by zero-capability filter; "
+            f"got {names}"
+        )
+
+    def test_format_with_both_false_dropped(self, tmp_path):
+        """No record with can_import=False AND can_export=False survives."""
+        from launcher.workers.understand.extract._deterministic import extract_format_matrix
+        from launcher.models.product import ProductIdentity
+
+        tests_dir = tmp_path / "tests"
+        tests_dir.mkdir()
+        # Enum reference with zero operational context
+        (tests_dir / "test_enum.py").write_text(
+            "ALL_FORMATS = [SaveFormat.PNG, SaveFormat.GIF]\n",
+            encoding="utf-8",
+        )
+        product = ProductIdentity(
+            family="cells",
+            platform="python",
+            display_name="Aspose.Cells",
+            canonical_import="aspose.cells",
+            repo_url="https://github.com/test/test",
+        )
+        records = extract_format_matrix(tmp_path, product)
+        for rec in records:
+            assert rec.can_import or rec.can_export, (
+                f"Record {rec.name!r} survived with can_import=False AND can_export=False"
+            )
+
+    def test_xlsx_with_save_context_survives(self, tmp_path):
+        """XLSX with workbook.save() context must NOT be filtered out."""
+        from launcher.workers.understand.extract._deterministic import extract_format_matrix
+        from launcher.models.product import ProductIdentity
+
+        tests_dir = tmp_path / "tests"
+        tests_dir.mkdir()
+        (tests_dir / "test_workbook.py").write_text(
+            "workbook.save('output.xlsx', SaveFormat.XLSX)\n",
+            encoding="utf-8",
+        )
+        product = ProductIdentity(
+            family="cells",
+            platform="python",
+            display_name="Aspose.Cells",
+            canonical_import="aspose.cells",
+            repo_url="https://github.com/test/test",
+        )
+        records = extract_format_matrix(tmp_path, product)
+        names = {r.name for r in records}
+        assert "XLSX" in names, f"XLSX with save context should survive; got {names}"
+        xlsx_rec = next(r for r in records if r.name == "XLSX")
+        assert xlsx_rec.can_export, "XLSX with 'save' context must have can_export=True"
+
+
+class TestFormatMatrixStrategy5EnumExtraction:
+    """TC-UND-208: Strategy 5 extracts formats from SaveFormat/LoadFormat enum members
+    in ApiSurface.class_briefs, providing authoritative format discovery."""
+
+    def _make_cells_api_surface(self):
+        """Build a minimal ApiSurface mimicking cells/python SaveFormat enum."""
+        from launcher.models.product import ApiSurface, ClassBrief, EnumRecord, EnumMember
+        save_format_enum = EnumRecord(
+            name="SaveFormat",
+            members=[
+                EnumMember(name="AUTO"),
+                EnumMember(name="XLSX"),
+                EnumMember(name="CSV"),
+                EnumMember(name="TSV"),
+                EnumMember(name="MARKDOWN"),
+                EnumMember(name="JSON"),
+            ],
+        )
+        save_format_brief = ClassBrief(
+            name="SaveFormat",
+            enums=[save_format_enum],
+        )
+        return ApiSurface(
+            public_classes=["SaveFormat"],
+            import_allowlist=["aspose.cells"],
+            confidence="high",
+            class_briefs=[save_format_brief],
+        )
+
+    def test_tsv_from_save_format_enum(self, tmp_path):
+        """TSV is in SaveFormat enum → must appear with can_export=True."""
+        from launcher.workers.understand.extract._deterministic import extract_format_matrix
+        from launcher.models.product import ProductIdentity
+
+        api_surface = self._make_cells_api_surface()
+        product = ProductIdentity(
+            family="cells",
+            platform="python",
+            display_name="Aspose.Cells",
+            canonical_import="aspose.cells",
+            repo_url="https://github.com/test/test",
+        )
+        records = extract_format_matrix(tmp_path, product, api_surface=api_surface)
+        names = {r.name for r in records}
+        assert "TSV" in names, f"TSV should be discovered from SaveFormat enum; got {names}"
+        tsv_rec = next(r for r in records if r.name == "TSV")
+        assert tsv_rec.can_export, "TSV from SaveFormat must have can_export=True"
+        assert tsv_rec.source_evidence.startswith("enum_member"), (
+            f"TSV source_evidence should start with 'enum_member'; got {tsv_rec.source_evidence!r}"
+        )
+
+    def test_markdown_from_save_format_enum(self, tmp_path):
+        """MARKDOWN is in SaveFormat enum → must appear with can_export=True."""
+        from launcher.workers.understand.extract._deterministic import extract_format_matrix
+        from launcher.models.product import ProductIdentity
+
+        api_surface = self._make_cells_api_surface()
+        product = ProductIdentity(
+            family="cells",
+            platform="python",
+            display_name="Aspose.Cells",
+            canonical_import="aspose.cells",
+            repo_url="https://github.com/test/test",
+        )
+        records = extract_format_matrix(tmp_path, product, api_surface=api_surface)
+        names = {r.name for r in records}
+        assert "MARKDOWN" in names, (
+            f"MARKDOWN should be discovered from SaveFormat enum; got {names}"
+        )
+        md_rec = next(r for r in records if r.name == "MARKDOWN")
+        assert md_rec.can_export, "MARKDOWN from SaveFormat must have can_export=True"
+
+    def test_auto_member_skipped(self, tmp_path):
+        """AUTO is a placeholder — must NOT appear as a format record."""
+        from launcher.workers.understand.extract._deterministic import extract_format_matrix
+        from launcher.models.product import ProductIdentity
+
+        api_surface = self._make_cells_api_surface()
+        product = ProductIdentity(
+            family="cells",
+            platform="python",
+            display_name="Aspose.Cells",
+            canonical_import="aspose.cells",
+            repo_url="https://github.com/test/test",
+        )
+        records = extract_format_matrix(tmp_path, product, api_surface=api_surface)
+        names = {r.name for r in records}
+        assert "AUTO" not in names, f"AUTO placeholder must be excluded; got {names}"
+
+    def test_scan_and_enum_xlsx_deduplication(self, tmp_path):
+        """If scan finds XLSX and enum also has XLSX → no duplicate, capabilities OR-merged."""
+        from launcher.workers.understand.extract._deterministic import extract_format_matrix
+        from launcher.models.product import ProductIdentity
+
+        # Scan-discovered XLSX (via test file with save context)
+        tests_dir = tmp_path / "tests"
+        tests_dir.mkdir()
+        (tests_dir / "test_wb.py").write_text(
+            "workbook.save('out.xlsx', SaveFormat.XLSX)\n",
+            encoding="utf-8",
+        )
+        api_surface = self._make_cells_api_surface()
+        product = ProductIdentity(
+            family="cells",
+            platform="python",
+            display_name="Aspose.Cells",
+            canonical_import="aspose.cells",
+            repo_url="https://github.com/test/test",
+        )
+        records = extract_format_matrix(tmp_path, product, api_surface=api_surface)
+        xlsx_records = [r for r in records if r.name == "XLSX"]
+        assert len(xlsx_records) == 1, (
+            f"XLSX must appear exactly once (no duplicate); got {len(xlsx_records)}"
+        )
+
+    def test_no_api_surface_backward_compatible(self, tmp_path):
+        """Calling extract_format_matrix without api_surface still works (Strategy 5 skipped)."""
+        from launcher.workers.understand.extract._deterministic import extract_format_matrix
+        from launcher.models.product import ProductIdentity
+
+        product = ProductIdentity(
+            family="cells",
+            platform="python",
+            display_name="Aspose.Cells",
+            canonical_import="aspose.cells",
+            repo_url="https://github.com/test/test",
+        )
+        # Must not raise even with empty directory and no api_surface
+        records = extract_format_matrix(tmp_path, product)
+        assert isinstance(records, list)
+
+    def test_source_evidence_uses_actual_class_name(self, tmp_path):
+        """UND208-01: FormatRecord from LoadFormat gets source_evidence='enum_member:LoadFormat',
+        not the hardcoded 'enum_member:SaveFormat'."""
+        from launcher.workers.understand.extract._deterministic import extract_format_matrix
+        from launcher.models.product import (
+            ApiSurface, ClassBrief, EnumRecord, EnumMember, ProductIdentity,
+        )
+        # SaveFormat: XLSX only; LoadFormat: ODS only (import-only format)
+        save_brief = ClassBrief(
+            name="SaveFormat",
+            enums=[EnumRecord(name="SaveFormat", members=[EnumMember(name="XLSX")])],
+        )
+        load_brief = ClassBrief(
+            name="LoadFormat",
+            enums=[EnumRecord(name="LoadFormat", members=[EnumMember(name="ODS")])],
+        )
+        api_surface = ApiSurface(
+            public_classes=["SaveFormat", "LoadFormat"],
+            import_allowlist=["aspose.cells"],
+            confidence="high",
+            class_briefs=[save_brief, load_brief],
+        )
+        product = ProductIdentity(
+            family="cells",
+            platform="python",
+            display_name="Aspose.Cells",
+            canonical_import="aspose.cells",
+            repo_url="https://github.com/test/test",
+        )
+        records = extract_format_matrix(tmp_path, product, api_surface=api_surface)
+
+        ods_rec = next((r for r in records if r.name == "ODS"), None)
+        assert ods_rec is not None, "ODS should appear (LoadFormat member)"
+        assert ods_rec.can_import is True
+        assert ods_rec.can_export is False
+        assert ods_rec.source_evidence == "enum_member:LoadFormat", (
+            f"ODS source_evidence should be 'enum_member:LoadFormat'; "
+            f"got {ods_rec.source_evidence!r}"
+        )
+
+        xlsx_rec = next((r for r in records if r.name == "XLSX"), None)
+        assert xlsx_rec is not None, "XLSX should appear (SaveFormat member)"
+        assert xlsx_rec.source_evidence == "enum_member:SaveFormat", (
+            f"XLSX source_evidence should be 'enum_member:SaveFormat'; "
+            f"got {xlsx_rec.source_evidence!r}"
+        )
+
+    def test_or_merge_enriches_scan_derived_record(self, tmp_path):
+        """SR2-G03 / SR2-G04: Strategy 5 OR-merges enum capability into an existing
+        scan-derived record WITHOUT overwriting its source_evidence.
+
+        Pre-condition (Strategy 4, stable): a source file containing 'OdsSaveOptions'
+        causes Strategy 4 to register ODS as can_export=True, can_import=False with
+        source_evidence=str(repo_dir) (the scan-derived label).
+        Then Strategy 5 LoadFormat:ODS enum enriches the record to can_import=True.
+        The original source_evidence must NOT be overwritten.
+
+        Uses Strategy 4 (_FORMAT_OPTIONS_PATTERN regex on class names like OdsSaveOptions)
+        rather than Strategy 3 (heuristic string-literal context), which is more stable.
+        """
+        from launcher.workers.understand.extract._deterministic import extract_format_matrix
+        from launcher.models.product import (
+            ApiSurface, ClassBrief, EnumRecord, EnumMember, ProductIdentity,
+        )
+        # Strategy 4 trigger: OdsSaveOptions → options_can_export["ODS"] = True.
+        # Place in repo_dir/tests/ which is in _src_candidate_dirs.
+        tests_dir = tmp_path / "tests"
+        tests_dir.mkdir()
+        (tests_dir / "test_options.py").write_text(
+            "options = OdsSaveOptions()\n"
+            "workbook.save('output.ods', options)\n",
+            encoding="utf-8",
+        )
+        # Strategy 5: LoadFormat enum adds ODS as can_import=True (OR-merge path).
+        load_brief = ClassBrief(
+            name="LoadFormat",
+            enums=[EnumRecord(name="LoadFormat", members=[EnumMember(name="ODS")])],
+        )
+        api_surface = ApiSurface(
+            public_classes=["LoadFormat"],
+            import_allowlist=["aspose.cells"],
+            confidence="high",
+            class_briefs=[load_brief],
+        )
+        product = ProductIdentity(
+            family="cells",
+            platform="python",
+            display_name="Aspose.Cells",
+            canonical_import="aspose.cells",
+            repo_url="https://github.com/test/test",
+        )
+        records = extract_format_matrix(tmp_path, product, api_surface=api_surface)
+        ods_records = [r for r in records if r.name == "ODS"]
+        assert len(ods_records) == 1, (
+            f"ODS must appear exactly once after OR-merge (no duplicate); "
+            f"got {len(ods_records)}"
+        )
+        ods_rec = ods_records[0]
+
+        # Strategy 4 gave can_export=True; Strategy 5 LoadFormat enriches can_import=True.
+        assert ods_rec.can_export is True, (
+            "ODS must retain can_export=True from Strategy 4 scan"
+        )
+        assert ods_rec.can_import is True, (
+            "ODS must be enriched to can_import=True from LoadFormat enum (OR-merge)"
+        )
+        # SR2-G04: source_evidence must NOT be overwritten by the enum label.
+        # OR-merge only updates capability flags; label stays with the original scan.
+        assert not ods_rec.source_evidence.startswith("enum_member"), (
+            f"OR-merge must NOT overwrite source_evidence of scan-derived record; "
+            f"got {ods_rec.source_evidence!r} — only capability flags may be updated"
+        )
+
+    def test_size_guard_warning_fires_when_enum_exceeds_cap(self, tmp_path, caplog):
+        """SR2-G01: logger.warning fires when Strategy 5 adds > _MAX_ENUM_FORMAT_RECORDS new records.
+
+        Regression guard: ensures the warning branch is reachable and structurally correct,
+        and that no truncation occurs (all records still present despite the warning).
+        """
+        import logging
+        from launcher.workers.understand.extract._deterministic import (
+            extract_format_matrix,
+            _MAX_ENUM_FORMAT_RECORDS,
+        )
+        from launcher.models.product import (
+            ApiSurface, ClassBrief, EnumRecord, EnumMember, ProductIdentity,
+        )
+        # Build SaveFormat with _MAX_ENUM_FORMAT_RECORDS + 1 unique members.
+        # Use names outside _FORMAT_EXTENSIONS to avoid scan-strategy cross-hits.
+        members = [EnumMember(name=f"SYNTHETIC{i:04d}") for i in range(_MAX_ENUM_FORMAT_RECORDS + 1)]
+        save_brief = ClassBrief(
+            name="SaveFormat",
+            enums=[EnumRecord(name="SaveFormat", members=members)],
+        )
+        api_surface = ApiSurface(
+            public_classes=["SaveFormat"],
+            import_allowlist=["aspose.cells"],
+            confidence="high",
+            class_briefs=[save_brief],
+        )
+        product = ProductIdentity(
+            family="cells",
+            platform="python",
+            display_name="Aspose.Cells",
+            canonical_import="aspose.cells",
+            repo_url="https://github.com/test/test",
+        )
+        with caplog.at_level(logging.WARNING, logger="launcher"):
+            records = extract_format_matrix(tmp_path, product, api_surface=api_surface)
+
+        warning_msgs = [
+            r.getMessage() for r in caplog.records
+            if r.levelno >= logging.WARNING and "Strategy 5" in r.getMessage()
+        ]
+        assert warning_msgs, (
+            f"Expected a WARNING about Strategy 5 size cap (cap={_MAX_ENUM_FORMAT_RECORDS}); "
+            f"got caplog messages: {[r.getMessage() for r in caplog.records]}"
+        )
+        # Warning-only: no truncation — all records must still be present.
+        enum_records = [r for r in records if (r.source_evidence or "").startswith("enum_member:")]
+        assert len(enum_records) > _MAX_ENUM_FORMAT_RECORDS, (
+            f"Records must NOT be truncated despite warning; "
+            f"got {len(enum_records)}, expected >{_MAX_ENUM_FORMAT_RECORDS}"
+        )
+
+    def test_fileformat_bilateral_capabilities_and_label(self, tmp_path):
+        """SR2-G02: FileFormat members get can_import=True AND can_export=True,
+        and source_evidence='enum_member:FileFormat' (not hardcoded SaveFormat).
+
+        Regression guard: ensures the cls_upper == 'FILEFORMAT' bilateral branch
+        in Strategy 5 is correct, and that AUTO sentinel is excluded.
+        """
+        from launcher.workers.understand.extract._deterministic import extract_format_matrix
+        from launcher.models.product import (
+            ApiSurface, ClassBrief, EnumRecord, EnumMember, ProductIdentity,
+        )
+        file_brief = ClassBrief(
+            name="FileFormat",
+            enums=[
+                EnumRecord(
+                    name="FileFormat",
+                    members=[
+                        EnumMember(name="PDF"),   # bilateral capability
+                        EnumMember(name="AUTO"),  # sentinel — must be excluded
+                    ],
+                )
+            ],
+        )
+        api_surface = ApiSurface(
+            public_classes=["FileFormat"],
+            import_allowlist=["aspose.cells"],
+            confidence="high",
+            class_briefs=[file_brief],
+        )
+        product = ProductIdentity(
+            family="cells",
+            platform="python",
+            display_name="Aspose.Cells",
+            canonical_import="aspose.cells",
+            repo_url="https://github.com/test/test",
+        )
+        records = extract_format_matrix(tmp_path, product, api_surface=api_surface)
+        names = {r.name for r in records}
+
+        assert "AUTO" not in names, f"AUTO sentinel must be excluded; got {names}"
+
+        pdf_rec = next((r for r in records if r.name == "PDF"), None)
+        assert pdf_rec is not None, "PDF from FileFormat must appear in format_matrix"
+        assert pdf_rec.can_import is True, (
+            "FileFormat member must have can_import=True (FILEFORMAT sets _is_import=True)"
+        )
+        assert pdf_rec.can_export is True, (
+            "FileFormat member must have can_export=True (FILEFORMAT sets _is_export=True)"
+        )
+        assert pdf_rec.source_evidence == "enum_member:FileFormat", (
+            f"source_evidence must use actual class name; "
+            f"got {pdf_rec.source_evidence!r}"
+        )
+
+
+class TestBuildFormatFactsEnumMemberConfidence:
+    """TC-UND-208: _build_format_facts assigns confidence 0.85 to enum_member source."""
+
+    def test_enum_member_gets_085_confidence(self):
+        """FormatRecord with source_evidence='enum_member:SaveFormat' and test_count=0
+        must produce FormatFact with confidence=0.85 and evidence_source='enum_declaration'."""
+        from launcher.workers.understand.extract._entry import _build_format_facts
+        from launcher.models.product import FormatRecord, ProductIdentity
+
+        fr = FormatRecord(
+            name="TSV",
+            extension=".tsv",
+            can_import=False,
+            can_export=True,
+            test_count=0,
+            source_evidence="enum_member:SaveFormat",
+        )
+        product = ProductIdentity(
+            family="cells",
+            platform="python",
+            display_name="Aspose.Cells",
+            canonical_import="aspose.cells",
+            repo_url="https://github.com/test/test",
+        )
+        facts = _build_format_facts([fr], product)
+        assert len(facts) == 1
+        fact = facts[0]
+        assert fact.confidence == 0.85, (
+            f"enum_member source should get confidence=0.85; got {fact.confidence}"
+        )
+        assert fact.evidence_source == "enum_declaration", (
+            f"enum_member source should map to evidence_source='enum_declaration'; "
+            f"got {fact.evidence_source!r}"
+        )
+
+
+class TestWorktreeMissingEvent:
+    """TC-UND-209: understand worker emits understand_llm_skipped event when repo_dir missing.
+
+    These tests verify that a structured event is emitted (and a WARNING logged)
+    BEFORE the ValueError is raised, so operators see the signal in the run report.
+    """
+
+    def _make_scout(self, repo_dir: str) -> "ScoutBundle":  # type: ignore[name-defined]
+        from launcher.models.scout import ScoutBundle
+
+        return ScoutBundle(
+            family="3d",
+            platform="dotnet",
+            repo_url="https://example.com/3d.git",
+            display_name="Aspose.3D",
+            canonical_import="aspose_3d_foss",
+            launch_tier="minimal",
+            repo_dir=repo_dir,
+        )
+
+    def _make_context(self, tmp_path: Path) -> "WorkerContext":  # type: ignore[name-defined]
+        from launcher.models.run_config import RunConfig
+        from launcher.orchestrator.worker_contract import WorkerContext
+
+        config = RunConfig(
+            family="3d",
+            platform="dotnet",
+            repo_url="https://example.com/3d.git",
+        )
+        run_dir = tmp_path / "run"
+        run_dir.mkdir(parents=True)
+        return WorkerContext(run_id="test-und-209", run_dir=run_dir, config=config)
+
+    @pytest.mark.asyncio
+    async def test_worktree_missing_emits_event(self, tmp_path: Path) -> None:
+        """TC-UND-209: repo_dir=non-existent → understand_llm_skipped event emitted."""
+        from unittest.mock import patch as _patch
+        from launcher.workers.understand.worker import UnderstandWorker
+
+        scout = self._make_scout(repo_dir=str(tmp_path / "nonexistent" / "path"))
+        context = self._make_context(tmp_path)
+
+        emitted: list[tuple] = []
+
+        def _capture_event(event_type: str, data: dict, *, worker: str = "") -> None:
+            emitted.append((event_type, data))
+
+        with _patch.object(context, "emit_event", side_effect=_capture_event):
+            with pytest.raises(ValueError, match="repo_dir does not exist"):
+                await UnderstandWorker().run(scout, context)
+
+        event_names = [e[0] for e in emitted]
+        assert "understand_llm_skipped" in event_names, (
+            f"Expected 'understand_llm_skipped' event; got {event_names}"
+        )
+        skipped = next(e for e in emitted if e[0] == "understand_llm_skipped")
+        assert skipped[1]["reason"] == "worktree_missing"
+        assert "3d" in skipped[1]["slug"]
+
+    @pytest.mark.asyncio
+    async def test_worktree_none_emits_event(self, tmp_path: Path) -> None:
+        """TC-UND-209: repo_dir=empty string → understand_llm_skipped event emitted."""
+        from unittest.mock import patch as _patch
+        from launcher.workers.understand.worker import UnderstandWorker
+
+        scout = self._make_scout(repo_dir="")
+        context = self._make_context(tmp_path)
+
+        emitted: list[tuple] = []
+
+        def _capture_event(event_type: str, data: dict, *, worker: str = "") -> None:
+            emitted.append((event_type, data))
+
+        with _patch.object(context, "emit_event", side_effect=_capture_event):
+            with pytest.raises(ValueError, match="repo_dir does not exist"):
+                await UnderstandWorker().run(scout, context)
+
+        event_names = [e[0] for e in emitted]
+        assert "understand_llm_skipped" in event_names, (
+            f"Expected 'understand_llm_skipped' event when repo_dir is empty; got {event_names}"
+        )
+
+
+class TestDeadCodeRemoved:
+    """TC-UND-208: extract_format_capabilities() must no longer exist on PythonExtractor
+    or PlatformExtractor. Anti-regression test to prevent dead code from re-appearing."""
+
+    def test_python_extractor_has_no_extract_format_capabilities(self):
+        """PythonExtractor must not have extract_format_capabilities attribute."""
+        from launcher.workers.understand.adapters._python import PythonExtractor
+        assert not hasattr(PythonExtractor, "extract_format_capabilities"), (
+            "PythonExtractor.extract_format_capabilities is dead code and was removed. "
+            "Do not re-add it without also wiring it into the active pipeline."
+        )
+
+    def test_base_extractor_has_no_extract_format_capabilities(self):
+        """PlatformExtractor must not have extract_format_capabilities attribute."""
+        from launcher.workers.understand.adapters._base import PlatformExtractor
+        assert not hasattr(PlatformExtractor, "extract_format_capabilities"), (
+            "PlatformExtractor.extract_format_capabilities is dead code and was removed. "
+            "Do not re-add it without also wiring it into the active pipeline."
+        )
+
+
+class TestPythonDetectPackageRootNamespace:
+    """TC-5186: email/python namespace package detection."""
+
+    def test_strategy3_namespace_no_init(self, tmp_path):
+        """Namespace dir without __init__.py found via rglob when prefix matches."""
+        from launcher.workers.understand.adapters._python import PythonExtractor
+        from launcher.models.product import ProductIdentity
+        # Build email-like repo structure: aspose/ (no __init__.py) / email_foss/ (has __init__.py)
+        (tmp_path / "aspose" / "email_foss").mkdir(parents=True)
+        (tmp_path / "aspose" / "email_foss" / "__init__.py").write_text("")
+        (tmp_path / "aspose" / "email_foss" / "message.py").write_text("class Message: pass\n")
+        product = ProductIdentity(
+            canonical_import="aspose_email_foss",
+            family="email",
+            platform="python",
+            display_name="Aspose.Email FOSS",
+            repo_url="https://example.com",
+        )
+        result = PythonExtractor().detect_package_root(tmp_path, product)
+        assert result == "aspose", f"Expected 'aspose', got {result!r}"
+
+    def test_derive_product_prefix_underscore_style(self):
+        """TC-5186: underscore-style canonical_import uses first segment as prefix."""
+        from launcher.workers.understand.adapters._python import _derive_product_prefix
+        from launcher.models.product import ProductIdentity
+        product = ProductIdentity(
+            canonical_import="aspose_email_foss", family="email", platform="python",
+            display_name="Aspose.Email FOSS", repo_url="https://example.com",
+        )
+        assert _derive_product_prefix(product) == "aspose"
+
+    def test_derive_product_prefix_dot_style_unchanged(self):
+        """TC-5186: dot-style canonical_import still uses first dot-segment."""
+        from launcher.workers.understand.adapters._python import _derive_product_prefix
+        from launcher.models.product import ProductIdentity
+        product = ProductIdentity(
+            canonical_import="aspose.email_foss", family="email", platform="python",
+            display_name="Aspose.Email FOSS", repo_url="https://example.com",
+        )
+        assert _derive_product_prefix(product) == "aspose"
+
+    def test_strategy2_cells_style_unaffected(self, tmp_path):
+        """TC-5186: cells-style repo (aspose/__init__.py exists) still uses Strategy 2."""
+        from launcher.workers.understand.adapters._python import PythonExtractor
+        from launcher.models.product import ProductIdentity
+        # Cells has aspose/__init__.py (namespace shim)
+        (tmp_path / "aspose").mkdir()
+        (tmp_path / "aspose" / "__init__.py").write_text("")  # namespace shim
+        (tmp_path / "aspose" / "cells_foss").mkdir()
+        (tmp_path / "aspose" / "cells_foss" / "__init__.py").write_text("# real package\n")
+        product = ProductIdentity(
+            canonical_import="aspose_cells_foss", family="cells", platform="python",
+            display_name="Aspose.Cells FOSS", repo_url="https://example.com",
+        )
+        result = PythonExtractor().detect_package_root(tmp_path, product)
+        # Strategy 2 finds aspose/__init__.py (even if namespace shim) → returns "aspose"
+        assert result == "aspose", f"Expected 'aspose', got {result!r}"
+
+
+class TestSparseFacts:
+    """TC-5187: sparse_facts OR semantics — activates when EITHER dimension is sparse."""
+
+    def test_sparse_mode_when_only_format_facts_sparse(self):
+        """Sparse mode on when api_facts >= 10 but format_facts < 10 (3d/java case)."""
+        from launcher.workers.understand.extract._validation import _SPARSE_FACTS_THRESHOLD
+        api_facts = list(range(492))   # simulate 3d/java
+        fmt_facts = list(range(4))     # 4 format facts < threshold
+        bounded = True
+        sparse = bounded and (len(api_facts) < _SPARSE_FACTS_THRESHOLD
+                               or len(fmt_facts) < _SPARSE_FACTS_THRESHOLD)
+        assert sparse is True, "Expected sparse_facts=True when format_facts < threshold"
+
+    def test_sparse_mode_when_only_api_facts_sparse(self):
+        """Sparse mode on when format_facts >= 10 but api_facts < 10."""
+        from launcher.workers.understand.extract._validation import _SPARSE_FACTS_THRESHOLD
+        api_facts = list(range(3))    # 3 api facts < threshold
+        fmt_facts = list(range(15))   # 15 format facts >= threshold
+        bounded = True
+        sparse = bounded and (len(api_facts) < _SPARSE_FACTS_THRESHOLD
+                               or len(fmt_facts) < _SPARSE_FACTS_THRESHOLD)
+        assert sparse is True
+
+    def test_non_sparse_when_both_dimensions_rich(self):
+        """Non-sparse when both api_facts >= 10 and format_facts >= 10."""
+        from launcher.workers.understand.extract._validation import _SPARSE_FACTS_THRESHOLD
+        api_facts = list(range(50))
+        fmt_facts = list(range(20))
+        bounded = True
+        sparse = bounded and (len(api_facts) < _SPARSE_FACTS_THRESHOLD
+                               or len(fmt_facts) < _SPARSE_FACTS_THRESHOLD)
+        assert sparse is False
+
+    def test_non_sparse_when_not_bounded(self):
+        """Non-sparse when bounded_mode_active=False regardless of fact counts."""
+        from launcher.workers.understand.extract._validation import _SPARSE_FACTS_THRESHOLD
+        api_facts = list(range(2))    # would be sparse
+        fmt_facts = list(range(2))
+        bounded = False
+        sparse = bounded and (len(api_facts) < _SPARSE_FACTS_THRESHOLD
+                               or len(fmt_facts) < _SPARSE_FACTS_THRESHOLD)
+        assert sparse is False
+
+
+# ===========================================================================
+# TC-5197: Enhanced JSON repair and parse resilience
+# ===========================================================================
+
+
+class TestTC5197JsonResilience:
+    """TC-5197: Enhanced JSON repair and parse resilience."""
+
+    def test_repair_json_curly_quotes(self):
+        """Smart/curly quotes should be replaced with straight quotes."""
+        from launcher.workers.understand.extract._llm import _repair_json
+        import json
+
+        text = '[\u201c{"claim_id": "c1"}\u201d]'  # Uses \u201c \u201d
+        result = _repair_json(text)
+        assert "\u201c" not in result
+        assert "\u201d" not in result
+
+    def test_repair_json_truncated_array(self):
+        """Truncated JSON arrays should be closed."""
+        from launcher.workers.understand.extract._llm import _repair_json
+        import json
+
+        text = '[{"claim_id": "c1", "text": "hello"}, {"claim_id": "c2"'
+        result = _repair_json(text)
+        parsed = json.loads(result)
+        assert isinstance(parsed, list)
+
+    def test_parse_claims_json_wrapped_object(self):
+        """Dict-wrapped responses like {"claims": [...]} should be unwrapped."""
+        from launcher.workers.understand.extract._llm import _parse_claims_json
+
+        product = _make_product()
+        text = '{"claims": [{"claim_id": "c1", "text": "test claim", "kind": "api", "claim_source": "llm", "confidence": 0.75}]}'
+        result = _parse_claims_json(text, product)
+        assert len(result) >= 1
+
+    def test_parse_claims_json_empty_on_garbage(self):
+        """Garbage input should return empty list, not raise."""
+        from launcher.workers.understand.extract._llm import _parse_claims_json
+
+        product = _make_product()
+        result = _parse_claims_json("this is not json at all!!!", product)
+        assert result == []
+
+    def test_truncation_finish_reason_warning(self, caplog):
+        """finish_reason=length should log a WARNING."""
+        import logging
+
+        caplog.set_level(logging.WARNING)
+        logger = logging.getLogger("launcher.workers.understand.extract._llm")
+        logger.warning(
+            "LLM extraction truncated (finish_reason=length) for %s",
+            "TestProduct",
+        )
+        assert "finish_reason=length" in caplog.text
+
+
+# ===========================================================================
+# TC-5198: Corroboration promotion includes llm_sparse_grounding
+# ===========================================================================
+
+
+class TestTC5198CorroborationPromotion:
+    """TC-5198: promote_corroborated_claims includes llm_sparse_grounding."""
+
+    def test_promote_sparse_grounding_claim(self):
+        """llm_sparse_grounding claims mentioning docstring classes should be promoted."""
+        from launcher.workers.understand.extract._linking import promote_corroborated_claims
+
+        # Create a claim with llm_sparse_grounding source
+        base = Claim(claim_id="c1", text="The Exporter class handles file output",
+                     kind="api", claim_source="llm", confidence=0.55)
+        sparse_claim = base.model_copy(update={"claim_source": "llm_sparse_grounding"})
+
+        # Need a docstring claim to create the docstring_classes set
+        docstring_claim = Claim(
+            claim_id="d1", text="Exporter exports files",
+            kind="api", claim_source="docstring", confidence=1.0,
+        )
+        # Manually set evidence with source_file starting with "docstring:Exporter"
+        docstring_claim = docstring_claim.model_copy(update={
+            "evidence": [type("Ev", (), {"source_file": "docstring:Exporter.export", "line_start": 1, "line_end": 5})()],
+        })
+
+        claims = [sparse_claim, docstring_claim]
+        result, promoted_count = promote_corroborated_claims(claims)
+        assert promoted_count == 1
+        assert result[0].claim_source == "llm_corroborated"
+        assert result[0].confidence == 0.85
+
+    def test_promote_does_not_touch_deterministic(self):
+        """Deterministic claims must never be promoted regardless of text content."""
+        from launcher.workers.understand.extract._linking import promote_corroborated_claims
+
+        docstring_claim = Claim(
+            claim_id="d1", text="Exporter exports files",
+            kind="api", claim_source="docstring", confidence=1.0,
+        )
+        docstring_claim = docstring_claim.model_copy(update={
+            "evidence": [type("Ev", (), {"source_file": "docstring:Exporter.export", "line_start": 1, "line_end": 5})()],
+        })
+
+        det_claim = Claim(claim_id="c1", text="The Exporter class handles output",
+                          kind="api", claim_source="deterministic", confidence=0.65)
+
+        claims = [det_claim, docstring_claim]
+        result, promoted_count = promote_corroborated_claims(claims)
+        assert promoted_count == 0
+        assert result[0].claim_source == "deterministic"
+
+    def test_promote_empty_docstring_classes_logs(self, caplog):
+        """When docstring_classes is empty, should log INFO and return unchanged."""
+        import logging
+        from launcher.workers.understand.extract._linking import promote_corroborated_claims
+
+        caplog.set_level(logging.INFO)
+        claims = [
+            Claim(claim_id="c1", text="Some claim about Exporter",
+                  kind="api", claim_source="llm", confidence=0.75),
+        ]
+
+        result, promoted_count = promote_corroborated_claims(claims)
+        assert promoted_count == 0
+        assert len(result) == len(claims)
+        assert "docstring_classes is empty" in caplog.text

@@ -40,11 +40,13 @@ def _valid_entry(content_path: str = "sub.x.org/slug") -> SnapshotIREntry:
 
 def test_empty_manifest_defaults():
     m = SnapshotManifest()
-    assert m.schema_version == "1.0"
+    assert m.schema_version == "1.1"  # TC-FIX-215: bumped for quality-weighted fields
     assert m.pages == {}
     assert m.majority_run_id == ""
     assert m.majority_run_ir_count == 0
+    assert m.majority_run_quality_score == 0.0  # TC-FIX-215
     assert m.run_ir_counts == {}
+    assert m.run_quality_scores == {}  # TC-FIX-215
     assert m.last_promotion == ""
     assert m.promotion_count == 0
 

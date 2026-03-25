@@ -6,9 +6,11 @@ until Agent B1's changes to clone.py and worker.py are merged.
 """
 from __future__ import annotations
 
+import logging
 import subprocess
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -19,6 +21,11 @@ from launcher.workers.intake.clone import (
 )
 from launcher.workers.intake.worker import IntakeWorker
 from launcher.models.intake import IntakeBundle
+from launcher.workers.intake.acquisition import (
+    _CLONE_TIMESTAMP_MARKER,
+    _STALE_CACHE_DAYS,
+    _log_cache_age,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -189,8 +196,8 @@ class TestCloneRefetchesOnShaMismatch:
             cmd = list(*popenargs) if popenargs else []
             return _sp.CompletedProcess(cmd, 0, stdout="", stderr="")
 
-        with patch("launcher.workers.intake.clone.check_remote_sha", return_value=new_sha), \
-             patch("launcher.workers.intake.clone.subprocess.run", side_effect=fake_clone_subprocess):
+        with patch("launcher.workers.intake.acquisition.check_remote_sha", return_value=new_sha), \
+             patch("launcher.workers.intake.acquisition.subprocess.run", side_effect=fake_clone_subprocess):
             repo_dir_second, sha_second, is_fresh_second = clone_repo_cached(
                 url, family="test", platform="python", work_dir=work_dir
             )
@@ -208,7 +215,7 @@ class TestCheckRemoteShaReturnsNoneOnFailure:
     def test_check_remote_sha_returns_none_on_failure(self):
         """check_remote_sha must return None (not '') when the remote is unreachable."""
         with patch(
-            "launcher.workers.intake.clone.subprocess.run",
+            "launcher.workers.intake.acquisition.subprocess.run",
             side_effect=subprocess.CalledProcessError(128, "git ls-remote"),
         ):
             result = check_remote_sha("https://example.com/nonexistent.git")
@@ -252,3 +259,357 @@ class TestSelfReviewFailsOnEmptyRepoDir:
             "Expected a finding with category='clone' and 'empty' in message. "
             f"Got findings: {result.findings}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Regression: clone.py must be pure re-exports (TC-INT-001)
+# ---------------------------------------------------------------------------
+
+
+class TestNoRecursionInWrapper:
+    """Regression: clone.py must be pure re-exports, not wrappers (TC-INT-001)."""
+
+    def test_check_remote_sha_is_direct_reexport(self):
+        """check_remote_sha in clone.py must be the same function object
+        as acquisition.check_remote_sha — not a wrapper that calls itself."""
+        from launcher.workers.intake import clone as wrapper_mod
+        from launcher.phase1 import acquisition as impl_mod
+
+        assert wrapper_mod.check_remote_sha is impl_mod.check_remote_sha, (
+            "clone.check_remote_sha must be a direct re-export of "
+            "acquisition.check_remote_sha, not a wrapper function"
+        )
+
+    def test_clone_repo_cached_is_direct_reexport(self):
+        from launcher.workers.intake import clone as wrapper_mod
+        from launcher.phase1 import acquisition as impl_mod
+
+        assert wrapper_mod.clone_repo_cached is impl_mod.clone_repo_cached, (
+            "clone.clone_repo_cached must be a direct re-export of "
+            "acquisition.clone_repo_cached, not a wrapper function"
+        )
+
+
+# ---------------------------------------------------------------------------
+# SR-01: build_repo_signals manifest detection
+# ---------------------------------------------------------------------------
+
+
+class TestBuildRepoSignalsManifestDetection:
+    """SR-01: Manifest detection — root CMakeLists.txt and subdir .csproj/.sln."""
+
+    def test_cmakelists_at_root_detected_as_cpp(self, tmp_path: Path):
+        from launcher.workers.intake.acquisition import build_repo_signals
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / "CMakeLists.txt").write_text("project(MyLib VERSION 1.0)", encoding="utf-8")
+        signals = build_repo_signals(repo)
+        assert signals["inferred_language"] == "cpp"
+        assert "CMakeLists.txt" in signals["detected_manifest_files"]
+
+    def test_csproj_in_subdir_detected_as_dotnet(self, tmp_path: Path):
+        from launcher.workers.intake.acquisition import build_repo_signals
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        subdir = repo / "MyLib"
+        subdir.mkdir()
+        (subdir / "MyLib.csproj").write_text(
+            "<Project Sdk=\"Microsoft.NET.Sdk\"/>", encoding="utf-8"
+        )
+        signals = build_repo_signals(repo)
+        assert signals["inferred_language"] == "dotnet"
+        assert "MyLib.csproj" in signals["detected_manifest_files"]
+
+    def test_sln_in_subdir_detected_as_dotnet(self, tmp_path: Path):
+        from launcher.workers.intake.acquisition import build_repo_signals
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        subdir = repo / "src"
+        subdir.mkdir()
+        (subdir / "MySolution.sln").write_text("", encoding="utf-8")
+        signals = build_repo_signals(repo)
+        assert signals["inferred_language"] == "dotnet"
+
+    def test_root_manifest_wins_over_subdir_csproj(self, tmp_path: Path):
+        """Root pyproject.toml must win over a subdir .csproj."""
+        from launcher.workers.intake.acquisition import build_repo_signals
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / "pyproject.toml").write_text("[project]\nname = 'mypkg'", encoding="utf-8")
+        subdir = repo / "bindings"
+        subdir.mkdir()
+        (subdir / "MyLib.csproj").write_text("<Project/>", encoding="utf-8")
+        signals = build_repo_signals(repo)
+        assert signals["inferred_language"] == "python", (
+            "Root pyproject.toml must win over subdir .csproj"
+        )
+
+    def test_empty_repo_returns_safe_defaults(self, tmp_path: Path):
+        from launcher.workers.intake.acquisition import build_repo_signals
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        signals = build_repo_signals(repo)
+        assert signals["is_empty_clone"] is True
+        assert signals["inferred_language"] == ""
+        assert signals["license_detected"] is False
+
+
+# ---------------------------------------------------------------------------
+# SR-02: build_repo_signals license detection
+# ---------------------------------------------------------------------------
+
+
+class TestBuildRepoSignalsLicense:
+    """SR-02: LICENSE file scanning detects open-source licenses."""
+
+    def test_mit_license_detected(self, tmp_path: Path):
+        from launcher.workers.intake.acquisition import build_repo_signals
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / "LICENSE").write_text(
+            "MIT License\n\nCopyright (c) 2024 Aspose Pty Ltd\n", encoding="utf-8"
+        )
+        signals = build_repo_signals(repo)
+        assert signals["license_detected"] is True
+        assert signals["license_type"] == "MIT"
+
+    def test_apache_license_txt_detected(self, tmp_path: Path):
+        from launcher.workers.intake.acquisition import build_repo_signals
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / "LICENSE.txt").write_text(
+            "Apache License\nVersion 2.0, January 2004\n", encoding="utf-8"
+        )
+        signals = build_repo_signals(repo)
+        assert signals["license_detected"] is True
+        assert signals["license_type"] == "Apache-2.0"
+
+    def test_no_license_file_returns_false(self, tmp_path: Path):
+        from launcher.workers.intake.acquisition import build_repo_signals
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / "README.md").write_text("# Hello", encoding="utf-8")
+        signals = build_repo_signals(repo)
+        assert signals["license_detected"] is False
+        assert signals["license_type"] == ""
+
+    def test_unrecognised_license_content_returns_unknown(self, tmp_path: Path):
+        from launcher.workers.intake.acquisition import build_repo_signals
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / "LICENSE").write_text(
+            "This is a proprietary license. All rights reserved.", encoding="utf-8"
+        )
+        signals = build_repo_signals(repo)
+        assert signals["license_detected"] is True
+        assert signals["license_type"] == "unknown"
+
+    def test_binary_license_file_does_not_crash(self, tmp_path: Path):
+        from launcher.workers.intake.acquisition import build_repo_signals
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / "LICENSE").write_bytes(bytes(range(256)))
+        signals = build_repo_signals(repo)
+        assert "license_detected" in signals
+
+
+# ---------------------------------------------------------------------------
+# TC-5177 — Stale cache age detection with aspose_* dirs (G-09 / BA-03)
+# ---------------------------------------------------------------------------
+
+
+class TestStaleCacheEviction:
+    """_log_cache_age correctly reads .clone_timestamp from aspose_* cache dirs.
+
+    Note: _log_cache_age only WARNS about staleness — it does not force a reclone.
+    The `force_refresh` parameter to clone_repo_cached controls eviction. These
+    tests verify the warning detection logic works with aspose_* dir names.
+    """
+
+    def _write_ts(self, cache_dir: Path, age_days: float) -> None:
+        """Write a .clone_timestamp marker with the given age in days."""
+        ts = datetime.now(tz=timezone.utc) - timedelta(days=age_days)
+        (cache_dir / _CLONE_TIMESTAMP_MARKER).write_text(
+            ts.isoformat(), encoding="utf-8"
+        )
+
+    def test_stale_aspose_cache_logs_warning(self, tmp_path: Path, caplog):
+        """aspose_* cache dir older than _STALE_CACHE_DAYS logs a stale warning."""
+        cache_dir = tmp_path / f"aspose_cells_python"
+        cache_dir.mkdir()
+        self._write_ts(cache_dir, age_days=_STALE_CACHE_DAYS + 1)
+
+        with caplog.at_level(logging.WARNING, logger="launcher.workers.intake.acquisition"):
+            _log_cache_age(cache_dir, "https://github.com/aspose-cells-foss/Aspose.Cells-FOSS-for-Python")
+
+        assert any(
+            "days old" in record.message and "consider force_refresh" in record.message
+            for record in caplog.records
+        ), f"Expected stale-cache warning. Got records: {[r.message for r in caplog.records]}"
+
+    def test_fresh_aspose_cache_no_warning(self, tmp_path: Path, caplog):
+        """aspose_* cache dir within _STALE_CACHE_DAYS does NOT log a warning."""
+        cache_dir = tmp_path / f"aspose_cells_python"
+        cache_dir.mkdir()
+        self._write_ts(cache_dir, age_days=_STALE_CACHE_DAYS - 1)
+
+        with caplog.at_level(logging.WARNING, logger="launcher.workers.intake.acquisition"):
+            _log_cache_age(cache_dir, "https://github.com/aspose-cells-foss/Aspose.Cells-FOSS-for-Python")
+
+        stale_records = [
+            r for r in caplog.records if "days old" in r.message
+        ]
+        assert not stale_records, (
+            f"Expected no stale warning for a {_STALE_CACHE_DAYS - 1}-day-old cache. "
+            f"Got: {[r.message for r in stale_records]}"
+        )
+
+    def test_stale_days_boundary(self, tmp_path: Path, caplog):
+        """Exactly _STALE_CACHE_DAYS days old: boundary is exclusive (> not >=), no warning."""
+        cache_dir = tmp_path / f"aspose_cells_python"
+        cache_dir.mkdir()
+        # Write a timestamp exactly _STALE_CACHE_DAYS * 86400 seconds ago
+        ts = datetime.now(tz=timezone.utc) - timedelta(days=_STALE_CACHE_DAYS)
+        (cache_dir / _CLONE_TIMESTAMP_MARKER).write_text(ts.isoformat(), encoding="utf-8")
+
+        with caplog.at_level(logging.WARNING, logger="launcher.workers.intake.acquisition"):
+            _log_cache_age(cache_dir, "https://github.com/aspose-cells-foss/Aspose.Cells-FOSS-for-Python")
+
+        # acquisition.py uses `.days` (integer floor division), so exactly
+        # _STALE_CACHE_DAYS seconds * 86400 = exactly _STALE_CACHE_DAYS days → age_days == _STALE_CACHE_DAYS
+        # Condition is `age_days > _STALE_CACHE_DAYS` — boundary is NOT stale
+        stale_records = [r for r in caplog.records if "days old" in r.message]
+        assert not stale_records, (
+            f"Exactly {_STALE_CACHE_DAYS} days old should NOT trigger warning "
+            f"(condition is >, not >=). Got: {[r.message for r in stale_records]}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# TC-5175 — seed mode passes force_refresh=True to clone_repo_cached
+# ---------------------------------------------------------------------------
+
+
+class TestSeedModeForceRefresh:
+    """TC-5175: pipeline_mode=seed causes IntakeWorker to pass force_refresh=True.
+
+    These tests mock clone_repo_cached so no real network/git is required.
+    """
+
+    def _make_context(self, tmp_path: Path, pipeline_mode: str = "create"):
+        from launcher.models.run_config import RunConfig
+        from launcher.orchestrator.worker_contract import WorkerContext
+
+        config = RunConfig(
+            family="cells",
+            platform="python",
+            repo_url="https://example.com/test.git",
+            pipeline_mode=pipeline_mode,
+        )
+        run_dir = tmp_path / "run"
+        run_dir.mkdir(parents=True)
+        return WorkerContext(run_id="test-seed", run_dir=run_dir, config=config)
+
+    def _make_fake_repo(self, tmp_path: Path) -> Path:
+        repo_dir = tmp_path / "repo"
+        repo_dir.mkdir(parents=True)
+        (repo_dir / "README.md").write_text("# test", encoding="utf-8")
+        return repo_dir
+
+    @pytest.mark.asyncio
+    async def test_seed_mode_passes_force_refresh_true(self, tmp_path: Path) -> None:
+        """TC-5175: pipeline_mode=seed → clone_repo_cached called with force_refresh=True."""
+        import asyncio
+        from launcher.workers.intake.worker import IntakeWorker
+
+        context = self._make_context(tmp_path, pipeline_mode="seed")
+        repo_dir = self._make_fake_repo(tmp_path)
+
+        with patch(
+            "launcher.workers.intake.worker.clone_repo_cached",
+            return_value=(repo_dir, "a" * 40, True),
+        ) as mock_clone:
+            with patch("launcher.workers.intake.worker.load_allowed_org_prefixes", return_value=None):
+                worker = IntakeWorker()
+                from launcher.models.base import LauncherBaseModel
+                await worker.run(LauncherBaseModel(), context)
+
+        mock_clone.assert_called_once()
+        _, kwargs = mock_clone.call_args
+        assert kwargs.get("force_refresh") is True, (
+            f"seed mode must pass force_refresh=True; got kwargs={kwargs}"
+        )
+
+    @pytest.mark.asyncio
+    async def test_create_mode_passes_force_refresh_false(self, tmp_path: Path) -> None:
+        """TC-5175: pipeline_mode=create → clone_repo_cached called with force_refresh=False."""
+        from launcher.workers.intake.worker import IntakeWorker
+
+        context = self._make_context(tmp_path, pipeline_mode="create")
+        repo_dir = self._make_fake_repo(tmp_path)
+
+        with patch(
+            "launcher.workers.intake.worker.clone_repo_cached",
+            return_value=(repo_dir, "b" * 40, False),
+        ) as mock_clone:
+            with patch("launcher.workers.intake.worker.load_allowed_org_prefixes", return_value=None):
+                worker = IntakeWorker()
+                from launcher.models.base import LauncherBaseModel
+                await worker.run(LauncherBaseModel(), context)
+
+        mock_clone.assert_called_once()
+        _, kwargs = mock_clone.call_args
+        assert kwargs.get("force_refresh") is False, (
+            f"create mode must pass force_refresh=False; got kwargs={kwargs}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# TC-5176 — _force_rmtree handles read-only files and missing dirs
+# ---------------------------------------------------------------------------
+
+
+class TestForceRmtree:
+    """TC-5176: _force_rmtree removes read-only files without error."""
+
+    def test_force_rmtree_removes_readonly_files(self, tmp_path: Path):
+        """_force_rmtree removes a directory containing a read-only file."""
+        import stat as _stat
+        from launcher.workers.intake.acquisition import _force_rmtree
+
+        target = tmp_path / "readonly_dir"
+        target.mkdir()
+        ro_file = target / "packed-refs"
+        ro_file.write_text("# git packed-refs\n", encoding="utf-8")
+        # Make the file read-only (simulates git's .git dir behavior on Windows)
+        ro_file.chmod(_stat.S_IREAD)
+
+        _force_rmtree(target)
+
+        assert not target.exists(), f"Expected directory to be removed, but it still exists"
+
+    def test_force_rmtree_removes_nested_dirs(self, tmp_path: Path):
+        """_force_rmtree removes a nested read-only structure entirely."""
+        import stat as _stat
+        from launcher.workers.intake.acquisition import _force_rmtree
+
+        target = tmp_path / "git_dir"
+        nested = target / "objects" / "pack"
+        nested.mkdir(parents=True)
+        ro_file = nested / "pack-abc.idx"
+        ro_file.write_text("idx", encoding="utf-8")
+        ro_file.chmod(_stat.S_IREAD)
+
+        _force_rmtree(target)
+
+        assert not target.exists(), "Nested read-only tree must be fully removed"
+
+    def test_force_rmtree_handles_missing_dir(self, tmp_path: Path):
+        """_force_rmtree on a non-existent path raises no exception."""
+        from launcher.workers.intake.acquisition import _force_rmtree
+
+        missing = tmp_path / "does_not_exist"
+        assert not missing.exists()
+
+        # Must not raise
+        _force_rmtree(missing)

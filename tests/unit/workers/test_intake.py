@@ -242,6 +242,51 @@ class TestResolveIdentity:
 
 
 # ===================================================================
+# TC-5191: canonical_import_overrides
+# ===================================================================
+
+
+class TestCanonicalImportOverrides:
+    """TC-5191: families.yaml canonical_import_overrides for non-alphabetic families."""
+
+    def setup_method(self):
+        from launcher.shared.identity import _clear_families_cache
+        _clear_families_cache()
+
+    def teardown_method(self):
+        from launcher.shared.identity import _clear_families_cache
+        _clear_families_cache()
+
+    def test_3d_dotnet_uses_override(self):
+        _, canonical_import, _, provenance = _resolve_identity("3d", "dotnet")
+        assert canonical_import == "Aspose.ThreeD"
+        assert provenance["canonical_import"] == "families_yaml"
+
+    def test_3d_java_uses_override(self):
+        _, canonical_import, _, provenance = _resolve_identity("3d", "java")
+        assert canonical_import == "com.aspose.threed"
+        assert provenance["canonical_import"] == "families_yaml"
+
+    def test_3d_cpp_uses_override(self):
+        _, canonical_import, _, _ = _resolve_identity("3d", "cpp")
+        assert canonical_import == "Aspose::ThreeD"
+
+    def test_3d_python_unaffected(self):
+        """Python has no canonical_import_overrides for 3d — template works fine."""
+        _, canonical_import, _, _ = _resolve_identity("3d", "python")
+        assert canonical_import == "aspose_3d_foss"
+
+    def test_cells_dotnet_no_override_needed(self):
+        """Alphabetic families don't need overrides — template works correctly."""
+        _, canonical_import, _, _ = _resolve_identity("cells", "dotnet")
+        assert canonical_import == "Aspose.Cells"
+
+    def test_slides_cpp_no_override_needed(self):
+        _, canonical_import, _, _ = _resolve_identity("slides", "cpp")
+        assert canonical_import == "Aspose::Slides"
+
+
+# ===================================================================
 # Tier resolution
 # ===================================================================
 
@@ -893,8 +938,8 @@ class TestCloneTimestamp:
         cache_dir.mkdir(parents=True)
         sha = "b" * 40
 
-        with patch("launcher.workers.intake.clone.check_remote_sha", return_value=sha), \
-             patch("launcher.workers.intake.clone.subprocess.run") as mock_run:
+        with patch("launcher.workers.intake.acquisition.check_remote_sha", return_value=sha), \
+             patch("launcher.workers.intake.acquisition.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0)
             # Simulate the clone by writing expected files
             def _fake_run(cmd, **kw):
@@ -904,8 +949,8 @@ class TestCloneTimestamp:
             mock_run.side_effect = _fake_run
 
             # patch _get_cache_dir to return our known cache_dir
-            with patch("launcher.workers.intake.clone._get_cache_dir", return_value=cache_dir):
-                with patch("launcher.workers.intake.clone._get_repo_sha", return_value=sha):
+            with patch("launcher.workers.intake.acquisition._get_cache_dir", return_value=cache_dir):
+                with patch("launcher.workers.intake.acquisition._get_repo_sha", return_value=sha):
                     result = clone_repo_cached(
                         "https://github.com/test/repo",
                         family="test",
@@ -941,10 +986,10 @@ class TestCloneTimestamp:
                 (cache_dir / ".clone_sha").write_text(sha, encoding="utf-8")
             return MagicMock(returncode=0)
 
-        with patch("launcher.workers.intake.clone.check_remote_sha", return_value=sha), \
-             patch("launcher.workers.intake.clone.subprocess.run", side_effect=_fake_run), \
-             patch("launcher.workers.intake.clone._get_cache_dir", return_value=cache_dir), \
-             patch("launcher.workers.intake.clone._get_repo_sha", return_value=sha):
+        with patch("launcher.workers.intake.acquisition.check_remote_sha", return_value=sha), \
+             patch("launcher.workers.intake.acquisition.subprocess.run", side_effect=_fake_run), \
+             patch("launcher.workers.intake.acquisition._get_cache_dir", return_value=cache_dir), \
+             patch("launcher.workers.intake.acquisition._get_repo_sha", return_value=sha):
             clone_repo_cached(
                 "https://github.com/test/repo",
                 family="test",

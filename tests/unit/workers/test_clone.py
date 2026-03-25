@@ -9,6 +9,7 @@ import pytest
 from launcher.workers.intake.clone import (
     _CLONE_URL_MARKER,
     _check_url_collision,
+    _extract_brand_from_org,
     _extract_brand_from_url,
     _get_cache_dir,
     _get_repo_sha,
@@ -74,6 +75,76 @@ class TestExtractBrandFromUrl:
     def test_empty_string_returns_unknown(self):
         assert _extract_brand_from_url("") == "unknown"
 
+    def test_s_in_brand_not_treated_as_separator(self):
+        """Regression: r'[-._\\\\s]+' in raw string treats 's' as separator.
+
+        The fix changed \\\\s to \\s so regex interprets it as whitespace class,
+        not literal backslash + 's'. Without the fix, 'aspose' splits on 's'
+        into ['a', 'po', 'e'] and returns 'po'.
+        """
+        url = "https://github.com/aspose-slides-foss/aspose-slides-python"
+        result = _extract_brand_from_url(url)
+        assert result == "aspose", (
+            f"Brand must be 'aspose', got '{result}' — "
+            "check regex in _extract_brand_from_url for \\\\s vs \\s bug"
+        )
+
+
+# ===================================================================
+# TC-5159: _extract_brand_from_org (canonical extractor, edge cases)
+# ===================================================================
+
+
+class TestExtractBrandFromOrg:
+    """Direct tests for the canonical brand extractor.
+
+    These complement TestExtractBrandFromUrl by exercising _extract_brand_from_org
+    directly with raw org/login strings rather than full URLs.
+    """
+
+    def test_aspose_cells_foss(self):
+        assert _extract_brand_from_org("aspose-cells-foss") == "aspose"
+
+    def test_aspose_slides_foss_regression(self):
+        """Regression: old r'[-._\\\\s]+' regex split on 's', yielding 'po'."""
+        assert _extract_brand_from_org("aspose-slides-foss") == "aspose"
+
+    def test_aspose_3d_foss(self):
+        assert _extract_brand_from_org("aspose-3d-foss") == "aspose"
+
+    def test_empty_string_returns_unknown(self):
+        assert _extract_brand_from_org("") == "unknown"
+
+    def test_all_stop_words_returns_unknown(self):
+        # Every segment is a stop word — no valid brand
+        assert _extract_brand_from_org("foss-for-net") == "unknown"
+
+    def test_single_stop_word_returns_unknown(self):
+        assert _extract_brand_from_org("foss") == "unknown"
+
+    def test_underscore_separator(self):
+        assert _extract_brand_from_org("my_brand_foss") == "my"
+
+    def test_dot_separator(self):
+        assert _extract_brand_from_org("my.brand") == "my"
+
+    def test_mixed_case_normalized(self):
+        assert _extract_brand_from_org("Aspose-Cells-FOSS") == "aspose"
+
+    def test_stop_word_python_filtered(self):
+        # "python" is a stop word — next valid segment returned
+        assert _extract_brand_from_org("python-tools-foss") == "tools"
+
+    def test_stop_word_java_filtered(self):
+        assert _extract_brand_from_org("java-libs-foss") == "libs"
+
+    def test_single_char_segments_skipped(self):
+        # Segments of length ≤ 1 are skipped
+        assert _extract_brand_from_org("a-b-mybrand") == "mybrand"
+
+    def test_org_starting_with_valid_brand(self):
+        assert _extract_brand_from_org("acme-widgets-foss") == "acme"
+
 
 # ===================================================================
 # TC-4216: _get_cache_dir (readable slug naming)
@@ -135,8 +206,8 @@ class TestOrgAllowlist:
         work_dir.mkdir(parents=True)
         allowed = ["https://github.com/aspose-cells-foss/"]
 
-        with patch("launcher.workers.intake.clone.check_remote_sha", return_value=FAKE_SHA), \
-             patch("launcher.workers.intake.clone.subprocess.run"):
+        with patch("launcher.workers.intake.acquisition.check_remote_sha", return_value=FAKE_SHA), \
+             patch("launcher.workers.intake.acquisition.subprocess.run"):
             repo_dir, sha, is_fresh = clone_repo_cached(
                 FAKE_URL,
                 family="cells",
@@ -166,8 +237,8 @@ class TestOrgAllowlist:
         work_dir.mkdir(parents=True)
         non_aspose_url = "https://github.com/totally-different-org/some-repo"
 
-        with patch("launcher.workers.intake.clone.check_remote_sha", return_value=FAKE_SHA), \
-             patch("launcher.workers.intake.clone.subprocess.run"):
+        with patch("launcher.workers.intake.acquisition.check_remote_sha", return_value=FAKE_SHA), \
+             patch("launcher.workers.intake.acquisition.subprocess.run"):
             repo_dir, sha, is_fresh = clone_repo_cached(
                 non_aspose_url,
                 family="cells",
@@ -201,8 +272,8 @@ class TestCloneUrlMarker:
         work_dir = tmp_path / "runs" / "run-001" / "work"
         work_dir.mkdir(parents=True)
 
-        with patch("launcher.workers.intake.clone.check_remote_sha", return_value=FAKE_SHA), \
-             patch("launcher.workers.intake.clone.subprocess.run"):
+        with patch("launcher.workers.intake.acquisition.check_remote_sha", return_value=FAKE_SHA), \
+             patch("launcher.workers.intake.acquisition.subprocess.run"):
             repo_dir, sha, is_fresh = clone_repo_cached(
                 FAKE_URL, family="cells", platform="python", work_dir=work_dir
             )
@@ -266,8 +337,8 @@ class TestReadableSlugNames:
         work_dir = tmp_path / "runs" / "r1" / "work"
         work_dir.mkdir(parents=True)
 
-        with patch("launcher.workers.intake.clone.check_remote_sha", return_value=FAKE_SHA), \
-             patch("launcher.workers.intake.clone.subprocess.run"):
+        with patch("launcher.workers.intake.acquisition.check_remote_sha", return_value=FAKE_SHA), \
+             patch("launcher.workers.intake.acquisition.subprocess.run"):
             repo_dir, sha, is_fresh = clone_repo_cached(
                 FAKE_URL, family="cells", platform="python", work_dir=work_dir
             )
@@ -286,8 +357,8 @@ class TestCloneRepoCached:
         work_dir = tmp_path / "runs" / "run-001" / "work"
         work_dir.mkdir(parents=True)
 
-        with patch("launcher.workers.intake.clone.check_remote_sha", return_value=FAKE_SHA), \
-             patch("launcher.workers.intake.clone.subprocess.run"):
+        with patch("launcher.workers.intake.acquisition.check_remote_sha", return_value=FAKE_SHA), \
+             patch("launcher.workers.intake.acquisition.subprocess.run"):
             repo_dir, sha, is_fresh = clone_repo_cached(
                 FAKE_URL, family="cells", platform="python", work_dir=work_dir
             )
@@ -309,7 +380,7 @@ class TestCloneRepoCached:
         (cache_dir / ".clone_sha").write_text(FAKE_SHA, encoding="utf-8")
         (cache_dir / _CLONE_URL_MARKER).write_text(FAKE_URL, encoding="utf-8")
 
-        with patch("launcher.workers.intake.clone.check_remote_sha", return_value=FAKE_SHA):
+        with patch("launcher.workers.intake.acquisition.check_remote_sha", return_value=FAKE_SHA):
             repo_dir, sha, is_fresh = clone_repo_cached(
                 FAKE_URL, family="cells", platform="python", work_dir=work_dir
             )
@@ -329,8 +400,8 @@ class TestCloneRepoCached:
         (cache_dir / "old_file.txt").write_text("old", encoding="utf-8")
 
         new_sha = "c" * 40
-        with patch("launcher.workers.intake.clone.check_remote_sha", return_value=new_sha), \
-             patch("launcher.workers.intake.clone.subprocess.run"):
+        with patch("launcher.workers.intake.acquisition.check_remote_sha", return_value=new_sha), \
+             patch("launcher.workers.intake.acquisition.subprocess.run"):
             repo_dir, sha, is_fresh = clone_repo_cached(
                 FAKE_URL, family="cells", platform="python", work_dir=work_dir
             )
@@ -342,9 +413,9 @@ class TestCloneRepoCached:
         work_dir = tmp_path / "runs" / "run-001" / "work"
         work_dir.mkdir(parents=True)
 
-        with patch("launcher.workers.intake.clone.check_remote_sha", return_value=""), \
-             patch("launcher.workers.intake.clone.subprocess.run"), \
-             patch("launcher.workers.intake.clone._get_repo_sha", return_value=FAKE_SHA):
+        with patch("launcher.workers.intake.acquisition.check_remote_sha", return_value=""), \
+             patch("launcher.workers.intake.acquisition.subprocess.run"), \
+             patch("launcher.workers.intake.acquisition._get_repo_sha", return_value=FAKE_SHA):
             repo_dir, sha, is_fresh = clone_repo_cached(
                 FAKE_URL, family="cells", platform="python", work_dir=work_dir
             )
@@ -362,12 +433,12 @@ class TestGetRepoSha:
     def test_returns_sha(self, tmp_path: Path):
         mock_result = MagicMock()
         mock_result.stdout = f"{FAKE_SHA}\n"
-        with patch("launcher.workers.intake.clone.subprocess.run", return_value=mock_result):
+        with patch("launcher.workers.intake.acquisition.subprocess.run", return_value=mock_result):
             sha = _get_repo_sha(tmp_path)
         assert sha == FAKE_SHA
 
     def test_returns_empty_on_error(self, tmp_path: Path):
-        with patch("launcher.workers.intake.clone.subprocess.run", side_effect=Exception("no git")):
+        with patch("launcher.workers.intake.acquisition.subprocess.run", side_effect=Exception("no git")):
             sha = _get_repo_sha(tmp_path)
         assert sha == ""
 
@@ -381,20 +452,20 @@ class TestCheckRemoteSha:
     def test_returns_sha_on_success(self):
         mock_result = MagicMock()
         mock_result.stdout = f"{FAKE_SHA}\tHEAD\n"
-        with patch("launcher.workers.intake.clone.subprocess.run", return_value=mock_result):
+        with patch("launcher.workers.intake.acquisition.subprocess.run", return_value=mock_result):
             sha = check_remote_sha(FAKE_URL)
         assert sha == FAKE_SHA
 
     def test_returns_none_on_failure(self):
         """Network failure (exception) must return None, not '' — TC-A05."""
-        with patch("launcher.workers.intake.clone.subprocess.run", side_effect=Exception("network")):
+        with patch("launcher.workers.intake.acquisition.subprocess.run", side_effect=Exception("network")):
             sha = check_remote_sha(FAKE_URL)
         assert sha is None
 
     def test_returns_empty_on_empty_output(self):
         mock_result = MagicMock()
         mock_result.stdout = ""
-        with patch("launcher.workers.intake.clone.subprocess.run", return_value=mock_result):
+        with patch("launcher.workers.intake.acquisition.subprocess.run", return_value=mock_result):
             sha = check_remote_sha(FAKE_URL)
         assert sha == ""
 
@@ -413,7 +484,7 @@ class TestWriteCacheTimestampGuard:
         from unittest.mock import patch
         from launcher.workers.intake.clone import _write_cache_timestamp
 
-        with caplog.at_level(logging.WARNING, logger="launcher.workers.intake.clone"):
+        with caplog.at_level(logging.WARNING, logger="launcher.phase1.acquisition"):
             with patch("pathlib.Path.write_text", side_effect=OSError("disk full")):
                 # Must not raise — pipeline continues
                 _write_cache_timestamp(tmp_path)
@@ -431,7 +502,7 @@ class TestWriteCacheTimestampGuard:
         import logging
         from launcher.workers.intake.clone import _write_cache_timestamp
 
-        with caplog.at_level(logging.WARNING, logger="launcher.workers.intake.clone"):
+        with caplog.at_level(logging.WARNING, logger="launcher.phase1.acquisition"):
             _write_cache_timestamp(tmp_path)
 
         warning_msgs = [r.message for r in caplog.records if r.levelno == logging.WARNING]
@@ -462,9 +533,9 @@ class TestCacheIntegrityCheck:
         # Delete the SHA marker so the dir is truly empty
         (cache_dir / ".clone_sha").unlink()
 
-        with caplog.at_level(logging.WARNING, logger="launcher.workers.intake.clone"):
-            with patch("launcher.workers.intake.clone.check_remote_sha", return_value=FAKE_SHA), \
-                 patch("launcher.workers.intake.clone.subprocess.run"):
+        with caplog.at_level(logging.WARNING, logger="launcher.phase1.acquisition"):
+            with patch("launcher.workers.intake.acquisition.check_remote_sha", return_value=FAKE_SHA), \
+                 patch("launcher.workers.intake.acquisition.subprocess.run"):
                 # empty dir means no marker.exists() → SHA check won't match → fresh clone
                 repo_dir, sha, is_fresh = clone_repo_cached(
                     FAKE_URL, family="cells", platform="python", work_dir=work_dir
@@ -487,8 +558,8 @@ class TestCacheIntegrityCheck:
         (cache_dir / ".clone_sha").write_text(FAKE_SHA, encoding="utf-8")
         (cache_dir / _CLONE_URL_MARKER).write_text(FAKE_URL, encoding="utf-8")
 
-        with caplog.at_level(logging.WARNING, logger="launcher.workers.intake.clone"):
-            with patch("launcher.workers.intake.clone.check_remote_sha", return_value=FAKE_SHA):
+        with caplog.at_level(logging.WARNING, logger="launcher.phase1.acquisition"):
+            with patch("launcher.workers.intake.acquisition.check_remote_sha", return_value=FAKE_SHA):
                 repo_dir, sha, is_fresh = clone_repo_cached(
                     FAKE_URL, family="cells", platform="python", work_dir=work_dir
                 )
@@ -515,9 +586,9 @@ class TestCacheIntegrityCheck:
             f.unlink()
         assert list(cache_dir.iterdir()) == [], "Test setup: cache_dir should be empty"
 
-        with caplog.at_level(logging.WARNING, logger="launcher.workers.intake.clone"):
-            with patch("launcher.workers.intake.clone.check_remote_sha", return_value=FAKE_SHA), \
-                 patch("launcher.workers.intake.clone.subprocess.run"):
+        with caplog.at_level(logging.WARNING, logger="launcher.phase1.acquisition"):
+            with patch("launcher.workers.intake.acquisition.check_remote_sha", return_value=FAKE_SHA), \
+                 patch("launcher.workers.intake.acquisition.subprocess.run"):
                 repo_dir, sha, is_fresh = clone_repo_cached(
                     FAKE_URL, family="cells", platform="python", work_dir=work_dir
                 )
@@ -540,10 +611,10 @@ class TestCacheIntegrityCheck:
         for f in list(cache_dir.iterdir()):
             f.unlink()
 
-        with caplog.at_level(logging.WARNING, logger="launcher.workers.intake.clone"):
-            with patch("launcher.workers.intake.clone.check_remote_sha", return_value=None), \
-                 patch("launcher.workers.intake.clone.subprocess.run"), \
-                 patch("launcher.workers.intake.clone._get_repo_sha", return_value=FAKE_SHA):
+        with caplog.at_level(logging.WARNING, logger="launcher.phase1.acquisition"):
+            with patch("launcher.workers.intake.acquisition.check_remote_sha", return_value=None), \
+                 patch("launcher.workers.intake.acquisition.subprocess.run"), \
+                 patch("launcher.workers.intake.acquisition._get_repo_sha", return_value=FAKE_SHA):
                 repo_dir, sha, is_fresh = clone_repo_cached(
                     FAKE_URL, family="cells", platform="python", work_dir=work_dir
                 )

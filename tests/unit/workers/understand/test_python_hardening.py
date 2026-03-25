@@ -161,6 +161,70 @@ class TestRuntimeImportFilter:
 
 
 # ---------------------------------------------------------------------------
+# _is_namespace_init unit tests (SR-TFL-02)
+# ---------------------------------------------------------------------------
+
+
+class TestIsNamespaceInit:
+    """Dedicated tests for _is_namespace_init after relative-import fix."""
+
+    def test_empty_init_is_namespace(self, tmp_path: Path):
+        init = tmp_path / "__init__.py"
+        init.write_text("", encoding="utf-8")
+        from launcher.workers.understand.adapters._python import _is_namespace_init
+        assert _is_namespace_init(init) is True
+
+    def test_relative_import_is_namespace(self, tmp_path: Path):
+        """from . import cells is a namespace shim pattern."""
+        init = tmp_path / "__init__.py"
+        init.write_text('"""NS."""\nfrom . import cells\n', encoding="utf-8")
+        from launcher.workers.understand.adapters._python import _is_namespace_init
+        assert _is_namespace_init(init) is True
+
+    def test_relative_wildcard_is_not_namespace(self, tmp_path: Path):
+        """from . import * is NOT a namespace shim (it re-exports everything)."""
+        init = tmp_path / "__init__.py"
+        init.write_text('from .mod import *\n', encoding="utf-8")
+        from launcher.workers.understand.adapters._python import _is_namespace_init
+        assert _is_namespace_init(init) is False
+
+    def test_class_def_is_not_namespace(self, tmp_path: Path):
+        init = tmp_path / "__init__.py"
+        init.write_text('class Foo:\n    pass\n', encoding="utf-8")
+        from launcher.workers.understand.adapters._python import _is_namespace_init
+        assert _is_namespace_init(init) is False
+
+    def test_absolute_import_is_not_namespace(self, tmp_path: Path):
+        init = tmp_path / "__init__.py"
+        init.write_text('import os\n', encoding="utf-8")
+        from launcher.workers.understand.adapters._python import _is_namespace_init
+        assert _is_namespace_init(init) is False
+
+    def test_future_import_only_is_namespace(self, tmp_path: Path):
+        init = tmp_path / "__init__.py"
+        init.write_text('from __future__ import annotations\n', encoding="utf-8")
+        from launcher.workers.understand.adapters._python import _is_namespace_init
+        assert _is_namespace_init(init) is True
+
+    def test_relative_plus_future_is_namespace(self, tmp_path: Path):
+        """Both __future__ and relative imports are allowed in namespace shims."""
+        init = tmp_path / "__init__.py"
+        init.write_text(
+            'from __future__ import annotations\nfrom . import cells\n',
+            encoding="utf-8",
+        )
+        from launcher.workers.understand.adapters._python import _is_namespace_init
+        assert _is_namespace_init(init) is True
+
+    def test_absolute_from_import_is_not_namespace(self, tmp_path: Path):
+        """from os import path is a real import, not namespace."""
+        init = tmp_path / "__init__.py"
+        init.write_text('from os import path\n', encoding="utf-8")
+        from launcher.workers.understand.adapters._python import _is_namespace_init
+        assert _is_namespace_init(init) is False
+
+
+# ---------------------------------------------------------------------------
 # TC-4080: Fenced code block extraction from README
 # ---------------------------------------------------------------------------
 

@@ -2598,6 +2598,27 @@ class TestFormatMatrix:
         assert "FBX" in names, "FBX from bare string must be detected"
         assert "OBJ" in names, "OBJ from bare string must be detected"
 
+    def test_hg12_bare_format_negative_context_excluded(self, tmp_path):
+        """HG-12: Bare format in negative context ('does not support') must NOT be detected."""
+        from launcher.models.product import ProductIdentity
+        from launcher.workers.understand.extract._deterministic import extract_format_matrix
+
+        doc_dir = tmp_path / "docs"
+        doc_dir.mkdir()
+        (doc_dir / "limits.md").write_text(
+            '## Limitations\nThis library does not support "FBX" or "DWG" formats.\n',
+            encoding="utf-8",
+        )
+        product = ProductIdentity(
+            family="3d", platform="python",
+            display_name="Aspose.3D", canonical_import="aspose_3d_foss",
+            repo_url="file://" + str(tmp_path),
+        )
+        result = extract_format_matrix(tmp_path, product)
+        names = {r.name for r in result}
+        assert "FBX" not in names, "FBX in negative context must NOT be detected"
+        assert "DWG" not in names, "DWG in negative context must NOT be detected"
+
 
 # ===================================================================
 # TC-HYBRID-02: Typed API Surface
@@ -2822,8 +2843,9 @@ class TestInstallRecipe:
         assert recipe.package_name == "aspose-3d-foss"
         assert "aspose-3d-foss" in recipe.install_command
         assert recipe.source_file == "pyproject.toml"
-        assert recipe.verification_code.startswith("import aspose.threed")
-        assert "import aspose_3d_foss" not in recipe.verification_code
+        # TC-FIX-216: Verification uses canonical_import (pip package), not runtime_import
+        assert recipe.verification_code.startswith("import aspose_3d_foss")
+        assert "import aspose.threed" not in recipe.verification_code
 
     def test_fallback_to_canonical_import(self, tmp_path):
         """extract_install_recipe falls back to canonical_import when no config files."""
@@ -4098,12 +4120,17 @@ class TestHG07GenericMissingInfo:
         ctx = MagicMock()
         ctx.repo_content = {}
         ctx.emit_event = MagicMock()
+        ctx.llm_config = None  # prevent MagicMock leaking into os.environ.get()
 
         async def _run():
             with (
                 __import__("unittest.mock", fromlist=["patch"]).patch(
                     "launcher.workers.understand.extract._entry._extract_claims_llm",
                     new=AsyncMock(return_value=[]),
+                ),
+                __import__("unittest.mock", fromlist=["patch"]).patch(
+                    "launcher.workers.understand.extract._entry._build_embedding_index",
+                    new=lambda *a, **kw: None,
                 ),
             ):
                 return await run_extract(product, repo_info, tmp_path, ctx)
