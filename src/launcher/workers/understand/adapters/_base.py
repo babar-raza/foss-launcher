@@ -4,11 +4,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from launcher.models.product import (
-    ClassBrief,
-    FormatRecord,
-    ProductIdentity,
-)
+from launcher.models.product import ProductIdentity
 
 
 class PlatformExtractor(ABC):
@@ -64,14 +60,3 @@ class PlatformExtractor(ABC):
     ) -> list[str]:
         """Return valid import statements for this product."""
 
-    def extract_format_capabilities(
-        self,
-        file_path: Path,
-        class_name: str,
-    ) -> list[FormatRecord]:
-        """Extract format capability flags from source (e.g. getter bodies).
-
-        Default returns empty list. Override for platforms where format
-        capabilities are expressed as getter properties.
-        """
-        return []

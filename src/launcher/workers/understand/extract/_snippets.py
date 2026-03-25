@@ -86,6 +86,50 @@ _SNIPPET_OPERATION_HINTS: tuple[str, ...] = (
     "from_file(",
 )
 
+# ---------------------------------------------------------------------------
+# SR-06: Java test method slicing constants
+# ---------------------------------------------------------------------------
+_JAVA_TEST_ATTR_RE = re.compile(r"^\s*@Test\b")
+_JAVA_ASSERT_LINE_RE = re.compile(
+    r"^\s*(?:assert(?:Equals|NotNull|Null|True|False|That|Throws|Same|NotSame|ArrayEquals)\s*[\(;]"
+    r"|verify\s*\("
+    r"|when\s*\()",
+    re.IGNORECASE,
+)
+_JAVA_TEST_IMPORT_PREFIXES: frozenset[str] = frozenset({
+    "org.junit", "org.mockito", "org.hamcrest", "org.assertj",
+    "junit.framework", "org.testng",
+})
+
+# ---------------------------------------------------------------------------
+# TC-CPP-404: C++ test method slicing constants (Google Test / Catch2)
+# ---------------------------------------------------------------------------
+_CPP_TEST_MACRO_RE = re.compile(
+    r"^\s*(?:TEST|TEST_F|TEST_P|TEST_CASE|SCENARIO)\s*\("
+)
+_CPP_ASSERT_LINE_RE = re.compile(
+    r"^\s*(?:ASSERT_|EXPECT_|REQUIRE\s*\(|CHECK\s*\(|REQUIRE_THAT|CHECK_THAT)",
+    re.IGNORECASE,
+)
+
+# Language markers: characteristic token patterns that identify a code snippet
+# language. Used by tests to verify language detection.
+_LANG_MARKERS: dict[str, list[str]] = {
+    "java": [
+        "import ", "public class ", "public static void main",
+        "System.out.println", "new ", ";",
+    ],
+    "csharp": [
+        "using ", "namespace ", "public class ", "static void Main", "Console.WriteLine",
+    ],
+    "python": [
+        "import ", "def ", "class ", "print(", "if __name__",
+    ],
+    "cpp": [
+        "#include ", "namespace ", "int main(", "std::", "->",
+    ],
+}
+
 # Fraction of _MAX_SOURCE_CHARS reserved for README files
 _README_BUDGET_FRACTION = 0.4
 
@@ -495,6 +539,260 @@ def _extract_csharp_test_slices(
     return selected
 
 
+# ---------------------------------------------------------------------------
+# SR-06: Java test method slicing — mirrors C# path above
+# ---------------------------------------------------------------------------
+
+
+def _extract_java_import_block(code: str) -> str:
+    """Extract import statements from Java file, filtering test-framework imports."""
+    imports: list[str] = []
+    for line in code.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("import "):
+            continue
+        # Extract the package prefix (e.g., "org.junit" from "import org.junit.Test;")
+        pkg = stripped.removeprefix("import ").rstrip(";").strip()
+        if any(pkg.startswith(prefix) for prefix in _JAVA_TEST_IMPORT_PREFIXES):
+            continue
+        imports.append(stripped)
+    return "\n".join(imports)
+
+
+def _sanitize_java_test_body(lines: list[str]) -> str:
+    """Remove assertion and mock lines from Java test method body."""
+    cleaned: list[str] = []
+    for line in lines:
+        if _JAVA_ASSERT_LINE_RE.match(line):
+            continue
+        cleaned.append(line.rstrip())
+    return "\n".join(cleaned).strip()
+
+
+def _validate_java_regex(code: str) -> bool:
+    """Return True if code looks like valid Java (has at least one structural marker)."""
+    java_markers = (
+        r"\bclass\s+\w+",
+        r"\bimport\s+[\w.]+;",
+        r"\bpublic\s+static\s+void\b",
+        r"\bnew\s+\w+\s*\(",
+    )
+    return any(re.search(pattern, code) for pattern in java_markers)
+
+
+def _extract_java_test_slices(
+    code: str,
+    api_surface: object,
+    *,
+    max_slices: int = 2,
+) -> list[str]:
+    """Extract individual test methods from a Java test file.
+
+    Extracts methods annotated with @Test, strips assertion noise,
+    and returns the top-scoring slices (by API surface coverage).
+
+    Parameters
+    ----------
+    code:
+        Full content of a Java test file.
+    api_surface:
+        Object with ``public_classes``, ``public_methods``, ``import_allowlist``.
+    max_slices:
+        Maximum number of slices to return.
+    """
+    if not code.strip():
+        return []
+
+    import_block = _extract_java_import_block(code)
+    lines = code.splitlines()
+    candidates: list[tuple[int, str]] = []
+
+    # TC-UND-209: observability counters for snippet filtering
+    _n_test_methods = 0
+    _n_nonempty_body = 0
+    _n_api_hit = 0
+    _n_size_ok = 0
+
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if not _JAVA_TEST_ATTR_RE.match(line):
+            i += 1
+            continue
+
+        # Found @Test — find the method declaration on the next non-blank line
+        _n_test_methods += 1
+        method_start = i + 1
+        while method_start < len(lines) and not lines[method_start].strip():
+            method_start += 1
+
+        if method_start >= len(lines):
+            break
+
+        # Find the opening brace
+        brace_search = method_start
+        depth = 0
+        body_start = -1
+        while brace_search < len(lines):
+            for ch in lines[brace_search]:
+                if ch == "{":
+                    depth += 1
+                    if body_start < 0:
+                        body_start = brace_search
+                elif ch == "}":
+                    depth -= 1
+                    if depth == 0 and body_start >= 0:
+                        body_end = brace_search
+                        body_lines = lines[body_start + 1:body_end]
+                        cleaned = _sanitize_java_test_body(body_lines)
+                        if cleaned:
+                            _n_nonempty_body += 1
+                            # Score by how many public API symbols appear
+                            public_classes = getattr(api_surface, "public_classes", []) or []
+                            score = sum(1 for cls in public_classes if cls in cleaned) * 6
+                            if score > 0:
+                                _n_api_hit += 1
+                                if len(cleaned) <= _TEST_MAX_SLICE_CHARS:
+                                    _n_size_ok += 1
+                                    snippet = (
+                                        f"{import_block}\n\n{cleaned}" if import_block else cleaned
+                                    )
+                                    candidates.append((score, snippet))
+                        i = body_end + 1
+                        body_start = -1
+                        depth = 0
+                        break
+            else:
+                brace_search += 1
+                continue
+            break
+        else:
+            i += 1
+
+    # Select top-scoring unique slices
+    seen: set[str] = set()
+    selected: list[str] = []
+    for _, candidate in sorted(candidates, key=lambda item: item[0], reverse=True):
+        digest = _dedup_key(candidate)
+        if digest in seen:
+            continue
+        seen.add(digest)
+        selected.append(candidate)
+        if len(selected) >= max_slices:
+            break
+
+    # TC-UND-209: structured observability for snippet filtering pipeline
+    logger.debug(
+        "[Snippets] java_test_slicing: @Test=%d nonempty_body=%d api_hit=%d "
+        "size_ok=%d candidates=%d selected=%d",
+        _n_test_methods, _n_nonempty_body, _n_api_hit,
+        _n_size_ok, len(candidates), len(selected),
+    )
+
+    return selected
+
+
+def _extract_cpp_include_block(code: str) -> str:
+    """TC-CPP-404: Extract #include lines from C++ source."""
+    includes: list[str] = []
+    for line in code.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("#include"):
+            # Skip test framework includes
+            if any(fw in stripped for fw in ("gtest", "catch2", "catch.hpp", "gmock")):
+                continue
+            includes.append(stripped)
+    return "\n".join(includes)
+
+
+def _sanitize_cpp_test_body(lines: list[str]) -> str:
+    """TC-CPP-404: Strip assertion macros from C++ test body."""
+    cleaned: list[str] = []
+    for line in lines:
+        if _CPP_ASSERT_LINE_RE.match(line):
+            continue
+        stripped = line.strip()
+        if not stripped or stripped in ("{", "}"):
+            continue
+        cleaned.append(line)
+    return "\n".join(cleaned).strip()
+
+
+def _extract_cpp_test_slices(
+    code: str,
+    api_surface: object,
+    *,
+    max_slices: int = 2,
+) -> list[str]:
+    """TC-CPP-404: Extract individual test cases from C++ test files.
+
+    Supports Google Test (TEST, TEST_F, TEST_P) and Catch2 (TEST_CASE, SCENARIO).
+    Extracts test bodies, strips assertion noise, scores by API surface coverage.
+    """
+    if not code.strip():
+        return []
+
+    include_block = _extract_cpp_include_block(code)
+    lines = code.splitlines()
+    candidates: list[tuple[int, str]] = []
+
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if not _CPP_TEST_MACRO_RE.match(line):
+            i += 1
+            continue
+
+        # Found a test macro — track brace depth to extract body
+        depth = 0
+        body_start = -1
+        brace_search = i
+        while brace_search < len(lines):
+            for ch in lines[brace_search]:
+                if ch == "{":
+                    depth += 1
+                    if body_start < 0:
+                        body_start = brace_search
+                elif ch == "}":
+                    depth -= 1
+                    if depth == 0 and body_start >= 0:
+                        body_end = brace_search
+                        body_lines = lines[body_start + 1:body_end]
+                        cleaned = _sanitize_cpp_test_body(body_lines)
+                        if cleaned:
+                            public_classes = getattr(api_surface, "public_classes", []) or []
+                            score = sum(1 for cls in public_classes if cls in cleaned) * 6
+                            if score > 0 and len(cleaned) <= _TEST_MAX_SLICE_CHARS:
+                                snippet = (
+                                    f"{include_block}\n\n{cleaned}" if include_block else cleaned
+                                )
+                                candidates.append((score, snippet))
+                        i = body_end + 1
+                        body_start = -1
+                        depth = 0
+                        break
+            else:
+                brace_search += 1
+                continue
+            break
+        else:
+            i += 1
+
+    # Select top-scoring unique slices
+    seen: set[str] = set()
+    selected: list[str] = []
+    for _, candidate in sorted(candidates, key=lambda item: item[0], reverse=True):
+        digest = _dedup_key(candidate)
+        if digest in seen:
+            continue
+        seen.add(digest)
+        selected.append(candidate)
+        if len(selected) >= max_slices:
+            break
+
+    return selected
+
+
 def _unknown_product_import_symbols(
     code: str,
     allowlist_set: set[str],
@@ -861,6 +1159,22 @@ def _extract_snippets(
             )
             source_examples = list(source_examples) + _test_candidates
 
+    # BPW-02b: When no example directory exists, test files are the primary snippet
+    # source. The initial fallback (lines above) caps at 20; promote remaining
+    # test files here without a snippet-count threshold.
+    if not repo_info.example_paths and repo_info.test_paths:
+        _test_bpw02b = [
+            p for p in repo_info.test_paths
+            if any(p.endswith(ext) for ext in _source_exts)
+            and p not in set(source_examples)
+        ][:20]
+        if _test_bpw02b:
+            logger.info(
+                "[Snippets] BPW-02b: promoting %d more test files (no example_paths, snippet_count=%d)",
+                len(_test_bpw02b), len(snippets),
+            )
+            source_examples = list(source_examples) + _test_bpw02b
+
     # Extract entire source example files as snippets (all languages)
     for rel_path in source_examples:
         file_path = repo_dir / rel_path
@@ -883,6 +1197,10 @@ def _extract_snippets(
                 candidate_codes = _extract_python_test_slices(code, api_surface) or []
             elif file_lang == "csharp":
                 candidate_codes = _extract_csharp_test_slices(code, api_surface) or []
+            elif file_lang == "java":
+                candidate_codes = _extract_java_test_slices(code, api_surface) or []
+            elif file_lang == "cpp":
+                candidate_codes = _extract_cpp_test_slices(code, api_surface) or []
             if not candidate_codes:
                 logger.debug("Skipping test fallback %s: no reviewable product usage slices", rel_path)
                 continue
@@ -1190,9 +1508,9 @@ def _build_embedding_index(
     if llm_cfg is not None:
         embedding_cfg = getattr(llm_cfg, "embedding", None)
         if embedding_cfg is not None and embedding_cfg.base_url:
-            api_key = os.environ.get(
-                getattr(llm_cfg, "api_key_env", None) or "litellm_key", ""
-            )
+            raw_env = getattr(llm_cfg, "api_key_env", None)
+            api_key_env = raw_env if isinstance(raw_env, str) else None
+            api_key = os.environ.get(api_key_env or "litellm_key", "")
             client = EmbeddingClient(
                 base_url=embedding_cfg.base_url,
                 model=embedding_cfg.model,

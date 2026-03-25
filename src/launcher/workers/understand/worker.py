@@ -22,6 +22,8 @@ from launcher.models.scout import ScoutBundle
 from launcher.models.product import ProductIdentity
 from launcher.models.understanding import UnderstandingBundle
 from launcher.orchestrator.worker_contract import WorkerContract, WorkerContext, SelfReviewResult
+from launcher.workers.understand.extract._validation import CONFIDENCE_BY_SOURCE as _CONFIDENCE_BY_SOURCE_MAP
+from launcher.workers.understand.extract._linking import promote_corroborated_claims as _promote
 logger = logging.getLogger(__name__)
 
 _META_DOC_EXACT_NAMES: frozenset[str] = frozenset({
@@ -393,6 +395,21 @@ class UnderstandWorker(WorkerContract):
 
         repo_dir = Path(scout.repo_dir) if scout.repo_dir else None
         if not repo_dir or not repo_dir.is_dir():
+            # TC-UND-209: emit structured event before raising so operators see the
+            # signal in the run report and know to run pipeline_mode=seed first.
+            _slug = f"{scout.family}/{scout.platform}"
+            logger.warning(
+                "[Understand] worktree_missing: LLM extraction skipped for %s — "
+                "run pipeline_mode=seed first to populate .clone_cache/",
+                _slug,
+            )
+            context.emit_event(
+                "understand_llm_skipped",
+                {"slug": _slug, "reason": "worktree_missing"},
+                worker=self.name,
+            )
+            # TC-UND-209: raise kept intentionally — downstream extraction also
+            # requires valid repo_dir. The event above surfaces the skip to operators.
             raise ValueError(
                 f"[Understand] repo_dir does not exist: {scout.repo_dir!r}. "
                 "Clone may have failed at Intake or the cached directory was deleted between runs."
@@ -601,6 +618,14 @@ class UnderstandWorker(WorkerContract):
             [r for r, s in page_evidence_index.items() if not s.evidence_sufficient],
         )
 
+        # -- TC-UND-210: Promote corroborated LLM claims ----------------------
+        claims, _promoted_count = _promote(claims)
+        if _promoted_count:
+            logger.info(
+                "[Understand] corroboration: promoted=%d claims llm→llm_corroborated",
+                _promoted_count,
+            )
+
         # -- Assemble output bundle -------------------------------------------
         bundle = UnderstandingBundle(
             product=product,
@@ -673,10 +698,17 @@ class UnderstandWorker(WorkerContract):
                 _llm_fallback_count_audit / _total_claims if _total_claims > 0 else 0.0
             )
 
-            # Build confidence distribution
+            # Build confidence distribution.
+            # TC-5171: Keys are derived from CONFIDENCE_BY_SOURCE so the histogram
+            # never diverges from the canonical confidence values.  "0.5" is kept as
+            # a legacy bucket for pre-TC-FIX-02 artifacts; "other" is a safety catch
+            # for any genuinely unrecognized value (should be 0 in healthy runs).
+            _legacy_buckets: frozenset[str] = frozenset({"0.5"})
+            _canonical_buckets = {str(round(v, 2)) for v in _CONFIDENCE_BY_SOURCE_MAP.values()}
             _conf_dist: dict[str, int] = {
-                "1.0": 0, "0.75": 0, "0.5": 0, "0.35": 0, "other": 0
+                k: 0 for k in sorted(_canonical_buckets | _legacy_buckets, reverse=True)
             }
+            _conf_dist["other"] = 0
             for _c in claims:
                 _cv = str(round(getattr(_c, 'confidence', 1.0), 2))
                 if _cv in _conf_dist:
@@ -739,6 +771,13 @@ class UnderstandWorker(WorkerContract):
                     "total_claim_count": _total_claims,
                 },
                 "dropped_claims_log": context.claim_drop_log,
+                # TC-5193: Dropped snippet summary for diagnostics
+                "dropped_snippet_summary": {
+                    "orphaned_no_claim_ids": getattr(context, "orphan_filtered_count", 0),
+                    "post_finalization_orphans": orphaned_snippet_count,
+                    "polluted_source_snippets": len(polluted_sources),
+                    "synthetic_snippets": synthetic_count,
+                },
             }
             context.store.write_json("extraction_audit.json", extraction_audit)
             context.log.info("[Understand] extraction_audit.json written")
@@ -1078,31 +1117,44 @@ class UnderstandWorker(WorkerContract):
                     "severity": "medium",
                 })
 
-        # TC-4090 P2-H: Check 7 — Orphaned snippets (claim_ids == [])
-        # Snippets without linked claims indicate snippet extraction found code blocks
-        # that couldn't be matched to any confirmed claim — a structural data quality issue.
+        # TC-4090: Check 7a — Orphaned snippet data-quality warning.
+        # Percentage-based severity: >20% = high, 10-20% = medium, >0% = low.
         orphaned_snippets = [s for s in bundle.snippets if not getattr(s, "claim_ids", None)]
         orphaned_count = len(orphaned_snippets)
-        if orphaned_count > 0:
-            orphaned_fraction = orphaned_count / max(total_snippets, 1)
-            if orphaned_fraction >= 0.4 or orphaned_count >= 3:
-                _orphan_severity = "high"
-            elif orphaned_fraction > 0.2:
-                _orphan_severity = "medium"
+        if orphaned_count > 0 and total_snippets > 0:
+            orphan_pct = orphaned_count / total_snippets
+            if orphan_pct > 0.20:
+                orphan_severity = "high"
+            elif orphan_pct > 0.10:
+                orphan_severity = "medium"
             else:
-                _orphan_severity = "low"
+                orphan_severity = "low"
             findings.append({
                 "category": "orphaned_snippets",
                 "message": (
-                    f"{orphaned_count}/{total_snippets} snippets have no linked claims "
-                    f"(orphaned_fraction={orphaned_fraction:.2f}). "
-                    "Snippet→claim linking may have failed for these code blocks."
+                    f"{orphaned_count}/{total_snippets} snippet(s) "
+                    f"({orphan_pct:.0%}) have no linked claims."
                 ),
-                "severity": _orphan_severity,
+                "severity": orphan_severity,
             })
-            logger.warning(
-                "[Understand] self_review: %d/%d snippets are orphaned (no claim_ids) — severity=%s",
-                orphaned_count, total_snippets, _orphan_severity,
+
+        # TC-5174: Check 7b — Orphaned snippet invariant.
+        # filter_orphaned_snippets() in _entry.py must have removed all orphans before
+        # the bundle was assembled. If any survive here, the finalization gate has a bug.
+        if orphaned_count > 0:
+            findings.append({
+                "category": "orphaned_snippets_invariant_violation",
+                "message": (
+                    f"{orphaned_count}/{total_snippets} snippet(s) have empty claim_ids in the "
+                    "finalized bundle. filter_orphaned_snippets() should have removed these in "
+                    "_entry.py. This indicates a bug in the finalization gate (TC-5174)."
+                ),
+                "severity": "high",
+            })
+            logger.error(
+                "[Understand] self_review: %d/%d snippets survived finalization with no "
+                "claim_ids — filter_orphaned_snippets() bug (TC-5174)",
+                orphaned_count, total_snippets,
             )
 
         if len(bundle.repo.example_paths) >= 10:
@@ -1124,6 +1176,7 @@ class UnderstandWorker(WorkerContract):
         # Metrics
         metrics["total_claims"] = len(bundle.claims)
         metrics["total_snippets"] = total_snippets
+        # TC-5174: post-filter this must always be 0; any nonzero value = invariant violation
         metrics["orphaned_snippets"] = orphaned_count
         metrics["synthetic_snippets"] = synthetic_count
         metrics["docstring_claim_count"] = claim_mix["docstring_count"]

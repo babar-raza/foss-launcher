@@ -408,7 +408,8 @@ def _extract_api_surface(
 
             # Filter 2b: Test-class heuristic — exclude Test-prefixed classes and classes
             # from test files so they never reach the LLM as "known API". FPR-02.
-            if _is_test_class(cls_name, src_file):
+            # Use repo-relative path so that fixtures under tests/ aren't misclassified.
+            if _is_test_class(cls_name, src_file.relative_to(repo_dir)):
                 _test_filtered_count += 1
                 continue
 

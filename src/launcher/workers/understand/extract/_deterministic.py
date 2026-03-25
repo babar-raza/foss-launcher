@@ -439,6 +439,7 @@ _FORMAT_EXTENSIONS: dict[str, str] = {
     "XLS": ".xls", "PPTX": ".pptx", "PPT": ".ppt",
     "HTML": ".html", "MHTML": ".mhtml", "RTF": ".rtf", "TXT": ".txt",
     "CSV": ".csv", "TSV": ".tsv", "ODS": ".ods", "ODT": ".odt",
+    "MARKDOWN": ".md", "XLSB": ".xlsb", "XLSM": ".xlsm",
     # Image formats
     "PNG": ".png", "JPEG": ".jpg", "JPG": ".jpg", "BMP": ".bmp",
     "TIFF": ".tiff", "GIF": ".gif", "SVG": ".svg", "WEBP": ".webp",
@@ -497,10 +498,34 @@ _FORMAT_NEGATIVE_CTX_RE = re.compile(
     re.IGNORECASE,
 )
 
+# TC-UND-208 / UND208-02: Enum class names that represent save/load format catalogs.
+# Module-level so they are not recreated on every extract_format_matrix() call.
+_FORMAT_ENUM_CLASS_NAMES: frozenset[str] = frozenset({
+    "SAVEFORMAT",
+    "LOADFORMAT",
+    "FILEFORMAT",
+    "EXPORTFORMAT",
+    "IMPORTFORMAT",
+})
+
+# TC-UND-208 / UND208-02: Enum member names to skip — sentinel/meta values with no format meaning.
+_FORMAT_ENUM_SKIP_MEMBERS: frozenset[str] = frozenset({
+    "AUTO",
+    "UNKNOWN",
+    "DEFAULT",
+    "NONE",
+    "INVALID",
+    "NOTSET",
+})
+
+# TC-UND-208 / UND208-04: Maximum enum-derived format records before a warning is emitted.
+_MAX_ENUM_FORMAT_RECORDS = 100
+
 
 def extract_format_matrix(
     repo_dir: Path,
     product: ProductIdentity,
+    api_surface: "ApiSurface | None" = None,
 ) -> "list[FormatRecord]":
     """Scan test files and README tables to build a format capability matrix.
 
@@ -512,6 +537,10 @@ def extract_format_matrix(
     3. Scan source/doc files for file-extension string literals (e.g. ``"output.fbx"``)
        and bare format name strings (e.g. ``"FBX"``).
     4. Merge: source-code evidence beats README when both present.
+    5. (TC-UND-208) If ``api_surface`` is provided, extract format names from
+       ``SaveFormat``/``LoadFormat`` enum members in ``ApiSurface.class_briefs``.
+       These are authoritative — enum membership proves capability even when no
+       test file exercises the format.
 
     TC-4092 — Negative context filter:
     Formats detected ONLY by string-scan strategies (2/3) with no Strategy 1 (enum
@@ -519,6 +548,17 @@ def extract_format_matrix(
     ``_FORMAT_NEGATIVE_CTX_RE`` (e.g., "PDF is not supported"). This prevents false
     positives where error messages or documentation mentioning unsupported formats
     are picked up by string scans.
+
+    TC-UND-207/TC-UND-208 — Zero-capability filter:
+    Records where both ``can_import`` and ``can_export`` are False are dropped.
+    These are noise — the format name appeared in code but no supported operation
+    could be determined.
+
+    Args:
+        repo_dir: Root directory of the cloned repository.
+        product: Product identity (used for logging).
+        api_surface: Optional already-extracted API surface. When provided, Strategy 5
+            augments the matrix with formats from SaveFormat/LoadFormat enum members.
 
     Returns a list of :class:`FormatRecord` instances.
     On any error: returns empty list (never raises).
@@ -724,6 +764,18 @@ def extract_format_matrix(
         can_import_from_code = test_count > 0 and any(
             kw in combined_ctx for kw in ("load", "import", "read", "open", "from_file", "fromfile")
         )
+        # HG-12: "support" in context implies documented capability (both directions).
+        # Bare format strings in "Supported Formats" sections have no directional context
+        # but do indicate the library handles the format.
+        # Guard: suppress when negative context is present (e.g. "does not support FBX").
+        _has_negative_ctx = ctx_lines and any(
+            _FORMAT_NEGATIVE_CTX_RE.search(line) for line in ctx_lines
+        )
+        _documented = test_count > 0 and not _has_negative_ctx and any(
+            kw in combined_ctx for kw in ("support", "format")
+        )
+        if _documented and not can_export_from_code and not can_import_from_code:
+            can_export_from_code = True
 
         if fmt in readme_caps:
             # README explicit capability + code context as tiebreaker
@@ -737,6 +789,13 @@ def extract_format_matrix(
         if test_count == 0 and fmt not in readme_caps and fmt not in options_can_import and fmt not in options_can_export:
             continue
 
+        # TC-UND-208 / TC-UND-207-Fix2: Skip formats where neither capability is confirmed.
+        # Records with can_import=False AND can_export=False are noise — the format name
+        # appeared in code but no supported operation could be determined. This was designed
+        # in TC-UND-207 Fix 2 but never applied to this file.
+        if not can_import and not can_export:
+            continue
+
         records.append(FormatRecord(
             name=fmt,
             extension=_FORMAT_EXTENSIONS.get(fmt, ""),
@@ -745,6 +804,109 @@ def extract_format_matrix(
             test_count=test_count,
             source_evidence=str(repo_dir),
         ))
+
+    # Strategy 5 (TC-UND-208): Extract format names from SaveFormat/LoadFormat enum members
+    # already present in the ApiSurface. These are authoritative — if SaveFormat.TSV is a
+    # public enum member, the library definitively supports saving to TSV, even when no test
+    # file exercises that format. This closes the gap where TSV/MARKDOWN appear in the
+    # cells/python SaveFormat enum but are absent from the format matrix because no test
+    # references them by enum pattern.
+    if api_surface is not None:
+        # UND208-01: dicts store originating class name (not bool) for source_evidence label.
+        # UND208-02: _FORMAT_ENUM_CLASS_NAMES / _FORMAT_ENUM_SKIP_MEMBERS are module-level.
+        _enum_can_export: dict[str, str] = {}  # fmt_name -> originating class name
+        _enum_can_import: dict[str, str] = {}  # fmt_name -> originating class name
+
+        for cls_brief in (getattr(api_surface, "class_briefs", None) or []):
+            cls_upper = (getattr(cls_brief, "name", "") or "").upper()
+            if cls_upper not in _FORMAT_ENUM_CLASS_NAMES:
+                continue
+            _is_export = "SAVE" in cls_upper or "EXPORT" in cls_upper or cls_upper == "FILEFORMAT"
+            _is_import = "LOAD" in cls_upper or "IMPORT" in cls_upper or cls_upper == "FILEFORMAT"
+            _cls_name = getattr(cls_brief, "name", "") or "UnknownFormat"
+            for enum_rec in (getattr(cls_brief, "enums", None) or []):
+                for member in (getattr(enum_rec, "members", None) or []):
+                    mname = (getattr(member, "name", "") or "").upper().replace("_", "")
+                    if not mname or mname in _FORMAT_ENUM_SKIP_MEMBERS:
+                        continue
+                    # First-class name wins; do not overwrite with a later enum class.
+                    if _is_export and mname not in _enum_can_export:
+                        _enum_can_export[mname] = _cls_name
+                    if _is_import and mname not in _enum_can_import:
+                        _enum_can_import[mname] = _cls_name
+
+        # UND208-03: build O(1) index once rather than scanning records list per fmt_name.
+        _records_index: dict[str, int] = {rec.name: i for i, rec in enumerate(records)}
+        _existing_names = set(_records_index)
+        _all_enum_fmts = sorted(set(_enum_can_export) | set(_enum_can_import))
+
+        _enum_new_count = 0       # counts NEW records added by Strategy 5
+        _enum_enriched_count = 0  # counts existing records enriched by Strategy 5
+
+        for fmt_name in _all_enum_fmts:
+            export_flag = fmt_name in _enum_can_export
+            import_flag = fmt_name in _enum_can_import
+            if fmt_name in _existing_names:
+                # Enrich existing scan-derived record with enum capability signals (OR-merge)
+                idx = _records_index[fmt_name]
+                rec = records[idx]
+                if (export_flag and not rec.can_export) or (import_flag and not rec.can_import):
+                    records[idx] = rec.model_copy(update={
+                        "can_export": rec.can_export or export_flag,
+                        "can_import": rec.can_import or import_flag,
+                    })
+                    _enum_enriched_count += 1
+                    logger.debug(
+                        "extract_format_matrix: Strategy 5 enriched %s "
+                        "(can_export: %s->%s, can_import: %s->%s)",
+                        fmt_name,
+                        rec.can_export, rec.can_export or export_flag,
+                        rec.can_import, rec.can_import or import_flag,
+                    )
+            else:
+                # New format discovered from enum — not found by scan strategies 1–4.
+                # Invariant: fmt_name ∈ _all_enum_fmts guarantees it is in at least one dict.
+                _origin_cls = _enum_can_export.get(fmt_name) or _enum_can_import.get(fmt_name)
+                if not _origin_cls:  # should never be reached — log and recover
+                    logger.error(
+                        "extract_format_matrix: Strategy 5 invariant violation — "
+                        "fmt_name %r not in either capability dict",
+                        fmt_name,
+                    )
+                    _origin_cls = "UnknownFormat"
+                records.append(FormatRecord(
+                    name=fmt_name,
+                    extension=_FORMAT_EXTENSIONS.get(fmt_name, ""),
+                    can_export=export_flag,
+                    can_import=import_flag,
+                    test_count=0,
+                    source_evidence=f"enum_member:{_origin_cls}",
+                ))
+                _enum_new_count += 1
+                _existing_names.add(fmt_name)
+                _records_index[fmt_name] = len(records) - 1
+                logger.debug(
+                    "extract_format_matrix: Strategy 5 new record %s "
+                    "(can_export=%s, can_import=%s, origin_cls=%s)",
+                    fmt_name, export_flag, import_flag, _origin_cls,
+                )
+
+        if _all_enum_fmts:
+            logger.info(
+                "extract_format_matrix: Strategy 5 — %d new format(s), %d enriched for %s",
+                _enum_new_count,
+                _enum_enriched_count,
+                product.family,
+            )
+        # Warn if Strategy 5 added an unexpectedly large number of new records.
+        if _enum_new_count > _MAX_ENUM_FORMAT_RECORDS:
+            logger.warning(
+                "extract_format_matrix: Strategy 5 added %d new enum-derived records "
+                "(cap=%d) for %s — inspect the SaveFormat/LoadFormat enum for noise",
+                _enum_new_count,
+                _MAX_ENUM_FORMAT_RECORDS,
+                product.family,
+            )
 
     logger.info(
         "extract_format_matrix: %d format records extracted for %s",
@@ -776,6 +938,43 @@ def _classify_kind_from_text(text: str) -> str:
 # Install recipe extraction (TC-HYBRID-04)
 # ---------------------------------------------------------------------------
 
+# Platforms with dedicated extractors — must NOT fall through to Python strategies.
+# Node/TypeScript/JavaScript are included: _extract_node_recipe handles shared_facts
+# internally, so the guard's cached-recipe path is only for non-Node platforms.
+_NON_PYTHON_PLATFORMS = frozenset({
+    "typescript", "javascript", "node", "java",
+    "dotnet", "csharp", "net", "go", "rust", "ruby", "php",
+    "cpp",
+})
+
+# Source-file labels for cached recipes built from shared_facts.
+# Node excluded — _extract_node_recipe handles shared_facts internally.
+_CACHED_LABEL: dict[str, str] = {
+    "java": "pom.xml (cached)",
+    "dotnet": "*.csproj (cached)",
+    "csharp": "*.csproj (cached)",
+    "net": "*.csproj (cached)",
+    "go": "go.mod (cached)",
+    "rust": "Cargo.toml (cached)",
+    "ruby": "Gemfile (cached)",
+    "php": "composer.json (cached)",
+    "cpp": "vcpkg.json (cached)",
+}
+
+# Install command templates for cached recipes (no version segment — appended inline).
+_CACHED_CMD_TPL: dict[str, str] = {
+    "java": "mvn dependency:get -Dartifact={pkg}",
+    "dotnet": "dotnet add package {pkg}",
+    "go": "go get {pkg}",
+    "rust": "cargo add {pkg}",
+    "ruby": "gem install {pkg}",
+    "php": "composer require {pkg}",
+    "cpp": "vcpkg install {pkg}",
+}
+
+# Comment prefix per platform for verification code.
+_COMMENT_PREFIX: dict[str, str] = {"ruby": "#"}  # All others use //
+
 
 def extract_install_recipe(
     repo_dir: "Path",
@@ -795,6 +994,7 @@ def extract_install_recipe(
     - Rust → _extract_rust_recipe (Cargo.toml → cargo add)
     - Ruby → _extract_ruby_recipe (Gemfile/gemspec → gem install)
     - PHP → _extract_php_recipe (composer.json → composer require)
+    - C++ → _extract_cpp_recipe (CMakeLists.txt → find_package)
     - Python or unknown → pyproject.toml / setup.cfg / setup.py / requirements.txt
 
     TC-4030: Pass shared_facts (from Scout's SharedFacts) to skip pyproject.toml disk read
@@ -838,6 +1038,35 @@ def extract_install_recipe(
         recipe = _extract_php_recipe(repo_dir, product)
         if recipe:
             return recipe
+    elif platform == "cpp":
+        recipe = _extract_cpp_recipe(repo_dir, product)
+        if recipe:
+            return recipe
+
+    # Non-Python platforms must not fall through to Python strategies.
+    if platform in _NON_PYTHON_PLATFORMS:
+        if shared_facts is not None and getattr(shared_facts, "package_name", ""):
+            pkg_name = shared_facts.package_name
+            cached_ver = getattr(shared_facts, "version", "")
+            install_cmd = _CACHED_CMD_TPL.get(platform, "pip install {pkg}").format(pkg=pkg_name)
+            # Java artifact spec includes version when available
+            if platform == "java" and cached_ver:
+                install_cmd = _CACHED_CMD_TPL["java"].format(pkg=f"{pkg_name}:{cached_ver}")
+            source_file = _CACHED_LABEL.get(platform, "pyproject.toml (cached)")
+            canonical = getattr(product, "canonical_import", "") or pkg_name
+            prefix = _COMMENT_PREFIX.get(platform, "//")
+            verification = f"{prefix} Import {canonical} in your project"
+            logger.info("extract_install_recipe(%s): package=%s source=%s", platform, pkg_name, source_file)
+            return InstallRecipe(
+                install_command=install_cmd,
+                package_name=pkg_name,
+                # version_constraint is raw version for non-Python platforms
+                version_constraint=cached_ver,
+                verification_code=verification,
+                source_file=source_file,
+            )
+        logger.debug("extract_install_recipe(%s): no manifest and no shared_facts", platform)
+        return None
 
     # Python or unknown → original strategies
     package_name = ""
@@ -847,11 +1076,7 @@ def extract_install_recipe(
     # TC-4030: Use cached SharedFacts from Scout if available (skip Strategy 1 disk read)
     if shared_facts is not None and getattr(shared_facts, "package_name", ""):
         package_name = shared_facts.package_name
-        # TC-4084: Fix source_file label — use platform-appropriate file name
-        if platform in ("typescript", "javascript", "node"):
-            source_file = "package.json (cached)"
-        else:
-            source_file = "pyproject.toml (cached)"
+        source_file = "pyproject.toml (cached)"
         cached_ver = getattr(shared_facts, "version", "")
         if cached_ver:
             version_constraint = f">={cached_ver}"
@@ -937,10 +1162,9 @@ def extract_install_recipe(
     if version_constraint:
         install_cmd = f"pip install {package_name}{version_constraint}"
 
-    # Use runtime_import for Python verification code when available. The install
-    # command remains package-oriented, but the verification snippet must reflect
-    # the actual import path the generated code and evaluator expect.
-    _verify_pkg = product.runtime_import or product.canonical_import or product.family
+    # TC-FIX-216: Verification code uses canonical_import (pip package) or family fallback.
+    # runtime_import is deliberately excluded — it's for generated code, not pip verification.
+    _verify_pkg = product.canonical_import or product.family
     verification = (
         f"import {_verify_pkg}\n"
         f"print('Installation successful')"
@@ -1021,7 +1245,9 @@ def _extract_java_recipe(repo_dir: "Path", product: "ProductIdentity") -> "Any |
             return None
         content = pom.read_text(encoding="utf-8", errors="replace")
         # Strip namespace for simple parsing
+        # Strip xmlns declarations and xsi:-prefixed attributes (e.g. xsi:schemaLocation)
         content_no_ns = re.sub(r' xmlns(?::[^=]*)?\s*=\s*["\'][^"\']*["\']', '', content)
+        content_no_ns = re.sub(r' xsi:\w+\s*=\s*["\'][^"\']*["\']', '', content_no_ns)
         try:
             root = ET.fromstring(content_no_ns)
         except ET.ParseError:
@@ -1050,15 +1276,81 @@ def _extract_java_recipe(repo_dir: "Path", product: "ProductIdentity") -> "Any |
         return None
 
 
+def _select_dotnet_csproj(
+    csproj_files: list, repo_dir: "Path | None" = None, canonical_import: str = "",
+) -> "Any | None":
+    """TC-4322/TC-5189: Select the main library .csproj with canonical_import scoring.
+
+    Excludes test projects (by repo-relative path) and exe projects
+    (<OutputType>Exe</OutputType>), then prefers AssemblyName/PackageId matching
+    canonical_import (+10), falling back to shortest remaining path.
+    """
+    if not csproj_files:
+        return None
+    if len(csproj_files) == 1:
+        return csproj_files[0]
+
+    ci_norm = canonical_import.lower().replace("-", ".").replace("_", ".") if canonical_import else ""
+
+    candidates = []
+    for csproj in csproj_files:
+        try:
+            rel = csproj.relative_to(repo_dir) if repo_dir else csproj
+        except (ValueError, TypeError):
+            rel = csproj
+        parts_lower = [p.lower() for p in rel.parts]
+        is_test = any("test" in p for p in parts_lower)
+        is_exe = False
+        content = ""
+        try:
+            content = csproj.read_text(encoding="utf-8", errors="replace")
+            is_exe = bool(re.search(r"<OutputType>\s*Exe\s*</OutputType>", content, re.IGNORECASE))
+        except Exception:
+            pass
+
+        # TC-5189: Score by canonical_import match
+        ci_score = 0
+        if ci_norm and content and not is_test and not is_exe:
+            for tag in ("AssemblyName", "PackageId"):
+                m = re.search(rf"<{tag}>\s*([^<]+)\s*</{tag}>", content, re.IGNORECASE)
+                if m:
+                    val = m.group(1).strip().lower().replace("-", ".").replace("_", ".")
+                    if ci_norm in val or val in ci_norm or ci_norm.startswith(val) or val.startswith(ci_norm):
+                        ci_score = 10
+                        break
+
+        candidates.append((csproj, is_test, is_exe, ci_score, len(rel.parts)))
+
+    lib = [(p, t, e, s, d) for p, t, e, s, d in candidates if not t and not e]
+    if not lib:
+        lib = [(p, t, e, s, d) for p, t, e, s, d in candidates if not t]
+    if not lib:
+        lib = candidates
+
+    # Sort by: canonical_import score descending, then path depth ascending, then path alpha
+    lib.sort(key=lambda x: (-x[3], x[4], str(x[0])))
+    return lib[0][0]
+
+
 def _extract_dotnet_recipe(repo_dir: "Path", product: "ProductIdentity") -> "Any | None":
-    """Extract dotnet add package recipe from *.csproj files."""
+    """Extract dotnet add package recipe from *.csproj files.
+
+    TC-4322: Uses _select_dotnet_csproj() to pick the main library project
+    rather than the alphabetically-first file.
+    """
     try:
         from launcher.models.understanding import InstallRecipe
 
-        csproj_files = list(repo_dir.glob("**/*.csproj"))
+        csproj_files = sorted(repo_dir.glob("**/*.csproj"))
         if not csproj_files:
             return None
-        content = csproj_files[0].read_text(encoding="utf-8", errors="replace")
+        selected_csproj = _select_dotnet_csproj(
+            csproj_files, repo_dir=repo_dir,
+            canonical_import=getattr(product, "canonical_import", "") or "",
+        )
+        if selected_csproj is None:
+            return None
+        content = selected_csproj.read_text(encoding="utf-8", errors="replace")
         # Look for PackageReference to find the actual package name
         canonical = getattr(product, "canonical_import", "")
         pkg_name = canonical or ""
@@ -1073,7 +1365,7 @@ def _extract_dotnet_recipe(repo_dir: "Path", product: "ProductIdentity") -> "Any
         return InstallRecipe(
             install_command=install_cmd,
             package_name=pkg_name,
-            source_file=str(csproj_files[0].name),
+            source_file=str(selected_csproj.name),
         )
     except Exception:
         logger.debug("_extract_dotnet_recipe failed", exc_info=True)
@@ -1190,6 +1482,109 @@ def _extract_php_recipe(repo_dir: "Path", product: "ProductIdentity") -> "Any | 
         )
     except Exception:
         logger.debug("_extract_php_recipe failed", exc_info=True)
+        return None
+
+
+# TC-CPP-410: CMake-based recipe for C++ repos
+_CMAKE_PROJECT_RE = re.compile(r"project\s*\(\s*(\S+)", re.IGNORECASE)
+_CMAKE_ADD_LIB_RE = re.compile(r"add_library\s*\(\s*(\S+)", re.IGNORECASE)
+
+
+def _extract_cpp_recipe(repo_dir: "Path", product: "ProductIdentity") -> "Any | None":
+    """Extract C++ install recipe from vcpkg.json, conanfile, or CMakeLists.txt.
+
+    TC-CPP-410: Original CMake-based extraction.
+    TC-CPP-416: Added vcpkg and conan detection with priority order:
+        vcpkg.json > conanfile.txt/py > CMakeLists.txt
+    """
+    try:
+        from launcher.models.understanding import InstallRecipe
+        import json as _json
+
+        canonical = getattr(product, "canonical_import", "") or ""
+        verification = f'#include <{canonical.replace("::", "/")}>' if canonical else ""
+
+        # --- Strategy 1: vcpkg.json (TC-CPP-416) ---
+        vcpkg_json = repo_dir / "vcpkg.json"
+        if vcpkg_json.exists():
+            try:
+                data = _json.loads(vcpkg_json.read_text(encoding="utf-8", errors="replace"))
+                pkg_name = data.get("name", "")
+                if pkg_name:
+                    version = data.get("version", data.get("version-string", ""))
+                    install_cmd = f"vcpkg install {pkg_name}"
+                    logger.info(
+                        "extract_install_recipe(cpp): package=%s source=vcpkg.json",
+                        pkg_name,
+                    )
+                    return InstallRecipe(
+                        install_command=install_cmd,
+                        package_name=pkg_name,
+                        version_constraint=version,
+                        verification_code=verification,
+                        source_file="vcpkg.json",
+                    )
+            except Exception:
+                logger.debug("_extract_cpp_recipe: vcpkg.json parse failed, falling through", exc_info=True)
+
+        # --- Strategy 2: conanfile.txt or conanfile.py (TC-CPP-416) ---
+        conanfile_txt = repo_dir / "conanfile.txt"
+        conanfile_py = repo_dir / "conanfile.py"
+        if conanfile_txt.exists() or conanfile_py.exists():
+            conan_source = "conanfile.txt" if conanfile_txt.exists() else "conanfile.py"
+            # Conan package name is hard to extract reliably; use product info
+            pkg_name = canonical.replace("::", "-") if canonical else ""
+            install_cmd = "conan install ."
+            logger.info(
+                "extract_install_recipe(cpp): source=%s", conan_source,
+            )
+            return InstallRecipe(
+                install_command=install_cmd,
+                package_name=pkg_name,
+                verification_code=verification,
+                source_file=conan_source,
+            )
+
+        # --- Strategy 3: CMakeLists.txt (TC-CPP-410 original) ---
+        cmake = repo_dir / "CMakeLists.txt"
+        if not cmake.exists():
+            return None
+        content = cmake.read_text(encoding="utf-8", errors="replace")
+        # Extract project name (primary) or library target (fallback)
+        project_match = _CMAKE_PROJECT_RE.search(content)
+        lib_match = _CMAKE_ADD_LIB_RE.search(content)
+        pkg_name = ""
+        if project_match:
+            pkg_name = project_match.group(1)
+        elif lib_match:
+            pkg_name = lib_match.group(1)
+        if not pkg_name:
+            return None
+        # Extract version if present: project(NAME VERSION x.y.z)
+        version = ""
+        if project_match:
+            version_re = re.compile(
+                r"project\s*\([^)]*VERSION\s+(\d[\d.]*)", re.IGNORECASE
+            )
+            v_match = version_re.search(content)
+            if v_match:
+                version = v_match.group(1)
+        install_cmd = f"find_package({pkg_name} REQUIRED)  # CMake"
+        if not verification:
+            verification = f'#include <{pkg_name.replace("::", "/")}>'
+        logger.info(
+            "extract_install_recipe(cpp): package=%s source=CMakeLists.txt",
+            pkg_name,
+        )
+        return InstallRecipe(
+            install_command=install_cmd,
+            package_name=pkg_name,
+            version_constraint=version,
+            verification_code=verification,
+            source_file="CMakeLists.txt",
+        )
+    except Exception:
+        logger.debug("_extract_cpp_recipe failed", exc_info=True)
         return None
 
 
@@ -1491,3 +1886,209 @@ def extract_workflow_examples(
         platform,
     )
     return examples
+
+
+# ===================================================================
+# TC-UND-211: Evidence-to-claim expansion
+# ===================================================================
+# Converts ExtractionDatabase facts (api_facts, format_facts, snippet_facts,
+# limitation_facts, install_recipe) into deterministic claims with diversified
+# kinds so non-API pages receive grounded claims through _KIND_TO_ROLES routing.
+
+_MAX_CLASS_BRIEF_CLAIMS: int = 40
+_MAX_FORMAT_CLAIMS: int = 15
+_MAX_SNIPPET_CLAIMS: int = 15
+_MAX_LIMITATION_CLAIMS: int = 10
+
+
+def _ev_claim_id(prefix: str, text: str) -> str:
+    """Content-hash claim ID for evidence-derived claims."""
+    digest = hashlib.md5(text.encode(), usedforsecurity=False).hexdigest()[:8]
+    return f"ev_{prefix}_{digest}"
+
+
+def harvest_evidence_claims(
+    api_surface: "Any",
+    extraction_db: "Any",
+    product: "ProductIdentity",
+    install_recipe: "Any | None" = None,
+) -> list[dict[str, Any]]:
+    """Convert ExtractionDatabase facts into deterministic claims.
+
+    Produces claims from 5 evidence sources with diversified kinds:
+    - class_briefs → kind="api" (one per public class with docstring)
+    - format_facts → kind="format"
+    - snippet_facts → kind="workflow" or "example"
+    - limitation_facts → kind="troubleshoot"
+    - install_recipe → kind="install"
+
+    All claims get claim_source="deterministic", confidence=0.65.
+    Returns raw claim dicts (no claim_id assignment — done by _validate_and_normalize_claims).
+    """
+    claims: list[dict[str, Any]] = []
+    display = getattr(product, "display_name", "") or getattr(product, "family", "unknown")
+
+    # ── 1. Class brief claims ─────────────────────────────────────────
+    class_briefs = getattr(api_surface, "class_briefs", []) or []
+    # Sort for determinism, then cap
+    for brief in sorted(class_briefs, key=lambda b: getattr(b, "name", ""))[:_MAX_CLASS_BRIEF_CLAIMS]:
+        name = getattr(brief, "name", "")
+        doc = getattr(brief, "docstring_snippet", "")
+        if not name:
+            continue
+        # Skip if docstring is empty — we'd produce a generic "ClassName is a public class" claim
+        # which has zero information content.
+        if doc:
+            first_sentence = doc.split(".")[0].strip()
+            if len(first_sentence) >= 10:
+                text = f"{name}: {first_sentence}"
+            else:
+                text = f"{name} is part of the {display} API"
+        else:
+            text = f"{name} is part of the {display} API"
+
+        claims.append({
+            "claim_id": _ev_claim_id("cb", text),
+            "text": text,
+            "kind": "api",
+            "visibility": "public",
+            "tier_relevance": "all",
+            "claim_source": "deterministic",
+            "evidence": [{"source_file": "", "snippet": f"class {name}"}],
+        })
+
+    # ── 2. Format fact claims ─────────────────────────────────────────
+    format_facts = getattr(extraction_db, "format_facts", []) or []
+    for ff in sorted(format_facts, key=lambda f: getattr(f, "format_name", ""))[:_MAX_FORMAT_CLAIMS]:
+        fmt_name = getattr(ff, "format_name", "")
+        if not fmt_name:
+            continue
+        can_imp = getattr(ff, "can_import", False)
+        can_exp = getattr(ff, "can_export", False)
+        ext = getattr(ff, "extension", "")
+
+        if can_imp and can_exp:
+            direction = "reading and writing"
+        elif can_imp:
+            direction = "reading"
+        elif can_exp:
+            direction = "writing"
+        else:
+            direction = "handling"
+
+        ext_str = f" ({ext})" if ext else ""
+        text = f"{display} supports {fmt_name}{ext_str} format for {direction}"
+        claims.append({
+            "claim_id": _ev_claim_id("ff", text),
+            "text": text,
+            "kind": "format",
+            "visibility": "public",
+            "tier_relevance": "all",
+            "claim_source": "deterministic",
+            "evidence": [{
+                "source_file": getattr(ff, "source_file", ""),
+                "snippet": f"{fmt_name} format support",
+            }],
+        })
+
+    # ── 3. Snippet fact claims ────────────────────────────────────────
+    snippet_facts = getattr(extraction_db, "snippet_facts", []) or []
+    for sf in sorted(
+        snippet_facts,
+        key=lambda s: (getattr(s, "operation_label", ""), getattr(s, "fact_id", "")),
+    )[:_MAX_SNIPPET_CLAIMS]:
+        op = getattr(sf, "operation_label", "other")
+        demo_class = getattr(sf, "demonstrates_class", "")
+        in_fmt = getattr(sf, "input_format", "")
+        out_fmt = getattr(sf, "output_format", "")
+
+        if op == "convert" and in_fmt and out_fmt:
+            text = f"Example demonstrates converting {in_fmt} to {out_fmt}"
+            kind = "workflow"
+        elif op == "save_file" and out_fmt:
+            text = f"Example demonstrates saving files in {out_fmt} format"
+            kind = "workflow"
+        elif op == "load_file" and in_fmt:
+            text = f"Example demonstrates loading {in_fmt} files"
+            kind = "workflow"
+        elif demo_class:
+            text = f"Code example demonstrates usage of {demo_class}"
+            kind = "example"
+        else:
+            continue  # Skip generic "other" snippets with no class
+
+        claims.append({
+            "claim_id": _ev_claim_id("sf", text),
+            "text": text,
+            "kind": kind,
+            "visibility": "public",
+            "tier_relevance": "all",
+            "claim_source": "deterministic",
+            "evidence": [{
+                "source_file": getattr(sf, "source_file", ""),
+                "snippet": getattr(sf, "code", "")[:120],
+            }],
+        })
+
+    # ── 4. Limitation fact claims ─────────────────────────────────────
+    limitation_facts = getattr(extraction_db, "limitation_facts", []) or []
+    for lf in sorted(
+        limitation_facts,
+        key=lambda l: getattr(l, "fact_id", ""),
+    )[:_MAX_LIMITATION_CLAIMS]:
+        feature = getattr(lf, "feature", "")
+        constraint = getattr(lf, "constraint", "")
+        if not feature:
+            continue
+        if constraint:
+            text = f"{feature} has limitation: {constraint}"
+        else:
+            text = f"{feature} has known constraints"
+
+        claims.append({
+            "claim_id": _ev_claim_id("lf", text),
+            "text": text,
+            "kind": "troubleshoot",
+            "visibility": "public",
+            "tier_relevance": "all",
+            "claim_source": "deterministic",
+            "evidence": [{
+                "source_file": getattr(lf, "source_file", ""),
+                "line_start": getattr(lf, "source_line", 0),
+                "snippet": f"{feature}: {constraint}"[:120],
+            }],
+        })
+
+    # ── 5. Install recipe claim ───────────────────────────────────────
+    if install_recipe is not None:
+        cmd = getattr(install_recipe, "install_command", "")
+        pkg = getattr(install_recipe, "package_name", "")
+        if cmd:
+            text = f"Install {display} via: {cmd}"
+        elif pkg:
+            text = f"Install {display} from package: {pkg}"
+        else:
+            text = None
+
+        if text:
+            claims.append({
+                "claim_id": _ev_claim_id("ir", text),
+                "text": text,
+                "kind": "install",
+                "visibility": "public",
+                "tier_relevance": "all",
+                "claim_source": "deterministic",
+                "evidence": [{"source_file": "", "snippet": cmd or pkg}],
+            })
+
+    logger.info(
+        "harvest_evidence_claims [TC-UND-211]: produced %d claims "
+        "(class_briefs=%d, format=%d, snippet=%d, limitation=%d, install=%d)",
+        len(claims),
+        min(len(class_briefs), _MAX_CLASS_BRIEF_CLAIMS),
+        min(len(format_facts), _MAX_FORMAT_CLAIMS),
+        min(len(snippet_facts), _MAX_SNIPPET_CLAIMS),
+        min(len(limitation_facts), _MAX_LIMITATION_CLAIMS),
+        1 if install_recipe and (getattr(install_recipe, "install_command", "") or getattr(install_recipe, "package_name", "")) else 0,
+    )
+    return claims

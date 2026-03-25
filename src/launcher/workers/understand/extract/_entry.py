@@ -22,7 +22,9 @@ from launcher.orchestrator.worker_contract import WorkerContext
 from launcher.workers.understand.extract._api_surface import _extract_api_surface
 from launcher.workers.understand.extract._llm import _extract_claims_llm
 from launcher.workers.understand.extract._snippets import _build_doc_contexts, _extract_snippets, _build_embedding_index
-from launcher.workers.understand.extract._validation import _validate_and_normalize_claims, _filter_contaminated_claims
+from launcher.workers.understand.extract._validation import _validate_and_normalize_claims, _filter_contaminated_claims, _filter_weak_evidence, _SPARSE_FACTS_THRESHOLD
+from launcher.workers.understand.extract._deterministic import harvest_evidence_claims
+from launcher.workers.understand.extract._linking import link_snippets
 
 logger = logging.getLogger(__name__)
 
@@ -287,6 +289,12 @@ def _build_api_facts(api_surface: "ApiSurface", product: "ProductIdentity") -> l
                     confidence=1.0,
                 ))
 
+    # TC-UND-211: deterministic sort for stable LLM prompt content across runs.
+    facts.sort(key=lambda f: (
+        getattr(f, "class_name", ""),
+        getattr(f, "member_type", ""),
+        getattr(f, "member_name", ""),
+    ))
     return facts
 
 
@@ -313,6 +321,11 @@ def _build_format_facts(format_matrix: list, product: "ProductIdentity") -> list
             ev_source = "enum_declaration"
         elif test_count > 0:
             confidence = 0.9  # found in at least one reference
+            ev_source = "enum_declaration"
+        elif "enum_member" in src_ev.lower():
+            # TC-UND-208: Format derived from SaveFormat/LoadFormat enum membership.
+            # Authoritative (enum proves capability) but not test-confirmed.
+            confidence = 0.85
             ev_source = "enum_declaration"
         elif "readme" in src_ev.lower():
             confidence = 0.7
@@ -355,7 +368,7 @@ def _build_snippet_facts(snippets: list, product: "ProductIdentity") -> list:
     _FORMAT_ENUM_RE = re.compile(r'\b\w+Format\.\s*(\w+)', re.IGNORECASE)
     _PASCAL_CLASS_RE = re.compile(r'\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\s*\(')
 
-    for sn in snippets or []:
+    for src_idx, sn in enumerate(snippets or []):
         code = getattr(sn, "code", "")
         if not code:
             continue
@@ -408,6 +421,7 @@ def _build_snippet_facts(snippets: list, product: "ProductIdentity") -> list:
             source_file=src_file,
             source_lines=tuple(getattr(sn, "source_lines", (0, 0)) or (0, 0)),
             syntax_valid=getattr(sn, "syntax_valid", True),
+            snippet_source_idx=src_idx,
             confidence=conf,
         ))
 
@@ -454,12 +468,13 @@ def _validate_fact_binding(
     extraction_db: "ExtractionDatabase | None",
     bounded_mode_active: bool,
 ) -> "tuple[list[dict], dict]":
-    """Downgrade LLM claims with no valid fact_id binding to confidence=0.35.
+    """Elevate unbound LLM claims to llm_sparse_grounding (0.55) for downstream filtering.
 
-    TC-4247: In bounded-description mode, every LLM claim should cite a source_fact_id
-    from the ExtractionDatabase. Claims that fail to cite a valid fact_id get
-    confidence=0.35 so they are dropped by U-2 (TC-4225, confidence < 0.5 filter)
-    before reaching generated content.
+    TC-4247/TC-5181: In bounded-description mode, LLM claims should cite a source_fact_id
+    from the ExtractionDatabase. Claims that fail to cite a valid fact_id are elevated to
+    confidence=0.55 (llm_sparse_grounding) so _filter_weak_evidence can make the final
+    quality call. Using 0.35 caused near-total claim collapse when LLM does not cite
+    fact_ids; 0.55 keeps claims above the U-2 threshold (TC-4225, confidence < 0.5).
 
     Skips docstring and llm_fallback claims (pre-verified).
     Is a no-op passthrough when bounded_mode_active=False or db has no facts.
@@ -496,7 +511,8 @@ def _validate_fact_binding(
         claim_source = claim.get("claim_source", "llm")
 
         # Pre-verified sources — skip binding check
-        if claim_source in ("docstring", "llm_fallback"):
+        # TC-UND-211: deterministic_fallback is the same extraction as deterministic, just triggered by LLM failure
+        if claim_source in ("docstring", "llm_fallback", "deterministic_fallback"):
             validated.append(claim)
             skipped_count += 1
             continue
@@ -513,22 +529,25 @@ def _validate_fact_binding(
             bound_count += 1
             validated.append(claim)
         else:
-            # No valid fact binding — downgrade confidence
+            # TC-5181: Unbound claim — elevate to llm_sparse_grounding (0.55) instead of
+            # llm_fallback (0.35). Keeps claims above the U-2 filter threshold so
+            # _filter_weak_evidence can make the final quality call based on evidence
+            # relevance. Prevents near-total claim collapse when LLM does not cite fact_ids.
             unbound_count += 1
             updated = dict(claim)  # copy to avoid mutating original
-            updated["confidence"] = 0.35
-            updated["claim_source"] = "llm_fallback"  # TC-4252: llm_unbound not in Claim Literal; use llm_fallback (same confidence=0.35, dropped by U-2 filter)
+            updated["confidence"] = 0.55
+            updated["claim_source"] = "llm_sparse_grounding"
             validated.append(updated)
 
     stats = {
         "valid_fact_ids_in_db": len(valid_fact_ids),
         "bound_claims": bound_count,
-        "unbound_claims_downgraded": unbound_count,
+        "unbound_claims_elevated_sparse": unbound_count,
         "pre_verified_skipped": skipped_count,
         "total_processed": len(raw_claims),
     }
     logger.info(
-        "fact_binding_validation [TC-4247]: bound=%d unbound_downgraded=%d "
+        "fact_binding_validation [TC-4247/TC-5181]: bound=%d unbound_elevated_sparse=%d "
         "pre_verified=%d valid_fact_ids=%d",
         bound_count, unbound_count, skipped_count, len(valid_fact_ids),
     )
@@ -612,6 +631,12 @@ async def run_extract(
     4. Post-LLM (engineering): Contradiction resolution, validation,
        sanitization, snippet extraction
     """
+    # Phase D: Drop-log accumulator — collects typed records for every claim dropped at any stage.
+    # Stored on context so worker.py can include it in extraction_audit.json without changing
+    # run_extract's return signature. Capped at 500 entries (overflow counted separately).
+    _claim_drop_log: list[dict] = []
+    _DROP_LOG_CAP = 500
+
     # ── Phase B.1: Deterministic evidence extraction ──────────────────
 
     # Resolve platform adapter for dispatch (TC-4003)
@@ -650,7 +675,7 @@ async def run_extract(
     _format_matrix = []
     try:
         from launcher.workers.understand.extract._deterministic import extract_format_matrix
-        _format_matrix = extract_format_matrix(repo_dir, product)
+        _format_matrix = extract_format_matrix(repo_dir, product, api_surface=api_surface)
         if _format_matrix:
             api_surface = api_surface.model_copy(update={"format_matrix": _format_matrix})
             logger.info("format_matrix: %d formats extracted", len(_format_matrix))
@@ -725,6 +750,17 @@ async def run_extract(
         and (getattr(_pre_llm_extraction_db, "api_facts", None)
              or getattr(_pre_llm_extraction_db, "format_facts", None))
     )
+    # Phase D: snapshot pre-mutation state for fact-binding audit trail (SR-02).
+    # Must be built BEFORE _validate_fact_binding so we can record the original
+    # confidence and claim_source before they are downgraded to 0.35/llm_fallback.
+    _pre_binding_snapshot: dict[str, tuple[float, str]] = {
+        rc.get("claim_id", ""): (
+            float(rc.get("confidence", 0.75)),
+            str(rc.get("claim_source", "llm")),
+        )
+        for rc in raw_claims
+        if rc.get("claim_id") and rc.get("claim_source") not in ("llm_fallback",)
+    }
     raw_claims, _fact_binding_stats = _validate_fact_binding(
         raw_claims, _pre_llm_extraction_db, _bounded_mode_active
     )
@@ -733,6 +769,24 @@ async def run_extract(
         _fact_binding_stats,
         worker="understand",
     )
+    # Phase D: log fact-binding mutations into drop_log.
+    # TC-5181: mutation is claim → llm_sparse_grounding (0.55), NOT a drop (kept above U-2).
+    for _rc in raw_claims:
+        _rc_id = _rc.get("claim_id", "")
+        if str(_rc.get("claim_source", "")) == "llm_sparse_grounding" and _rc_id in _pre_binding_snapshot:
+            _orig_conf, _orig_src = _pre_binding_snapshot[_rc_id]
+            if _orig_src not in ("llm_sparse_grounding", "llm_fallback") and len(_claim_drop_log) < _DROP_LOG_CAP:
+                _claim_drop_log.append({
+                    "claim_id": _rc_id,
+                    "claim_text_prefix": str(_rc.get("text", ""))[:80],
+                    "drop_stage": "fact_binding_mutation",
+                    "drop_reason": (
+                        f"no valid source_fact_id; confidence elevated "
+                        f"{_orig_conf:.2f}→0.55, claim_source→llm_sparse_grounding (TC-5181)"
+                    ),
+                    "confidence_before": _orig_conf,
+                    "claim_source": _orig_src,
+                })
 
     # Harvest docstring-sourced claims as raw dicts (AQ-01)
     docstring_cap = min(_MAX_DOCSTRING_CLAIMS, max(12, len(raw_claims)))
@@ -756,6 +810,31 @@ async def run_extract(
         raw_claims.extend(operation_raw)
         logger.info("operation_claims_raw harvested=%d", len(operation_raw))
 
+    # TC-UND-211: Harvest evidence-derived claims from ExtractionDatabase facts.
+    # Converts class_briefs, format_facts, snippet_facts, limitation_facts, and
+    # install_recipe into deterministic claims with diversified kinds so non-API
+    # pages receive grounded claims through _KIND_TO_ROLES routing.
+    _pre_llm_lim_facts = _build_limitation_facts(limitations, product)
+    _evidence_db_for_harvest = ExtractionDatabase(
+        api_facts=_pre_llm_api_facts,
+        format_facts=_pre_llm_fmt_facts,
+        snippet_facts=_build_snippet_facts(raw_snippets_for_llm, product),
+        limitation_facts=_pre_llm_lim_facts,
+        install_recipe=install_recipe,
+    )
+    evidence_raw = harvest_evidence_claims(
+        api_surface, _evidence_db_for_harvest, product,
+        install_recipe=install_recipe,
+    )
+    if evidence_raw:
+        raw_claims.extend(evidence_raw)
+        logger.info("evidence_claims_raw harvested=%d [TC-UND-211]", len(evidence_raw))
+        context.emit_event(
+            "evidence_claims_harvested",
+            {"count": len(evidence_raw)},
+            worker="understand",
+        )
+
     # ── Phase B.4: Post-LLM validation ────────────────────────────────
 
     claims = _validate_and_normalize_claims(
@@ -763,11 +842,28 @@ async def run_extract(
         product,
         api_surface,
         file_tree=frozenset(repo_info.file_tree),
+        drop_log=_claim_drop_log,
     )
 
     # B.4a: Classify claims (user_facing / internal / developer)
     from launcher.shared.classify_claims import filter_claims
     claims = filter_claims(claims)
+
+    # BBN-02: Compute sparse_facts flag — when bounded-description mode is active but
+    # EITHER the api_facts OR format_facts are below _SPARSE_FACTS_THRESHOLD, unbound
+    # LLM claims get elevated to llm_sparse_grounding (0.55) instead of being dropped.
+    # OR semantics: repos sparse in any one dimension (e.g. 3d/java: few format facts)
+    # enter sparse mode even when the other dimension is rich.
+    _sparse_facts = (
+        _bounded_mode_active
+        and (
+            len(_pre_llm_api_facts) < _SPARSE_FACTS_THRESHOLD
+            or len(_pre_llm_fmt_facts) < _SPARSE_FACTS_THRESHOLD
+        )
+    )
+
+    # UND-01: Filter claims with empty or irrelevant evidence
+    claims = _filter_weak_evidence(claims, sparse_facts=_sparse_facts)
 
     # B.4b: Contradiction resolution (TC-4002)
     contradiction_log: list[dict] = []
@@ -808,12 +904,23 @@ async def run_extract(
     )
 
     # B.4d: Remove claims about unrelated third-party technologies (TC-3782)
-    pre_filter_count = len(claims)
+    _pre_contamination = {c.claim_id: c for c in claims}
     claims = _filter_contaminated_claims(claims, product)
-    if pre_filter_count != len(claims):
+    _post_contamination_ids = {c.claim_id for c in claims}
+    for _cid, _c in _pre_contamination.items():
+        if _cid not in _post_contamination_ids and len(_claim_drop_log) < _DROP_LOG_CAP:
+            _claim_drop_log.append({
+                "claim_id": _cid,
+                "claim_text_prefix": _c.text[:80],
+                "drop_stage": "contamination_filter",
+                "drop_reason": "third-party technology mention without product keyword",
+                "confidence_before": _c.confidence,
+                "claim_source": _c.claim_source,
+            })
+    if len(_pre_contamination) != len(claims):
         logger.info(
             "claim_contamination_filter removed=%d kept=%d",
-            pre_filter_count - len(claims), len(claims),
+            len(_pre_contamination) - len(claims), len(claims),
         )
 
     # Phase B.4e: LLM fallback strict filtering (TC-HAL-04)
@@ -822,10 +929,22 @@ async def run_extract(
     _llm_fallback_rate = _llm_fallback_count / _total_claim_count if _total_claim_count > 0 else 0.0
     logger.info("llm_fallback_rate=%.3f (%d/%d claims)", _llm_fallback_rate, _llm_fallback_count, _total_claim_count)
 
+    _pre_fallback_map = {c.claim_id: c for c in claims}
     claims, _unverified_api_dropped = _filter_fallback_api_claims(
         claims, api_surface, _llm_fallback_rate
     )
     if _unverified_api_dropped > 0:
+        _post_fallback_ids = {c.claim_id for c in claims}
+        for _cid, _c in _pre_fallback_map.items():
+            if _cid not in _post_fallback_ids and len(_claim_drop_log) < _DROP_LOG_CAP:
+                _claim_drop_log.append({
+                    "claim_id": _cid,
+                    "claim_text_prefix": _c.text[:80],
+                    "drop_stage": "llm_fallback_api_filter",
+                    "drop_reason": "unverifiable api-kind llm_fallback claim (TC-HAL-04)",
+                    "confidence_before": _c.confidence,
+                    "claim_source": _c.claim_source,
+                })
         context.emit_event(
             "llm_fallback_filter_applied",
             {
@@ -848,10 +967,20 @@ async def run_extract(
     # U-2: Drop claims with confidence < 0.5 before passing downstream [TC-4225]
     # confidence=0.35 == llm_fallback; dropping these prevents CRITICAL hallucination_rate
     # findings in Evaluate (triggered when >10% of used claims have confidence<0.5).
-    _pre_conf_filter = len(claims)
-    claims = [c for c in claims if c.confidence >= 0.5]
-    _low_conf_dropped = _pre_conf_filter - len(claims)
+    _pre_u2_claims = claims
+    claims = [c for c in _pre_u2_claims if c.confidence >= 0.5]
+    _low_conf_dropped = len(_pre_u2_claims) - len(claims)
     if _low_conf_dropped:
+        for _c in _pre_u2_claims:
+            if _c.confidence < 0.5 and len(_claim_drop_log) < _DROP_LOG_CAP:
+                _claim_drop_log.append({
+                    "claim_id": _c.claim_id,
+                    "claim_text_prefix": _c.text[:80],
+                    "drop_stage": "u2_confidence_filter",
+                    "drop_reason": f"confidence {_c.confidence:.2f} < 0.5 threshold (TC-4225)",
+                    "confidence_before": _c.confidence,
+                    "claim_source": _c.claim_source,
+                })
         logger.warning(
             "low_confidence_claims_dropped [TC-4225]: %d claims with confidence<0.5 excluded "
             "(source=llm_fallback). These had confidence=0.35 and would trigger hallucination_rate CRITICAL.",
@@ -863,11 +992,40 @@ async def run_extract(
             worker="understand",
         )
 
+    # CDN-01: Detect whether the pipeline is running without LLM-origin claims.
+    # If no LLM-origin claims survived, evidence-derived claims (TC-UND-211 Phase 1c)
+    # are the sole content source. Log this for operational visibility.
+    _LLM_ORIGIN_SOURCES = {"llm", "llm_corroborated", "llm_sparse_grounding"}
+    _llm_origin_count = sum(1 for c in claims if c.claim_source in _LLM_ORIGIN_SOURCES)
+    if _llm_origin_count == 0 and len(claims) > 0:
+        logger.warning(
+            "CDN-01 activated [TC-UND-211]: 0 LLM-origin claims survived filtering; "
+            "%d deterministic/evidence claims remain as sole content source.",
+            len(claims),
+        )
+        context.emit_event(
+            "cdn01_fallback_activated",
+            {
+                "llm_origin_claims": 0,
+                "deterministic_claims": len(claims),
+                "reason": "no_llm_claims_survived_filtering",
+            },
+            worker="understand",
+        )
+
+    # Phase D: Store drop log on context for worker.py audit output.
+    # Capped at _DROP_LOG_CAP entries; overflow is not tracked (first 500 are sufficient for diagnosis).
+    context.claim_drop_log = _claim_drop_log
+
     # Phase B.5 continues below
 
     # ── Phase B.5: Snippet extraction ─────────────────────────────────
 
     snippets = _extract_snippets(repo_dir, repo_info, product, api_surface, claims)
+
+    # TC-5135: Three-tier structural linking cascade + UND-03 redistribution
+    snippets = link_snippets(snippets, claims, api_surface, _pre_llm_api_facts)
+
     # TC-4062: Synthetic snippet generation removed — it produced semantically wrong
     # evidence (obj.method() with no args). Zero snippets is the correct signal;
     # the "EVIDENCE ABSENT" path in section_prompt.py handles it cleanly.
@@ -891,9 +1049,21 @@ async def run_extract(
     except Exception:
         logger.warning("snippet_import_validation failed [TC-HAL-07]", exc_info=True)
 
+    # TC-5174: Finalization gate — remove orphaned snippets before bundle assembly.
+    # Any snippet still without claim_ids after the three-tier cascade is dead data:
+    # Planner and Generate implicitly exclude it, but retaining it in the bundle
+    # pollutes phase_store/ artifacts indefinitely. Filter here at the ownership point.
+    from launcher.workers.understand.extract._linking import filter_orphaned_snippets
+    snippets, _orphan_filtered_count = filter_orphaned_snippets(snippets)
+    context.orphan_filtered_count = _orphan_filtered_count
+
     context.emit_event(
         "snippet_extraction_complete",
-        {"extracted": len(snippets), "import_filtered": _invalid_import_count},
+        {
+            "extracted": len(snippets),
+            "import_filtered": _invalid_import_count,
+            "orphan_filtered": _orphan_filtered_count,
+        },
         worker="understand",
     )
 
@@ -912,6 +1082,25 @@ async def run_extract(
         except Exception:
             pass
 
+    _supported_formats = [fr.name for fr in _format_matrix if fr.can_import or fr.can_export]
+    _input_formats = [fr.name for fr in _format_matrix if fr.can_import]
+    _output_formats = [fr.name for fr in _format_matrix if fr.can_export]
+
+    # SR-11: C++ has no API-level format signals; detect from README/docs instead
+    if not _supported_formats and getattr(product, "platform", "") == "cpp":
+        try:
+            from launcher.workers.understand.adapters._cpp import CppExtractor as _CppExt
+            _cpp_ext = _CppExt()
+            _doc_texts = [repo_content.get(p, "") for p in (repo_info.doc_paths or [])[:5]]
+            _detected = _cpp_ext.detect_supported_formats_from_docs(
+                repo_info.readme_summary or "", _doc_texts
+            )
+            if _detected:
+                _supported_formats = _detected
+                logger.info("[Understand] C++ doc-based format detection: %s", _detected)
+        except Exception:
+            pass
+
     product_evidence = ProductEvidence(
         limitations=limitations,
         workflow_examples=workflow_examples,
@@ -919,9 +1108,9 @@ async def run_extract(
         missing_info=_missing_info,
         confidence=_confidence,
         # TC-4040: wire AST-extracted format matrix into ProductEvidence
-        supported_formats=[fr.name for fr in _format_matrix if fr.can_import or fr.can_export],
-        input_formats=[fr.name for fr in _format_matrix if fr.can_import],
-        output_formats=[fr.name for fr in _format_matrix if fr.can_export],
+        supported_formats=_supported_formats,
+        input_formats=_input_formats,
+        output_formats=_output_formats,
     )
 
     logger.info(

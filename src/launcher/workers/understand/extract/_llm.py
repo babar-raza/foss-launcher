@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 # Maximum characters of source material sent to the LLM per batch
 _MAX_SOURCE_CHARS = 32_000
 
+# TC-UND-211: cap api_facts sent to LLM to prevent token overflow for large repos.
+_MAX_API_FACTS_FOR_LLM: int = 100
+
 # Discovery-mode task instructions (backward-compatible default for claim_extractor.txt).
 # TC-4245: when no ExtractionDatabase facts are available the LLM operates in open-ended
 # discovery mode using these instructions. TC-4246 will replace this with bounded-description
@@ -105,7 +108,10 @@ def _build_verified_facts_block(extraction_db: "Any", max_chars: int = 16_000) -
     api_facts = getattr(extraction_db, "api_facts", [])
     if api_facts:
         api_lines = ["VERIFIED API FACTS:"]
-        for f in sorted(api_facts, key=lambda x: -getattr(x, "confidence", 1.0)):
+        for f in sorted(api_facts, key=lambda x: (
+            -getattr(x, "confidence", 1.0),
+            getattr(x, "fact_id", ""),
+        ))[:_MAX_API_FACTS_FOR_LLM]:
             sig = getattr(f, "signature", "") or f"{getattr(f, 'class_name', '')}.{getattr(f, 'member_name', '')}"
             doc = getattr(f, "docstring", "")
             doc_preview = doc[:120].rstrip() if doc else ""
@@ -122,7 +128,10 @@ def _build_verified_facts_block(extraction_db: "Any", max_chars: int = 16_000) -
     format_facts = getattr(extraction_db, "format_facts", [])
     if format_facts:
         fmt_lines = ["VERIFIED FORMAT FACTS:"]
-        for f in sorted(format_facts, key=lambda x: -getattr(x, "confidence", 1.0)):
+        for f in sorted(format_facts, key=lambda x: (
+            -getattr(x, "confidence", 1.0),
+            getattr(x, "fact_id", ""),
+        )):
             can_import = getattr(f, "can_import", False)
             can_export = getattr(f, "can_export", False)
             flags: list[str] = []
@@ -210,7 +219,7 @@ async def _extract_claims_llm(
     )
     fallback = _extract_claims_deterministic(doc_contexts, product)
     for c in fallback:
-        c.setdefault("claim_source", "llm_fallback")
+        c.setdefault("claim_source", "deterministic_fallback")  # TC-UND-211: was llm_fallback@0.35; now survives U-2 at 0.60
     return fallback
 
 
@@ -338,17 +347,40 @@ def _call_llm_extract(
         max_tokens=20_000,  # Override: snippet-enriched prompts yield more claims; avoid finish_reason=length (TC-3884)
     )
 
+    # TC-5197: Check for truncation
+    finish_reason = response.get("finish_reason", "")
+    if finish_reason == "length":
+        logger.warning(
+            "LLM extraction truncated (finish_reason=length) for %s — "
+            "output may be incomplete, JSON repair will attempt to close brackets",
+            product.display_name,
+        )
+
     # Parse JSON from response
     text = response.get("content", "")
     return _parse_claims_json(text, product)
 
 
 def _repair_json(text: str) -> str:
-    """Attempt to fix common LLM JSON errors."""
+    """Attempt to fix common LLM JSON errors (TC-5197: enhanced)."""
+    # TC-5197: Replace smart/curly quotes with straight quotes
+    text = text.replace("\u201c", '"').replace("\u201d", '"')  # " "
+    text = text.replace("\u2018", "'").replace("\u2019", "'")  # ' '
+
     # Remove trailing commas before ] or }
     text = re.sub(r",\s*([}\]])", r"\1", text)
     # Remove JS-style line comments (only at line start, to preserve URLs)
     text = re.sub(r"(?m)^\s*//[^\n]*", "", text)
+
+    # TC-5197: Try to close truncated JSON arrays/objects
+    open_brackets = text.count("[") - text.count("]")
+    open_braces = text.count("{") - text.count("}")
+    if open_brackets > 0 or open_braces > 0:
+        # Remove trailing comma if present
+        text = re.sub(r",\s*$", "", text.rstrip())
+        # Close unmatched brackets/braces
+        text += "}" * max(0, open_braces) + "]" * max(0, open_brackets)
+
     return text
 
 
@@ -365,11 +397,27 @@ def _parse_claims_json(text: str, product: ProductIdentity) -> list[dict[str, An
     bracket_start = cleaned.find("[")
     bracket_end = cleaned.rfind("]")
 
-    if bracket_start == -1 or bracket_end == -1 or bracket_end <= bracket_start:
-        logger.warning("No JSON array found in LLM response, falling back to empty")
-        return []
+    # TC-5197: Also look for dict-wrapped responses like {"claims": [...]}
+    brace_start = cleaned.find("{")
 
-    json_str = cleaned[bracket_start : bracket_end + 1]
+    if bracket_start == -1 or bracket_end == -1 or bracket_end <= bracket_start:
+        # No array brackets found — try parsing as a dict wrapper (TC-5197)
+        if brace_start == -1:
+            logger.warning("No JSON array found in LLM response, falling back to empty")
+            return []
+        # Try the whole thing as a JSON object
+        json_str = cleaned[brace_start:]
+    else:
+        # If a dict wrapper appears before the array, use the wider range
+        if brace_start != -1 and brace_start < bracket_start:
+            brace_end = cleaned.rfind("}")
+            if brace_end > bracket_end:
+                json_str = cleaned[brace_start : brace_end + 1]
+            else:
+                json_str = cleaned[bracket_start : bracket_end + 1]
+        else:
+            json_str = cleaned[bracket_start : bracket_end + 1]
+
     try:
         raw = json.loads(json_str)
     except json.JSONDecodeError:
@@ -381,6 +429,22 @@ def _parse_claims_json(text: str, product: ProductIdentity) -> list[dict[str, An
         except json.JSONDecodeError as exc2:
             logger.warning("Failed to parse LLM claims JSON after repair: %s", exc2)
             return []
+
+    # TC-5197: Handle dict-wrapped response like {"claims": [...]}
+    if isinstance(raw, dict):
+        for key in ("claims", "results", "items", "data"):
+            if key in raw and isinstance(raw[key], list):
+                raw = raw[key]
+                break
+        else:
+            # Try first list value
+            for v in raw.values():
+                if isinstance(v, list):
+                    raw = v
+                    break
+            else:
+                logger.warning("LLM returned dict without array value, returning empty")
+                return []
 
     if not isinstance(raw, list):
         return []

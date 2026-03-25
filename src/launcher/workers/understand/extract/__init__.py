@@ -61,6 +61,8 @@ from launcher.workers.understand.extract._contradiction_resolver import (  # noq
 from launcher.workers.understand.extract._linking import (  # noqa: F401
     _assign_tier_relevance,
     _link_snippet_to_claims,
+    _redistribute_snippets,
+    _LINKING_STOPWORDS,
 )
 from launcher.workers.understand.extract._llm import (  # noqa: F401
     _MAX_SOURCE_CHARS,
@@ -77,6 +79,8 @@ from launcher.workers.understand.extract._validation import (  # noqa: F401
     _CONTAMINANT_KEYWORDS,
     _CHANGELOG_PATTERN,
     _filter_contaminated_claims,
+    _filter_weak_evidence,
+    _score_evidence_relevance,
     _validate_and_normalize_claims,
     _normalize_text,
     _deduplicate_claims,
