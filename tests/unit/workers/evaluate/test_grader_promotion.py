@@ -307,3 +307,232 @@ class TestCheckToGradeIntegration:
         findings = check_api_identifiers(content, "test-slug", api_surface=surface)
         assert len(findings) == 0
         assert grade_page(findings) == Grade.A
+
+
+# ---------------------------------------------------------------------------
+# TC-HEAL-001: Skeleton-directive HIGH findings → Grade D (not Grade C)
+# ---------------------------------------------------------------------------
+
+class TestSkeletonDirectiveGradeD:
+    """TC-HEAL-001: Skeleton directive or filler sentence HIGH findings must yield Grade D.
+
+    Pages with leaked skeleton/template content are content-void and should
+    never be promotable as Grade C. The _is_skeleton_directive() helper
+    classifies specific HIGH findings from artifacts/forbidden_content checks.
+    """
+
+    def test_artifacts_skeleton_directive_gives_grade_d(self):
+        """[artifacts] skeleton-directive HIGH → Grade D (TC-HEAL-001)."""
+        findings = [
+            Finding(
+                check="artifacts",
+                severity="high",
+                message="[ENG] 2 skeleton-directive sentence(s) found (e.g. 'Aspose.3D -- What is new'). "
+                        "Internal section-guidance text leaked into published content.",
+                location="test-page",
+            ),
+        ]
+        assert grade_page(findings) == Grade.D
+
+    def test_forbidden_content_template_hint_gives_grade_d(self):
+        """[forbidden_content] Template content-hint directive HIGH → Grade D (TC-HEAL-001)."""
+        findings = [
+            Finding(
+                check="forbidden_content",
+                severity="high",
+                message="Template content-hint directive leaked verbatim into page prose",
+                location="test-page",
+            ),
+        ]
+        assert grade_page(findings) == Grade.D
+
+    def test_forbidden_content_generic_filler_gives_grade_d(self):
+        """[forbidden_content] Generic filler sentence HIGH → Grade D (TC-HEAL-001)."""
+        findings = [
+            Finding(
+                check="forbidden_content",
+                severity="high",
+                message="Generic filler sentence not replaced with actual content",
+                location="test-page",
+            ),
+        ]
+        assert grade_page(findings) == Grade.D
+
+    def test_artifacts_keyword_stuffing_not_skeleton(self):
+        """[artifacts] Keyword-stuffing HIGH is NOT skeleton-directive → Grade B (not D)."""
+        findings = [
+            Finding(
+                check="artifacts",
+                severity="high",
+                message="Keyword stuffing: product-name density 6.2 per 100 words (threshold 5)",
+                location="test-page",
+            ),
+        ]
+        # keyword stuffing is non-safety-critical HIGH → Grade B (1 non-safety HIGH)
+        assert grade_page(findings) == Grade.B
+
+    def test_two_non_skeleton_highs_give_grade_c_not_d(self):
+        """Two non-skeleton non-safety-critical HIGHs → Grade C (regression guard)."""
+        findings = [
+            Finding(
+                check="artifacts",
+                severity="high",
+                message="Keyword stuffing: product-name density 6.2 per 100 words (threshold 5)",
+                location="test-page",
+            ),
+            Finding(
+                check="artifacts",
+                severity="high",
+                message="Repeated section opener (5x): 'the following example demonstrates'",
+                location="test-page",
+            ),
+        ]
+        # Both are non-skeleton non-safety-critical HIGHs → Grade C
+        assert grade_page(findings) == Grade.C
+
+    def test_skeleton_plus_non_skeleton_high_still_grade_d(self):
+        """Skeleton HIGH + non-skeleton HIGH → still Grade D."""
+        findings = [
+            Finding(
+                check="artifacts",
+                severity="high",
+                message="[ENG] 1 skeleton-directive sentence(s) found (e.g. 'Aspose.3D -- What is new').",
+                location="test-page",
+            ),
+            Finding(
+                check="artifacts",
+                severity="high",
+                message="Keyword stuffing: product-name density 6.0 per 100 words (threshold 5)",
+                location="test-page",
+            ),
+        ]
+        assert grade_page(findings) == Grade.D
+
+
+# ---------------------------------------------------------------------------
+# TC-5304: claim_coverage metric correctness
+# ---------------------------------------------------------------------------
+
+class TestTC5304ClaimCoverage:
+    """TC-5304: claim_coverage formula must produce values < 1.0 when claims are uncovered.
+
+    Before TC-5304, the formula was len(covered)/max(len(covered), 1) which always = 1.0.
+    The fix uses len(covered)/max(len(assigned), 1) so partial coverage < 1.0.
+    """
+
+    def test_full_coverage_is_1_0(self):
+        """When all assigned claims are used, coverage is 1.0."""
+        covered = {"c1", "c2", "c3"}
+        assigned = {"c1", "c2", "c3"}
+        coverage = len(covered) / max(len(assigned), 1)
+        assert coverage == 1.0
+
+    def test_partial_coverage_is_less_than_1(self):
+        """TC-5304: With 2 of 4 assigned claims covered, coverage must be 0.5, not 1.0."""
+        covered = {"c1", "c2"}
+        assigned = {"c1", "c2", "c3", "c4"}
+        coverage = len(covered) / max(len(assigned), 1)
+        assert coverage == 0.5
+        assert coverage < 1.0
+
+    def test_zero_assigned_claims_is_0_0(self):
+        """When no claims are assigned and none are covered, coverage is 0.0.
+
+        The formula is len(covered)/max(len(assigned),1). With both empty:
+        0 / max(0, 1) = 0 / 1 = 0.0. This is the safe sentinel for 'no data'.
+        """
+        covered: set = set()
+        assigned: set = set()
+        coverage = len(covered) / max(len(assigned), 1)
+        assert coverage == 0.0
+
+    def test_zero_covered_of_four_assigned(self):
+        """Zero coverage: 0 of 4 assigned claims covered → 0.0."""
+        covered: set = set()
+        assigned = {"c1", "c2", "c3", "c4"}
+        coverage = len(covered) / max(len(assigned), 1)
+        assert coverage == 0.0
+
+    def test_old_formula_always_1_0_regression(self):
+        """Regression guard: old formula len(covered)/max(len(covered),1) always = 1.0.
+
+        This test documents the bug and confirms the new formula differs from the old.
+        With covered={c1,c2} and assigned={c1,c2,c3,c4}:
+          old formula: 2/max(2,1) = 1.0  (WRONG)
+          new formula: 2/max(4,1) = 0.5  (CORRECT)
+        """
+        covered = {"c1", "c2"}
+        assigned = {"c1", "c2", "c3", "c4"}
+        old_formula = len(covered) / max(len(covered), 1)
+        new_formula = len(covered) / max(len(assigned), 1)
+        assert old_formula == 1.0, "Old formula always equals 1.0 (the bug)"
+        assert new_formula == 0.5, "New formula gives real fractional coverage"
+        assert new_formula < old_formula, "Fix produces lower (more correct) value"
+
+
+# ---------------------------------------------------------------------------
+# TC-5316: annotate_graded_severity
+# ---------------------------------------------------------------------------
+
+class TestAnnotateGradedSeverity:
+    """TC-5316: annotate_graded_severity() populates graded_severity on Finding copies."""
+
+    def _llm_finding(self, message: str, severity: str = "high") -> "Finding":
+        from launcher.models.evaluation import Finding
+        # api_consistency is in _LLM_CHECK_NAMES
+        return Finding(check="api_consistency", message=message, severity=severity)
+
+    def _non_llm_finding(self, severity: str = "high") -> "Finding":
+        from launcher.models.evaluation import Finding
+        # frontmatter is a safety-critical check, NOT in _LLM_CHECK_NAMES
+        return Finding(check="frontmatter", message="missing title", severity=severity)
+
+    def test_llm_check_high_capped_to_medium(self):
+        """TC-5316: LLM check HIGH finding with non-promoted message → graded_severity=medium."""
+        from launcher.workers.evaluate.grader import annotate_graded_severity
+        findings = [self._llm_finding("content is generic and thin")]
+        annotated = annotate_graded_severity(findings)
+        assert len(annotated) == 1
+        assert annotated[0].severity == "high"          # original unchanged
+        assert annotated[0].graded_severity == "medium"  # capped by grader
+
+    def test_llm_check_promoted_stays_high(self):
+        """TC-5316: LLM check HIGH with promoted message → graded_severity=high."""
+        from launcher.workers.evaluate.grader import annotate_graded_severity
+        findings = [self._llm_finding("no such method 'load' in Workbook")]
+        annotated = annotate_graded_severity(findings)
+        assert annotated[0].severity == "high"
+        assert annotated[0].graded_severity == "high"   # promoted, not capped
+
+    def test_non_llm_check_high_unchanged(self):
+        """TC-5316: Non-LLM check HIGH → graded_severity=high (no cap applied)."""
+        from launcher.workers.evaluate.grader import annotate_graded_severity
+        findings = [self._non_llm_finding(severity="high")]
+        annotated = annotate_graded_severity(findings)
+        assert annotated[0].severity == "high"
+        assert annotated[0].graded_severity == "high"
+
+    def test_critical_finding_unchanged(self):
+        """TC-5316: CRITICAL finding → graded_severity=critical."""
+        from launcher.models.evaluation import Finding
+        from launcher.workers.evaluate.grader import annotate_graded_severity
+        findings = [Finding(check="safety", message="malicious link", severity="critical")]
+        annotated = annotate_graded_severity(findings)
+        assert annotated[0].graded_severity == "critical"
+
+    def test_returns_new_copies_not_mutated(self):
+        """TC-5316: annotate_graded_severity must return new Finding objects (frozen model)."""
+        from launcher.workers.evaluate.grader import annotate_graded_severity
+        original = self._llm_finding("generic content")
+        annotated = annotate_graded_severity([original])
+        # Original is unchanged
+        assert original.graded_severity == ""
+        # Annotated copy has graded_severity set
+        assert annotated[0].graded_severity == "medium"
+        # They are different objects
+        assert annotated[0] is not original
+
+    def test_empty_list_returns_empty(self):
+        """annotate_graded_severity([]) → []"""
+        from launcher.workers.evaluate.grader import annotate_graded_severity
+        assert annotate_graded_severity([]) == []

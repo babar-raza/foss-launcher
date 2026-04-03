@@ -131,6 +131,21 @@ _CPP_FORMAT_KEYWORDS: list[str] = [
 ]
 
 
+# SC-03 (TC-5323): Namespace suffixes that indicate internal/implementation detail.
+# Namespaces matching these patterns must never appear in the public import allowlist.
+_INTERNAL_NS_SUFFIXES: tuple[str, ...] = (
+    "::Internal", "::Detail", "::Impl", "::Private", "::details",
+)
+
+
+def _is_internal_namespace(ns: str) -> bool:
+    """Return True if a C++ namespace segment is implementation-internal (not public API)."""
+    return any(
+        ns == suffix.lstrip(":") or ns.endswith(suffix)
+        for suffix in _INTERNAL_NS_SUFFIXES
+    )
+
+
 def _extract_cpp_namespace(header_path: Path) -> str:
     """Extract the first qualified namespace from a C++ header file.
 
@@ -387,31 +402,58 @@ class CppExtractor(PlatformExtractor):
         if not src_root.is_dir():
             return allowlist
 
-        # Step 1: extract product namespace from .h then .hpp files
+        # Step 1: extract product namespace from .h then .hpp files.
+        # SC-03 (TC-5323): Stop scanning as soon as we confirm the canonical namespace
+        # is present — prevents accidentally adding ::Internal subnamespaces discovered
+        # by scanning further headers just to find something "new" in the allowlist.
+        # Also explicitly blocks any internal namespace variant.
         namespace = ""
-        for header in sorted(src_root.rglob("*.h"))[:10]:
-            ns = _extract_cpp_namespace(header)
-            if ns and ns not in allowlist:
+        canonical_ns = product.canonical_import or ""
+
+        def _try_add_namespace(ns: str) -> tuple[bool, bool]:
+            """Returns (should_break, was_added).
+            Break when canonical namespace is confirmed (even if already in list).
+            Skip internal namespaces entirely.
+            """
+            nonlocal namespace
+            if not ns:
+                return False, False
+            if _is_internal_namespace(ns):
+                return False, False
+            # Canonical namespace confirmed — stop scanning regardless
+            if canonical_ns and (ns == canonical_ns or ns.startswith(canonical_ns + "::")):
+                if ns not in allowlist:
+                    allowlist.append(ns)
+                namespace = ns
+                return True, True
+            if ns not in allowlist:
                 allowlist.append(ns)
                 namespace = ns
+                return True, True
+            return False, False
+
+        for header in sorted(src_root.rglob("*.h"))[:10]:
+            should_break, _ = _try_add_namespace(_extract_cpp_namespace(header))
+            if should_break:
                 break
         if not namespace:
             for header in sorted(src_root.rglob("*.hpp"))[:10]:
-                ns = _extract_cpp_namespace(header)
-                if ns and ns not in allowlist:
-                    allowlist.append(ns)
-                    namespace = ns
+                should_break, _ = _try_add_namespace(_extract_cpp_namespace(header))
+                if should_break:
                     break
         if namespace:
             logger.debug("[Cpp] namespace=%s in allowlist", namespace)
 
         # Step 2: canonical header include paths — strip include/ prefix
+        # SR-02/TC-5312: Skip headers under _internal/ directories — they are not public API.
         for header in sorted(src_root.rglob("*.h"))[:50]:
             if len(allowlist) >= 30:
                 break
             try:
                 rel = header.relative_to(src_root)
                 include_path = str(rel).replace("\\", "/")
+                if "_internal/" in include_path or include_path.startswith("_internal"):
+                    continue
                 if include_path not in allowlist:
                     allowlist.append(include_path)
             except ValueError:

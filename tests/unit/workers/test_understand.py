@@ -2376,8 +2376,12 @@ class TestExtractApiSurfaceIdentifiers:
         result = _extract_api_surface(tmp_path, product)
         assert result.api_identifiers == []
 
-    def test_identifiers_capped_at_500(self, tmp_path):
-        """More than 500 unique identifiers should be capped."""
+    def test_identifiers_capped_at_2000(self, tmp_path):
+        """More than 2000 unique identifiers should be capped at 2000.
+
+        SR-01/TC-5310: Cap raised from 500 to 2000 to accommodate C++ repos
+        with 250+ classes × 20+ methods each requiring ~5000 identifier slots.
+        """
         from launcher.workers.understand.extract import _extract_api_surface
 
         product = ProductIdentity(
@@ -2386,9 +2390,9 @@ class TestExtractApiSurfaceIdentifiers:
             repo_url="https://example.com",
         )
 
-        # Create a file with many classes
+        # Create a file with many classes (> 2000)
         lines = []
-        for i in range(510):
+        for i in range(2010):
             lines.append(f"class Cls{i:04d}:\n    pass\n")
         src = tmp_path / "src" / "many.py"
         src.parent.mkdir(parents=True)
@@ -2396,7 +2400,7 @@ class TestExtractApiSurfaceIdentifiers:
         (tmp_path / "src" / "__init__.py").touch()
 
         result = _extract_api_surface(tmp_path, product)
-        assert len(result.api_identifiers) <= 500
+        assert len(result.api_identifiers) <= 2000
 
     def test_backward_compat_missing_field(self):
         """ApiSurface created without api_identifiers should default to []."""

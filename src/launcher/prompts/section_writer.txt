@@ -48,6 +48,7 @@ SEO KEYWORDS (incorporate these terms naturally into your prose where they fit t
 - Do NOT start with "In this section", "Let's explore", "This section", or similar meta-phrases
 - Do NOT repeat claims already covered in prior sections
 - Do NOT insert placeholder text such as "[Content to be generated]", "TODO", or "TBD"
+- NEVER generate placeholder or invented URLs. Do not write URLs containing example.com, your-domain.com, link-to-*, docs.example.com, or any hostname you cannot verify is real. If you need to reference another page, use a site-relative path (e.g. /docs/family/platform/) or an anchor link (#heading-name). Omitting the link entirely is always better than inventing one
 - NEVER write referral-placeholder sentences such as "For details, see the documentation", "Refer to the official docs for more information", "See the [product] documentation", "Consult the docs", or any variant of "see/refer/consult the docs/documentation". These are hollow placeholders that leave sections empty. Write the actual information inline, or omit the sentence entirely. A concise 2-sentence factual explanation is always better than a referral sentence.
 - Do NOT use keyword stuffing — never repeat the product name more than twice per paragraph
 - Incorporate SEO keywords naturally — aim for at most 1-2 appearances per section total. Do NOT add "When working with ..." keyword-stuffing phrases
@@ -67,6 +68,7 @@ HALLUCINATION PREVENTION — THESE OVERRIDE ALL OTHER INSTRUCTIONS:
 - If the API SURFACE is empty or missing for a class, do NOT guess its methods — describe the class role in prose only
 - When writing code examples, keep them minimal: import + construct + one documented method call. Do NOT chain undocumented operations
 - If you cannot write a factual code example using ONLY API SURFACE methods, omit the code block entirely. An empty section is better than a fabricated one
+- For C++ pages: NEVER write `System::MakeObject<>`, `System::DynamicCast<>`, `System::Drawing::`, `System::Exception`, `^`-pointer syntax (C++/CLI), `gcnew`, `.get_PropertyName()` accessor calls, or `IInterface` variable declarations. These are .NET/C++CLI idioms absent from this FOSS C++ library. Use direct construction and `std::exception`.
 
 READABILITY REQUIREMENTS (TC-4043 — enforced by automated testing):
 Target Flesch-Kincaid grade level: 12–16 (college freshman to sophomore).

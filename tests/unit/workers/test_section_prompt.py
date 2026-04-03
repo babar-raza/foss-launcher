@@ -207,3 +207,144 @@ class TestBuildSectionPromptInstallRecipe:
             install_recipe=recipe,
         )
         assert "INSTALL REFERENCE" not in result
+
+
+# ---------------------------------------------------------------------------
+# SR-22-02 — _is_test_file_snippet + reference page snippet filter
+# ---------------------------------------------------------------------------
+
+class TestIsTestFileSnippet:
+    """Unit tests for _is_test_file_snippet path-pattern detection."""
+
+    def _make_snippet(self, source_file: str):
+        from launcher.models.claims import Snippet
+        return Snippet(code="x = 1", source_file=source_file)
+
+    def test_test_dir_prefix_detected(self):
+        from launcher.workers.generate.section_prompt import _is_test_file_snippet
+        s = self._make_snippet("tests/test_workbook.py")
+        assert _is_test_file_snippet(s) is True
+
+    def test_test_dir_singular_detected(self):
+        from launcher.workers.generate.section_prompt import _is_test_file_snippet
+        s = self._make_snippet("test/workbook_test.py")
+        assert _is_test_file_snippet(s) is True
+
+    def test_root_test_underscore_prefix_detected(self):
+        from launcher.workers.generate.section_prompt import _is_test_file_snippet
+        s = self._make_snippet("test_workbook.py")
+        assert _is_test_file_snippet(s) is True
+
+    def test_underscore_test_dot_detected(self):
+        from launcher.workers.generate.section_prompt import _is_test_file_snippet
+        s = self._make_snippet("workbook_test.py")
+        assert _is_test_file_snippet(s) is True
+
+    def test_examples_dir_not_detected(self):
+        from launcher.workers.generate.section_prompt import _is_test_file_snippet
+        s = self._make_snippet("examples/workbook_demo.py")
+        assert _is_test_file_snippet(s) is False
+
+    def test_src_main_not_detected(self):
+        from launcher.workers.generate.section_prompt import _is_test_file_snippet
+        s = self._make_snippet("src/main.py")
+        assert _is_test_file_snippet(s) is False
+
+    def test_empty_source_file_not_detected(self):
+        from launcher.workers.generate.section_prompt import _is_test_file_snippet
+        s = self._make_snippet("")
+        assert _is_test_file_snippet(s) is False
+
+    def test_windows_path_backslashes_handled(self):
+        from launcher.workers.generate.section_prompt import _is_test_file_snippet
+        s = self._make_snippet(r"tests\unit\test_workbook.py")
+        assert _is_test_file_snippet(s) is True
+
+    def test_path_with_test_in_middle_of_word_not_false_positive(self):
+        from launcher.workers.generate.section_prompt import _is_test_file_snippet
+        # "contest" should NOT match — "test" must be at a path boundary
+        s = self._make_snippet("src/contest/workbook.py")
+        assert _is_test_file_snippet(s) is False
+
+
+class TestReferencePageSnippetFilter:
+    """Tests for test-snippet filtering applied to reference page roles."""
+
+    def _make_snippet(self, source_file: str, code: str = "x = 1"):
+        from launcher.models.claims import Snippet
+        return Snippet(code=code, source_file=source_file)
+
+    def _make_page(self, page_role: str):
+        from launcher.models.plan import PlannedPage
+        return PlannedPage(page_id="ref_page", page_role=page_role, title="Reference")
+
+    def _make_section(self):
+        from launcher.shared.page_skeletons import SkeletonSection
+        return SkeletonSection(
+            heading="Overview",
+            level=2,
+            content_hint="API overview",
+            required=True,
+            min_words=50,
+            max_words=300,
+        )
+
+    def _make_product(self):
+        from launcher.models.product import ProductIdentity
+        return ProductIdentity(
+            family="cells",
+            platform="python",
+            display_name="Aspose.Cells",
+            canonical_import="aspose_cells_foss",
+            repo_url="https://github.com/test/test",
+        )
+
+    def test_reference_role_builds_prompt_with_mixed_snippets(self):
+        """reference_object_page: prompt builds without error with test + real snippets."""
+        from launcher.workers.generate.section_prompt import build_section_prompt
+
+        test_snip = self._make_snippet("tests/test_workbook.py", "setUp()")
+        real_snip = self._make_snippet("examples/demo.py", "wb = Workbook()")
+        page = self._make_page("reference_object_page")
+        section = self._make_section()
+        product = self._make_product()
+
+        result = build_section_prompt(section, 0, 1, page, product, [], [test_snip, real_snip])
+        assert isinstance(result, str)
+
+    def test_reference_role_keeps_test_snippets_as_fallback_when_only_source(self):
+        """reference_object_page: falls back to test snippets when no non-test available."""
+        from launcher.workers.generate.section_prompt import build_section_prompt
+
+        test_snip = self._make_snippet("tests/test_workbook.py", "wb = Workbook()")
+        page = self._make_page("reference_object_page")
+        section = self._make_section()
+        product = self._make_product()
+
+        result = build_section_prompt(section, 0, 1, page, product, [], [test_snip])
+        assert isinstance(result, str)
+
+    def test_non_reference_role_does_not_filter_test_snippets(self):
+        """howto role: test snippets are NOT filtered out."""
+        from launcher.workers.generate.section_prompt import build_section_prompt
+
+        test_snip = self._make_snippet("tests/test_workbook.py", "setUp()")
+        page = self._make_page("howto")
+        section = self._make_section()
+        product = self._make_product()
+
+        result = build_section_prompt(section, 0, 1, page, product, [], [test_snip])
+        assert isinstance(result, str)
+
+    def test_api_reference_role_builds_prompt_with_mixed_snippets(self):
+        """api_reference is also a _REFERENCE_ROLE and should handle mixed snippets."""
+        from launcher.workers.generate.section_prompt import build_section_prompt
+
+        test_snip = self._make_snippet("tests/test_api.py", "assert x == 1")
+        real_snip = self._make_snippet("examples/api_demo.py", "api = ApiClass()")
+        page = self._make_page("api_reference")
+        section = self._make_section()
+        product = self._make_product()
+
+        result = build_section_prompt(section, 0, 1, page, product, [], [test_snip, real_snip])
+        assert isinstance(result, str)

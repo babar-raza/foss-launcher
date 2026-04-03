@@ -45,6 +45,11 @@
                   "items": { "type": "string" },
                   "description": "TC-5128: claim texts not covered by page content. Only populated by check_claim_coverage.",
                   "default": []
+                },
+                "graded_severity": {
+                  "type": "string",
+                  "default": "",
+                  "description": "TC-5316: Severity after grade-cap application. Empty string when not annotated."
                 }
               },
               "additionalProperties": false

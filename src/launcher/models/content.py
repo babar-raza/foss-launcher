@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -93,4 +93,20 @@ class ContentManifest(LauncherBaseModel):
     api_fact_member_names: list[str] = Field(
         default_factory=list,
         description="TC-FIX-214: member names from api_facts for evaluate cross-check.",
+    )
+    understanding_checkpoint_run_id: Optional[str] = Field(
+        default=None,
+        description=(
+            "TC-5306: side-load traceability. Identifies which understand checkpoint was "
+            "side-loaded from disk by the generate worker. Used by the evaluate worker to "
+            "detect stale evidence (checkpoint from a different run_id)."
+        ),
+    )
+    extraction_completeness: Optional[Any] = Field(
+        default=None,
+        description=(
+            "TC-5308: ExtractionCompleteness from the Understand worker's ExtractionDatabase. "
+            "Used by check_extraction_quality to surface thin extraction as MEDIUM/HIGH findings. "
+            "None when the generate worker did not populate it (backward compatibility)."
+        ),
     )

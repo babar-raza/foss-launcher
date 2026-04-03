@@ -29,23 +29,63 @@ _CODE_EXAMPLE_HEADINGS: frozenset[str] = frozenset({
     "working example", "example code", "complete code example",
 })
 
+# TC-5313: Platform-aware prerequisites content.
+# Maps platform slug → (runtime requirement text, install command template).
+# {package} is replaced with the product's canonical_import.
+_RUNTIME_REQUIREMENTS: dict[str, str] = {
+    "python": "Python 3.7+",
+    "java": "Java 8+",
+    "dotnet": ".NET 6.0+",
+    "cpp": "C++17 compatible compiler",
+    "typescript": "Node.js 14+",
+    "nodejs": "Node.js 14+",
+}
+
+_INSTALL_COMMANDS: dict[str, str] = {
+    "python": "Install via pip: `pip install {package}`",
+    "java": "Add to your Maven `pom.xml` or Gradle `build.gradle`: `{package}`",
+    "dotnet": "Install via NuGet: `dotnet add package {package}`",
+    "cpp": "Install via vcpkg: `vcpkg install {package}`",
+    "typescript": "Install via npm: `npm install {package}`",
+    "nodejs": "Install via npm: `npm install {package}`",
+}
+
+# TC-5313: Platform-aware import/usage syntax for the code example block.
+# {import_path} is replaced with the product's runtime_import or canonical_import.
+_IMPORT_SYNTAX: dict[str, str] = {
+    "python": "import {import_path}",
+    "java": "import {import_path}.*;",
+    "dotnet": "using {import_path};",
+    "cpp": "// Include {import_path} headers\n// See installation guide for include paths",
+    "typescript": 'import * as aspose from "{import_path}";',
+    "nodejs": 'const aspose = require("{import_path}");',
+}
+
 
 def _render_prerequisites_blocks(product: ProductIdentity) -> list[BlockIR]:
     """Deterministic Prerequisites blocks for zero-claim sections (TC-3912).
 
     Produces a list block with install/version info and a code block
     with the runtime import — always factual, never fabricated.
+    Platform-aware: dispatches on product.platform (TC-5313).
     """
     lang = get_lang_tag(product.platform)
-    pip_name = product.canonical_import or "aspose_foss"
-    code_import = product.runtime_import or product.canonical_import or "aspose_foss"
-    items = [
-        f"Python 3.7+ (or the supported runtime for {product.platform})",
-        f"Install via pip: `pip install {pip_name.replace('_', '-')}`",
-    ]
+    platform = (product.platform or "python").lower()
+    package = product.canonical_import or "aspose-foss"
+    import_path = product.runtime_import or product.canonical_import or "aspose_foss"
+
+    runtime_req = _RUNTIME_REQUIREMENTS.get(platform, f"Supported runtime for {platform}")
+    install_cmd = _INSTALL_COMMANDS.get(
+        platform, f"Install `{package}` using your platform's package manager"
+    ).format(package=package.replace("_", "-"))
+    import_stmt = _IMPORT_SYNTAX.get(platform, f"// Use {import_path}").format(
+        import_path=import_path
+    )
+
+    items = [runtime_req, install_cmd]
     return [
         BlockIR(type=BlockType.list, items=items),
-        BlockIR(type=BlockType.code, content=f"import {code_import}", language=lang),
+        BlockIR(type=BlockType.code, content=import_stmt, language=lang),
     ]
 
 
@@ -54,12 +94,19 @@ def _render_code_example_blocks(product: ProductIdentity) -> list[BlockIR]:
 
     Produces a minimal, runnable import-level example using the runtime
     import. Never fabricates API calls not in the API surface.
+    Platform-aware: dispatches on product.platform (TC-5313).
     """
     lang = get_lang_tag(product.platform)
-    code_import = product.runtime_import or product.canonical_import or "aspose_foss"
+    platform = (product.platform or "python").lower()
+    import_path = product.runtime_import or product.canonical_import or "aspose_foss"
+
+    import_stmt = _IMPORT_SYNTAX.get(platform, f"// Use {import_path}").format(
+        import_path=import_path
+    )
+    comment_char = "//" if platform in ("cpp", "java", "dotnet", "typescript", "nodejs") else "#"
     code = (
-        f"import {code_import}\n\n"
-        f"# Initialize — see the {code_import} API reference for available classes"
+        f"{import_stmt}\n\n"
+        f"{comment_char} Initialize — see the {product.display_name} API reference for available classes"
     )
     return [
         BlockIR(
@@ -98,6 +145,10 @@ def render_section_deterministic(
     fail.  Produces structured content that passes all safety gates but
     is intentionally plain (bullet lists + verbatim code).
 
+    Note: The ``content_hint`` field from the skeleton is intentionally
+    NOT emitted as content — it is an internal engineering scaffold note
+    and must never appear in published output.
+
     Parameters
     ----------
     section:
@@ -115,15 +166,6 @@ def render_section_deterministic(
         A section with deterministic blocks.
     """
     blocks: list[BlockIR] = []
-
-    # Opening paragraph from content hint
-    if section.content_hint:
-        blocks.append(
-            BlockIR(
-                type=BlockType.paragraph,
-                content=f"{product.display_name} -- {section.content_hint}.",
-            )
-        )
 
     # Claims as table (for tabular sections) or bullet list (default)
     if claims:

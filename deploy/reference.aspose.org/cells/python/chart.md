@@ -1,18 +1,24 @@
 ---
 canonical: https://reference.aspose.org/cells/python/chart/
-canonical_import: aspose.cells_foss
-date: '2026-03-19T15:07:33Z'
-dateModified: '2026-03-19T15:07:33Z'
-datePublished: '2026-03-19T15:07:33Z'
-description: 'Aspose.Cells FOSS: Cells.cell(): Accesses a cell by row and column (1-based).'
+canonical_import: aspose.cells
+code_import: aspose.cells
+date: '2026-03-27T07:02:41Z'
+dateModified: '2026-03-27T07:02:41Z'
+datePublished: '2026-03-27T07:02:41Z'
+description: It is created via methods in `ChartCollection`, such as `add_line()`,
+  `add_bar()`, or `add_box_whisker()`.
 display_name: Aspose.Cells FOSS
 family: cells
 keywords:
-- chart
-- worksheet
-- adds
-- spreadsheets
-lastmod: '2026-03-19T15:07:33Z'
+- cells python
+- python cells in excel
+- python cells vscode
+- cell python docx
+- cell python spyder
+- aspose cells python
+- code cells python
+- voronoi cells python
+lastmod: '2026-03-27T07:02:41Z'
 page_role: reference_object_page
 platform: python
 reading_time: 1
@@ -22,75 +28,135 @@ slug: chart
 title: 'Chart: Represents a chart in a worksheet'
 type: reference_object_page
 url: /reference.aspose.org/cells/python/chart/
-weight: 3
+weight: 22
 ---
 
 ## Overview
 
-Represents a chart in a worksheet.
+The `Chart` class represents a chart in a worksheet and provides methods to manage its series, `axes`, and 3D view settings. It is created via methods in `ChartCollection`, such as `add_line()`, `add_bar()`, or `add_box_whisker()`.
+
+```python
+from aspose.cells import Workbook, ChartType
+
+workbook = Workbook()
+worksheet = workbook.worksheets[0]
+charts = worksheet.charts
+chart = charts.add(ChartType.LINE, 5, 0, 15, 5)
+chart.title = "Sample Line Chart"
+workbook.save("chart.xlsx")
+```
+
+| Method | Description |
+|--------|-------------|
+| `add_series(values, category_data, name, chart_type, x_values)` | Adds a series to the chart. |
+| `add_axis(axis_type, axis_id)` | Adds an axis to the chart and returns it. |
+| `copy()` | Creates a `copy` of the chart. |
+| `type` | Read-only property indicating the chart `type`. |
+| `title` | Gets or sets the chart `title`. |
+| `category_data` | Gets or sets the category axis data. |
+| `show_legend` | Gets or sets whether the legend is shown. |
+| `legend_position` | Gets or sets the legend position. |
+| `axes` | Accesses the chart `axes` collection. |
+| series | Accesses the chart series collection. |
+| `view_3d` | Accesses 3D view settings. |
+
+## Constructor
+
+The `Chart` class represents a chart in a worksheet and provides methods to manage its series, `axes`, and 3D view settings. It is instantiated via the `ChartCollection.add()` method or specialized chart-`type` methods like `add_scatter()`.
+
+| Name | Type | Description |
+|------|------|-------------|
+| `add_series(values, category_data, name, chart_type, x_values)` | method | Adds a series to the chart. |
+| `add_axis(axis_type, axis_id)` | method | Adds an axis to the chart and returns it. |
+| `copy()` | method | Creates a `copy` of the chart. |
+| `type` | property (read-only) | Returns the chart `type`. |
+| `title` | property | Gets or sets the chart `title`. |
+| `category_data` | property | Gets or sets the category axis data. |
+| `show_legend` | property | Gets or sets whether the legend is shown. |
+| `legend_position` | property | Gets or sets the legend position. |
+| `axes` | property (read-only) | Returns the collection of chart `axes`. |
+| series | property (read-only) | Returns the collection of chart series. |
+| `view_3d` | property (read-only) | Returns the 3D view settings. |
+| `error_bars` | property (read-only) | Returns the `error` bars collection. |
 
 ## Properties
 
-| Name | Type | Read-only | Description |
-| --- | --- | --- | --- |
-| type |  | Yes |  |
-| title |  | No |  |
-| category_data |  | No |  |
-| show_legend |  | No |  |
-| legend_position |  | No |  |
-| smooth |  | No |  |
-| n_series |  | Yes |  |
-| NSeries |  | Yes | PascalCase alias of n_series. |
-| grouping |  | No |  |
-| bar_direction |  | No |  |
-| gap_width |  | No |  |
-| overlap |  | No |  |
-| vary_colors |  | No |  |
-| first_slice_angle |  | No |  |
-| is_of_pie |  | No |  |
-| of_pie_type |  | No |  |
-| second_pie_size |  | No |  |
-| quartile_method |  | No |  |
-| box_show_mean_line |  | No |  |
-| box_show_mean_marker |  | No |  |
-| box_show_inner_points |  | No |  |
-| box_show_outlier_points |  | No |  |
-| box_gap_width |  | No |  |
-| is_3d |  | No |  |
-| gap_depth |  | No |  |
-| view_3d |  | Yes |  |
-| View3D |  | Yes | PascalCase alias of view_3d. |
-| show_connector_lines |  | No |  |
-| has_subtotals |  | No |  |
-| sub_charts |  | Yes | List of sub-chart descriptors for combo charts. |
-| axes |  | Yes | List of ChartAxis objects defining all axes for the chart. |
-| scatter_style |  | No |  |
-| wireframe |  | No | Whether the surface chart uses wireframe display mode (<c:wireframe val='1'/>). |
-| radar_style |  | No | Radar chart style: 'standard', 'marker', or 'filled'. |
-| histogram_bin_count |  | No | Number of bins for count-based binning (int or None for auto/size-based). |
-| histogram_bin_size |  | No | Bin width for size-based binning (float or None for auto/count-based). |
-| histogram_interval_closed |  | No | Which side of each bin interval is closed: 'r' (right) or 'l' (left). |
-| histogram_overflow |  | No | Overflow bin boundary value (float or None). |
-| histogram_underflow |  | No | Underflow bin boundary value (float or None). |
-| disp_blanks_as |  | No |  |
-| stock_style |  | No |  |
+The `Chart` class represents a chart in a worksheet and provides `properties` to access and configure its visual and structural attributes. These `properties` control aspects such as chart `type`, `title`, legend, and category data.
+
+| Name | Type | Description |
+|------|------|-------------|
+| `type` | `ChartType` | Gets the chart `type`. |
+| `title` | str | Gets or sets the chart `title`. |
+| `category_data` | list | Gets or sets the category axis data. |
+| `show_legend` | bool | Gets or sets whether the legend is displayed. |
+| `legend_position` | str | Gets or sets the legend position (e.g., 'Top', 'Bottom', 'Left', 'Right'). |
 
 ## Methods
 
-**add_series**(values, category_data, name, chart_type, x_values)
+The `Chart` class represents a chart in a worksheet and provides methods to manage its series, `axes`, and 3D view settings. Below are the methods available on the `Chart` object.
 
-Convenience method to add a series.
+| Method | Return Type | Description |
+|--------|-------------|-------------|
+| `add_series(values, category_data, name, chart_type, x_values)` | `ChartSeries` | Adds a series to the chart with the specified `values`, category data, `name`, chart `type`, and optional x-`values`. |
+| `add_axis(axis_type, axis_id)` | `ChartAxis` | Adds an axis (category, `value`, or series) to the chart and returns the created axis object. |
+| `copy()` | `Chart` | Creates a deep `copy` of the chart. |
 
-**add_axis**(axis_type, axis_id) → ChartAxis
+```python
+from aspose.cells import Workbook, DataValidationType
 
-Adds an axis to the chart and returns it.
+workbook = Workbook()
+worksheet = workbook.worksheets[0]
 
-**copy**()
+# Add a dropdown list validation to A1:A10
+validation = worksheet.data_validations.add("A1:A10")
+validation.type = DataValidationType.LIST
+validation.formula1 = '",,"'
+
+workbook.save("validation.xlsx")
+```
+
+## Example
+
+The following example demonstrates creating a chart, adding a series, and configuring its `title` and legend using the `Chart` class. It uses the canonical import `aspose.cells` and operates on a new workbook with sample data.
+
+```python
+import aspose.cells
+
+# Create a new workbook and access the first worksheet
+workbook = aspose.cells.Workbook()
+worksheet = workbook.worksheets[0]
+
+# Populate sample data
+worksheet.cells["A1"].value = "Category"
+worksheet.cells["B1"].value = "Value"
+worksheet.cells["A2"].value = "A"
+worksheet.cells["B2"].value = 10
+worksheet.cells["A3"].value = "B"
+worksheet.cells["B3"].value = 20
+worksheet.cells["A4"].value = "C"
+worksheet.cells["B4"].value = 30
+
+# Add a column chart
+chart = worksheet.charts.add_bar(5, 0, 15, 8)
+chart.type = aspose.cells.ChartType.COLUMN
+
+# Add a series to the chart
+series_index = chart.n_series.add("B2:B4", True)
+series = chart.n_series[series_index]
+series.name = "=B1"
+
+# Configure chart title and legend
+chart.title.value = "Sample Chart"
+chart.show_legend = True
+
+# Save the workbook
+workbook.save("chart_example.xlsx")
+```
 
 ## See Also
 
-- [Aspose.Cells FOSS API reference](/reference.aspose.org/cells/python/api-overview/)
-- [Workbook class overview](/blog.aspose.org/cells/python/introducing-cells-foss-python/)
-- [Hyperlink support details](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)
-- [Formula handling guide](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)
-- [Spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)
+- [Worksheet object reference](/cells/python/worksheet/)
+- [Introduction to Cells FOSS for Python](/cells/python/cells-foss-python/)
+- [Create all chart types in spreadsheets](/cells/python/create-charts-spreadsheets/)
+- [Working with formulas in FOSS](/cells/python/developer-guide/formula-calculation/)
+- [Essential spreadsheet operations](/cells/python/developer-guide/spreadsheet-operations/)

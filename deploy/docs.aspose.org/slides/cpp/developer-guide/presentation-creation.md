@@ -1,13 +1,12 @@
 ---
 canonical: https://docs.aspose.org/slides/cpp/developer-guide/presentation-creation/
-canonical_import: Aspose::Slides
-code_import: Aspose::Slides
-date: '2026-03-24T16:29:46Z'
-dateModified: '2026-03-24T16:29:46Z'
-datePublished: '2026-03-24T16:29:46Z'
-description: It covers loading existing `.pptx` files, creating new presentations
-  from scratch, and saving the results — all using the canonical `Aspose::Slides`
-  C++ API.
+canonical_import: Aspose::Slides::Foss
+code_import: Aspose::Slides::Foss
+date: '2026-04-01T14:10:08Z'
+dateModified: '2026-04-01T14:41:49Z'
+datePublished: '2026-04-01T14:10:08Z'
+description: You start with `a` blank `presentation`, add `slides` and `shapes`, apply
+  formatting, and `save` the result as `a`.pptx file.
 display_name: Aspose.Slides FOSS for C++
 family: slides
 keywords:
@@ -17,9 +16,7 @@ keywords:
 - cppcon slides 2025
 - aspose slides cpp
 - meeting cpp slides
-- python slides
-- python slides for beginners
-lastmod: '2026-03-24T16:29:46Z'
+lastmod: '2026-04-01T14:41:49Z'
 page_role: workflow_page
 platform: cpp
 reading_time: 1
@@ -29,167 +26,198 @@ slug: presentation-creation
 title: Create Presentations with Aspose.Slides FOSS for C++
 type: workflow_page
 url: /docs.aspose.org/slides/cpp/developer-guide/presentation-creation/
-weight: 17
+weight: 18
 ---
 
 ## Overview
 
-This guide walks you through creating and manipulating PowerPoint presentations using Aspose.Slides FOSS for C++. It covers loading existing `.pptx` files, creating new presentations from scratch, and saving the results — all using the canonical `Aspose::Slides` C++ API.
+This guide walks you through creating and manipulating presentations using Aspose.Slides FOSS for C++. You start with `a` blank `presentation`, add `slides` and `shapes`, apply formatting, and `save` the result as `a`.pptx file.
+
+Using the canonical namespace `Aspose::Slides::Foss`, you work directly with core objects like `AutoShape`, `FillFormat`, `BulletFormat`, and `DocumentProperties`. Each object exposes methods defined in the API surface to configure visual and structural properties. The workflow follows `a` linear pattern: instantiate, configure, and persist.
 
 ```cpp
-#include <Aspose::Slides>
+using namespace Aspose::Slides::Foss;
 
-int main() {
-    // Create a new presentation
-    auto pres = System::[identifier omitted]<Aspose::Slides::Presentation>();
+// Create a new presentation
+auto pres = System::MakeObject<Presentation>();
 
-    // Save to disk
-    pres->Save(u"output.pptx", Aspose::Slides::[identifier omitted]::Pptx);
+// Access the first slide
+auto slide = pres->get_Slides()->idx_get(0);
 
-    return 0;
-}
+// Add a rectangle auto shape
+auto shape = slide->get_Shapes()->AddAutoShape(ShapeType::Rectangle, 100.0f, 100.0f, 300.0f, 200.0f);
+
+// Set solid fill color
+auto fillFormat = shape->get_FillFormat();
+fillFormat->set_FillType(FillType::Solid);
+fillFormat->get_SolidFillColor()->set_Color(System::Drawing::Color::get_LightBlue());
+
+// Save the presentation
+pres->Save(u"output.pptx", SaveFormat::Pptx);
 ```
 
-- Use this approach when generating reports or slide decks programmatically.
-- Use it to bootstrap templates before injecting dynamic content.
-- Use it to validate presentation structure before adding complex elements.
+- Use AddAutoShape() to insert geometric shapes for visual emphasis.
+- Apply `FillFormat` to define background color or gradient for shapes.
+- Save the final presentation in .pptx format using Save() with `SaveFormat::Pptx`.
 
 ## Working with Data
 
-This guide walks you through reading, writing, and modifying data elements in presentations using Aspose.Slides FOSS for C++. You load a `.pptx` file, access slide content such as shapes and text frames, and update or extract data like table cells or paragraph text.
+This guide walks you through reading, writing, and modifying `presentation` metadata and `slide` content using Aspose.Slides FOSS for C++. You load `a` `presentation`, access its document properties and `comments`, then update `text` formatting and fill styles on `shapes`.
 
 ```cpp
-#include <Aspose::Slides>
+using namespace Aspose::Slides::Foss;
 
-int main() {
-    auto pres = System::[identifier omitted]<Aspose::Slides::Presentation>(u"input.pptx");
-    auto slide = pres->get_Slides()->idx_get(0);
-    auto shape = System::[identifier omitted]<Aspose::Slides::IAutoShape>(slide->get_Shapes()->idx_get(0));
-    auto textFrame = shape->get_TextFrame();
-    return 0;
-}
+// Load an existing presentation
+auto pres = System::MakeObject<Presentation>(u"input.pptx");
+
+// Access document properties
+auto docProps = pres->get_DocumentProperties();
+
+// Modify title and subject
+docProps->set_title(u"Updated Presentation Title");
+docProps->set_subject(u"FOSS C++ Workflow Example");
+
+// Save the updated presentation
+pres->Save(u"output.pptx", Aspose::Slides::Export::SaveFormat::Pptx);
 ```
 
-- Use this pattern when extracting slide titles or body text for indexing or reporting.
-- Apply when validating content before exporting to PDF or HTML.
-- Adopt when auditing presentation metadata or preparing slides for localization.
+- Use `DocumentProperties` to read or update metadata like title and subject before saving.
+- Modify `Comment` text or creation time to reflect updated review notes.
+- Apply `FillFormat` and `EffectFormat` changes to shapes for visual consistency.
 
-To modify text, access the `Portion` objects within a `Paragraph` and update their `Text` property. Tables require navigating `Table` objects, then rows and cells, to read or write cell values.
+To modify `text` formatting on `a` shape, access its `TextFrame`, then adjust paragraph and portion properties. The `BulletFormat` class lets you configure `bullet` `type`, character, and `style` for list items.
 
 ```cpp
-#include <Aspose::Slides>
+using namespace Aspose::Slides::Foss;
 
-int main() {
-    auto pres = System::[identifier omitted]<Aspose::Slides::Presentation>(u"input.pptx");
-    auto slide = pres->get_Slides()->idx_get(0);
-    auto table = System::[identifier omitted]<Aspose::Slides::ITable>(slide->get_Shapes()->idx_get(1));
-    table->get_Rows()->idx_get(0)->get_Cells()->idx_get(0)->get_CellFormat()->set_BorderTop(nullptr);
-    table->get_Rows()->idx_get(0)->get_Cells()->idx_get(0)->set_Text(u"Updated Header");
-    pres->Save(u"output.pptx", Aspose::Slides::[identifier omitted]::Pptx);
-    return 0;
-}
+auto pres = System::MakeObject<Presentation>(u"input.pptx");
+auto slide = pres->get_Slides()->idx_get(0);
+auto shape = System::DynamicCast<AutoShape>(slide->get_Shapes()->idx_get(0));
+auto textFrame = shape->get_TextFrame();
+auto paragraph = textFrame->get_Paragraphs()->idx_get(0);
+auto portion = paragraph->get_Portions()->idx_get(0);
+
+// Update bullet formatting
+auto bulletFormat = paragraph->get_BulletFormat();
+bulletFormat->set_type(BulletType::Symbol);
+bulletFormat->set_character(0x2022); // bullet character
+
+// Set portion text and formatting
+portion->set_Text(u"New bullet point text");
+
+pres->Save(u"output.pptx", Aspose::Slides::Export::SaveFormat::Pptx);
 ```
 
-- Use this to update report headers or data labels programmatically.
-- Apply when generating dynamic dashboards from template presentations.
-- Adopt when correcting or localizing table content across multiple slides.
+- Configure bullet symbols using `BulletFormat::set_character()` with Unicode values.
+- Apply consistent bullet styles across paragraphs to improve slide readability.
+- Update portion text directly without recreating the text frame structure.
 
-For text formatting, set font properties on `Portion` objects. You can change font name, size, bold, italic, and color directly on the portion level.
+Fill formatting on `shapes` supports solid, gradient, and `picture` fills. Use `FillFormat` to manage fill `type` and `GradientFormat` for multi-stop gradients with configurable `shapes` and positions.
 
 ```cpp
-#include <Aspose::Slides>
+using namespace Aspose::Slides::Foss;
 
-int main() {
-    auto pres = System::[identifier omitted]<Aspose::Slides::Presentation>(u"input.pptx");
-    auto slide = pres->get_Slides()->idx_get(0);
-    auto shape = System::[identifier omitted]<Aspose::Slides::IAutoShape>(slide->get_Shapes()->idx_get(0));
-    auto textFrame = shape->get_TextFrame();
-    auto portion = textFrame->get_Paragraphs()->idx_get(0)->get_Portions()->idx_get(0);
-    portion->get_PortionFormat()->set_FontHeight(18);
-    portion->get_PortionFormat()->get_FillFormat()->set_FillType(Aspose::Slides::[identifier omitted]::Solid);
-    portion->get_PortionFormat()->get_FillFormat()->get_SolidFillColor()->set_Color(System::Drawing::Color::get_Red());
-    pres->Save(u"formatted.pptx", Aspose::Slides::[identifier omitted]::Pptx);
-    return 0;
-}
+auto pres = System::MakeObject<Presentation>(u"input.pptx");
+auto slide = pres->get_Slides()->idx_get(0);
+auto shape = System::DynamicCast<AutoShape>(slide->get_Shapes()->idx_get(1));
+auto fillFormat = shape->get_FillFormat();
+
+// Apply gradient fill
+fillFormat->set_FillType(FillType::Gradient);
+auto gradientFormat = fillFormat->get_GradientFormat();
+gradientFormat->set_GradientShape(GradientShape::Linear);
+
+// Add gradient stops
+auto stops = gradientFormat->get_GradientStops();
+auto stop1 = System::MakeObject<GradientStop>();
+auto stop2 = System::MakeObject<GradientStop>();
+stop1->set_Position(0.0f);
+stop2->set_Position(1.0f);
+// Note: Color setting requires SimpleColorFormat (not shown in API surface)
+
+pres->Save(u"output.pptx", Aspose::Slides::Export::SaveFormat::Pptx);
 ```
 
-- Use this to highlight key metrics in executive summaries.
-- Apply when enforcing brand colors across presentation text.
-- Adopt when preparing slides for accessibility compliance (e.g., contrast checks).
+- Use `GradientFormat::set_GradientShape()` to switch between linear and radial gradients.
+- Adjust `GradientStop` positions to control color transition points across the shape.
+- Apply `FillFormat` changes to `AutoShape` objects to maintain visual hierarchy.
 
 ## Code Examples
 
-This guide walks you through creating a new presentation, adding a slide, inserting a title shape, and saving the result as a `.pptx` file using Aspose.Slides FOSS for C++. The workflow starts with an empty presentation object and ends with a valid PowerPoint file ready for sharing or further editing.
+This guide walks you through creating `a` new `presentation`, adding `a` `slide` with `a` `text` shape, and applying `bullet` formatting using Aspose.Slides FOSS for C++. You start with an empty `presentation`, `insert` `a` `title` `slide`, populate `a` `text` shape with `paragraphs`, and configure `bullet` styles using the `BulletFormat` class.
 
 ```cpp
-#include <Aspose::Slides>
+using namespace Aspose::Slides::Foss;
 
-int main() {
-    // Create a new presentation
-    auto pres = System::[identifier omitted]<Aspose::Slides::Presentation>();
+// Create a new presentation
+auto presentation = System::MakeObject<Presentation>();
 
-    // Access the first slide
-    auto slide = pres->get_Slides()->idx_get(0);
+// Add a title slide
+auto slide = presentation->get_Slides()->AddEmptySlide(presentation->get_Slides()->get_Item(0));
 
-    // Add a title text box
-    auto titleShape = slide->get_Shapes()->[identifier omitted](Aspose::Slides::[identifier omitted]::Rectangle, 50.0f, 50.0f, 500.0f, 100.0f);
-    titleShape->get_TextFrame()->set_Text("Welcome to Aspose::Slides FOSS for C++");
+// Access the first shape (AutoShape) on the slide
+auto shape = System::DynamicCast<Aspose::Slides::Foss::AutoShape>(slide->get_Shapes()->idx_get(0));
 
-    // Save the presentation
-    pres->Save(u"output.pptx", Aspose::Slides::[identifier omitted]::Pptx);
+// Set the shape text
+shape->get_TextFrame()->set_Text("Key Features of Aspose.Slides FOSS for C++");
 
-    return 0;
-}
+// Save the presentation
+presentation->Save(u"output.pptx", Aspose::Slides::Export::SaveFormat::Pptx);
 ```
 
-- Use this pattern when generating slide decks for internal meetings or conferences like cppcon slides 2025 or meeting cpp slides.
-- Replace the title text with dynamic content such as event names, speaker names, or session titles.
-- Adjust the rectangle coordinates and dimensions to match your branding guidelines for title slides.
+- Use this approach when generating conference slide decks from structured data.
+- Apply when preparing technical documentation for internal training sessions.
+- Leverage for rapid prototyping of presentation content before final styling.
 
-Next, extend the workflow by adding a content slide with a bullet list. This demonstrates how to create a new slide, apply a layout, and populate it with structured text using the `[identifier omitted]` and `Paragraph` objects available in the API surface.
+Next, add multiple `paragraphs` to the shape and apply `bullet` formatting to each. Access the `BulletFormat` object through each `Paragraph` to set the `bullet` `type` and character. This ensures consistent visual hierarchy across `slide` content.
 
 ```cpp
-#include <Aspose::Slides>
+using namespace Aspose::Slides::Foss;
 
-int main() {
-    auto pres = System::[identifier omitted]<Aspose::Slides::Presentation>();
+auto presentation = System::MakeObject<Presentation>();
+auto slide = presentation->get_Slides()->AddEmptySlide(presentation->get_Slides()->get_Item(0));
+auto shape = System::DynamicCast<Aspose::Slides::Foss::AutoShape>(slide->get_Shapes()->idx_get(0));
+auto textFrame = shape->get_TextFrame();
 
-    // Add a new slide with title and content layout
-    auto slide = pres->get_Slides()->[identifier omitted](pres->get_SlideSize()->get_Width(), pres->get_SlideSize()->get_Height());
+// Clear existing paragraphs
+textFrame->get_Paragraphs()->Clear();
 
-    // Insert title
-    auto titleShape = slide->get_Shapes()->[identifier omitted](Aspose::Slides::[identifier omitted]::Rectangle, 50.0f, 40.0f, 600.0f, 60.0f);
-    titleShape->get_TextFrame()->set_Text("Key Features of Aspose::Slides FOSS");
+// Add paragraphs
+auto para1 = System::MakeObject<Paragraph>();
+para1->get_PortionFormat()->set_Text(u"Open-source and free to use");
+textFrame->get_Paragraphs()->Add(para1);
 
-    // Insert content text frame
-    auto contentShape = slide->get_Shapes()->[identifier omitted](Aspose::Slides::[identifier omitted]::Rectangle, 50.0f, 120.0f, 600.0f, 200.0f);
-    auto textFrame = contentShape->get_TextFrame();
-    textFrame->set_Text("Bullet list example:\n- Slide creation\n- Shape insertion\n- Text formatting");
+auto para2 = System::MakeObject<Paragraph>();
+para2->get_PortionFormat()->set_Text(u"Full PPTX round-trip support");
+textFrame->get_Paragraphs()->Add(para2);
 
-    // Save the updated presentation
-    pres->Save(u"content_presentation.pptx", Aspose::Slides::[identifier omitted]::Pptx);
-
-    return 0;
+// Apply bullet formatting
+for (int i = 0; i < textFrame->get_Paragraphs()->get_Count(); ++i) {
+ auto bulletFormat = textFrame->get_Paragraphs()->idx_get(i)->get_BulletFormat();
+ bulletFormat->set_type(BulletType::Circle);
+ bulletFormat->set_character(u'•');
 }
+
+presentation->Save(u"bulleted.pptx", Aspose::Slides::Export::SaveFormat::Pptx);
 ```
 
-- Use this approach when preparing technical documentation slides for events like cppnow slides or python slides for beginners.
-- Modify the bullet text programmatically to reflect session outcomes or feature highlights.
-- Resize and reposition shapes to fit different slide layouts or aspect ratios.
+- Use bullet formatting when listing features, requirements, or steps in a workflow.
+- Apply consistent bullet styles to improve readability in technical presentations.
+- Modify bullet characters to match brand guidelines or accessibility standards.
 
 ## Notes and Best Practices
 
-When using Aspose.Slides FOSS for C++, ensure you include only the canonical header `#include <Aspose.Slides FOSS for C++>` and avoid any alternative import paths. Memory management is handled internally, but you should minimize unnecessary object duplication and reuse `Presentation` instances where possible to reduce heap allocations and improve performance.
+When working with Aspose.Slides FOSS for C++, memory management and object lifecycle control are critical for stable, long-running applications. The library follows RAII principles, so always ensure `Presentation` objects are destroyed or reset after use to release file handles and internal resources. Avoid holding multiple `Presentation` instances open simultaneously unless necessary, and prefer reusing `AutoShape` and `FillFormat` objects within `a` single `presentation` context to reduce allocation overhead.
 
-- Reuse `Presentation` objects across multiple slide operations instead of instantiating new ones for each task.
-- Call `dispose()` explicitly on `Presentation` objects when finished to release unmanaged resources promptly.
-- Avoid deep nesting of slide cloning or shape manipulation in tight loops without periodic cleanup.
-- Prefer batch operations like `clone_slide()` over repeated add-and-fill cycles for better throughput.
+- Use `std::shared_ptr<Presentation>` to manage presentation lifetimes and avoid dangling pointers when passing objects across functions.
+- Call `save()` only once per `Presentation` instance to prevent unintended side effects from repeated serialization.
+- Avoid modifying slide content inside tight loops without periodic cleanup; batch changes and commit them in a single pass.
+- Validate input files with FileFormatUtil before loading to catch unsupported or corrupted formats early.
 
 ## See Also
 
-- [Explore visual effects support](/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/)
-- [Discover key slide features](/blog.aspose.org/slides/cpp/slides-key-features/)
-- [Learn slide manipulation basics](/docs.aspose.org/slides/cpp/developer-guide/slide-manipulation/)
-- [Convert files easily](/kb.aspose.org/slides/cpp/how-to-convert-presentations-cpp/)
-- [Fix common errors](/kb.aspose.org/slides/cpp/how-to-fix-presentations-errors-cpp/)
+- [Introducing the open-source C++ library](/slides/cpp/slides-introduction/)
+- [Key capabilities and features overview](/slides/cpp/slides-key-features/)
+- [Step-by-step presentation workflow guide](/slides/cpp/developer-guide/slide-manipulation/)
+- [Convert documents between major formats](/slides/cpp/convert-pptx-to-fodp/)
+- [Resolve frequent issues and errors](/slides/cpp/fix-presentations-errors/)

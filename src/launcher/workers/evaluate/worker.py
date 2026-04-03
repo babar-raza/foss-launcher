@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import re
 import time
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -73,14 +74,17 @@ from launcher.workers.evaluate.checks import (
     check_content_grounding,
     # --- TC-EVAL-502: New checks ---
     check_code_platform,
+    check_ecosystem_contamination,  # TC-5329: wrong-ecosystem code token detection
     check_unsourced_metrics,
     check_content_viability,
+    # --- TC-5308: Extraction quality gate ---
+    check_extraction_quality,
 )
 from launcher.io.run_layout import RunLayout
 from launcher.util.errors import WorkerError
 from launcher.workers.evaluate.diagnosis import diagnose_root_causes
 from launcher.workers.evaluate.go_criteria import evaluate_go_criteria
-from launcher.workers.evaluate.grader import grade_page
+from launcher.workers.evaluate.grader import annotate_graded_severity, grade_page
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +149,17 @@ class EvaluateWorker(WorkerContract):
 
         context.log.info("[Evaluate] Starting evaluation of %d pages", len(manifest.pages))
         context.emit_event("worker_started", {"pages": len(manifest.pages)}, worker=self.name)
+
+        # TC-5306: Detect stale understanding checkpoint (side-load traceability).
+        _uc_run_id = getattr(manifest, "understanding_checkpoint_run_id", None)
+        if _uc_run_id is not None and _uc_run_id != context.run_id:
+            logger.warning(
+                "TC-5306: ContentManifest built from stale understanding checkpoint "
+                "(checkpoint run_id=%r, current run_id=%r). "
+                "Evaluate may be using evidence from a different run.",
+                _uc_run_id,
+                context.run_id,
+            )
 
         # TC-HO-09-R: Emit checkpoint_fallback for missing manifest fields
         _emitted_pe_fallback = False
@@ -355,6 +370,8 @@ class EvaluateWorker(WorkerContract):
                 product_evidence=_pe_raw,
                 # HC-TIER-01: pass repo-level richness tier for calibrated density/structure thresholds.
                 richness_tier=_richness_tier_str,
+                # TC-5308: pass extraction_completeness for thin-extraction quality gating.
+                extraction_completeness=getattr(manifest, "extraction_completeness", None),
             )
 
             # TC-HAL-09: Hallucination rate check
@@ -453,6 +470,10 @@ class EvaluateWorker(WorkerContract):
                     )
                 findings.extend(llm_findings)
 
+            # TC-5316: Annotate graded_severity before building PageEvaluation so
+            # routing decisions downstream can use the grader's actual effective severity
+            # rather than the reported severity (which may differ for LLM checks).
+            findings = annotate_graded_severity(findings)
             grade = grade_page(findings)
             check_results = _aggregate_check_results(findings)
             page_eval = PageEvaluation(
@@ -482,7 +503,12 @@ class EvaluateWorker(WorkerContract):
 
         page_evals: list[PageEvaluation] = []
         total_words = 0
-        all_claim_ids: set[str] = set()
+        all_claim_ids: set[str] = set()  # covered claim IDs (actually used in generated pages)
+        # TC-5304: collect all assigned claim IDs from manifest to compute real coverage fraction.
+        # Previously the formula used len(covered)/max(len(covered), 1) which always = 1.0.
+        all_assigned_claim_ids: set[str] = set()
+        for gp in manifest.pages:
+            all_assigned_claim_ids.update(getattr(gp, "assigned_claim_ids", []) or [])
 
         for gp, result in zip(manifest.pages, raw_eval_results):
             if isinstance(result, BaseException):
@@ -514,12 +540,14 @@ class EvaluateWorker(WorkerContract):
         for path_key, indices in path_counts.items():
             if len(indices) > 1:
                 for idx in indices:
-                    new_findings = list(page_evals[idx].findings) + [Finding(
-                        check="permalink",
-                        message=f"Permalink collision: '{path_key}' used by {len(indices)} pages",
-                        severity="critical",
-                        location=page_evals[idx].slug,
-                    )]
+                    new_findings = annotate_graded_severity(
+                        list(page_evals[idx].findings) + [Finding(
+                            check="permalink",
+                            message=f"Permalink collision: '{path_key}' used by {len(indices)} pages",
+                            severity="critical",
+                            location=page_evals[idx].slug,
+                        )]
+                    )
                     page_evals[idx] = PageEvaluation(
                         slug=page_evals[idx].slug,
                         content_path=page_evals[idx].content_path,
@@ -540,10 +568,18 @@ class EvaluateWorker(WorkerContract):
 
         avg_words = round(total_words / len(page_evals), 1) if page_evals else 0.0
 
+        # TC-5304/TC-5327: real coverage = covered ∩ assigned / assigned.
+        # Fall back to 1.0 only when nothing was assigned (nothing to cover).
+        if not all_assigned_claim_ids:
+            logger.debug("TC-5327: no assigned claims — claim_coverage defaulting to 1.0")
+            _claim_coverage = 1.0
+        else:
+            _claim_coverage = len(all_claim_ids & all_assigned_claim_ids) / len(all_assigned_claim_ids)
+
         quality = QualitySummary(
             pages_by_grade=grade_counts,
             avg_word_count=avg_words,
-            claim_coverage=len(all_claim_ids) / max(len(all_claim_ids), 1),
+            claim_coverage=_claim_coverage,
         )
 
         # Build preliminary report for GO criteria
@@ -720,6 +756,25 @@ def _compute_api_surface_coverage(
         return 0.0
 
 
+def _run_check(
+    check_fn: "Any", findings: "list[Finding]", _log_slug: str, *args: "Any", **kwargs: "Any"
+) -> None:
+    """ICS-02: Run one deterministic check, accumulate findings, log per-check counts."""
+    try:
+        result = check_fn(*args, **kwargs)
+        if result:
+            logger.debug(
+                "[Evaluate] check=%s slug=%s findings=%d",
+                check_fn.__name__, _log_slug, len(result),
+            )
+        findings.extend(result)
+    except Exception:
+        logger.warning(
+            "[Evaluate] check=%s slug=%s FAILED — skipped", check_fn.__name__, _log_slug,
+            exc_info=True,
+        )
+
+
 def _run_deterministic_checks(
     content: str, slug: str, *, page_role: str = "", product_name: str = "",
     canonical_import: str = "", runtime_import: str = "",
@@ -728,67 +783,82 @@ def _run_deterministic_checks(
     api_surface: "Any | None" = None,  # TC-HYBRID-05: ApiSurface | None
     product_evidence: "dict | None" = None,  # TC-HO-01/02: from understand checkpoint
     richness_tier: str = "A",  # HC-TIER-01: repo-level tier for calibrated thresholds
+    extraction_completeness: "Any | None" = None,  # TC-5308: ExtractionCompleteness | None
 ) -> list[Finding]:
     """Run all deterministic checks on a page."""
     findings: list[Finding] = []
-    findings.extend(check_frontmatter(content, slug))
-    findings.extend(check_structure(content, slug, richness_tier=richness_tier))
-    findings.extend(check_code(content, slug, canonical_import=canonical_import, runtime_import=runtime_import))
-    findings.extend(check_density(content, slug, page_role=page_role, richness_tier=richness_tier))
-    findings.extend(check_spec_leakage(content, slug, page_role=page_role))
-    findings.extend(check_claim_leakage(content, slug))
-    findings.extend(check_artifacts(content, slug, product_name=product_name))
-    findings.extend(check_opener_boilerplate(content, slug))
-    findings.extend(check_safety(content, slug, page_role=page_role))
-    findings.extend(check_seo(content, slug, product_name=product_name))
-    findings.extend(check_repetition(content, slug, page_role=page_role))
-    findings.extend(check_product_names(content, slug, product_name=product_name))
-    findings.extend(check_semantic_structure(content, slug, page_role=page_role))
-    findings.extend(check_reference_completeness(content, slug, page_role=page_role))
-    findings.extend(check_readability_from_markdown(content, slug))
-    findings.extend(check_golden_spec_from_markdown(content, slug, page_role, golden_dir))
+    _run_check(check_frontmatter, findings, slug, content, slug)
+    _run_check(check_structure, findings, slug, content, slug, richness_tier=richness_tier)
+    _run_check(check_code, findings, slug, content, slug, canonical_import=canonical_import, runtime_import=runtime_import)
+    _run_check(check_density, findings, slug, content, slug, page_role=page_role, richness_tier=richness_tier)
+    _run_check(check_spec_leakage, findings, slug, content, slug, page_role=page_role)
+    _run_check(check_claim_leakage, findings, slug, content, slug)
+    _run_check(check_artifacts, findings, slug, content, slug, product_name=product_name)
+    _run_check(check_opener_boilerplate, findings, slug, content, slug)
+    _run_check(check_safety, findings, slug, content, slug, page_role=page_role)
+    _run_check(check_seo, findings, slug, content, slug, product_name=product_name)
+    _run_check(check_repetition, findings, slug, content, slug, page_role=page_role)
+    _run_check(check_product_names, findings, slug, content, slug, product_name=product_name)
+    _run_check(check_semantic_structure, findings, slug, content, slug, page_role=page_role)
+    _run_check(check_reference_completeness, findings, slug, content, slug, page_role=page_role)
+    _run_check(check_readability_from_markdown, findings, slug, content, slug)
+    _run_check(check_golden_spec_from_markdown, findings, slug, content, slug, page_role, golden_dir)
     # TC-3880 Wave 2 (E4): claim coverage check — only runs when claim_texts populated.
     if claim_texts:
-        findings.extend(check_claim_coverage(content, slug, claim_texts))
+        _run_check(check_claim_coverage, findings, slug, content, slug, claim_texts)
     # TC-HYBRID-05: API identifier verification (skips when api_surface is None/low confidence).
-    findings.extend(check_api_identifiers(content, slug, api_surface=api_surface))
+    _run_check(check_api_identifiers, findings, slug, content, slug, api_surface=api_surface)
     # TC-REG-301: Prose-level backtick identifier check (skips when api_surface is None).
-    findings.extend(check_api_allowlist(content, api_surface, slug))
+    _run_check(check_api_allowlist, findings, slug, content, api_surface, slug)
     # TC-HYBRID-06: Format contradiction + truth checks (skip when no format_matrix).
-    findings.extend(check_contradiction(content, slug, api_surface=api_surface))
-    findings.extend(check_format_truth(content, slug, api_surface=api_surface))
+    _run_check(check_contradiction, findings, slug, content, slug, api_surface=api_surface)
+    _run_check(check_format_truth, findings, slug, content, slug, api_surface=api_surface)
     # TC-4050 (Wave 4A): route consistency — slug topic words must appear in prose.
-    findings.extend(check_route_consistency(content, slug, page_role=page_role))
+    _run_check(check_route_consistency, findings, slug, content, slug, page_role=page_role)
     # TC-HO-01: Limitations contradiction — content must not affirm unsupported/deprecated features.
-    findings.extend(check_limitations_contradiction(content, slug, product_evidence=product_evidence))
+    _run_check(check_limitations_contradiction, findings, slug, content, slug, product_evidence=product_evidence)
     # TC-HO-02: Install recipe — install pages must use the correct install command.
-    findings.extend(check_install_recipe(content, slug, page_role=page_role, product_evidence=product_evidence))
+    _run_check(check_install_recipe, findings, slug, content, slug, page_role=page_role, product_evidence=product_evidence)
     # --- TC-EVAL-500: Wire disconnected checks (Wave 1 — critical) ---
-    findings.extend(check_forbidden_content(content, slug))
-    findings.extend(check_content_utility(content, slug))
-    findings.extend(check_link_validity(content, slug))
-    findings.extend(check_code_completeness_workflow(content, slug, page_role=page_role))
-    findings.extend(check_faq_structure(content, slug, page_role=page_role))
-    findings.extend(check_contract_compliance(content, slug, page_role=page_role, product_name=product_name))
+    _run_check(check_forbidden_content, findings, slug, content, slug)
+    _run_check(check_content_utility, findings, slug, content, slug)
+    _run_check(check_link_validity, findings, slug, content, slug)
+    _run_check(check_code_completeness_workflow, findings, slug, content, slug, page_role=page_role)
+    _run_check(check_faq_structure, findings, slug, content, slug, page_role=page_role)
+    _run_check(check_contract_compliance, findings, slug, content, slug, page_role=page_role, product_name=product_name)
     # --- TC-EVAL-500: Wire disconnected checks (Wave 2 — quality) ---
-    findings.extend(check_golden_conformance(content, slug, page_role=page_role, golden_dir=golden_dir))
-    findings.extend(check_heading_echo(content, slug))
-    findings.extend(check_prose_lead(content, slug, page_role=page_role, product_name=product_name))
-    findings.extend(check_sentence_openings(content, slug, page_role=page_role))
-    findings.extend(check_paragraph_monotony(content, slug))
-    findings.extend(check_explanation_gap(content, slug, page_role=page_role))
-    findings.extend(check_low_specificity(content, slug, page_role=page_role))
+    _run_check(check_golden_conformance, findings, slug, content, slug, page_role=page_role, golden_dir=golden_dir)
+    _run_check(check_heading_echo, findings, slug, content, slug)
+    _run_check(check_prose_lead, findings, slug, content, slug, page_role=page_role, product_name=product_name)
+    _run_check(check_sentence_openings, findings, slug, content, slug, page_role=page_role)
+    _run_check(check_paragraph_monotony, findings, slug, content, slug)
+    _run_check(check_explanation_gap, findings, slug, content, slug, page_role=page_role)
+    _run_check(check_low_specificity, findings, slug, content, slug, page_role=page_role)
     # --- TC-EVAL-500: structure.py uncalled functions ---
-    findings.extend(check_section_order(content, slug, page_role=page_role))
-    findings.extend(check_terminal_section(content, slug))
-    findings.extend(check_duplicate_sections(content, slug))
+    _run_check(check_section_order, findings, slug, content, slug, page_role=page_role)
+    _run_check(check_terminal_section, findings, slug, content, slug)
+    _run_check(check_duplicate_sections, findings, slug, content, slug)
     # --- TC-EVAL-500: hallucination_rate — content grounding (conditional) ---
     if claim_texts:
-        findings.extend(check_content_grounding(content, claim_texts, slug=slug))
+        _run_check(check_content_grounding, findings, slug, content, claim_texts, slug=slug)
     # --- TC-EVAL-502: New checks ---
-    findings.extend(check_code_platform(content, slug, page_role=page_role))
-    findings.extend(check_unsourced_metrics(content, slug))
-    findings.extend(check_content_viability(content, slug))
+    _run_check(check_code_platform, findings, slug, content, slug, page_role=page_role)
+    _run_check(check_ecosystem_contamination, findings, slug, content, slug, page_role=page_role)  # TC-5329
+    _run_check(check_unsourced_metrics, findings, slug, content, slug)
+    _run_check(check_content_viability, findings, slug, content, slug)
+    # --- TC-5308: Extraction quality gate ---
+    # SR-02: signature is (slug, content, location, *, ...) — pass slug as first positional arg
+    _run_check(check_extraction_quality, findings, slug, slug, content, slug, extraction_completeness=extraction_completeness)
+    # ICS-02: aggregate finding counts by severity for observability
+    by_sev = Counter(f.severity for f in findings)
+    logger.info(
+        "[Evaluate] deterministic_checks slug=%s total=%d critical=%d high=%d medium=%d low=%d",
+        slug, len(findings),
+        by_sev.get("critical", 0),
+        by_sev.get("high", 0),
+        by_sev.get("medium", 0),
+        by_sev.get("low", 0),
+    )
     return findings
 
 

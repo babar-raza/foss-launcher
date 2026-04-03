@@ -122,7 +122,8 @@ def build_page_index(page_plans: list[PlannedPage]) -> dict[str, PageEntry]:
     index: dict[str, PageEntry] = {}
     for pp in page_plans:
         section = infer_section(pp.page_id, pp.frontmatter)
-        url = pp.frontmatter.get("url", f"/{pp.content_path}/") if pp.frontmatter else f"/{pp.content_path}/"
+        raw_url = pp.frontmatter.get("url", f"/{pp.content_path}/") if pp.frontmatter else f"/{pp.content_path}/"
+        url = strip_subdomain_prefix(raw_url)  # TC-EVAL-508: normalize /kb.aspose.org/... → /...
         slug = pp.frontmatter.get("slug", pp.page_id) if pp.frontmatter else pp.page_id
         index[pp.page_id] = PageEntry(
             page_id=pp.page_id,

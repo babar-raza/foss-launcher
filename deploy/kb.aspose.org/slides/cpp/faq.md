@@ -1,13 +1,13 @@
 ---
-canonical: https://kb.aspose.org/slides/cpp/faq/
-canonical_import: Aspose::Slides
-code_import: Aspose::Slides
-date: '2026-03-24T16:29:46Z'
-dateModified: '2026-03-24T16:29:46Z'
-datePublished: '2026-03-24T16:29:46Z'
-description: This permissive open-source license allows free use, modification, and
-  distribution of the software for both personal and commercial purposes, provided
-  the...
+canonical: https://kb.aspose.org/slides/cpp/frequently-asked-questions/
+canonical_import: Aspose::Slides::Foss
+code_import: Aspose::Slides::Foss
+date: '2026-04-01T14:10:08Z'
+dateModified: '2026-04-01T14:41:49Z'
+datePublished: '2026-04-01T14:10:08Z'
+description: It enables `slide` manipulation, shape rendering, `text` formatting,
+  and fill styles. However, certain advanced features remain unsupported as documented
+  in...
 display_name: Aspose.Slides FOSS for C++
 family: slides
 keywords:
@@ -17,49 +17,62 @@ keywords:
 - cppcon slides 2025
 - aspose slides cpp
 - meeting cpp slides
-- python slides
-- python slides for beginners
-lastmod: '2026-03-24T16:29:46Z'
+lastmod: '2026-04-01T14:41:49Z'
 page_role: faq
 platform: cpp
 reading_time: 1
 robots: index, follow
 seoTitle: Aspose.Slides FOSS for C++ FAQ | Guide
-slug: faq
+slug: frequently-asked-questions
 title: Aspose.Slides FOSS for C++ FAQ
 type: faq
-url: /kb.aspose.org/slides/cpp/faq/
+url: /kb.aspose.org/slides/cpp/frequently-asked-questions/
 weight: 8
 ---
 
 ## Frequently Asked Questions
 
-### What is the license for Aspose.Slides FOSS for C++?
+Aspose.Slides FOSS for C++ supports core `presentation` operations including opening, creating, and saving `.pptx` files with full round-trip fidelity. It enables `slide` manipulation, shape rendering, `text` formatting, and fill styles. However, certain advanced features remain unsupported as documented in the product's limitations.
 
-The library is distributed under the MIT License. This permissive open-source license allows free use, modification, and distribution of the software for both personal and commercial purposes, provided the original copyright notice and license text are included. The full license text is available in the project's LICENSE file on GitHub.
+### What areas are not yet available in Aspose.Slides FOSS for C++?
 
-### How do I include Aspose.Slides FOSS for C++ in my C++ project?
+The following areas are not yet available in Aspose.Slides FOSS for C++: animation effects, 3D scene rendering beyond basic `camera` setup, `comments` beyond basic `text` and timestamp support, and advanced shape `adjustments`. These limitations are explicitly listed in the product's README.md and reflect the current scope of the FOSS distribution. Developers should avoid relying on these features for production workflows until future releases extend support.
 
-Use the canonical import `#include <Aspose.Slides FOSS for C++>` at the top of your C++ source file. This is the only valid include path for the library; no other import paths are supported. Ensure your build system links against the compiled Aspose.Slides FOSS for C++ library binary.
+### How do I add `a` `bullet` to `a` paragraph?
 
-### What operations are supported for working with slides?
+Use the `BulletFormat` class to configure `bullet` properties on `a` paragraph. First, access the paragraph through `a` `text` `frame`, then call get_BulletFormat() to obtain the `bullet` formatting object. Set the `bullet` `type` and character as needed using `set_type()` and `set_character()`.
 
-You can open, create, and save `.pptx` files with full round-trip fidelity, add, remove, clone, reorder, and iterate slides, and work with shapes, text, and formatting. The library supports [identifier omitted], [identifier omitted], Tables, Connectors, and full text formatting including bullets, character, paragraph, and text frame properties. Fill types such as solid, gradient, pattern, and picture fills are also supported.
+```cpp
+using namespace Aspose::Slides::Foss;
 
-### Are there any known limitations in this version?
+// Assuming 'paragraph' is a valid Paragraph pointer
+auto bulletFormat = paragraph->get_BulletFormat();
+bulletFormat->set_type(BulletType::Circle);
+bulletFormat->set_character(u'•');
+```
 
-Yes, certain features are not yet implemented. The following areas are not yet available: advanced animations, slide transitions, embedded OLE objects, and macro support. These limitations are documented in the project's known limitations section and may be addressed in future releases.
+### Can I use 3D `camera` settings in Aspose.Slides FOSS for C++?
 
-### Can I use Aspose.Slides FOSS for C++ in production environments?
+Yes, basic 3D `camera` settings are supported via the `Camera` class. You can initialize internal `camera` state and `save` `camera` properties, but advanced 3D scene rendering features such as lighting control or complex projections are not available. Use `ensure_camera()` to create or retrieve the `camera` element with default `preset` "orthographicFront".
 
-Yes, the library is suitable for production use. It is distributed under the MIT License, which permits commercial usage without restriction. The core functionality for presentation I/O, slide manipulation, and content formatting is stable and tested. Ensure you review the known limitations to confirm your use case is supported.
+### How do I set document properties like `title` and `subject`?
+
+Access the `presentation`'s document properties through the `DocumentProperties` interface. Call `set_title()` and `set_subject()` to assign values, then `save` the `presentation` to persist changes. These properties are stored in the `presentation`'s core properties part and survive round-trip `save` operations.
+
+```cpp
+using namespace Aspose::Slides::Foss;
+
+auto pres = System::MakeObject<Presentation>();
+auto docProps = pres->get_DocumentProperties();
+docProps->set_title(u"Meeting C++ 2025 Slides");
+docProps->set_subject(u"C++ Conference Presentation");
+pres->Save(u"output.pptx", SaveFormat::Pptx);
+```
 
 ## See Also
 
-Aspose.Slides FOSS for C++ is distributed under the MIT License, enabling free use in commercial and open-source projects. The library supports core presentation operations including opening, creating, and saving .pptx files with full round-trip fidelity. However, certain advanced features are not yet available, as noted in the known limitations.
-
-- [How to load files](/kb.aspose.org/slides/cpp/how-to-load-presentations-cpp/)
-- [How to convert file formats](/kb.aspose.org/slides/cpp/how-to-convert-presentations-cpp/)
-- [How to fix common errors](/kb.aspose.org/slides/cpp/how-to-fix-presentations-errors-cpp/)
-- [How to optimize performance](/kb.aspose.org/slides/cpp/how-to-optimize-presentations-cpp/)
-- [How to Save Files with Aspose.Slides FOSS for C++](/kb.aspose.org/slides/cpp/how-to-save-presentations-cpp/)
+- [Troubleshooting common issues](/slides/cpp/troubleshooting-guide/)
+- [Convert file formats step-by-step](/slides/cpp/convert-pptx-to-fodp/)
+- [Fix common errors effectively](/slides/cpp/fix-presentations-errors/)
+- [Load files correctly and efficiently](/slides/cpp/load-presentations/)
+- [Optimize performance tips](/slides/cpp/optimize-presentations/)

@@ -31,7 +31,8 @@ class SkeletonSection(NamedTuple):
 
 
 # ---------------------------------------------------------------------------
-# Skeleton registry -- one entry per canonical page_role (17 roles)
+# Skeleton registry -- one entry per canonical page_role (20 roles)
+# (TC-5208 added getting_started; TC-EVAL-504 added code_snippet, developer_guide)
 # ---------------------------------------------------------------------------
 
 PAGE_ROLE_SKELETONS: Dict[str, List[SkeletonSection]] = {
@@ -166,6 +167,23 @@ PAGE_ROLE_SKELETONS: Dict[str, List[SkeletonSection]] = {
                         "Related best practices and guides", 0, 100),
     ],
 
+    # TC-5208: getting_started is a first-class role used in ruleset.yaml + many
+    # evaluator checks. Missing entry caused planner self-review HIGH failure.
+    "getting_started": [
+        SkeletonSection("Overview", 2, True,
+                        "What this guide covers and what the reader will achieve", 50, 200),
+        SkeletonSection("Prerequisites", 2, True,
+                        "Required setup and knowledge before starting", 30, 100),
+        SkeletonSection("Installation", 2, True,
+                        "How to install and configure the library", 50, 200),
+        SkeletonSection("Quick Start", 2, True,
+                        "Minimal runnable example demonstrating basic usage", 50, 300),
+        SkeletonSection("Next Steps", 2, False,
+                        "Where to go from here: links to tutorials, guides, and API reference", 30, 100),
+        SkeletonSection("See Also", 2, False,
+                        "Related workflows and documentation", 0, 100),
+    ],
+
     "tutorial": [
         SkeletonSection("Prerequisites", 2, True,
                         "What you need before starting", 30, 100),
@@ -255,6 +273,34 @@ PAGE_ROLE_SKELETONS: Dict[str, List[SkeletonSection]] = {
                         "Performance anti-patterns to avoid", 50, 200),
         SkeletonSection("See Also", 2, False,
                         "Related performance and optimization guides", 0, 100),
+    ],
+
+    # -- TC-EVAL-504: Additional roles used by the planner, absent from registry --
+
+    "code_snippet": [
+        SkeletonSection("Problem", 2, True,
+                        "What task or operation this snippet demonstrates", 20, 60),
+        SkeletonSection("Solution", 2, True,
+                        "Concise explanation of the approach", 30, 100),
+        SkeletonSection("Code Example", 2, True,
+                        "Complete runnable code example using canonical import", 50, 300),
+        SkeletonSection("See Also", 2, False,
+                        "Related snippets and how-to articles", 0, 100),
+    ],
+
+    "developer_guide": [
+        SkeletonSection("Introduction", 2, True,
+                        "What this guide covers and prerequisites", 50, 150),
+        SkeletonSection("Core Concepts", 2, True,
+                        "Key concepts the reader needs to understand", 100, 400),
+        SkeletonSection("Implementation", 2, True,
+                        "Step-by-step implementation with code examples", 200, 600),
+        SkeletonSection("Advanced Usage", 2, False,
+                        "Advanced patterns and configurations", 100, 300),
+        SkeletonSection("Troubleshooting", 2, False,
+                        "Common issues and solutions", 50, 200),
+        SkeletonSection("See Also", 2, True,
+                        "Related guides and references", 0, 100),
     ],
 }
 

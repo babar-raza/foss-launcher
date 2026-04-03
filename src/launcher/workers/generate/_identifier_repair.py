@@ -90,6 +90,16 @@ _PYTHON_BUILTINS: frozenset[str] = frozenset({
     "Field", "BaseModel",  # pydantic
     "Logger",  # logging
     "Json",    # common alias
+    # TC-EVAL-507: stdlib test/io/xml/http names that appear in BPW-02-promoted test files
+    "TestCase", "TestSuite", "TestResult", "TestLoader", "TestRunner",
+    "ZipFile", "ZipInfo", "TarFile", "TarInfo",
+    "ElementTree", "Element", "SubElement",
+    "HTMLParser", "HTMLFormatter",
+    "ConfigParser", "RawConfigParser", "SafeConfigParser",
+    "ArgumentParser", "OptionParser", "Namespace",
+    "JSONDecodeError", "JSONEncoder", "JSONDecoder",
+    "HTTPError", "URLError", "HTTPResponse", "HTTPConnection", "HTTPSConnection",
+    "XMLParser", "XMLSyntaxError",
 })
 
 # Common proper nouns, frameworks, and language keywords that appear as PascalCase
@@ -356,16 +366,36 @@ def _build_method_names_set(api_surface: "ApiSurface") -> frozenset[str]:
     return frozenset(method_names)
 
 
-def _build_exempt_set(product_display_name: str = "") -> frozenset[str]:
-    """Build the complete exempt set including product display name tokens."""
+def _build_exempt_set(
+    product_display_name: str = "",
+    canonical_import: str = "",
+    import_allowlist: "list[str] | None" = None,
+) -> frozenset[str]:
+    """Build the complete exempt set including product display name tokens.
+
+    TC-NET-001: Also exempts components of ``canonical_import`` and
+    ``import_allowlist`` entries so that namespace path tokens like ``ThreeD``
+    (from ``Aspose.ThreeD``) are never treated as hallucinated identifiers.
+    """
     exempt: set[str] = set()
     exempt.update(_PYTHON_BUILTINS)
     exempt.update(_GENERIC_PROPER_NOUNS)
     exempt.update(_SHORT_EXEMPT)
 
-    # Tokenise product display name (e.g. "Aspose.Cells" → {"Aspose", "Cells"})
-    if product_display_name:
-        for token in re.split(r"[.\s\-_/]+", product_display_name):
+    # Tokenise both product display name and canonical import path.
+    # e.g. display_name="Aspose.3D" → {"Aspose", "3D"}
+    #      canonical_import="Aspose.ThreeD" → {"Aspose", "ThreeD"}
+    for src in (product_display_name, canonical_import):
+        if src:
+            for token in re.split(r"[.\s\-_/]+", src):
+                tok = token.strip()
+                if tok and len(tok) >= 2:
+                    exempt.add(tok)
+
+    # Also exempt each dotted component of every import_allowlist entry.
+    # e.g. "Aspose.Slides.Foss" → {"Aspose", "Slides", "Foss"}
+    for entry in (import_allowlist or []):
+        for token in entry.split("."):
             tok = token.strip()
             if tok and len(tok) >= 2:
                 exempt.add(tok)
@@ -503,20 +533,18 @@ def _repair_code_segment(
             repaired_lines.append(line)
             continue
 
-        # Annotate the first hallucinated token only (keep output readable)
-        token = hallucinated[0]
-        repairs.extend(hallucinated)  # record all found, even if only first is annotated
-        eol = line[len(stripped):]   # preserve original line ending (\n or \r\n)
-        # Only add comment if line doesn't already have one (avoid double-commenting)
-        if "#" not in stripped:
-            annotated = f"{stripped}  # {token}: unknown — omitted{eol}"
-        else:
-            # Line already has a comment — insert the annotation before the comment
-            comment_pos = stripped.index("#")
-            code_part = stripped[:comment_pos].rstrip()
-            existing_comment = stripped[comment_pos:]
-            annotated = f"{code_part}  # {token}: unknown — {existing_comment.lstrip('# ').rstrip()}{eol}"
-        repaired_lines.append(annotated)
+        # TC-5317: Replace hallucinated identifier tokens with _UNKNOWN_{token}_ marker
+        # instead of silently deleting the entire line (TC-GEN-601 approach).
+        # Deleting the line breaks subsequent code that references the deleted variable/object.
+        # The _UNKNOWN_ marker preserves syntactic structure while making the problem visible
+        # to the evaluator (api_allowlist check detects _UNKNOWN_ and fires HIGH finding).
+        repaired_line = stripped
+        for token in hallucinated:
+            repaired_line = repaired_line.replace(token, f"_UNKNOWN_{token}_")
+        # Re-attach the original line ending
+        ending = line[len(stripped):]
+        repaired_lines.append(repaired_line + ending)
+        repairs.extend(hallucinated)
 
     return "".join(repaired_lines), repairs
 
@@ -525,6 +553,9 @@ def repair_identifiers(
     section_text: str,
     api_surface: "ApiSurface",
     product_display_name: str = "",
+    *,
+    canonical_import: str = "",
+    import_allowlist: "list[str] | None" = None,
 ) -> tuple[str, list[str]]:
     """Repair hallucinated API identifiers in a generated section's text.
 
@@ -541,6 +572,13 @@ def repair_identifiers(
         The product's display name (e.g., "Aspose.Cells for Python").
         Its component tokens are added to the exempt set so the product
         name itself is never suppressed.
+    canonical_import:
+        TC-NET-001: The product's canonical import path (e.g., "Aspose.ThreeD").
+        Each dotted component (e.g., "ThreeD") is added to the exempt set so
+        namespace tokens are never stripped as hallucinated identifiers.
+    import_allowlist:
+        TC-NET-001: Additional import paths (from ``ApiSurface.import_allowlist``).
+        Each dotted component is added to the exempt set.
 
     Returns
     -------
@@ -553,6 +591,7 @@ def repair_identifiers(
     --------------------------------------------------
     - Identifiers inside markdown headers (``# H1``, ``## H2``, …)
     - The product display name itself and its component tokens
+    - Components of ``canonical_import`` and ``import_allowlist`` paths
     - Standard Python builtins, exceptions, typing constructs
     - Identifiers shorter than 4 characters
     - Identifiers that are substrings of any known class name (or vice versa)
@@ -561,7 +600,7 @@ def repair_identifiers(
         return section_text, []
 
     known_set = _build_known_set(api_surface)
-    exempt_set = _build_exempt_set(product_display_name)
+    exempt_set = _build_exempt_set(product_display_name, canonical_import, import_allowlist)
     # GEN-3: build lowercase and method-name sets for softened matching
     known_set_lower = _build_known_set_lower(known_set)
     known_method_names = _build_method_names_set(api_surface)

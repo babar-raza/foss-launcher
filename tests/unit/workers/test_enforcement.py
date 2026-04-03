@@ -267,7 +267,7 @@ def test_pass2_called_when_pass1_fails_tier_a():
     with patch(
         "launcher.workers.generate.worker._call_llm",
         new_callable=AsyncMock,
-        return_value=mock_response,
+        return_value=(mock_response, ""),
     ):
         result_ir, pass_used = asyncio.run(enforce_block_spec(
             section, skel, "overview", golden_index, product, [], [], ctx,
@@ -296,7 +296,7 @@ def test_pass2_allowed_for_tier_c():
     with patch(
         "launcher.workers.generate.worker._call_llm",
         new_callable=AsyncMock,
-        return_value=mock_response,
+        return_value=(mock_response, ""),
     ) as mock_llm:
         result_ir, pass_used = asyncio.run(enforce_block_spec(
             section, skel, "overview", golden_index, product, [], [], ctx,
@@ -325,7 +325,7 @@ def test_pass2_satisfies_spec_returns_pass2():
     with patch(
         "launcher.workers.generate.worker._call_llm",
         new_callable=AsyncMock,
-        return_value=mock_response,
+        return_value=(mock_response, ""),
     ):
         result_ir, pass_used = asyncio.run(enforce_block_spec(
             section, skel, "overview", golden_index, product, [], [], ctx,
@@ -355,7 +355,7 @@ def test_pass2_fails_falls_through_to_pass3():
     with patch(
         "launcher.workers.generate.worker._call_llm",
         new_callable=AsyncMock,
-        return_value=bad_response,
+        return_value=(bad_response, ""),
     ):
         result_ir, pass_used = asyncio.run(enforce_block_spec(
             section, skel, "overview", golden_index, product, [], [], ctx,
@@ -559,7 +559,7 @@ def test_pass2_max_retries_2_calls_llm_twice():
     with patch(
         "launcher.workers.generate.worker._call_llm",
         new_callable=AsyncMock,
-        return_value=bad_response,
+        return_value=(bad_response, ""),
     ) as mock_llm:
         result_ir, pass_used = asyncio.run(enforce_block_spec(
             section, skel, "overview", golden_index, product, [], [], ctx,
@@ -623,3 +623,42 @@ class TestDeduplicateSections:
         # Code blocks preserved in both sections
         assert len(result[0].blocks) == 1
         assert len(result[1].blocks) == 1
+
+
+# ---------------------------------------------------------------------------
+# TC-5305: _resolve_input_model wires "verify" → ScoutBundle
+# ---------------------------------------------------------------------------
+
+class TestTC5305VerifyInputModel:
+    """TC-5305: _resolve_input_model('verify') must return ScoutBundle, not None.
+
+    Before TC-5305 the verify case was missing, causing _resolve_input_model
+    to fall through to model=None and wrap the input in _DictProxy instead of
+    the validated ScoutBundle type.
+    """
+
+    def test_verify_resolves_to_scout_bundle(self):
+        """_resolve_input_model('verify') returns ScoutBundle (not None)."""
+        from launcher.orchestrator.graph_builder import _resolve_input_model
+        from launcher.models.scout import ScoutBundle
+        model = _resolve_input_model("verify")
+        assert model is ScoutBundle, (
+            f"Expected ScoutBundle for 'verify', got {model!r}. "
+            "TC-5305: verify worker must be wired to ScoutBundle input model."
+        )
+
+    def test_understand_still_resolves_to_scout_bundle(self):
+        """Regression guard: 'understand' still resolves to ScoutBundle after TC-5305."""
+        from launcher.orchestrator.graph_builder import _resolve_input_model
+        from launcher.models.scout import ScoutBundle
+        model = _resolve_input_model("understand")
+        assert model is ScoutBundle
+
+    def test_verify_model_not_none(self):
+        """_resolve_input_model('verify') must not return None."""
+        from launcher.orchestrator.graph_builder import _resolve_input_model
+        model = _resolve_input_model("verify")
+        assert model is not None, (
+            "TC-5305: verify worker returned None from _resolve_input_model — "
+            "graph builder will wrap input in _DictProxy, bypassing type validation."
+        )

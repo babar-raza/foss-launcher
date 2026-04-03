@@ -45,37 +45,37 @@ class TestEVL1AcceptCodeBlock:
     def test_valid_python_block_accepted(self):
         from launcher.workers.generate.worker import _accept_code_block
         code = "from aspose_cells import Workbook\nwb = Workbook()\nwb.save('out.xlsx')"
-        assert _accept_code_block(code, "python") is True
+        assert _accept_code_block(code, "python")[0] is True
 
     def test_invalid_python_block_rejected(self):
         from launcher.workers.generate.worker import _accept_code_block
         # Missing colon on 'if' — syntax error
         code = "if True\n    print('hello')"
-        assert _accept_code_block(code, "python") is False
+        assert _accept_code_block(code, "python")[0] is False
 
     def test_identifier_omitted_sentinel_is_invalid(self):
         from launcher.workers.generate.worker import _accept_code_block
         # [identifier omitted] is not valid Python syntax
         code = "wb = [identifier omitted]()\nwb.save('out.xlsx')"
-        assert _accept_code_block(code, "python") is False
+        assert _accept_code_block(code, "python")[0] is False
 
     def test_non_python_block_always_accepted(self):
         from launcher.workers.generate.worker import _accept_code_block
         code = "this is not valid python @ all!!!"
-        assert _accept_code_block(code, "typescript") is True
-        assert _accept_code_block(code, "cpp") is True
-        assert _accept_code_block(code, "java") is True
+        assert _accept_code_block(code, "typescript")[0] is True
+        assert _accept_code_block(code, "cpp")[0] is True
+        assert _accept_code_block(code, "java")[0] is True
 
     def test_shell_command_first_line_skipped(self):
         """pip install commands in Python blocks must be accepted (install instructions)."""
         from launcher.workers.generate.worker import _accept_code_block
         code = "pip install aspose-cells-foss\n"
-        assert _accept_code_block(code, "python") is True
+        assert _accept_code_block(code, "python")[0] is True
 
     def test_empty_block_accepted(self):
         from launcher.workers.generate.worker import _accept_code_block
-        assert _accept_code_block("", "python") is True
-        assert _accept_code_block("   ", "python") is True
+        assert _accept_code_block("", "python")[0] is True
+        assert _accept_code_block("   ", "python")[0] is True
 
 
 class TestEVL1SyntaxStrippingAfterRetryExhaustion:
@@ -85,13 +85,13 @@ class TestEVL1SyntaxStrippingAfterRetryExhaustion:
         """_accept_code_block returns True → block would be kept."""
         from launcher.workers.generate.worker import _accept_code_block
         valid_code = "from aspose_cells import Workbook\nwb = Workbook()"
-        assert _accept_code_block(valid_code, "python") is True
+        assert _accept_code_block(valid_code, "python")[0] is True
 
     def test_invalid_block_detected(self):
         """_accept_code_block returns False → EVL-1 would strip this block."""
         from launcher.workers.generate.worker import _accept_code_block
         invalid_code = "def foo(\n    print('oops')"  # missing closing paren + colon
-        assert _accept_code_block(invalid_code, "python") is False
+        assert _accept_code_block(invalid_code, "python")[0] is False
 
     def test_evl1_strip_leaves_prose_intact(self):
         """EVL-1 logic: strip invalid code blocks but preserve prose blocks."""
@@ -113,7 +113,7 @@ class TestEVL1SyntaxStrippingAfterRetryExhaustion:
         for blk in blocks:
             if blk.type == BlockType.code:
                 blk_lang = blk.language if blk.language else ("python" if is_python_product else "")
-                if not _accept_code_block(blk.content or "", blk_lang):
+                if not _accept_code_block(blk.content or "", blk_lang)[0]:
                     evl1_stripped += 1
                     continue
             evl1_kept.append(blk)
@@ -132,7 +132,7 @@ class TestEVL1SyntaxStrippingAfterRetryExhaustion:
         evl1_stripped = 0
         for blk in blocks:
             if blk.type == BlockType.code:
-                if not _accept_code_block(blk.content or "", blk.language or "python"):
+                if not _accept_code_block(blk.content or "", blk.language or "python")[0]:
                     evl1_stripped += 1
                     continue
             evl1_kept.append(blk)

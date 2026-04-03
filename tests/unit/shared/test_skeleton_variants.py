@@ -191,13 +191,19 @@ class TestResolveSkeleton:
             )
 
     def test_page_role_skeletons_unchanged(self) -> None:
-        """PAGE_ROLE_SKELETONS must still have exactly 17 roles."""
-        assert len(PAGE_ROLE_SKELETONS) == 17
+        """PAGE_ROLE_SKELETONS must still have exactly 20 roles.
+
+        TC-5208 added getting_started; TC-EVAL-504 added code_snippet and developer_guide.
+        """
+        assert len(PAGE_ROLE_SKELETONS) == 20
         expected_roles = {
             "landing", "toc", "comprehensive_guide", "workflow_page",
             "feature_showcase", "troubleshooting", "api_reference",
             "reference_object_page", "faq", "best_practices", "tutorial",
             "howto_article", "blog_announcement", "blog", "feature_blog",
             "format_conversion", "performance_guide",
+            "getting_started",   # TC-5208: registered from ruleset.yaml
+            "code_snippet",      # TC-EVAL-504: used in planner _ROLE_OP_MAP
+            "developer_guide",   # TC-EVAL-504: used in planner _ROLE_OP_MAP
         }
         assert set(PAGE_ROLE_SKELETONS.keys()) == expected_roles

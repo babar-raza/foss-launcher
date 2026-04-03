@@ -37,6 +37,13 @@ _ECHO_PATTERNS = [
     r"based on (?:your|the) (?:request|question)",
 ]
 
+# TC-GEN-602: Skeleton-directive sentence pattern: "ProductName -- description of what to write".
+# Matches product display name (contains at least one dot, e.g. "Aspose.Cells") followed by " -- ".
+# [^-\n]{0,200}: excludes dash and newline (no backtracking on " -- " delimiter), capped at 200 chars.
+_SKELETON_DIRECTIVE_RE = re.compile(
+    r'\b[A-Z][A-Za-z0-9]*\.[A-Za-z0-9]+[^-\n]{0,200} -- ',
+)
+
 # TC-3891: raw Python dict literal used as markdown link anchor text.
 # Pattern: [{'type': ... or [{"type": ... as the link text portion.
 _DICT_ANCHOR_RE = re.compile(r'\[\{[\'"]type[\'"]', re.DOTALL)
@@ -127,6 +134,25 @@ def check_artifacts(content: str, slug: str, *, product_name: str = "") -> list[
                     check="artifacts",
                     message=f"Keyword stuffing: product-name density {density:.1f} per 100 words (threshold 5)",
                     severity="medium",
+                    location=slug,
+                )
+            )
+
+    # TC-GEN-602: Skeleton-directive sentences leaked into published content.
+    # Pattern: "Aspose.X -- description of what to write". The engineering strip in
+    # section_validator.py removes these at generation time; this check catches any survivors.
+    if product_name:
+        skeleton_matches = _SKELETON_DIRECTIVE_RE.findall(body_for_phrases)
+        if skeleton_matches:
+            findings.append(
+                Finding(
+                    check="artifacts",
+                    message=(
+                        f"[ENG] {len(skeleton_matches)} skeleton-directive sentence(s) found "
+                        f"(e.g. '{skeleton_matches[0].strip()}'). "
+                        "Internal section-guidance text leaked into published content."
+                    ),
+                    severity="high",
                     location=slug,
                 )
             )

@@ -1,11 +1,12 @@
 ---
 canonical: https://blog.aspose.org/cells/python/create-charts-spreadsheets/
 canonical_import: aspose.cells
-date: '2026-03-22T08:56:20Z'
-dateModified: '2026-03-22T08:56:20Z'
-datePublished: '2026-03-22T08:56:20Z'
-description: With support for core spreadsheet operations—including `cell` `value`
-  management, styling, and chart creation—it serves as a lightweight, open-source...
+code_import: aspose.cells
+date: '2026-03-27T07:02:41Z'
+dateModified: '2026-03-27T07:02:41Z'
+datePublished: '2026-03-27T07:02:41Z'
+description: The `ChartCollection` class enables adding various chart types—including
+  line, bar, pie, scatter, and waterfall—directly to worksheet objects.
 display_name: Aspose.Cells FOSS
 family: cells
 keywords:
@@ -17,7 +18,7 @@ keywords:
 - aspose cells python
 - code cells python
 - voronoi cells python
-lastmod: '2026-03-22T08:56:20Z'
+lastmod: '2026-03-27T07:02:41Z'
 page_role: feature_blog
 platform: python
 reading_time: 1
@@ -32,40 +33,40 @@ weight: 17
 
 ## Introduction
 
-Aspose.Cells FOSS enables developers to programmatically create and manipulate Excel workbooks and `worksheets` using Python. With support for core spreadsheet operations—including `cell` `value` management, styling, and chart creation—it serves as a lightweight, open-source solution for generating Excel-compatible files.
+If you have ever needed to generate spreadsheets with multiple chart types in Python without relying on Excel, Aspose.Cells FOSS provides native support for programmatic chart creation. The `ChartCollection` class enables adding various chart types—including line, bar, pie, scatter, and waterfall—directly to worksheet objects.
 
-The library exposes key classes like `Workbook`, `Worksheet`, `Cells`, `Cell`, and `ChartCollection`, allowing developers to build spreadsheets from scratch or `modify` existing ones. It supports input formats CSV and XLSX, and outputs CSV, JSON, and XLSX—making it suitable for data export, reporting, and automation workflows in environments such as VS Code, Spyder, or Jupyter.
+This feature supports creating all major chart types using the `ChartType` enum, with full control over series data, axis formatting, and visual `properties` via `ChartSeries`, `ChartAxis`, and `ChartErrorBars`. Output is limited to supported formats: CSV, XLSX, JSON, MARKDOWN, and TSV.
 
 ## Key Highlights
 
-Aspose.Cells FOSS enables developers to programmatically create, manipulate, and export spreadsheets in Python. With core classes like `Workbook`, `Worksheet`, `Cells`, and `Chart`, you can build robust spreadsheet workflows directly in your Python environment — from simple data exports to complex chart generation.
+If you have ever needed to generate spreadsheets with multiple chart types in Python without relying on Excel, Aspose.Cells FOSS handles this using the `ChartType` enum and `ChartCollection` methods. This feature supports creating line, bar, pie, area, scatter, combo, waterfall, and box-whisker `charts` directly in code, with full control over series data, `axes`, and formatting.
 
-- Full `Workbook` control: Create, manage, and protect workbooks with methods like `add_worksheet()`, `get_worksheet()`, and `unprotect()`.
-- Direct cell manipulation: Read and write cell values, formulas, and comments using the `Cell` and `Cells` classes with coordinate helpers like `coordinate_from_string()`.
-- Chart creation support: Generate line, bar, pie, area, and scatter charts via `ChartCollection` methods such as `add_line()`, `add_bar()`, and `add_pie()`.
-- Multi-format export: Save workbooks to CSV, JSON, and XLSX using `CSVHandler`, `JsonHandler`, and native workbook save capabilities.
-- Markdown and structured export: Export worksheet data to Markdown format using `MarkdownHandler.save_markdown()` for documentation or reporting pipelines.
+- Create multiple chart types using the `ChartType` enum and `ChartCollection.add_*()` methods
+- Add and configure chart series with `ChartSeries` and `ChartAxis` objects
+- Export workbooks to CSV, JSON, Markdown, and XLSX formats using `CSVHandler`, `JsonHandler`, and `MarkdownHandler`
+- Manage worksheets and cells via `Workbook`, `Worksheet`, `Cells`, and `Cell` classes
+- Apply Agile encryption to protect output files using `AgileEncryptionParameters`
+
+The `ChartCollection` class provides dedicated methods like `add_bar()`, `add_line()`, and `add_pie()` to insert `charts` at specific grid positions. Each chart supports series configuration through `ChartSeries`, and axis control via `ChartAxis`. The `ChartType` enum ensures `type`-safe chart creation across supported formats.
+
+Export operations use handler classes: `CSVHandler.save_csv()` writes CSV files, `JsonHandler.save_json()` outputs JSON, and `MarkdownHandler.save_markdown()` generates Markdown `tables`. All handlers accept optional `save` options and support both file paths and string outputs.
 
 ## Getting Started
 
-Aspose.Cells FOSS enables programmatic creation and manipulation of Excel workbooks in Python. Use the `Workbook` class to instantiate a new spreadsheet and the `ChartCollection` class to `add` `charts` like line, bar, pie, and area types directly to `worksheets`.
+If you have ever needed to generate a new spreadsheet with multiple chart types in Python without relying on Excel, Aspose.Cells FOSS provides direct programmatic control via the `Workbook` and `ChartCollection` classes. This feature enables creation of line, bar, pie, and area `charts` using dedicated methods on the chart collection, with full control over series data and axis configuration.
 
-```python
-import aspose.cells
+- Create a new workbook and add a worksheet using `Workbook` and `add_worksheet()`
+- Insert multiple chart types using `ChartCollection.add_line()`, `add_bar()`, `add_pie()`, and `add_area()`
+- Populate chart series data by setting `ChartSeries.values` and `category_data`
 
-# Create a new workbook and access the first worksheet
-workbook = aspose.cells.Workbook()
-worksheet = workbook.worksheets[0]
+The `ChartCollection` class provides dedicated methods like `add_line()`, `add_bar()`, `add_pie()`, and `add_area()` to insert `charts` at specified row/column coordinates. Each chart is accessed via its index in the collection, and series data is added using the `n_series` property. The `Workbook.save()` method writes the result to an `.xlsx` file.
 
-# Add a line chart to the worksheet
-chart_index = worksheet.charts.add_line(5, 0, 20, 8)
-chart = worksheet.charts[chart_index]
-```
+The `Chart` class exposes `properties` such as `title`, `category_data`, and `show_legend`, while `ChartSeries` allows setting `values`, `name`, and `chart_type`. These classes work together to support full chart configuration without requiring Excel to be installed.
 
 ## See Also
 
-- [Introducing Cells FOSS for Python](/blog.aspose.org/cells/python/cells-foss-python/)
-- [Working with spreadsheet formulas](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)
-- [Essential spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)
-- [Converting file formats easily](/kb.aspose.org/cells/python/convert-csv-json-python/)
-- [Fixing common errors quickly](/kb.aspose.org/cells/python/fix-spreadsheets-errors-python/)
+- [Install and set up Cells FOSS for Python](/cells/python/cells-foss-python/)
+- [Work with formulas using Aspose.Cells FOSS](/cells/python/developer-guide/formula-calculation/)
+- [Perform spreadsheet operations efficiently](/cells/python/developer-guide/spreadsheet-operations/)
+- [Convert spreadsheets between file formats](/cells/python/convert-csv-json-python/)
+- [Fix common errors in Aspose.Cells FOSS](/cells/python/fix-spreadsheets-errors-python/)

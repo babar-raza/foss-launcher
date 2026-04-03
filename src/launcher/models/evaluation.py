@@ -32,6 +32,10 @@ class Finding(LauncherBaseModel):
     check: str
     message: str
     severity: Literal["critical", "high", "medium", "low"] = "medium"
+    # TC-5316: Effective severity used by grader for scoring. May differ from
+    # ``severity`` when LLM check HIGHs are capped to MEDIUM. Default "" means
+    # not yet annotated (backward-compatible with existing checkpoint JSON).
+    graded_severity: str = ""
     location: str = ""
     section_id: str | None = None
     # TC-5128: structured list of uncovered claim texts for downstream reporting.
@@ -132,15 +136,13 @@ class PipelineAdvice(LauncherBaseModel):
     """LLM pipeline advisor output — routing decision after a NO_GO evaluation.
 
     routing options:
-      "publish"       — override NO_GO and publish (only when no critical/high findings)
-      "heal_generate" — re-run generate on target_pages
-      "stop"          — content unfixable, end pipeline
-
-    NOTE: "heal_upstream" intentionally excluded in v1.
-    Add it only after empirical data shows understanding re-runs improve grades.
+      "publish"         — override NO_GO and publish (only when no critical/high findings)
+      "heal_generate"   — re-run generate on target_pages
+      "heal_understand" — re-run understand + planner + generate (thin extraction root cause)
+      "stop"            — content unfixable, end pipeline
     """
 
-    routing: Literal["publish", "heal_generate", "stop"]
+    routing: Literal["publish", "heal_generate", "heal_understand", "stop"]
     analysis: str
     confidence: float = Field(ge=0.0, le=1.0)
     target_pages: list[str] = Field(default_factory=list)

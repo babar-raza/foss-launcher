@@ -89,6 +89,8 @@ platforms:
     import_tpl: "aspose_{family}_foss"
     install_cmd: "pip install aspose-{family}-foss"
     lang_tag: "python"
+    import_keyword: "import"
+    manifest_files: ["pyproject.toml", "setup.py", "setup.cfg"]
     runtime_import_tpl: "aspose.{family}"
     runtime_import_overrides:
       3d: "aspose.threed"
@@ -100,6 +102,8 @@ platforms:
     import_tpl: "com.aspose.{family}"
     install_cmd: "maven"
     lang_tag: "java"
+    import_keyword: "import"
+    manifest_files: ["pom.xml", "build.gradle"]
     file_ext: ".java"
     doc_comment: "javadoc"
     ast_parser: "tree_sitter"
@@ -110,6 +114,8 @@ platforms:
     import_tpl: "Aspose.{Family}"
     install_cmd: "dotnet add package Aspose.{Family}"
     lang_tag: "csharp"
+    import_keyword: "using"
+    manifest_files: []
     file_ext: ".cs"
     doc_comment: "xmldoc"
     ast_parser: "tree_sitter"
@@ -120,6 +126,8 @@ platforms:
     import_tpl: "@aspose/{family}"
     install_cmd: "npm install @aspose/{family}"
     lang_tag: "javascript"
+    import_keyword: "require/import"
+    manifest_files: ["package.json"]
     file_ext: ".ts"
     doc_comment: "jsdoc"
     ast_parser: "tree_sitter"
@@ -128,6 +136,8 @@ platforms:
     import_tpl: "@aspose/{family}"
     install_cmd: "npm install @aspose/{family}"
     lang_tag: "typescript"
+    import_keyword: "import"
+    manifest_files: []
     file_ext: ".ts"
     doc_comment: "jsdoc"
     ast_parser: "tree_sitter"
@@ -136,6 +146,8 @@ platforms:
     import_tpl: "@aspose/{family}"
     install_cmd: "npm install @aspose/{family}"
     lang_tag: "javascript"
+    import_keyword: "require"
+    manifest_files: []
     file_ext: ".js"
     doc_comment: "jsdoc"
     ast_parser: "tree_sitter"
@@ -144,6 +156,8 @@ platforms:
     import_tpl: "github.com/aspose-{family}/aspose_{family}_go"
     install_cmd: "go get github.com/aspose-{family}/aspose_{family}_go"
     lang_tag: "go"
+    import_keyword: "import"
+    manifest_files: ["go.mod"]
     file_ext: ".go"
     doc_comment: "godoc"
     ast_parser: "tree_sitter"
@@ -152,6 +166,8 @@ platforms:
     import_tpl: "aspose_{family}"
     install_cmd: "cargo add aspose_{family}"
     lang_tag: "rust"
+    import_keyword: "use"
+    manifest_files: ["cargo.toml"]
     file_ext: ".rs"
     doc_comment: "rustdoc"
     ast_parser: "tree_sitter"
@@ -160,6 +176,8 @@ platforms:
     import_tpl: "Aspose\\{Family}"
     install_cmd: "composer require aspose/{family}"
     lang_tag: "php"
+    import_keyword: "use"
+    manifest_files: ["composer.json"]
     file_ext: ".php"
     doc_comment: "phpdoc"
     ast_parser: "tree_sitter"
@@ -170,6 +188,8 @@ platforms:
     import_tpl: "aspose_{family}"
     install_cmd: "gem install aspose_{family}"
     lang_tag: "ruby"
+    import_keyword: "require"
+    manifest_files: ["gemfile"]
     file_ext: ".rb"
     doc_comment: "yard"
     ast_parser: "tree_sitter"
@@ -178,6 +198,8 @@ platforms:
     import_tpl: "com.aspose.{family}"
     install_cmd: "implementation 'com.aspose:aspose-{family}'"
     lang_tag: "kotlin"
+    import_keyword: "import"
+    manifest_files: ["build.gradle.kts"]
     file_ext: ".kt"
     doc_comment: "kdoc"
     ast_parser: "tree_sitter"
@@ -188,6 +210,8 @@ platforms:
     import_tpl: "Aspose{Family}"
     install_cmd: ".package(url: \"https://github.com/aspose-{family}/aspose-{family}-swift\", from: \"1.0.0\")"
     lang_tag: "swift"
+    import_keyword: "import"
+    manifest_files: ["package.swift"]
     file_ext: ".swift"
     doc_comment: "swift_markup"
     ast_parser: "tree_sitter"
@@ -198,6 +222,8 @@ platforms:
     import_tpl: "Aspose::{Family}"
     install_cmd: "vcpkg install aspose-{family}"
     lang_tag: "cpp"
+    import_keyword: "#include"
+    manifest_files: ["cmakelists.txt"]
     file_ext: ".cpp"
     doc_comment: "doxygen"
     ast_parser: "tree_sitter"

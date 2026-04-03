@@ -26,6 +26,60 @@ _HEADING_LABEL_PATTERNS = [
 
 
 # ---------------------------------------------------------------------------
+# TC-GEN-603: Backtick-wrapping exempt words
+# Lowercase common English words that happen to match lowercase API method names.
+# These are NOT wrapped in backticks even when they appear in the API surface,
+# because wrapping them produces awkward prose ("you can `get` the value").
+# NOTE: PascalCase class names must NOT be added here — they ARE legitimate API
+# classes and must remain wrapped when they appear as API identifiers in prose.
+# ---------------------------------------------------------------------------
+_BACKTICK_EXEMPT_WORDS: frozenset[str] = frozenset({
+    # Very short lowercase words that would produce awkward backtick prose
+    # if they happen to match a same-named API method or constant.
+    "get", "set", "add", "del", "run", "key", "map", "use",
+    "new", "old", "raw", "all", "any", "max", "min",
+})
+
+
+# ---------------------------------------------------------------------------
+# TC-5329: Wrong-ecosystem pattern detection for C++ code blocks.
+# The qwen3-next LLM defaults to .NET/C++CLI Aspose patterns when writing C++ code.
+# These patterns are syntactically valid enough to pass basic checks but are semantically
+# wrong for a standard C++ library. Detect them post-LLM to drive retry or block drop.
+# ---------------------------------------------------------------------------
+_CPP_FENCE_LANGS: frozenset[str] = frozenset({"cpp", "c++", "c"})
+_CPP_CONTAMINATION_MARKER = "# __CPP_CONTAMINATION__:"
+
+_CPP_CONTAMINATION_PATTERNS: list[tuple[re.Pattern[str], str]] = [
+    (re.compile(r"\bSystem\s*::\s*MakeObject\s*<"),   "System::MakeObject"),
+    (re.compile(r"\bSystem\s*::\s*DynamicCast\s*<"),  "System::DynamicCast"),
+    (re.compile(r"\bSystem\s*::\s*SafeCast\s*<"),     "System::SafeCast"),
+    (re.compile(r"\bSystem\s*::\s*Drawing\s*::"),     "System::Drawing"),
+    (re.compile(r"\bSystem\s*::\s*Exception\b"),      "System::Exception"),
+    (re.compile(r"\bgcnew\b"),                        "gcnew"),
+    # ^ managed-pointer: letter/paren immediately before ^ (XOR has spaces: a ^ b)
+    (re.compile(r"[A-Za-z_)]\^"),                     "managed-pointer(^)"),
+    # IInterface instantiation: e.g. IPresentation p("file") or ISlide s =
+    (re.compile(r"\bI[A-Z][A-Za-z]{3,}\s+\w+\s*[=(;]"), "IInterface-instantiation"),
+    # .get_X() .NET property accessor: e.g. ->get_Message() ->get_Slides()
+    (re.compile(r"->\s*get_[A-Z][A-Za-z]+\s*\(\)"),  "get_X()-accessor"),
+]
+
+
+def scan_cpp_contamination(code: str) -> list[str]:
+    """Return list of wrong-ecosystem pattern labels found in a C++ code block.
+
+    TC-5329: Detects .NET/C++CLI idioms that are invalid in standard C++ FOSS code.
+    Returns an empty list if the code is clean.
+    """
+    labels: list[str] = []
+    for pattern, label in _CPP_CONTAMINATION_PATTERNS:
+        if pattern.search(code):
+            labels.append(label)
+    return labels
+
+
+# ---------------------------------------------------------------------------
 # W1-S2: LLM artifact phrase strip
 # Imports _ARTIFACT_PHRASES from checks/artifacts.py (authoritative list).
 # ---------------------------------------------------------------------------
@@ -44,6 +98,22 @@ def _strip_artifact_phrases(content: str) -> str:
         pattern = r'(?i)(^|\.\s+)' + re.escape(phrase) + r'[,.]?\s*'
         content = re.sub(pattern, lambda m: m.group(1), content)
     return content.strip()
+
+
+def _strip_skeleton_directives(content: str, display_name: str) -> str:
+    """Strip skeleton-directive sentences from paragraph content (TC-GEN-602).
+
+    The LLM sometimes echoes section guidance verbatim:
+      "Aspose.Cells for Python via .NET -- Provide an overview of..."
+    These are internal scaffolding notes, never real content.
+    Strip the entire sentence (to end of line or period) when this pattern appears.
+    """
+    if not content or not display_name:
+        return content
+    # Match: display_name -- <rest of sentence/line>
+    pattern = re.escape(display_name) + r'\s*--\s*[^\n.]+'
+    content = re.sub(pattern, "", content).strip()
+    return content
 
 
 def parse_and_validate_blocks(
@@ -383,6 +453,12 @@ def _validate_block(
     # Applied after prose normalization so strip operates on clean text.
     if block_type == BlockType.paragraph:
         content = _strip_artifact_phrases(content)
+        # TC-GEN-602: Strip skeleton-directive sentences (e.g. "Aspose.Cells -- Provide an overview").
+        content = _strip_skeleton_directives(content, product.display_name)
+        # Drop the block entirely if stripping emptied it.
+        if not content.strip():
+            logger.debug("Dropping empty paragraph block after skeleton-directive strip")
+            return None
 
     # TC-3873 W1-S3: Strip dict-literal anchor artifacts from paragraph and list blocks.
     # Catches [{"type":...}](url) LLM artifacts that survive _parse_anchor_response.
@@ -394,11 +470,24 @@ def _validate_block(
     if block_type == BlockType.code:
         content = _strip_claim_comments(content)
         content = _strip_claim_citations(content)
-        if (language or "").lower() in ("python", "py", "python3"):
+        if (language or "").lower() in ("python", "py", "python3") and (
+            getattr(product, "platform", "python") or "python"
+        ).lower() == "python":
+            # TC-5314: Only apply Python import normalization when the product IS Python.
+            # A non-Python product with a mistakenly python-tagged block must not have
+            # its C#/C++/Java code rewritten as Python imports.
             content = _normalize_imports(
                 content, product.canonical_import, import_allowlist,
                 runtime_import=getattr(product, "runtime_import", ""),
             )
+        elif (language or "").lower() in ("csharp", "cs", "c#"):
+            # TC-NET-002: C#-specific using-statement normalization.
+            # Rewrites wrong Aspose sub-namespaces (e.g. Aspose.Slides.Foss)
+            # to canonical_import before passing to the TS/generic normalizer.
+            if product.canonical_import:
+                content = _normalize_csharp_imports(
+                    content, product.canonical_import, import_allowlist
+                )
         elif language and product.canonical_import:
             try:
                 # TC-3901: AST-based normalization handles hyphenated npm scoped packages
@@ -408,6 +497,19 @@ def _validate_block(
                 content = _ts_normalize(content, language, product.canonical_import)
             except ImportError:
                 pass
+
+        # TC-5329: Annotate C++ code blocks that contain wrong-ecosystem (.NET/C++CLI) patterns.
+        # The annotation is a comment prepended to the code content; worker.py reads it to
+        # decide whether to retry or drop the block. The marker is also in FORBIDDEN_PATTERNS
+        # as a backstop so it can never reach published output.
+        if (language or "").lower() in _CPP_FENCE_LANGS:
+            _contamination_labels = scan_cpp_contamination(content)
+            if _contamination_labels:
+                _annotation = (
+                    _CPP_CONTAMINATION_MARKER
+                    + " " + ", ".join(_contamination_labels)
+                )
+                content = _annotation + "\n" + content
 
     items = [_strip_dict_anchors(_strip_claim_citations(item)) if isinstance(item, str) else item
              for item in raw.get("items", [])]
@@ -498,6 +600,11 @@ def _backtick_api_names(
         logger.debug("Backtick pass: skipped (no identifiers or empty content)")
         return content
 
+    # TC-GEN-603: Exclude common English words that share names with API identifiers.
+    effective_ids = api_identifiers - _BACKTICK_EXEMPT_WORDS
+    if not effective_ids:
+        return content
+
     # Build protected spans: backtick regions, markdown links, display_name occurrences
     protected: list[tuple[int, int]] = []
 
@@ -517,7 +624,7 @@ def _backtick_api_names(
     def _is_protected(start: int, end: int) -> bool:
         return any(ps <= start and end <= pe for ps, pe in protected)
 
-    pattern = _compile_api_pattern(tuple(sorted(api_identifiers)))
+    pattern = _compile_api_pattern(tuple(sorted(effective_ids)))
 
     # Replace from right to left to preserve positions
     matches = list(pattern.finditer(content))
@@ -662,17 +769,16 @@ def deduplicate_sections(
     *,
     similarity_threshold: float = 0.7,
 ) -> list[Any]:
-    """Remove cross-section paragraph duplication after parallel gather (V2CP-03 Phase 4).
+    """Remove cross-section paragraph and code block duplication (V2CP-03 Phase 4).
 
-    Iterates sections in skeleton order. For each paragraph block in a section,
-    checks if it is nearly identical (Jaccard ≥ threshold) to a paragraph block
-    already seen in an earlier section. Near-duplicate paragraphs are dropped.
+    Iterates sections in skeleton order.
+    - Prose paragraph blocks: deduplicated by Jaccard similarity (>= threshold).
+    - Code blocks: deduplicated by exact content hash (TC-GEN-605). Short code
+      blocks (< 5 lines) are exempt from dedup to preserve legitimate one-liners.
 
-    Only prose paragraph blocks are checked — code, list, and table blocks are
-    always preserved. Input order is preserved.
-
-    Returns the modified sections list (uses model_copy; originals unchanged).
+    Input order is preserved. Returns modified sections (uses model_copy).
     """
+    import hashlib
     import string
     from launcher.shared.jaccard import STOPWORDS, jaccard_similarity
 
@@ -682,6 +788,7 @@ def deduplicate_sections(
         return frozenset(w for w in words if w and w not in STOPWORDS and len(w) > 2)
 
     seen: list[tuple[frozenset[str], str]] = []
+    seen_code_hashes: set[str] = set()
     result_sections: list[Any] = []
 
     for section in sections:
@@ -695,6 +802,27 @@ def deduplicate_sections(
                 btype == BlockType.paragraph
                 or (hasattr(btype, "value") and btype.value == "paragraph")
             )
+            is_code = (
+                btype == BlockType.code
+                or (hasattr(btype, "value") and btype.value == "code")
+            )
+
+            if is_code:
+                # TC-GEN-605: Exact-match dedup for code blocks (skip short snippets).
+                content = getattr(block, "content", "") or ""
+                if len(content.strip().splitlines()) < 5:
+                    new_blocks.append(block)
+                    continue
+                code_hash = hashlib.sha1(
+                    content.strip().encode("utf-8", errors="replace")
+                ).hexdigest()
+                if code_hash in seen_code_hashes:
+                    logger.debug("[dedup] Dropped duplicate code block in section '%s'", heading)
+                else:
+                    seen_code_hashes.add(code_hash)
+                    new_blocks.append(block)
+                continue
+
             if not is_paragraph:
                 new_blocks.append(block)
                 continue
@@ -1078,17 +1206,16 @@ def _strip_hallucinated_method_calls(
             continue  # Drop block
 
         if len(unknown_methods) == 1:
-            # Comment out the offending line
+            # Remove the offending line (TC-GEN-601: no visible markers in published code)
             new_lines: list[str] = []
             for idx, line in enumerate(lines):
                 if idx in unknown_lines:
-                    new_lines.append(f"# HG-22: {line.lstrip()}")
-                    commented_count += 1
+                    commented_count += 1  # reuse counter for logging
                 else:
                     new_lines.append(line)
             new_code = "\n".join(new_lines)
             logger.debug(
-                "[HG-22] Commented out hallucinated method '%s' in code block",
+                "[HG-22] Removed hallucinated method '%s' from code block",
                 unknown_methods[0],
             )
             result.append(block.model_copy(update={"content": new_code}))
@@ -1097,7 +1224,7 @@ def _strip_hallucinated_method_calls(
 
     if stripped_count or commented_count:
         logger.info(
-            "[HG-22] Method verification: %d blocks stripped, %d lines commented",
+            "[HG-22] Method verification: %d blocks stripped, %d lines removed",
             stripped_count, commented_count,
         )
 
@@ -1177,6 +1304,46 @@ def _normalize_imports(
                     normalized.append(f"{indent}from {effective_import}{after_module}")
                 continue
 
+        normalized.append(line)
+
+    return "\n".join(normalized)
+
+
+def _normalize_csharp_imports(
+    code: str,
+    canonical_import: str,
+    import_allowlist: list[str],
+) -> str:
+    """TC-NET-002: Normalize C# ``using`` statements to the canonical import.
+
+    Rewrites any ``using Aspose.*.Foss*;`` or other wrong Aspose sub-namespace
+    that is neither ``canonical_import`` nor present in ``import_allowlist``.
+    Non-Aspose ``using`` statements (e.g. ``using System.IO;``) are left intact.
+
+    Example::
+
+        _normalize_csharp_imports(
+            "using Aspose.Slides.Foss;", "Aspose.Slides", []
+        )
+        # → "using Aspose.Slides;"
+    """
+    if not canonical_import:
+        return code
+
+    allowlist_set = set(import_allowlist or [])
+    lines = code.split("\n")
+    normalized: list[str] = []
+
+    for line in lines:
+        m = re.match(r"^(\s*)using\s+([\w.]+)\s*;", line)
+        if m:
+            indent = m.group(1)
+            namespace = m.group(2)
+            # Only touch Aspose namespaces; leave System.*, Microsoft.*, etc. alone.
+            if namespace.lower().startswith("aspose"):
+                if namespace != canonical_import and namespace not in allowlist_set:
+                    normalized.append(f"{indent}using {canonical_import};")
+                    continue
         normalized.append(line)
 
     return "\n".join(normalized)

@@ -389,3 +389,52 @@ class TestSelectMainCsproj:
         )
         assert result is not None
         assert result.name == "Aspose.ThreeD.csproj"
+
+
+# ===================================================================
+# TC-5322: C/C++ primary_language merge
+# ===================================================================
+
+class TestCppPrimaryLanguageMerge:
+    """SC-01 (TC-5322): .h files classify as 'c' but are C++ headers in mixed repos."""
+
+    def test_mixed_h_and_cpp_reports_cpp(self, repo_dir: Path) -> None:
+        """More .h files than .cpp should still yield primary_language='cpp'."""
+        # Mirrors slides/cpp: 260 .h files vs 206 .cpp files
+        files = (
+            [f"include/A{i}.h" for i in range(10)]   # classified as "c"
+            + [f"src/B{i}.cpp" for i in range(7)]    # classified as "cpp"
+        )
+        facts = _extract_shared_facts(repo_dir, files, _build_file_index(files))
+        assert facts.primary_language == "cpp", (
+            f"Expected 'cpp', got {facts.primary_language!r}. "
+            ".h files should merge into cpp when cpp files are also present."
+        )
+
+    def test_pure_c_repo_unaffected(self, repo_dir: Path) -> None:
+        """Pure C repos (.h + .c only, no .cpp) keep primary_language='c'."""
+        files = [f"src/A{i}.c" for i in range(5)] + [f"include/B{i}.h" for i in range(8)]
+        facts = _extract_shared_facts(repo_dir, files, _build_file_index(files))
+        assert facts.primary_language == "c", (
+            f"Expected 'c', got {facts.primary_language!r}. "
+            "Pure-C repos (no .cpp/.hpp) must not be reclassified."
+        )
+
+    def test_hpp_files_alone_report_cpp(self, repo_dir: Path) -> None:
+        """A repo with only .hpp files reports 'cpp'."""
+        files = [f"include/Class{i}.hpp" for i in range(5)]
+        facts = _extract_shared_facts(repo_dir, files, _build_file_index(files))
+        assert facts.primary_language == "cpp"
+
+    def test_cpp_install_command_generated(self, repo_dir: Path) -> None:
+        """After merge, install_command uses vcpkg (cpp key in _INSTALL_CMD_MAP)."""
+        cmake_content = 'cmake_minimum_required(VERSION 3.10)\nproject(aspose_slides_foss)\n'
+        (repo_dir / "CMakeLists.txt").write_text(cmake_content, encoding="utf-8")
+        files = [f"include/A{i}.h" for i in range(5)] + [f"src/B{i}.cpp" for i in range(3)]
+        facts = _extract_shared_facts(repo_dir, files, _build_file_index(files))
+        assert facts.primary_language == "cpp"
+        # package_name may be extracted from CMakeLists.txt; install_command must use vcpkg if set
+        if facts.package_name and facts.package_name != "UNKNOWN":
+            assert facts.install_command.startswith("vcpkg install"), (
+                f"Expected vcpkg install command, got {facts.install_command!r}"
+            )

@@ -1,0 +1,240 @@
+{
+  "frontmatter": {
+    "canonical": "https://kb.aspose.org/slides/cpp/developer-guide/use-cases/",
+    "canonical_import": "Aspose::Slides::Foss",
+    "code_import": "Aspose::Slides::Foss",
+    "date": "2026-04-01T14:10:08Z",
+    "dateModified": "2026-04-01T14:41:49Z",
+    "datePublished": "2026-04-01T14:10:08Z",
+    "description": "This section demonstrates practical use cases for creating, formatting, and exporting presentations to multiple formats including `FODP`, `MD`, and `POT`....",
+    "display_name": "Aspose.Slides FOSS for C++",
+    "family": "slides",
+    "keywords": [
+      "cppcon slides",
+      "cpp slides",
+      "cppnow slides",
+      "cppcon slides 2025",
+      "aspose slides cpp",
+      "meeting cpp slides"
+    ],
+    "lastmod": "2026-04-01T14:41:49Z",
+    "page_role": "feature_showcase",
+    "platform": "cpp",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Slides FOSS Use Cases",
+    "slug": "use-cases",
+    "title": "Use Cases",
+    "type": "feature_showcase",
+    "url": "/kb.aspose.org/slides/cpp/developer-guide/use-cases/",
+    "weight": 10
+  },
+  "page_id": "kb/use-cases",
+  "page_role": "feature_showcase",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-8145aa",
+            "CLM-slides-9e5b38",
+            "CLM-slides-fb90a4"
+          ],
+          "content": "Aspose.Slides FOSS for C++ enables developers to generate and manipulate `presentation` files entirely in C++. This section demonstrates practical use cases for creating, formatting, and exporting presentations to multiple formats including `FODP`, `MD`, and `POT`. Each example uses the canonical `Aspose::Slides::Foss` namespace and shows real, runnable code.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-8145aa"
+          ],
+          "content": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nint main() {\n Presentation pres;\n auto& slide = pres.slides()[0];\n slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 50, 50, 300, 100)\n ->add_text_frame(\"FODP Export Demo\");\n pres.save(\"output.fodp\", SaveFormat::FODP);\n}",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-9e5b38",
+            "CLM-slides-fb90a4"
+          ],
+          "content": "The library writes presentations directly to `FODP` format, enabling interoperability with open-document workflows. Similarly, it supports exporting to `MD` for lightweight documentation and `POT` for template reuse.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-9e5b38"
+          ],
+          "content": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nint main() {\n Presentation pres;\n auto& slide = pres.slides()[0];\n slide.shapes().add_auto_shape(ShapeType::ELLIPSE, 100, 100, 200, 200)\n ->add_text_frame(\"Markdown Export\");\n pres.save(\"output.md\", SaveFormat::MD);\n}",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-fb90a4"
+          ],
+          "content": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nint main() {\n Presentation pres;\n auto& slide = pres.slides()[0];\n slide.shapes().add_auto_shape(ShapeType::CLOUD, 75, 75, 250, 150)\n ->add_text_frame(\"POT Template\");\n pres.save(\"template.pot\", SaveFormat::POT);\n}",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-6b24e8",
+            "CLM-slides-a852f3",
+            "CLM-slides-329e6f"
+          ],
+          "content": "Aspose.Slides FOSS for C++ enables direct writing of presentations to multiple open and proprietary formats. Developers can generate or convert presentations to `GIF` animations, `ODP` documents for LibreOffice interoperability, and `POTM` templates with macros — all without external dependencies.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-6b24e8",
+            "CLM-slides-a852f3",
+            "CLM-slides-329e6f"
+          ],
+          "content": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nint main() {\n Presentation pres;\n auto& slide = pres.slides()[0];\n slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 50, 50, 200, 50);\n pres.save(\"output.gif\", SaveFormat::GIF);\n pres.save(\"output.odp\", SaveFormat::ODP);\n pres.save(\"template.potm\", SaveFormat::POTM);\n return 0;\n}",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-6b24e8",
+            "CLM-slides-a852f3",
+            "CLM-slides-329e6f"
+          ],
+          "content": "Each call to `save()` with `a` specified `SaveFormat` writes the `presentation` in the target format. The library handles internal serialization to `GIF` (for animated sequences), `ODP` ( `Presentation`), and `POTM` (PowerPoint Macro-Enabled Template) using standardized `XML` structures compliant with each specification.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "How It Works",
+      "level": 2,
+      "section_id": "how_it_works"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-e1d52a",
+            "CLM-slides-b676f1",
+            "CLM-slides-7c2dd9"
+          ],
+          "content": "This section demonstrates how to export presentations to open and web-friendly formats using Aspose.Slides FOSS for C++. Developers building cross-platform tools, documentation generators, or web-based `slide` viewers benefit from native support for `HTML`, `OTP`, and `POTX` formats. Each example shows `a` complete, runnable workflow that writes `a` `presentation` to `a` target format using the canonical `Aspose::Slides::Foss` namespace.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-e1d52a"
+          ],
+          "content": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nint main() {\n Presentation pres;\n auto& slide = pres.slides()[0];\n slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 50, 50, 300, 100)\n.add_text_frame(\"Export to HTML\");\n pres.save(\"output.html\", SaveFormat::HTML);\n}",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-e1d52a"
+          ],
+          "content": "The example above creates `a` new `presentation` with `a` single `rectangle` shape containing `text` and saves it as an `HTML` file. This enables embedding `slides` in web pages or converting them for use in documentation systems that consume `HTML`. The output file `output.html` `contains` `a` self-contained `HTML` representation of the `slide` content.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-b676f1"
+          ],
+          "content": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nint main() {\n Presentation pres;\n auto& slide = pres.slides()[0];\n slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 50, 50, 300, 100)\n.add_text_frame(\"Export to OTP\");\n pres.save(\"output.otp\", SaveFormat::OTP);\n}",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-b676f1"
+          ],
+          "content": "This example exports the same `presentation` to `OTP` format, an open standard used by LibreOffice and Apache. Writing to `OTP` ensures compatibility with open-document workflows and allows users to edit the `presentation` in free office suites.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-7c2dd9"
+          ],
+          "content": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nint main() {\n Presentation pres;\n auto& slide = pres.slides()[0];\n slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 50, 50, 300, 100)\n.add_text_frame(\"Export to POTX\");\n pres.save(\"template.potx\", SaveFormat::POTX);\n}",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-7c2dd9"
+          ],
+          "content": "The final example saves the `presentation` as `a` `POTX` template file, which can be used as `a` basis for new presentations in Microsoft PowerPoint and compatible applications. This supports reuse of `slide` layouts, themes, and branding across multiple projects.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Code Example",
+      "level": 2,
+      "section_id": "code_example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Introducing Slides FOSS for C++](/slides/cpp/slides-introduction/)",
+            "[Explore core features and capabilities](/slides/cpp/slides-key-features/)",
+            "[Create presentations step by step](/slides/cpp/developer-guide/presentation-creation/)",
+            "[Work with slides efficiently](/slides/cpp/developer-guide/slide-manipulation/)",
+            "[Convert file formats easily](/slides/cpp/convert-pptx-to-fodp/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Use Cases"
+}

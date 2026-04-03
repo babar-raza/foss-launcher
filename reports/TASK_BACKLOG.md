@@ -1,3 +1,99 @@
+# Task Backlog — Session 23 (2026-03-27) — Architectural Revamp: Canonical Evidence Architecture
+
+**Plan**: `C:\Users\prora\.claude\plans\bright-nibbling-elephant.md`
+**From_chat**: `plans/from_chat/20260327_120000_from_chat_arch-revamp-canonical-evidence.md`
+
+## Phase 0 — Fix Broken Metrics + Annotate Side-Load (P0, Very Low Risk)
+
+| ID | Scope | Priority | Owner | Impacted Paths | Acceptance | Status |
+|----|-------|----------|-------|----------------|------------|--------|
+| TC-5304 | Fix `evaluate/worker.py:547` claim_coverage always-1.0 bug | P0 | Agent-B | `src/launcher/workers/evaluate/worker.py` | `claim_coverage` < 1.0 when pages have uncovered claims; test proves it | **Done** |
+| TC-5305 | Wire verify worker in `graph_builder._resolve_input_model()` | P0 | Agent-B | `src/launcher/orchestrator/graph_builder.py` | `_resolve_input_model("verify")` returns `ScoutBundle` not `None` | **Done** |
+| TC-5306 | Annotate generate side-load + `understanding_checkpoint_run_id` in ContentManifest | P0 | Agent-B | `src/launcher/workers/generate/worker.py`, `models/content.py`, `evaluate/worker.py` | Side-load logs WARNING with checkpoint path; ContentManifest carries run_id; stale cross-run load warns in evaluate | **Done** |
+
+## Phase 1 — Platform Config Unification (P0, Low Risk, 2 sessions)
+
+| ID | Scope | Priority | Owner | Impacted Paths | Acceptance | Status |
+|----|-------|----------|-------|----------------|------------|--------|
+| TC-5307 | Create `shared/families_loader.py`; replace 3 platform lookup tables | P0 | Agent-B | `src/launcher/shared/families_loader.py`, `section_prompt.py`, `acquisition.py`, `configs/families.yaml` | All 3 tables removed; 59 new tests pass; 5731 total pass | **Done** |
+
+## Phase 2 — Extraction Quality Observability (P0, Low Risk, 1 session)
+
+| ID | Scope | Priority | Owner | Impacted Paths | Acceptance | Status |
+|----|-------|----------|-------|----------------|------------|--------|
+| TC-5308 | Add extraction_quality check; wire into evaluate as MEDIUM/HIGH finding | P0 | Agent-B | `src/launcher/models/content.py`, `evaluate/checks/extraction_quality.py`, `evaluate/worker.py` | check fires MEDIUM when overall_completeness<0.35; HIGH when classes=0; 9 new tests; 5740 total pass | **Done** |
+
+## Phase 3 — Fix Claim Binding (P1, Medium Risk, 2 sessions)
+
+| ID | Scope | Priority | Owner | Impacted Paths | Acceptance | Status |
+|----|-------|----------|-------|----------------|------------|--------|
+| TC-5309 | Remove `llm_sparse_grounding` bypass in `_entry.py:535-540` | P1 | Agent-B | `src/launcher/workers/understand/extract/_entry.py`, LLM claim extraction prompt | Zero `llm_sparse_grounding` claims in UnderstandingBundle; claim count ≥5 for pilot repos | Pending |
+
+## Phase 4 — C++ Tree-Sitter Extraction (P1, High Risk, 3-4 sessions)
+
+| ID | Scope | Priority | Owner | Impacted Paths | Acceptance | Status |
+|----|-------|----------|-------|----------------|------------|--------|
+| TC-5310 | `_cpp_ast.py` using `shared/ts_analyzer.py`; C++ full AST extraction | P1 | Agent-B | `src/launcher/workers/understand/adapters/_cpp_ast.py`, `_cpp.py` | api_allowlist failures <5/18 (from 13/18); `[identifier omitted]` = 0; class_count ≥10 | Pending |
+
+## Phase 5 — Deterministic Routing (P1, Low Risk, 1 session)
+
+| ID | Scope | Priority | Owner | Impacted Paths | Acceptance | Status |
+|----|-------|----------|-------|----------------|------------|--------|
+| TC-5311 | Replace LLM advisor with deterministic `route_after_evaluate()`; add `heal_understand` path | P1 | Agent-B | `src/launcher/orchestrator/pipeline_advisor.py`, `configs/pipeline.yaml`, `graph_builder.py`, `models/evaluation.py` | All routing branches tested without LLM; C++ failures route to `heal_understand` | **Draft — next session** |
+
+---
+
+# Task Backlog — Session 22 (2026-03-27) — Production-Grade A+B 100% Redesign
+
+| ID | Scope | Priority | Owner | Impacted Paths | Acceptance | Status |
+|----|-------|----------|-------|----------------|------------|--------|
+| TC-5301 | Remove skeleton directive paragraph from `fallback.py` | P0 | Agent-B | `src/launcher/workers/generate/fallback.py` | No fallback section ever emits `"{display_name} -- "` pattern; 4 new tests pass | Pending |
+| TC-5303 | Normalize internal links in generate worker post-processor + prompt instruction | P0 | Agent-B | `src/launcher/workers/generate/worker.py`, `section_prompt.py` | link_validity HIGH count drops to 0 on re-eval; 4 new tests pass | Pending |
+| TC-5300 | Diagnose and fix intake worker silent failure (10/11 pilots blocked) | P0 | Agent-B | `src/launcher/workers/intake/worker.py` | All 11 pilots produce `intake_checkpoint.json`; failed runs write structured error event | Pending |
+| TC-5302 | Fix output token budget + handle `finish_reason="length"` + JSON healing | P0 | Agent-B | `src/launcher/workers/generate/worker.py`, `llm_provider.py` | No `finish_reason: length` truncation in 3D DotNet; fallback rate < 20% | Pending |
+| TC-HEAL-003 | Class-grouped relevance-ranked api_surface_block in `section_prompt.py` | P1 | Agent-B | `src/launcher/workers/generate/section_prompt.py` | Input prompt token count ≤3000 for 3D DotNet sections; tests pass | Pending |
+
+---
+
+# Task Backlog — .NET Pilot Publishability
+
+**Created**: 2026-03-25
+**Plan**: snuggly-painting-widget.md
+
+## Workstream 1 — Core generate fixes (P0)
+
+| ID | Scope | Owner | Impacted Paths | Acceptance | Risk |
+|----|-------|-------|----------------|------------|------|
+| TC-NET-001 | `_identifier_repair.py` + `worker.py` | Agent B | `src/launcher/workers/generate/` | 0 `[identifier omitted]` in regenerated .NET pages | LOW — additive param to existing function |
+| TC-NET-002 | `section_validator.py` | Agent B | `src/launcher/workers/generate/` | `using Aspose.Slides.Foss;` → `using Aspose.Slides;` | MEDIUM — new code branch for csharp fences |
+
+## Workstream 2 — Evaluate + forbidden pattern fixes (P1)
+
+| ID | Scope | Owner | Impacted Paths | Acceptance | Risk |
+|----|-------|-------|----------------|------------|------|
+| TC-NET-003 | `code_platform.py` | Agent B | `src/launcher/workers/evaluate/checks/` | HIGH finding for Python imports in csharp blocks | LOW — additive check |
+| TC-NET-005 | `forbidden_patterns.py` | Agent B | `src/launcher/shared/` | Bare CLM IDs + template stubs flagged as CRITICAL/HIGH | LOW — additive patterns |
+
+## Workstream 3 — SEO + api_allowlist (P1/P2)
+
+| ID | Scope | Owner | Impacted Paths | Acceptance | Risk |
+|----|-------|-------|----------------|------------|------|
+| TC-NET-004 | `seo_metadata.py` | Agent B | `src/launcher/workers/generate/` | No Python keywords in .NET frontmatter | LOW — post-filter function |
+| TC-NET-006 | `api_allowlist.py` | Agent B | `src/launcher/workers/evaluate/checks/` | No false HIGH for .NET stdlib types | LOW — additive exempt set |
+
+## Status
+
+| ID | Status | Notes |
+|----|--------|-------|
+| TC-NET-001 | Pending | |
+| TC-NET-002 | Pending | |
+| TC-NET-003 | Pending | |
+| TC-NET-004 | Pending | |
+| TC-NET-005 | Pending | |
+| TC-NET-006 | Pending | |
+
+---
+
 # Task Backlog — Java & C++ Gap Closure (Session 19, 2026-03-24)
 
 | ID | Scope | Priority | Owner | Impacted Paths | Acceptance | Status |
@@ -94,4 +190,17 @@
 | TC-5173 | intake onboard → scan_state.json persistence | P2 | Agent-B | `cli/intake.py`, `phase1/onboarding.py` | onboard run updates scan_state.json | Pending |
 | TC-5177 | --force flag for intake generate | P2 | Agent-B | `cli/intake.py` | `intake generate --force` bypasses needs_review | Pending |
 | TC-5178 | Fix garbled product_name in config_generator | P2 | Agent-B | `intake/config_generator.py` | product_name = "Aspose.X FOSS for Platform" | Pending |
+
+---
+
+## Session 21 Backlog — 2026-03-26 (Healing Investigation: Pilot Quality Gap Analysis)
+
+| ID | Scope | Priority | Owner | Impacted Paths | Acceptance | Status |
+|----|-------|----------|-------|----------------|------------|--------|
+| TC-HEAL-001 | grader.py skeleton HIGH → Grade D | P0 | Agent-B | `src/launcher/workers/evaluate/grader.py` | Skeleton-directive HIGH yields Grade D; 2 non-skeleton HIGHs still Grade C | **Done** |
+| TC-HEAL-005 | seo_metadata.py keyword relevance filter | P1 | Agent-B | `src/launcher/workers/generate/seo_metadata.py` | "is .net 3.5 safe", "shapr 3d cost", "3d symptoms" rejected; "dotnet 3d library" accepted | **Done** |
+| TC-HEAL-006 | section_prompt.py _foss import NEVER rule | P1 | Agent-B | `src/launcher/workers/generate/section_prompt.py` | aspose_email_foss rule explicitly names `import aspose.email` as NEVER + ImportError reason | **Done** |
+| TC-HEAL-002 | Generate phase anti-echo / fallback guard | P0 | Agent-B | `src/launcher/workers/generate/worker.py` | Skeleton fallback produces CRITICAL finding, never silently promotes | Pending |
+| TC-HEAL-003 | Understand api_surface_block class context | P1 | Agent-B | `src/launcher/workers/understand/`, `src/launcher/workers/generate/section_prompt.py` | C++/Java prompts include class membership in api_surface_block | Pending |
+| TC-HEAL-004 | Re-evaluate old C++/Java content with [identifier omitted] | P0 | Agent-B | `deploy/` (slides/cpp, 3d/java) | All pages with [identifier omitted] re-graded F and excluded from deploy | Pending |
 | TC-5179 | Fix evaluate/checks import errors | P2 | Agent-C | `tests/unit/workers/evaluate/checks/` | pytest tests/unit/ -x passes | Pending |

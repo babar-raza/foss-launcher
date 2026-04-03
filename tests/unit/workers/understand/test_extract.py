@@ -3409,9 +3409,10 @@ class TestValidateFactBinding:
         assert result[0].get("confidence") == 0.75
         assert result[0].get("claim_source") == "llm"
         assert stats["bound_claims"] == 1
-        assert stats["unbound_claims_elevated_sparse"] == 0
+        assert stats["unbound_claims_dropped"] == 0
 
-    def test_unbound_claim_downgraded(self):
+    def test_unbound_claim_is_dropped(self):
+        """TC-5309: Unbound LLM claims are dropped (not elevated to llm_sparse_grounding)."""
         from launcher.workers.understand.extract._entry import _validate_fact_binding
         from launcher.models.understanding import ExtractionDatabase, ApiFact
         db = ExtractionDatabase(api_facts=[
@@ -3423,11 +3424,11 @@ class TestValidateFactBinding:
             "evidence": [{"source_fact_id": "", "source_file": "README.md"}]
         }]
         result, stats = _validate_fact_binding(claims, db, bounded_mode_active=True)
-        assert result[0]["confidence"] == 0.55  # TC-5181: elevated to llm_sparse_grounding, not dropped
-        assert result[0]["claim_source"] == "llm_sparse_grounding"
-        assert stats["unbound_claims_elevated_sparse"] == 1
+        assert len(result) == 0, "TC-5309: unbound LLM claim must be dropped"
+        assert stats["unbound_claims_dropped"] == 1
 
-    def test_nonexistent_fact_id_downgraded(self):
+    def test_nonexistent_fact_id_is_dropped(self):
+        """TC-5309: Claims citing a non-existent fact_id are dropped (not elevated)."""
         from launcher.workers.understand.extract._entry import _validate_fact_binding
         from launcher.models.understanding import ExtractionDatabase, ApiFact
         db = ExtractionDatabase(api_facts=[
@@ -3439,8 +3440,8 @@ class TestValidateFactBinding:
             "evidence": [{"source_fact_id": "AF-HALLUCINATED-999", "source_file": "README.md"}]
         }]
         result, stats = _validate_fact_binding(claims, db, bounded_mode_active=True)
-        assert result[0]["confidence"] == 0.55  # TC-5181: elevated to llm_sparse_grounding, not dropped
-        assert stats["unbound_claims_elevated_sparse"] == 1
+        assert len(result) == 0, "TC-5309: claim citing hallucinated fact_id must be dropped"
+        assert stats["unbound_claims_dropped"] == 1
 
     def test_docstring_claim_not_downgraded(self):
         from launcher.workers.understand.extract._entry import _validate_fact_binding
@@ -3456,7 +3457,7 @@ class TestValidateFactBinding:
         result, stats = _validate_fact_binding(claims, db, bounded_mode_active=True)
         assert result[0]["confidence"] == 1.0
         assert stats["pre_verified_skipped"] == 1
-        assert stats["unbound_claims_elevated_sparse"] == 0
+        assert stats["unbound_claims_dropped"] == 0
 
     def test_original_dict_not_mutated(self):
         from launcher.workers.understand.extract._entry import _validate_fact_binding

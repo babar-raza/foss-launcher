@@ -1,12 +1,12 @@
 {
   "frontmatter": {
     "canonical": "https://docs.aspose.org/slides/cpp/developer-guide/slide-manipulation/",
-    "canonical_import": "Aspose::Slides",
-    "code_import": "Aspose::Slides",
-    "date": "2026-03-24T16:29:46Z",
-    "dateModified": "2026-03-24T16:29:46Z",
-    "datePublished": "2026-03-24T16:29:46Z",
-    "description": "The workflow covers opening existing `.pptx` files, iterating or modifying slides, and persisting changes — all in a single, reproducible C++ process.",
+    "canonical_import": "Aspose::Slides::Foss",
+    "code_import": "Aspose::Slides::Foss",
+    "date": "2026-04-01T14:10:08Z",
+    "dateModified": "2026-04-01T14:41:49Z",
+    "datePublished": "2026-04-01T14:10:08Z",
+    "description": "The workflow uses only the `Aspose::Slides::Foss` namespace and leverages core classes like `Presentation`, `Slide`, and `SlideCollection` to manipulate...",
     "display_name": "Aspose.Slides FOSS for C++",
     "family": "slides",
     "keywords": [
@@ -15,11 +15,9 @@
       "cppnow slides",
       "cppcon slides 2025",
       "aspose slides cpp",
-      "meeting cpp slides",
-      "python slides",
-      "python slides for beginners"
+      "meeting cpp slides"
     ],
-    "lastmod": "2026-03-24T16:29:46Z",
+    "lastmod": "2026-04-01T14:41:49Z",
     "page_role": "workflow_page",
     "platform": "cpp",
     "reading_time": 1,
@@ -29,7 +27,7 @@
     "title": "Work with Slides with Aspose.Slides FOSS for C++",
     "type": "workflow_page",
     "url": "/docs.aspose.org/slides/cpp/developer-guide/slide-manipulation/",
-    "weight": 18
+    "weight": 19
   },
   "page_id": "docs/slide-manipulation",
   "page_role": "workflow_page",
@@ -38,7 +36,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "This guide walks you through working with slides in Aspose.Slides FOSS for C++, enabling you to load, manipulate, and save PowerPoint presentations using the `Aspose::Slides` library. The workflow covers opening existing `.pptx` files, iterating or modifying slides, and persisting changes — all in a single, reproducible C++ process.",
+          "content": "This guide walks you through working with `slides` in Aspose.Slides FOSS for C++, covering how to load existing presentations, add new `slides`, and `save` the modified document. The workflow uses only the `Aspose::Slides::Foss` namespace and leverages core classes like `Presentation`, `Slide`, and `SlideCollection` to manipulate `slide` content programmatically.",
           "items": [],
           "language": null,
           "level": null,
@@ -46,7 +44,7 @@
         },
         {
           "claim_ids": [],
-          "content": "#include <Aspose::Slides>\n\nint main() {\n    // Load an existing presentation\n    auto pres = System::[identifier omitted]<Aspose::Slides::Presentation>(u\"input.pptx\");\n    \n    // Access the first slide\n    auto slide = pres->get_Slides()->idx_get(0);\n    \n    // Save the modified presentation\n    pres->Save(u\"output.pptx\", Aspose::Slides::[identifier omitted]::Pptx);\n    \n    return 0;\n}",
+          "content": "using namespace Aspose::Slides::Foss;\n\n// Load an existing presentation\nauto presentation = System::MakeObject<Presentation>(u\"input.pptx\");\n\n// Access the slide collection\nauto slides = presentation->get_Slides();\n\n// Add a new blank slide at the end\nauto newSlide = slides->AddEmptySlide(slides->get_Count());\n\n// Save the updated presentation\npresentation->Save(u\"output.pptx\", SaveFormat::Pptx);",
           "items": [],
           "language": "cpp",
           "level": null,
@@ -56,9 +54,9 @@
           "claim_ids": [],
           "content": "",
           "items": [
-            "Use this approach when automating slide updates in batch report generation.",
-            "Apply when cloning slides for reusable templates across presentations.",
-            "Adopt when iterating slides to extract or validate content before export."
+            "Use this approach when updating conference slide decks for events like cppcon slides 2025 or meeting cpp slides.",
+            "Apply it to automate slide generation for reports or training materials where slide count varies dynamically.",
+            "Leverage it when preparing presentation templates that require consistent slide insertion logic."
           ],
           "language": null,
           "level": null,
@@ -73,7 +71,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Slides FOSS for C++ -- Core data manipulation operations: reading, writing, modifying cells/sheets/elements with code examples for each.",
+          "content": "This section covers core `data` manipulation operations for `presentation` elements in Aspose.Slides FOSS for C++. You will learn how to read, write, and modify `text` formatting, `bullet` styles, and document properties using the `BulletFormat`, `DocumentProperties`, and `Comment` classes.",
           "items": [],
           "language": null,
           "level": null,
@@ -81,7 +79,123 @@
         },
         {
           "claim_ids": [],
-          "content": "For details on working with data, see the Aspose.Slides FOSS for C++ documentation.",
+          "content": "All operations use the canonical namespace `Aspose::Slides::Foss`. Begin by including the necessary headers and initializing your `presentation` object. The following examples demonstrate how to work with paragraph bullets, document metadata, and `slide` `comments` using only the documented API surface.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Reading and Modifying Bullet Formatting",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Use `BulletFormat` to inspect or update `bullet` characteristics such as `type`, character, and `position`. Access the `BulletFormat` object through `a` paragraph’s formatting interface, then call `BulletType()` to read the current `bullet` `style` or `set_type()` to change it.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "using namespace Aspose::Slides::Foss;\n\n// Assume 'paragraph' is a valid Paragraph* obtained from a slide\nauto bulletFormat = paragraph->get_BulletFormat();\n\n// Read current bullet type\nauto type = bulletFormat->BulletType();\n\n// Change bullet type to filled circle\nbulletFormat->set_type(BulletType::FilledCircle);\n\n// Set custom bullet character\nbulletFormat->set_character(u'•');",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Use `BulletType()` to verify bullet style before applying conditional formatting logic.",
+            "Call `set_type()` with a valid `BulletType` enum to standardize bullet appearance across slides.",
+            "Set a custom character with `set_character()` when the built-in bullet types do not meet design requirements."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [],
+          "content": "Updating Document Properties",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Access `presentation`-level metadata via `DocumentProperties`. You can read or modify core properties like `title()` and `subject()`, and extended properties such as `company()` and `name_of_application()`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "using namespace Aspose::Slides::Foss;\n\n// Assume 'presentation' is a valid Presentation* instance\nauto docProps = presentation->get_DocumentProperties();\n\n// Read current title\nauto title = docProps->title();\n\n// Update title and subject\n docProps->set_title(u\"Q3 Financial Review\");\ndocProps->set_subject(u\"Revenue and expense breakdown\");\n\n// Set company metadata\ndocProps->set_company(u\"Contoso Ltd.\");",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Update `title()` and `subject()` to ensure consistent metadata for archival or searchability.",
+            "Set `company()` to embed organizational context for internal distribution.",
+            "Use `set_name_of_application()` to record the tool used for generation or modification."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [],
+          "content": "Adding and Editing `Slide` Comments",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "heading"
+        },
+        {
+          "claim_ids": [],
+          "content": "Attach `comments` to `slides` using the `Comment` class. Construct `a` comment with `author`, `position`, and timestamp, then add it to `a` `slide`’s comment collection. Modify existing `comments` by updating their `text()` or `created_time()`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "using namespace Aspose::Slides::Foss;\n\n// Assume 'slide' is a valid Slide* and 'author' is a CommentAuthor*\nauto comment = System::MakeObject<Comment>(\n u\"Please verify data alignment.\",\n slide.GetPtr(),\n author,\n Drawing::PointF(100.0f, 200.0f),\n std::chrono::system_clock::now()\n);\n\n// Add comment to slide\nslide->get_Comments()->Add(comment);\n\n// Update comment text\ncomment->set_text(u\"Please verify data alignment and formatting.\");",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Use `Comment` constructor to embed time-stamped feedback directly on slides.",
+            "Call `set_text()` to revise editorial notes without creating duplicate comments.",
+            "Read `created_time()` to sort or filter comments chronologically."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        },
+        {
+          "claim_ids": [],
+          "content": "These operations reflect the minimal but complete set of `data` manipulation capabilities available in Aspose.Slides FOSS for C++. For advanced formatting or 3D effects, refer to the `FillFormat`, `GradientFormat`, and `EffectFormat` classes in the API surface.",
           "items": [],
           "language": null,
           "level": null,
@@ -96,7 +210,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "This guide walks you through creating and manipulating slides in a presentation using Aspose.Slides FOSS for C++. You start with a blank or existing `.pptx` file, add or modify slides, and save the updated presentation — all using the canonical `Aspose::Slides` namespace.",
+          "content": "This guide walks you through creating and manipulating `slides` in Aspose.Slides FOSS for C++. You start with `a` blank `presentation`, add `a` `slide`, `insert` `a` shape with formatted `text`, and `save` the result as `a`.pptx file.",
           "items": [],
           "language": null,
           "level": null,
@@ -104,7 +218,7 @@
         },
         {
           "claim_ids": [],
-          "content": "#include <Aspose::Slides>\n\nint main() {\n    auto pres = System::[identifier omitted]<Aspose::Slides::Presentation>();\n    \n    // Add a new slide using the default layout\n    auto slide = pres->get_Slides()->[identifier omitted](pres->get_SlideLayout()->get_Item(0));\n    \n    // Save the presentation to disk\n    pres->Save(u\"output.pptx\", Aspose::Slides::[identifier omitted]::Pptx);\n    \n    return 0;\n}",
+          "content": "using namespace Aspose::Slides::Foss;\n\n// Create a new presentation\nPresentation presentation;\n\n// Add a blank slide\nSlide slide = presentation.get_Slides()->AddEmptySlide(presentation.get_Slides()->get_Count());\n\n// Add a rectangle auto shape\nAutoShape shape = slide->get_Shapes()->AddAutoShape(ShapeType::Rectangle, 50.0f, 50.0f, 300.0f, 100.0f);\n\n// Set solid fill color\nshape->get_FillFormat()->set_FillType(FillType::Solid);\nshape->get_FillFormat()->get_SolidFillColor()->set_Color(Color::Get_LightBlue());\n\n// Add text and format the first portion\nshape->get_TextFrame()->get_Paragraphs()->Add()->get_Portions()->Add()->set_Text(u\"Hello, Aspose.Slides FOSS!\");\n\n// Save the presentation\npresentation->Save(u\"output.pptx\", SaveFormat::Pptx);",
           "items": [],
           "language": "cpp",
           "level": null,
@@ -114,9 +228,9 @@
           "claim_ids": [],
           "content": "",
           "items": [
-            "Use this approach when generating reports from templates with dynamic slide content.",
-            "Apply when building slide decks programmatically for meetings or conferences like cppcon slides 2025.",
-            "Ideal for embedding slide creation into C++ applications that require presentation output."
+            "Use this approach when generating presentation templates for internal reports.",
+            "Apply solid fills to highlight key data points in dashboards.",
+            "Add text to shapes to create labeled diagrams without external dependencies."
           ],
           "language": null,
           "level": null,
@@ -124,7 +238,7 @@
         },
         {
           "claim_ids": [],
-          "content": "Next, clone an existing slide from another presentation to reuse layouts and content. Load the source presentation, copy the desired slide, and insert it into the target presentation at a specific index.",
+          "content": "Next, add `a` comment to the `slide` and set document properties. Comments attach metadata to specific `slide` positions, while document properties provide `presentation`-level context.",
           "items": [],
           "language": null,
           "level": null,
@@ -132,7 +246,7 @@
         },
         {
           "claim_ids": [],
-          "content": "#include <Aspose::Slides>\n\nint main() {\n    auto sourcePres = System::[identifier omitted]<Aspose::Slides::Presentation>(u\"template.pptx\");\n    auto targetPres = System::[identifier omitted]<Aspose::Slides::Presentation>();\n    \n    // Clone the first slide from source to target at the end\n    auto clonedSlide = targetPres->get_Slides()->[identifier omitted](sourcePres->get_Slides()->idx_get(0));\n    \n    // Save the updated target presentation\n    targetPres->Save(u\"cloned_output.pptx\", Aspose::Slides::[identifier omitted]::Pptx);\n    \n    return 0;\n}",
+          "content": "using namespace Aspose::Slides::Foss;\n\n// Load an existing presentation\nPresentation presentation(u\"output.pptx\");\n\n// Get the first slide\nSlide slide = presentation.get_Slides()->idx_get(0);\n\n// Create a comment author\nCommentAuthor author = presentation->get_CommentAuthors()->AddAuthor(u\"Author Name\", u\"AN\");\n\n// Add a comment at position (200, 150)\nComment comment = slide->get_Comments()->AddComment(u\"Review this section before finalizing.\", slide, author, Drawing::PointF(200.0f, 150.0f), std::chrono::system_clock::now());\n\n// Set document title\npresentation->get_DocumentProperties()->set_title(u\"FOSS Presentation Demo\");\n\n// Save with updated metadata\npresentation->Save(u\"output_with_comments.pptx\", SaveFormat::Pptx);",
           "items": [],
           "language": "cpp",
           "level": null,
@@ -142,9 +256,9 @@
           "claim_ids": [],
           "content": "",
           "items": [
-            "Use this when building slide decks from reusable components across multiple projects.",
-            "Apply for merging content from different sources into a single presentation.",
-            "Helpful for preparing meeting cpp slides by combining approved sections from prior decks."
+            "Attach comments to guide reviewers during collaborative editing workflows.",
+            "Set document title and subject to improve file discoverability in enterprise repositories.",
+            "Use `CommentAuthor` objects to maintain consistent attribution across multiple slides."
           ],
           "language": null,
           "level": null,
@@ -159,7 +273,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "When working with Aspose.Slides FOSS for C++, always include the canonical header `#include <Aspose.Slides FOSS for C++>` and avoid any alternative import paths. Memory management is handled automatically via smart pointers, but developers should avoid holding raw pointers to internal objects beyond their intended scope to prevent undefined behavior.",
+          "content": "When working with Aspose.Slides FOSS for C++, ensure you use the canonical namespace `Aspose::Slides::Foss` in all code. Memory management is handled automatically via smart pointers, so avoid manual new/delete calls. Always `dispose` of `Presentation` objects explicitly using delete when they are no longer needed, especially in long-running processes or batch operations.",
           "items": [],
           "language": null,
           "level": null,
@@ -169,10 +283,10 @@
           "claim_ids": [],
           "content": "",
           "items": [
-            "Use `System::MakeObject<T>()` for all object construction to ensure proper reference counting and memory safety.",
-            "Avoid storing `System::SharedPtr` references across asynchronous or long-running operations; re-acquire them as needed.",
-            "Always call `save()` on the `Presentation` object to persist changes—unsaved modifications are lost on destruction.",
-            "Clone slides using `Slide::Clone()` only within the same `Presentation` instance; cross-presentation cloning requires explicit export/import."
+            "Use `std::shared_ptr<Presentation>` to manage presentation lifetimes safely and avoid memory leaks.",
+            "Avoid holding multiple `Presentation` instances open simultaneously unless necessary — close unused ones promptly.",
+            "Prefer in-memory operations (e.g., cloning slides via CloneSlide()) over repeated file I/O for performance.",
+            "Validate input files before processing using `FileFormatUtil.DetectFileFormat()` to prevent runtime exceptions."
           ],
           "language": null,
           "level": null,
@@ -189,11 +303,11 @@
           "claim_ids": [],
           "content": "",
           "items": [
-            "[Explore visual effects support](/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/)",
-            "[Discover key features overview](/blog.aspose.org/slides/cpp/slides-key-features/)",
-            "[Create presentations from scratch](/docs.aspose.org/slides/cpp/developer-guide/presentation-creation/)",
-            "[Convert file formats easily](/kb.aspose.org/slides/cpp/how-to-convert-presentations-cpp/)",
-            "[Fix common errors and issues](/kb.aspose.org/slides/cpp/how-to-fix-presentations-errors-cpp/)"
+            "[Introducing the open-source library](/slides/cpp/slides-introduction/)",
+            "[Key capabilities and features overview](/slides/cpp/slides-key-features/)",
+            "[Step-by-step presentation creation guide](/slides/cpp/developer-guide/presentation-creation/)",
+            "[Supported file format conversions](/slides/cpp/convert-pptx-to-fodp/)",
+            "[Resolving frequent runtime issues](/slides/cpp/fix-presentations-errors/)"
           ],
           "language": null,
           "level": null,

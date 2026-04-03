@@ -1,0 +1,297 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/slides/cpp/presentation-overview/",
+    "canonical_import": "Aspose::Slides::Foss",
+    "code_import": "Aspose::Slides::Foss",
+    "date": "2026-04-01T14:10:08Z",
+    "dateModified": "2026-04-01T14:41:49Z",
+    "datePublished": "2026-04-01T14:10:08Z",
+    "description": "It serves as the top-level container for `slides`, master `slides`, and `presentation`-wide properties.",
+    "display_name": "Aspose.Slides FOSS for C++",
+    "family": "slides",
+    "keywords": [
+      "cppcon slides",
+      "cpp slides",
+      "cppnow slides",
+      "cppcon slides 2025",
+      "aspose slides cpp",
+      "meeting cpp slides"
+    ],
+    "lastmod": "2026-04-01T14:41:49Z",
+    "page_role": "reference_object_page",
+    "platform": "cpp",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Aspose.Slides FOSS Presentation",
+    "slug": "presentation-overview",
+    "title": "Presentation",
+    "type": "reference_object_page",
+    "url": "/reference.aspose.org/slides/cpp/presentation-overview/",
+    "weight": 21
+  },
+  "page_id": "reference/presentation",
+  "page_role": "reference_object_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-bbc9de"
+          ],
+          "content": "The `Presentation` class represents `a` PowerPoint `presentation` and provides methods to load, create, and `save` `.pptx` files. It serves as the top-level container for `slides`, master `slides`, and `presentation`-wide properties.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-bbc9de"
+          ],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `save(std::string)` | void | Saves the `presentation` to `a` file in `PPTX` format. |\n| get_Slides() | `SlideCollection` & | Returns the collection of `slides` in the `presentation`. |\n| get_Masters() | `MasterSlideCollection` & | Returns the collection of master `slides`. |\n| get_Comments() | `CommentCollection` & | Returns the collection of `comments`. |\n| get_DocumentProperties() | `DocumentProperties` & | Returns the document properties (`title`, `subject`, etc.). |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-f908b1",
+            "CLM-slides-9d8aa5"
+          ],
+          "content": "Slides are accessed via get_Slides(), which returns `a` `SlideCollection`. Each `slide` inherits from `BaseSlide`, which implements `IBaseSlide` and provides common `data` for all `slide` types (). Tables are represented by the `Table` class, and individual cells within tables are represented by the `Cell` class ().",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-bbc9de",
+            "CLM-slides-9d8aa5"
+          ],
+          "content": "The `Presentation` class in Aspose.Slides FOSS for C++ represents `a` PowerPoint `presentation` and provides methods to load, create, and `save` presentations. It supports full round-trip fidelity for `.pptx` files and exposes `slide` collections via get_Slides().",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-bbc9de",
+            "CLM-slides-f908b1"
+          ],
+          "content": "| Constructor | Parameters | Description |\n|-------------|------------|-------------|\n| `Presentation()` | none | Initializes `a` new `Presentation` object with `a` default blank `presentation`. |\n| `Presentation(System::String)` | fileName (System::String) | Initializes `a` new `Presentation` object by loading an existing `.pptx` file. |\n| `Presentation(System::IO::Stream)` | stream (System::IO::Stream) | Initializes `a` new `Presentation` object by loading from `a` stream. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-bbc9de"
+          ],
+          "content": "using namespace Aspose::Slides::Foss;\n\n// Create a new presentation\nauto presentation = System::MakeObject<Presentation>();\n\n// Save to file\npresentation->Save(u\"output.pptx\", SaveFormat::Pptx);",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Constructor",
+      "level": 2,
+      "section_id": "constructor"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-bbc9de",
+            "CLM-slides-9d8aa5"
+          ],
+          "content": "The `Presentation` class exposes properties that provide access to core `presentation` metadata and structure. These properties are read-write where applicable and enable programmatic inspection and modification of `presentation`-level attributes.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-bbc9de",
+            "CLM-slides-9d8aa5",
+            "CLM-slides-57fa5e"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| `slides()` | `SlideCollection&` | Returns the collection of `slides` in the `presentation`. |\n| `document_properties()` | `DocumentProperties&` | Returns the document properties object for reading and writing metadata such as `title` and `subject`. |\n| `app_version()` | `const std::string&` | Returns the version of the application that created the `presentation`. |\n| `name_of_application()` | `const std::string&` | Returns the `name` of the application that created the `presentation`. |\n| `company()` | `const std::string&` | Returns the `company` `name` associated with the `presentation`. |\n| `set_company(value: std::string)` | void | Sets the `company` `name` associated with the `presentation`. |\n| `set_name_of_application(value: std::string)` | void | Sets the `name` of the application that created the `presentation`. |\n| `title()` | `const std::string&` | Returns the `title` of the `presentation`. |\n| `set_title(value: std::string)` | void | Sets the `title` of the `presentation`. |\n| `subject()` | `const std::string&` | Returns the `subject` of the `presentation`. |\n| `set_subject(value: std::string)` | void | Sets the `subject` of the `presentation`. |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-bbc9de",
+            "CLM-slides-9d8aa5"
+          ],
+          "content": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nint main() {\n Presentation pres(\"input.pptx\");\n pres.document_properties().set_title(\"New Title\");\n pres.document_properties().set_company(\"Example Corp\");\n pres.save(\"output.pptx\", SaveFormat::PPTX);\n}",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-e99531",
+            "CLM-slides-5f492f"
+          ],
+          "content": "| Item | Description |\n| --- | --- |\n| BulletFormat: Represents paragraph bullet formatting properties | |\n| Color: Represents an ARGB color, equivalent to System | |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-9b3b8f",
+            "CLM-slides-5f492f"
+          ],
+          "content": "#include <chrono>\n#include <filesystem>\n#include <string>\n#include <Aspose/Slides/Foss/auto_shape.h>\n#include <Aspose/Slides/Foss/drawing/color.h>\n#include <Aspose/Slides/Foss/effect_format.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/rectangle_alignment.h>\n#include <Aspose/Slides/Foss/shape_type.h>\n#include <Aspose/Slides/Foss/slide.h>\n#include <Aspose/Slides/Foss/slide_collection.h>\n\nPresentation pres;\n auto& slide = clear_slide(pres);\n auto& shape = slide.shapes().add_auto_shape(ShapeType::RECTANGLE, 100, 100, 200, 100);\n auto& ef = shape.effect_format();\n ef.enable_outer_shadow_effect();\n auto* shadow = ef.outer_shadow_effect();\n shadow->set_blur_radius(10);\n shadow->set_direction(315);\n shadow->set_distance(8);\n shadow->shadow_color().set_color(Color::from_argb(128, 0, 0, 0));\n auto pres2 = save_and_reopen(pres);\n auto& ef2 = pres2.slides()[0].shapes()[0].effect_format();\n auto* s2 = ef2.outer_shadow_effect();",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-9d8aa5",
+            "CLM-slides-57fa5e",
+            "CLM-slides-05d849",
+            "CLM-slides-975352",
+            "CLM-slides-5f492f"
+          ],
+          "content": "#include <chrono>\n#include <filesystem>\n#include <string>\n#include <vector>\n#include <Aspose/Slides/Foss/cell.h>\n#include <Aspose/Slides/Foss/cell_format.h>\n#include <Aspose/Slides/Foss/column.h>\n#include <Aspose/Slides/Foss/column_collection.h>\n#include <Aspose/Slides/Foss/drawing/color.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n#include <Aspose/Slides/Foss/fill_format.h>\n#include <Aspose/Slides/Foss/fill_type.h>\n#include <Aspose/Slides/Foss/line_format.h>\n#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/row.h>\n#include <Aspose/Slides/Foss/row_collection.h>\n#include <Aspose/Slides/Foss/shape.h>\n#include <Aspose/Slides/Foss/shape_collection.h>\n#include <Aspose/Slides/Foss/slide.h>\n#include <Aspose/Slides/Foss/slide_collection.h>\n#include <Aspose/Slides/Foss/table.h>\n\nPresentation pres;\n auto& slide = blank_slide(pres);\n std::vector<double> col_widths = {150};\n std::vector<double> row_heights = {50};\n auto& table = slide.shapes().add_table(50, 50, col_widths, row_heights);\n auto& cell = table.rows()[0][0];\n cell.text_frame()->set_text(\"Bordered\");\n auto& fmt = cell.cell_format();\n fmt.border_top().fill_format().set_fill_type(FillType::SOLID);\n fmt.border_top().fill_format().solid_fill_color().set_color(Drawing::Color::red);\n fmt.border_top().set_width(3);\n fmt.border_bottom().fill_format().set_fill_type(FillType::SOLID);\n fmt.border_bottom().fill_format().solid_fill_color().set_color(Drawing::Color::red);\n fmt.border_bottom().set_width(3);\n fmt.border_left().fill_format().set_fill_type(FillType::SOLID);\n fmt.border_left().fill_format().solid_fill_color().set_color(Drawing::Color::red);\n fmt.border_left().set_width(3);\n fmt.border_right().fill_format().set_fill_type(FillType::SOLID);\n fmt.border_right().fill_format().solid_fill_color().set_color(Drawing::Color::red);\n fmt.border_right().set_width(3);\n auto pres2 = save_and_reopen(pres);\n auto* t2 = find_table(pres2.slides()[0]);\n auto& fmt2 = t2->rows()[0][0].cell_format();",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-9d8aa5",
+            "CLM-slides-57fa5e",
+            "CLM-slides-05d849",
+            "CLM-slides-975352",
+            "CLM-slides-5f492f"
+          ],
+          "content": "#include <chrono>\n#include <filesystem>\n#include <string>\n#include <vector>\n#include <Aspose/Slides/Foss/cell.h>\n#include <Aspose/Slides/Foss/cell_format.h>\n#include <Aspose/Slides/Foss/column.h>\n#include <Aspose/Slides/Foss/column_collection.h>\n#include <Aspose/Slides/Foss/drawing/color.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n#include <Aspose/Slides/Foss/fill_format.h>\n#include <Aspose/Slides/Foss/fill_type.h>\n#include <Aspose/Slides/Foss/line_format.h>\n#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/row.h>\n#include <Aspose/Slides/Foss/row_collection.h>\n#include <Aspose/Slides/Foss/shape.h>\n#include <Aspose/Slides/Foss/shape_collection.h>\n#include <Aspose/Slides/Foss/slide.h>\n#include <Aspose/Slides/Foss/slide_collection.h>\n#include <Aspose/Slides/Foss/table.h>\n\nPresentation pres;\n auto& slide = blank_slide(pres);\n std::vector<double> col_widths = {200};\n std::vector<double> row_heights = {60};\n auto& table = slide.shapes().add_table(50, 50, col_widths, row_heights);\n auto& cell = table.rows()[0][0];\n cell.cell_format().fill_format().set_fill_type(FillType::SOLID);\n cell.cell_format().fill_format().solid_fill_color().set_color(Drawing::Color::light_blue);\n cell.text_frame()->set_text(\"Blue\");\n auto pres2 = save_and_reopen(pres);\n auto* t2 = find_table(pres2.slides()[0]);\n auto& cf2 = t2->rows()[0][0].cell_format();",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-842174",
+            "CLM-slides-e99531"
+          ],
+          "content": "#include <chrono>\n#include <filesystem>\n#include <string>\n#include <Aspose/Slides/Foss/auto_shape.h>\n#include <Aspose/Slides/Foss/drawing/color.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n#include <Aspose/Slides/Foss/fill_format.h>\n#include <Aspose/Slides/Foss/fill_type.h>\n#include <Aspose/Slides/Foss/font_data.h>\n#include <Aspose/Slides/Foss/nullable_bool.h>\n#include <Aspose/Slides/Foss/paragraph.h>\n#include <Aspose/Slides/Foss/paragraph_collection.h>\n#include <Aspose/Slides/Foss/paragraph_format.h>\n#include <Aspose/Slides/Foss/portion.h>\n#include <Aspose/Slides/Foss/portion_collection.h>\n#include <Aspose/Slides/Foss/portion_format.h>\n#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/shape.h>\n#include <Aspose/Slides/Foss/shape_collection.h>\n#include <Aspose/Slides/Foss/shape_type.h>\n#include <Aspose/Slides/Foss/slide.h>\n#include <Aspose/Slides/Foss/slide_collection.h>\n#include <Aspose/Slides/Foss/text_alignment.h>\n#include <Aspose/Slides/Foss/text_frame.h>\n#include <Aspose/Slides/Foss/text_strikethrough_type.h>\n#include <Aspose/Slides/Foss/text_underline_type.h>\n\nPresentation pres;\n pres.slides()[0].shapes().clear();\n auto& shape = pres.slides()[0].shapes().add_auto_shape(\n ShapeType::RECTANGLE, 50, 50, 400, 200);\n shape.text_frame()->set_text(\"Centered\");\n shape.text_frame()->paragraphs()[0].paragraph_format().set_alignment(\n TextAlignment::CENTER);\n auto pres2 = save_and_reopen(pres);\n auto& reloaded = dynamic_cast<AutoShape&>(pres2.slides()[0].shapes()[0]);\n auto& pf = reloaded.text_frame()->paragraphs()[0].paragraph_format();",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-f44917",
+            "CLM-slides-541e7e",
+            "CLM-slides-e99531"
+          ],
+          "content": "#include <chrono>\n#include <filesystem>\n#include <string>\n#include <Aspose/Slides/Foss/auto_shape.h>\n#include <Aspose/Slides/Foss/drawing/color.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n#include <Aspose/Slides/Foss/fill_format.h>\n#include <Aspose/Slides/Foss/fill_type.h>\n#include <Aspose/Slides/Foss/font_data.h>\n#include <Aspose/Slides/Foss/nullable_bool.h>\n#include <Aspose/Slides/Foss/paragraph.h>\n#include <Aspose/Slides/Foss/paragraph_collection.h>\n#include <Aspose/Slides/Foss/paragraph_format.h>\n#include <Aspose/Slides/Foss/portion.h>\n#include <Aspose/Slides/Foss/portion_collection.h>\n#include <Aspose/Slides/Foss/portion_format.h>\n#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/shape.h>\n#include <Aspose/Slides/Foss/shape_collection.h>\n#include <Aspose/Slides/Foss/shape_type.h>\n#include <Aspose/Slides/Foss/slide.h>\n#include <Aspose/Slides/Foss/slide_collection.h>\n#include <Aspose/Slides/Foss/text_alignment.h>\n#include <Aspose/Slides/Foss/text_frame.h>\n#include <Aspose/Slides/Foss/text_strikethrough_type.h>\n#include <Aspose/Slides/Foss/text_underline_type.h>\n\nPresentation pres;\n auto [shape, fmt] = shaped(pres);\n fmt->fill_format().set_fill_type(FillType::SOLID);\n fmt->fill_format().solid_fill_color().set_color(Color::red);\n auto pres2 = save_and_reopen(pres);\n auto& fmt2 = reloaded_portion_format(pres2);\n auto c = fmt2.fill_format().solid_fill_color().color();",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-e6b035",
+            "CLM-slides-541e7e",
+            "CLM-slides-e99531"
+          ],
+          "content": "#include <chrono>\n#include <filesystem>\n#include <string>\n#include <Aspose/Slides/Foss/auto_shape.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n#include <Aspose/Slides/Foss/paragraph.h>\n#include <Aspose/Slides/Foss/paragraph_collection.h>\n#include <Aspose/Slides/Foss/portion.h>\n#include <Aspose/Slides/Foss/portion_collection.h>\n#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/shape.h>\n#include <Aspose/Slides/Foss/shape_collection.h>\n#include <Aspose/Slides/Foss/shape_type.h>\n#include <Aspose/Slides/Foss/slide.h>\n#include <Aspose/Slides/Foss/slide_collection.h>\n#include <Aspose/Slides/Foss/text_frame.h>\n\nPresentation pres;\n auto& shape = pres.slides()[0].shapes().add_auto_shape(\n ShapeType::RECTANGLE, 50, 50, 400, 100);\n shape.text_frame()->set_text(\"Hello \");\n Portion new_portion(\"World!\");\n shape.text_frame()->paragraphs()[0].portions().add(std::move(new_portion));",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-bbc9de",
+            "CLM-slides-588933"
+          ],
+          "content": "The `Presentation` class enables loading, creating, and saving PowerPoint presentations. It provides access to `slides`, metadata, and formatting structures including `bullet` formatting via `BulletFormat` and `color` definitions via `ColorFormat`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-bbc9de",
+            "CLM-slides-9d8aa5"
+          ],
+          "content": "using namespace Aspose::Slides::Foss;\n\nauto pres = System::MakeObject<Presentation>();\npres->get_SlideComments()->AddComment(System::MakeObject<Comment>(u\"Review note\", pres->get_Slides()->idx_get(0), nullptr, Drawing::PointF(100.0f, 100.0f), std::chrono::system_clock::now()));\npres->Save(u\"output.pptx\", SaveFormat::Pptx);",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Example",
+      "level": 2,
+      "section_id": "example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Reference for comment objects](/slides/cpp/manage-comments/)",
+            "[Introduction to Slides FOSS C++](/slides/cpp/slides-introduction/)",
+            "[Key features of Slides FOSS](/slides/cpp/slides-key-features/)",
+            "[Create presentations step by step](/slides/cpp/developer-guide/presentation-creation/)",
+            "[Work with slides programmatically](/slides/cpp/developer-guide/slide-manipulation/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Presentation"
+}

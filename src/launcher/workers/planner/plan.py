@@ -282,7 +282,9 @@ def _apply_relevance_filter(
 
 
 # Roles that are structural-only and do not receive claim assignments.
-_NO_CLAIM_ROLES: frozenset[str] = frozenset({"toc"})
+# TC-GEN-704: "landing" added — products/_index is a navigation page that
+# should not receive claims (avoids spurious claim_coverage HIGH).
+_NO_CLAIM_ROLES: frozenset[str] = frozenset({"toc", "landing"})
 
 # FPR-05 (2026-03-22): Structural landing roles that must always receive a
 # minimum number of claims regardless of kind/topic filter outcomes.

@@ -887,6 +887,12 @@ def _extract_shared_facts(
     for entry in file_index.values():
         if entry.language and entry.category == FileCategory.source:
             lang_counts[entry.language] = lang_counts.get(entry.language, 0) + 1
+    # SC-01 (TC-5322): .h files are classified as "c" by LANG_BY_EXT but in a
+    # mixed c/cpp repo they are C++ headers.  Merge "c" into "cpp" so C++ repos
+    # report primary_language="cpp" and get the correct install_command.
+    # Pure-C repos (no "cpp" key at all) are unaffected.
+    if "c" in lang_counts and "cpp" in lang_counts:
+        lang_counts["cpp"] += lang_counts.pop("c")
     primary_language = ""
     if lang_counts:
         primary_language = max(lang_counts, key=lang_counts.get)  # type: ignore[arg-type]

@@ -529,25 +529,30 @@ def _validate_fact_binding(
             bound_count += 1
             validated.append(claim)
         else:
-            # TC-5181: Unbound claim — elevate to llm_sparse_grounding (0.55) instead of
-            # llm_fallback (0.35). Keeps claims above the U-2 filter threshold so
-            # _filter_weak_evidence can make the final quality call based on evidence
-            # relevance. Prevents near-total claim collapse when LLM does not cite fact_ids.
+            # TC-5309: Drop unbound claims. harvest_evidence_claims() provides deterministic
+            # fallback coverage from ExtractionDatabase, so near-total claim collapse is
+            # prevented without admitting hallucinated claims (TC-5181 workaround removed).
             unbound_count += 1
-            updated = dict(claim)  # copy to avoid mutating original
-            updated["confidence"] = 0.55
-            updated["claim_source"] = "llm_sparse_grounding"
-            validated.append(updated)
+
+    total_eligible = bound_count + unbound_count
+    if total_eligible > 0:
+        citation_rate = bound_count / total_eligible
+        if citation_rate < 0.5:
+            logger.warning(
+                "TC-5309: low_citation_rate=%.0f%% (%d/%d LLM claims cite valid fact_ids). "
+                "Unbound claims dropped; deterministic fallback provides coverage.",
+                citation_rate * 100, bound_count, total_eligible,
+            )
 
     stats = {
         "valid_fact_ids_in_db": len(valid_fact_ids),
         "bound_claims": bound_count,
-        "unbound_claims_elevated_sparse": unbound_count,
+        "unbound_claims_dropped": unbound_count,
         "pre_verified_skipped": skipped_count,
         "total_processed": len(raw_claims),
     }
     logger.info(
-        "fact_binding_validation [TC-4247/TC-5181]: bound=%d unbound_elevated_sparse=%d "
+        "fact_binding_validation [TC-4247/TC-5309]: bound=%d unbound_dropped=%d "
         "pre_verified=%d valid_fact_ids=%d",
         bound_count, unbound_count, skipped_count, len(valid_fact_ids),
     )

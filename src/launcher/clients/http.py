@@ -15,6 +15,13 @@ from typing import Any, Dict, Optional
 
 import yaml
 
+# TC-INF-101: Hard total-request deadline for LLM HTTP calls.
+# requests timeout=N only enforces a per-chunk read deadline; a server that
+# streams very slowly can keep a connection alive indefinitely. This constant
+# caps the TOTAL wall-clock time allowed for any single http_post() call.
+# Must be > typical LLM latency (~30-60s) but low enough to surface hangs fast.
+HARD_TOTAL_TIMEOUT_S: int = 120
+
 # Persistent HTTP session pool for connection reuse.
 # Each LLM call reuses an existing TCP+TLS connection instead of paying
 # ~100-300ms handshake overhead. Thread-safe via double-checked locking.
@@ -191,4 +198,31 @@ def http_post(
     """
     _validate_url(url, allowlist_path)
 
-    return _get_session().post(url, data=data, json=json, headers=headers, timeout=timeout, **kwargs)
+    # TC-INF-101: Enforce a hard total-request deadline.
+    # requests timeout=N only caps per-chunk waits; a slowly-streaming server
+    # bypasses it. We run the actual POST in a daemon thread and wait at most
+    # HARD_TOTAL_TIMEOUT_S. Because the thread is a daemon, it is discarded
+    # when the deadline fires — the main thread is never blocked.
+    import queue as _queue
+    import requests as _req
+
+    _result_q: _queue.Queue = _queue.Queue()
+
+    def _do_post_thread() -> None:
+        try:
+            _r = _get_session().post(url, data=data, json=json, headers=headers, timeout=timeout, **kwargs)
+            _result_q.put(("ok", _r))
+        except Exception as _exc:
+            _result_q.put(("err", _exc))
+
+    _t = threading.Thread(target=_do_post_thread, daemon=True, name="http_post_worker")
+    _t.start()
+    try:
+        _kind, _value = _result_q.get(timeout=HARD_TOTAL_TIMEOUT_S)
+    except _queue.Empty:
+        raise _req.exceptions.Timeout(
+            f"Hard total timeout ({HARD_TOTAL_TIMEOUT_S}s) exceeded for POST {url}"
+        )
+    if _kind == "ok":
+        return _value
+    raise _value  # re-raise original exception from worker thread

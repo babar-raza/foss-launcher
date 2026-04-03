@@ -1,20 +1,25 @@
 {
   "frontmatter": {
     "canonical": "https://reference.aspose.org/cells/python/chart/",
-    "canonical_import": "aspose.cells_foss",
-    "date": "2026-03-19T15:07:33Z",
-    "dateModified": "2026-03-19T15:07:33Z",
-    "datePublished": "2026-03-19T15:07:33Z",
-    "description": "Aspose.Cells FOSS: Cells.cell(): Accesses a cell by row and column (1-based).",
+    "canonical_import": "aspose.cells",
+    "code_import": "aspose.cells",
+    "date": "2026-03-27T07:02:41Z",
+    "dateModified": "2026-03-27T07:02:41Z",
+    "datePublished": "2026-03-27T07:02:41Z",
+    "description": "It is created via methods in `ChartCollection`, such as `add_line()`, `add_bar()`, or `add_box_whisker()`.",
     "display_name": "Aspose.Cells FOSS",
     "family": "cells",
     "keywords": [
-      "chart",
-      "worksheet",
-      "adds",
-      "spreadsheets"
+      "cells python",
+      "python cells in excel",
+      "python cells vscode",
+      "cell python docx",
+      "cell python spyder",
+      "aspose cells python",
+      "code cells python",
+      "voronoi cells python"
     ],
-    "lastmod": "2026-03-19T15:07:33Z",
+    "lastmod": "2026-03-27T07:02:41Z",
     "page_role": "reference_object_page",
     "platform": "python",
     "reading_time": 1,
@@ -24,7 +29,7 @@
     "title": "Chart: Represents a chart in a worksheet",
     "type": "reference_object_page",
     "url": "/reference.aspose.org/cells/python/chart/",
-    "weight": 3
+    "weight": 22
   },
   "page_id": "reference/chart",
   "page_role": "reference_object_page",
@@ -32,12 +37,37 @@
     {
       "blocks": [
         {
-          "claim_ids": [],
-          "content": "Represents a chart in a worksheet.",
+          "claim_ids": [
+            "CLM-cells-a88964",
+            "CLM-cells-d7e2d1"
+          ],
+          "content": "The `Chart` class represents a chart in a worksheet and provides methods to manage its series, `axes`, and 3D view settings. It is created via methods in `ChartCollection`, such as `add_line()`, `add_bar()`, or `add_box_whisker()`.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-a88964"
+          ],
+          "content": "from aspose.cells import Workbook, ChartType\n\nworkbook = Workbook()\nworksheet = workbook.worksheets[0]\ncharts = worksheet.charts\nchart = charts.add(ChartType.LINE, 5, 0, 15, 5)\nchart.title = \"Sample Line Chart\"\nworkbook.save(\"chart.xlsx\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-a88964",
+            "CLM-cells-43c708",
+            "CLM-cells-b62cb8"
+          ],
+          "content": "| Method | Description |\n|--------|-------------|\n| `add_series(values, category_data, name, chart_type, x_values)` | Adds a series to the chart. |\n| `add_axis(axis_type, axis_id)` | Adds an axis to the chart and returns it. |\n| `copy()` | Creates a `copy` of the chart. |\n| `type` | Read-only property indicating the chart `type`. |\n| `title` | Gets or sets the chart `title`. |\n| `category_data` | Gets or sets the category axis data. |\n| `show_legend` | Gets or sets whether the legend is shown. |\n| `legend_position` | Gets or sets the legend position. |\n| `axes` | Accesses the chart `axes` collection. |\n| series | Accesses the chart series collection. |\n| `view_3d` | Accesses 3D view settings. |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
         }
       ],
       "heading": "Overview",
@@ -47,8 +77,50 @@
     {
       "blocks": [
         {
-          "claim_ids": [],
-          "content": "| Name | Type | Read-only | Description |\n| --- | --- | --- | --- |\n| type |  | Yes |  |\n| title |  | No |  |\n| category_data |  | No |  |\n| show_legend |  | No |  |\n| legend_position |  | No |  |\n| smooth |  | No |  |\n| n_series |  | Yes |  |\n| NSeries |  | Yes | PascalCase alias of n_series. |\n| grouping |  | No |  |\n| bar_direction |  | No |  |\n| gap_width |  | No |  |\n| overlap |  | No |  |\n| vary_colors |  | No |  |\n| first_slice_angle |  | No |  |\n| is_of_pie |  | No |  |\n| of_pie_type |  | No |  |\n| second_pie_size |  | No |  |\n| quartile_method |  | No |  |\n| box_show_mean_line |  | No |  |\n| box_show_mean_marker |  | No |  |\n| box_show_inner_points |  | No |  |\n| box_show_outlier_points |  | No |  |\n| box_gap_width |  | No |  |\n| is_3d |  | No |  |\n| gap_depth |  | No |  |\n| view_3d |  | Yes |  |\n| View3D |  | Yes | PascalCase alias of view_3d. |\n| show_connector_lines |  | No |  |\n| has_subtotals |  | No |  |\n| sub_charts |  | Yes | List of sub-chart descriptors for combo charts. |\n| axes |  | Yes | List of ChartAxis objects defining all axes for the chart. |\n| scatter_style |  | No |  |\n| wireframe |  | No | Whether the surface chart uses wireframe display mode (<c:wireframe val='1'/>). |\n| radar_style |  | No | Radar chart style: 'standard', 'marker', or 'filled'. |\n| histogram_bin_count |  | No | Number of bins for count-based binning (int or None for auto/size-based). |\n| histogram_bin_size |  | No | Bin width for size-based binning (float or None for auto/count-based). |\n| histogram_interval_closed |  | No | Which side of each bin interval is closed: 'r' (right) or 'l' (left). |\n| histogram_overflow |  | No | Overflow bin boundary value (float or None). |\n| histogram_underflow |  | No | Underflow bin boundary value (float or None). |\n| disp_blanks_as |  | No |  |\n| stock_style |  | No |  |",
+          "claim_ids": [
+            "CLM-cells-a88964",
+            "CLM-cells-95df98"
+          ],
+          "content": "The `Chart` class represents a chart in a worksheet and provides methods to manage its series, `axes`, and 3D view settings. It is instantiated via the `ChartCollection.add()` method or specialized chart-`type` methods like `add_scatter()`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-a88964",
+            "CLM-cells-43c708",
+            "CLM-cells-b62cb8"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| `add_series(values, category_data, name, chart_type, x_values)` | method | Adds a series to the chart. |\n| `add_axis(axis_type, axis_id)` | method | Adds an axis to the chart and returns it. |\n| `copy()` | method | Creates a `copy` of the chart. |\n| `type` | property (read-only) | Returns the chart `type`. |\n| `title` | property | Gets or sets the chart `title`. |\n| `category_data` | property | Gets or sets the category axis data. |\n| `show_legend` | property | Gets or sets whether the legend is shown. |\n| `legend_position` | property | Gets or sets the legend position. |\n| `axes` | property (read-only) | Returns the collection of chart `axes`. |\n| series | property (read-only) | Returns the collection of chart series. |\n| `view_3d` | property (read-only) | Returns the 3D view settings. |\n| `error_bars` | property (read-only) | Returns the `error` bars collection. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Constructor",
+      "level": 2,
+      "section_id": "constructor"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-a88964"
+          ],
+          "content": "The `Chart` class represents a chart in a worksheet and provides `properties` to access and configure its visual and structural attributes. These `properties` control aspects such as chart `type`, `title`, legend, and category data.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-a88964"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| `type` | `ChartType` | Gets the chart `type`. |\n| `title` | str | Gets or sets the chart `title`. |\n| `category_data` | list | Gets or sets the category axis data. |\n| `show_legend` | bool | Gets or sets whether the legend is displayed. |\n| `legend_position` | str | Gets or sets the legend position (e.g., 'Top', 'Bottom', 'Left', 'Right'). |",
           "items": [],
           "language": null,
           "level": null,
@@ -62,28 +134,38 @@
     {
       "blocks": [
         {
-          "claim_ids": [],
-          "content": "**add_series**(values, category_data, name, chart_type, x_values)\n\nConvenience method to add a series.",
+          "claim_ids": [
+            "CLM-cells-a88964",
+            "CLM-cells-43c708",
+            "CLM-cells-b62cb8"
+          ],
+          "content": "The `Chart` class represents a chart in a worksheet and provides methods to manage its series, `axes`, and 3D view settings. Below are the methods available on the `Chart` object.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
         },
         {
-          "claim_ids": [],
-          "content": "**add_axis**(axis_type, axis_id) → ChartAxis\n\nAdds an axis to the chart and returns it.",
+          "claim_ids": [
+            "CLM-cells-a88964",
+            "CLM-cells-43c708",
+            "CLM-cells-b62cb8"
+          ],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `add_series(values, category_data, name, chart_type, x_values)` | `ChartSeries` | Adds a series to the chart with the specified `values`, category data, `name`, chart `type`, and optional x-`values`. |\n| `add_axis(axis_type, axis_id)` | `ChartAxis` | Adds an axis (category, `value`, or series) to the chart and returns the created axis object. |\n| `copy()` | `Chart` | Creates a deep `copy` of the chart. |\n",
           "items": [],
           "language": null,
           "level": null,
-          "type": "paragraph"
+          "type": "table"
         },
         {
-          "claim_ids": [],
-          "content": "**copy**()",
+          "claim_ids": [
+            "CLM-cells-a88964"
+          ],
+          "content": "from aspose.cells import Workbook, DataValidationType\n\nworkbook = Workbook()\nworksheet = workbook.worksheets[0]\n\n# Add a dropdown list validation to A1:A10\nvalidation = worksheet.data_validations.add(\"A1:A10\")\nvalidation.type = DataValidationType.LIST\nvalidation.formula1 = '\",,\"'\n\nworkbook.save(\"validation.xlsx\")",
           "items": [],
-          "language": null,
+          "language": "python",
           "level": null,
-          "type": "paragraph"
+          "type": "code"
         }
       ],
       "heading": "Methods",
@@ -93,14 +175,43 @@
     {
       "blocks": [
         {
+          "claim_ids": [
+            "CLM-cells-a88964",
+            "CLM-cells-43c708"
+          ],
+          "content": "The following example demonstrates creating a chart, adding a series, and configuring its `title` and legend using the `Chart` class. It uses the canonical import `aspose.cells` and operates on a new workbook with sample data.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-a88964",
+            "CLM-cells-43c708"
+          ],
+          "content": "import aspose.cells\n\n# Create a new workbook and access the first worksheet\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\n\n# Populate sample data\nworksheet.cells[\"A1\"].value = \"Category\"\nworksheet.cells[\"B1\"].value = \"Value\"\nworksheet.cells[\"A2\"].value = \"A\"\nworksheet.cells[\"B2\"].value = 10\nworksheet.cells[\"A3\"].value = \"B\"\nworksheet.cells[\"B3\"].value = 20\nworksheet.cells[\"A4\"].value = \"C\"\nworksheet.cells[\"B4\"].value = 30\n\n# Add a column chart\nchart = worksheet.charts.add_bar(5, 0, 15, 8)\nchart.type = aspose.cells.ChartType.COLUMN\n\n# Add a series to the chart\nseries_index = chart.n_series.add(\"B2:B4\", True)\nseries = chart.n_series[series_index]\nseries.name = \"=B1\"\n\n# Configure chart title and legend\nchart.title.value = \"Sample Chart\"\nchart.show_legend = True\n\n# Save the workbook\nworkbook.save(\"chart_example.xlsx\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Example",
+      "level": 2,
+      "section_id": "example"
+    },
+    {
+      "blocks": [
+        {
           "claim_ids": [],
           "content": "",
           "items": [
-            "[Aspose.Cells FOSS API reference](/reference.aspose.org/cells/python/api-overview/)",
-            "[Workbook class overview](/blog.aspose.org/cells/python/introducing-cells-foss-python/)",
-            "[Hyperlink support details](/blog.aspose.org/cells/python/testcreateallcharts-spreadsheets/)",
-            "[Formula handling guide](/docs.aspose.org/cells/python/developer-guide/formula-calculation/)",
-            "[Spreadsheet operations](/docs.aspose.org/cells/python/developer-guide/spreadsheet-operations/)"
+            "[Worksheet object reference](/cells/python/worksheet/)",
+            "[Introduction to Cells FOSS for Python](/cells/python/cells-foss-python/)",
+            "[Create all chart types in spreadsheets](/cells/python/create-charts-spreadsheets/)",
+            "[Working with formulas in FOSS](/cells/python/developer-guide/formula-calculation/)",
+            "[Essential spreadsheet operations](/cells/python/developer-guide/spreadsheet-operations/)"
           ],
           "language": null,
           "level": null,

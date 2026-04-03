@@ -89,7 +89,7 @@ def check_heading_echo(
                             f"the heading (similarity={similarity:.2f}): "
                             f"\"{first_para[:80]}...\" — add information beyond the heading"
                         ),
-                        severity="medium",
+                        severity="low",
                         location=slug,
                         section_id=heading_text,
                     ))

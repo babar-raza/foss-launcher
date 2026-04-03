@@ -33,3 +33,19 @@ Thumbs.db
 
 # Claude agent worktrees
 .claude/worktrees/
+
+# Clone/SEO caches (large, regenerable)
+.clone_cache/
+.seo_cache/
+intake/.clone_cache/
+
+# Generated knowledge output
+knowledge/
+
+# Runtime logs
+logs/
+
+# Accidental artifacts
+echo
+foss-launcher.zip
+"EXIT CODE："

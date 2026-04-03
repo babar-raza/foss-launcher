@@ -12,7 +12,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import yaml
 from langgraph.graph import END, StateGraph
@@ -44,6 +44,10 @@ def _resolve_input_model(worker_name: str) -> type[LauncherBaseModel] | None:
             model = IntakeBundle
         elif worker_name == "understand":
             # TC-4078: Understand now takes ScoutBundle (not IntakeBundle)
+            from launcher.models.scout import ScoutBundle
+            model = ScoutBundle
+        elif worker_name == "verify":
+            # TC-5305: verify worker takes ScoutBundle (input_schema: scout_bundle.schema.json)
             from launcher.models.scout import ScoutBundle
             model = ScoutBundle
         elif worker_name == "planner":
@@ -296,6 +300,16 @@ def _make_worker_node(
             )
         except Exception as exc:
             logger.exception("[%s] Worker %s failed", state["run_id"], worker_name)
+            # TC-5300: emit structured event so failures appear in events.ndjson
+            ctx.emit_event(
+                "worker_failed",
+                {
+                    "worker": worker_name,
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                },
+                worker=worker_name,
+            )
             return {
                 "current_worker": worker_name,
                 "errors": [*state["errors"], f"{worker_name}: {exc!s}"],
@@ -464,14 +478,19 @@ def _make_post_evaluate_router(max_re_runs: int):
 
 
 def _make_advisor_route(workers: dict):
-    """Route __advisor__ output: heal_generate -> __re_run__, publish -> publish, else END.
+    """Route __advisor__ output to the appropriate re-run or terminal node.
 
-    NOTE: "heal_upstream" excluded in v1. Only heal_generate, publish, stop.
+    heal_generate    → __re_run__           (re-run from generate)
+    heal_understand  → __re_run_understand__ (re-run from understand)
+    publish          → publish (if present) or END
+    stop/unknown     → END
     """
     def _advisor_route(state: "PipelineGraphState") -> str:
         routing = (state.get("advisor_decision") or {}).get("routing", "stop")
         if routing == "heal_generate":
             return "__re_run__"
+        if routing == "heal_understand":
+            return "__re_run_understand__"
         if routing == "publish":
             return "publish" if "publish" in workers else END
         return END  # "stop" or any unknown value
@@ -515,18 +534,62 @@ def _build_heal_directives(report: "Any") -> "dict[str, list[str]]":
     return {"page_directives": directives}
 
 
+# TC-5318: Finding-to-directive mapping for targeted heal instructions.
+# Each entry is a callable accepting a Finding and returning an actionable instruction string.
+# Injects finding.message so the LLM knows the specific identifier/issue, not just the check name.
+_FINDING_TO_DIRECTIVE: dict[str, Callable[[Any], str]] = {
+    "api_allowlist": lambda f: (
+        f"UNKNOWN IDENTIFIER: {getattr(f, 'message', 'see finding')}. "
+        "Do NOT use class or method names not confirmed in the API surface. "
+        "If unsure about an identifier, omit the code example rather than guessing."
+    ),
+    "api_consistency": lambda f: (
+        f"API INCONSISTENCY: {getattr(f, 'message', 'see finding')}. "
+        "Cross-check every method name, class name, and property name against the API surface."
+    ),
+    "code_correctness": lambda f: (
+        f"CODE ERROR: {getattr(f, 'message', 'see finding')}. "
+        "Fix the syntax error, or omit the code block entirely if you cannot produce correct code."
+    ),
+    "code_platform": lambda f: (
+        f"WRONG PLATFORM SYNTAX: {getattr(f, 'message', 'see finding')}. "
+        "Use only platform-appropriate syntax, import statements, and install commands."
+    ),
+    "low_specificity": lambda f: (
+        "GENERIC CONTENT detected. "
+        "Replace generic language with specific API method names, class names, and concrete examples. "
+        "Avoid sentences like 'this library provides powerful features'."
+    ),
+    "heading_echo": lambda f: (
+        "HEADING ECHO detected — the section text repeats the heading word-for-word. "
+        "Rewrite the opening sentence without echoing the section title."
+    ),
+    "prose_lead": lambda f: (
+        "BOILERPLATE OPENER detected. "
+        "Do not start sections with 'This section covers...' or similar meta-text. "
+        "Start directly with the content."
+    ),
+    "sentence_openings": lambda f: (
+        "REPETITIVE SENTENCE OPENINGS detected. "
+        "Vary how sentences begin — avoid starting multiple consecutive sentences with the same word."
+    ),
+    "content_density": lambda f: (
+        "CONTENT DENSITY TOO LOW. "
+        "The section is too thin. Add specific API usage examples, code snippets, or concrete details."
+    ),
+}
+
+
 def _build_failing_check_directives(report: "Any", target_slugs: list[str]) -> list[str]:
-    """SR-01: Build grade + failing-check directives for heal target pages.
+    """TC-5318: Build grade + failing-check directives for heal target pages.
 
     For each page in ``target_slugs`` that has HIGH or CRITICAL findings
     (excluding claim_coverage, which is handled by _build_heal_directives),
-    produces a directive line of the form:
+    produces specific actionable instructions derived from the failing checks.
 
-        [{slug}] Previous grade: {grade}. Top failing checks: {c1}, {c2}.
-        Write a substantially different version that avoids these quality issues.
-
+    Uses graded_severity when available (TC-5316), falling back to severity.
     Returns a list of directive strings (empty when no relevant findings exist).
-    Capped at 5 failing checks per page to avoid prompt bloat.
+    Capped at 5 findings per page to avoid prompt bloat.
     """
     _HIGH_PLUS = {"critical", "high"}
     directives: list[str] = []
@@ -537,22 +600,38 @@ def _build_failing_check_directives(report: "Any", target_slugs: list[str]) -> l
         grade = str(getattr(page, "grade", "?"))
         if hasattr(grade, "value"):  # Grade enum
             grade = grade.value
-        failing_checks: list[str] = []
+        page_instructions: list[str] = []
+        seen_checks: set[str] = set()
         for finding in getattr(page, "findings", []):
             check = getattr(finding, "check", "")
-            severity = str(getattr(finding, "severity", "")).lower()
             if check == "claim_coverage":
                 continue  # Handled by _build_heal_directives
-            if severity in _HIGH_PLUS and check and check not in failing_checks:
-                failing_checks.append(check)
-            if len(failing_checks) >= 5:
+            # TC-5316: prefer graded_severity (what grader actually used) over severity
+            graded_sev = str(getattr(finding, "graded_severity", "")).lower()
+            reported_sev = str(getattr(finding, "severity", "")).lower()
+            effective_sev = graded_sev if graded_sev else reported_sev
+            if effective_sev not in _HIGH_PLUS:
+                continue
+            if check in seen_checks:
+                continue
+            seen_checks.add(check)
+            # Use specific instruction from mapping (callable injects finding.message),
+            # fall back to generic label for checks not in the mapping.
+            fn = _FINDING_TO_DIRECTIVE.get(check)
+            if fn:
+                page_instructions.append(fn(finding))
+            else:
+                page_instructions.append(
+                    f"Fix '{check}' quality issue: {getattr(finding, 'message', '')}. "
+                    "Review and improve this aspect of the content."
+                )
+            if len(page_instructions) >= 5:
                 break
-        if not failing_checks:
+        if not page_instructions:
             continue
-        checks_str = ", ".join(failing_checks)
+        instruction_block = "\n".join(f"  • {instr}" for instr in page_instructions)
         directives.append(
-            f"[{slug}] Previous grade: {grade}. Top failing checks: {checks_str}. "
-            "Write a substantially different version that avoids these quality issues."
+            f"[{slug}] Previous grade: {grade}. Specific issues to fix:\n{instruction_block}"
         )
     return directives
 
@@ -827,6 +906,26 @@ def build_pipeline(
         graph.add_node("__re_run__", _re_run_increment)
         graph.add_edge("__re_run__", re_run_first_target)
 
+        # -- Add __re_run_understand__ for heal_understand routing -----------
+        # Routes to understand (re-runs understand + planner + generate).
+        # Only added when understand is in the active pipeline.
+        _understand_target = "understand" if "understand" in active_workers else None
+        if _understand_target:
+
+            async def _re_run_understand_increment(state: PipelineGraphState) -> dict[str, Any]:
+                """Bump re_run_count before re-entering from understand (heal_understand path)."""
+                new_count = state.get("re_run_count", 0) + 1
+                logger.info(
+                    "[%s] Understand re-run #%d triggered (max %d) — heal_understand path",
+                    state["run_id"],
+                    new_count,
+                    state.get("max_re_runs", 2),
+                )
+                return {"re_run_count": new_count}
+
+            graph.add_node("__re_run_understand__", _re_run_understand_increment)
+            graph.add_edge("__re_run_understand__", _understand_target)
+
     # -- Add the __advisor__ LLM routing node (only when max_re_runs > 0) ---
     if evaluate_entry is not None and evaluate_entry.max_re_runs > 0:
 
@@ -890,14 +989,18 @@ def build_pipeline(
             }
 
         graph.add_node("__advisor__", _advisor_node)
+        _advisor_edge_map: dict[str, str] = {
+            "__re_run__": "__re_run__",
+            "publish": "publish" if "publish" in active_workers else END,
+            END: END,
+        }
+        # Include __re_run_understand__ only when it was added to the graph.
+        if evaluate_entry and "understand" in active_workers:
+            _advisor_edge_map["__re_run_understand__"] = "__re_run_understand__"
         graph.add_conditional_edges(
             "__advisor__",
             _make_advisor_route(workers),
-            {
-                "__re_run__": "__re_run__",
-                "publish": "publish" if "publish" in active_workers else END,
-                END: END,
-            },
+            _advisor_edge_map,
         )
 
     # -- Compile and return --------------------------------------------------

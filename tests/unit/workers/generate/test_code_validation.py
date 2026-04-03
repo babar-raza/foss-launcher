@@ -251,7 +251,8 @@ class TestCodeBlockSyntaxRejection:
     @staticmethod
     def _accept(code: str, lang: str) -> bool:
         from launcher.workers.generate.worker import _accept_code_block
-        return _accept_code_block(code, lang)
+        ok, _ = _accept_code_block(code, lang)
+        return ok
 
     def test_invalid_python_rejected(self):
         """A Python block with a syntax error is rejected (returns False)."""

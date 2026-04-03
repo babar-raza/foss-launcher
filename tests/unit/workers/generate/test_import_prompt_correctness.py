@@ -11,11 +11,11 @@ from __future__ import annotations
 
 import pytest
 
+from launcher.shared.families_loader import get_import_keyword
 from launcher.workers.generate.section_prompt import (
     _build_import_rule_block,
     _build_import_statement,
     _build_wrong_import_warning,
-    _IMPORT_KEYWORD,
 )
 
 
@@ -37,16 +37,18 @@ class TestBuildImportStatement:
         result = _build_import_statement("java", "com.aspose.threed")
         assert result == "import com.aspose.threed.*;"
 
-    def test_cpp_include(self):
-        result = _build_import_statement("cpp", "Aspose::Slides")
-        assert result == "#include <Aspose::Slides>"
+    def test_cpp_using_namespace(self):
+        # TC-5324: C++ uses 'using namespace', not '#include <namespace::path>'
+        result = _build_import_statement("cpp", "Aspose::Slides::Foss")
+        assert result == "using namespace Aspose::Slides::Foss;"
 
     def test_typescript_import(self):
         result = _build_import_statement("typescript", "@aspose/3d-foss")
         assert 'from "@aspose/3d-foss"' in result
 
     def test_unknown_platform_fallback(self):
-        result = _build_import_statement("rust", "aspose_cells")
+        # Use a genuinely unknown platform to test the fallback path
+        result = _build_import_statement("unknown_platform_xyz", "aspose_cells")
         assert result == "import aspose_cells"
 
 
@@ -99,9 +101,10 @@ class TestBuildImportRuleBlock:
         assert "import com.aspose.slides.*;" in rule
         assert "Java import" in rule
 
-    def test_cpp_rule_uses_include(self):
-        rule = _build_import_rule_block("cpp", "Aspose::Slides")
-        assert "#include" in rule
+    def test_cpp_rule_uses_using_namespace(self):
+        # TC-5324: C++ rule block must mention 'using namespace', not '#include'
+        rule = _build_import_rule_block("cpp", "Aspose::Slides::Foss")
+        assert "using namespace" in rule
         assert "C++" in rule
 
     def test_unknown_platform_generic(self):
@@ -113,7 +116,7 @@ class TestBuildImportRuleBlock:
 
 
 class TestImportKeywordMap:
-    """TC-GEN-212: _IMPORT_KEYWORD covers all known platforms."""
+    """TC-GEN-212: import keyword covers all known platforms (TC-5307: now via families_loader)."""
 
     @pytest.mark.parametrize("platform,expected", [
         ("python", "import"),
@@ -122,7 +125,7 @@ class TestImportKeywordMap:
         ("cpp", "#include"),
     ])
     def test_keyword_for_platform(self, platform, expected):
-        assert _IMPORT_KEYWORD[platform] == expected
+        assert get_import_keyword(platform) == expected
 
 
 # ── Planner frontmatter split ───────────────────────────────────────────

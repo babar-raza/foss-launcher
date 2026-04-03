@@ -711,3 +711,285 @@ class TestFaqDepthConstraint:
             section, 0, 1, page, product, [_make_claim()], [],
         )
         assert "FAQ writing rules" not in prompt
+
+
+# ---------------------------------------------------------------------------
+# TC-HEAL-006: _build_import_rule_block — _foss suffix → explicit NEVER for base pkg
+# ---------------------------------------------------------------------------
+
+class TestBuildImportRuleBlockFossSuffix:
+    """TC-HEAL-006: _build_import_rule_block adds explicit NEVER for base package
+    when code_import ends with _foss (e.g. aspose_email_foss → never aspose.email).
+    """
+
+    def test_foss_suffix_adds_never_for_base_package(self):
+        """aspose_email_foss → rule mentions 'import aspose.email' as NEVER."""
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+
+        rule = _build_import_rule_block("python", "aspose_email_foss")
+        assert "aspose_email_foss" in rule
+        assert "aspose.email" in rule
+        assert "NEVER" in rule
+        # The explicit negative example should reference the commercial package name
+        assert "import aspose.email" in rule
+
+    def test_foss_suffix_mentions_importerror(self):
+        """The NEVER block must explain *why*: ImportError at runtime."""
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+
+        rule = _build_import_rule_block("python", "aspose_email_foss")
+        assert "ImportError" in rule
+
+    def test_non_foss_python_import_no_extra_never(self):
+        """aspose_note_foss (not a well-known conflict pkg) still gets _foss treatment."""
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+
+        rule = _build_import_rule_block("python", "aspose_note_foss")
+        # Should mention aspose.note as NEVER
+        assert "aspose.note" in rule
+        assert "NEVER" in rule
+
+    def test_hardcoded_never_packages_in_base_rule(self):
+        """aspose.cells and aspose.pydrawing always appear as NEVER in base rule."""
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+
+        rule = _build_import_rule_block("python", "aspose_cells_foss")
+        # The base rule template always includes aspose.cells and aspose.pydrawing
+        assert "aspose.cells" in rule.lower()
+        assert "aspose.pydrawing" in rule.lower()
+
+    def test_non_python_platform_not_affected(self):
+        """dotnet platform → import rule does not mention _foss email packages."""
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+
+        rule = _build_import_rule_block("dotnet", "Aspose.Email")
+        assert "aspose_email_foss" not in rule
+        assert "ImportError" not in rule
+
+
+# ===================================================================
+# TC-5324: C++ import statement / wrong-import-warning / rule fixes
+# ===================================================================
+
+
+class TestCppImportStatementFix:
+    """TC-5324: C++ import statement must use 'using namespace', not '#include <NS>'."""
+
+    def test_cpp_import_statement_uses_using_namespace(self):
+        from launcher.workers.generate.section_prompt import _build_import_statement
+
+        stmt = _build_import_statement("cpp", "Aspose::Slides::Foss")
+        assert stmt == "using namespace Aspose::Slides::Foss;"
+
+    def test_cpp_import_statement_never_starts_with_include(self):
+        from launcher.workers.generate.section_prompt import _build_import_statement
+
+        stmt = _build_import_statement("cpp", "Aspose::ThreeD::Foss")
+        assert not stmt.startswith("#include"), (
+            f"C++ import_statement must use 'using namespace', got: {stmt!r}"
+        )
+
+    def test_other_platforms_unaffected(self):
+        from launcher.workers.generate.section_prompt import _build_import_statement
+
+        assert _build_import_statement("python", "aspose_cells_foss") == "import aspose_cells_foss"
+        assert _build_import_statement("dotnet", "Aspose.Slides.Foss") == "using Aspose.Slides.Foss;"
+        assert _build_import_statement("java", "org.aspose.slides.foss") == "import org.aspose.slides.foss.*;"
+
+
+class TestCppWrongImportWarningFix:
+    """TC-5324: Wrong-import warning must name the commercial namespace, not append ::Foss."""
+
+    def test_cpp_warning_names_commercial_namespace(self):
+        from launcher.workers.generate.section_prompt import _build_wrong_import_warning
+
+        warning = _build_wrong_import_warning("cpp", "Aspose::Slides::Foss")
+        assert "Aspose::Slides::Foss::Foss" not in warning
+        assert "Aspose::Slides" in warning
+
+    def test_cpp_warning_3d_namespace(self):
+        from launcher.workers.generate.section_prompt import _build_wrong_import_warning
+
+        warning = _build_wrong_import_warning("cpp", "Aspose::ThreeD::Foss")
+        assert "Aspose::ThreeD::Foss::Foss" not in warning
+        assert "Aspose::ThreeD" in warning
+
+
+class TestCppImportRuleBlockFix:
+    """TC-5324: Import rule block must not produce '{canonical}::Foss' nonsense."""
+
+    def test_cpp_rule_block_no_double_foss(self):
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+
+        rule = _build_import_rule_block("cpp", "Aspose::Slides::Foss")
+        assert "Aspose::Slides::Foss::Foss" not in rule, (
+            f"Rule block must not contain double-Foss suffix, got: {rule!r}"
+        )
+
+    def test_cpp_rule_block_names_commercial_namespace(self):
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+
+        rule = _build_import_rule_block("cpp", "Aspose::Slides::Foss")
+        assert "Aspose::Slides" in rule
+        assert "Aspose::Slides::Foss" in rule
+
+    def test_cpp_rule_block_mentions_using_namespace(self):
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+
+        rule = _build_import_rule_block("cpp", "Aspose::Slides::Foss")
+        assert "using namespace" in rule
+
+    def test_cpp_rule_block_forbidden_dotnet_types(self):
+        """TC-5330: C++ import rule block must explicitly forbid .NET types."""
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+
+        rule = _build_import_rule_block("cpp", "Aspose::Slides::Foss")
+        # .NET types must be called out as forbidden
+        assert "System::DateTime" in rule, "Must list System::DateTime as forbidden"
+        assert "System::String" in rule, "Must list System::String as forbidden"
+        assert "InvalidOperationException" in rule, "Must forbid InvalidOperationException"
+        # C++ alternatives must be provided for exceptions
+        assert "std::runtime_error" in rule, "Must suggest std::runtime_error as C++ exception alternative"
+
+    def test_cpp_rule_block_enum_all_caps_rule(self):
+        """TC-5330: C++ import rule block must specify ALL_CAPS for enum members."""
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+
+        rule = _build_import_rule_block("cpp", "Aspose::Slides::Foss")
+        assert "PPTX" in rule, "Must show PPTX (ALL_CAPS) as correct enum member format"
+        assert "SaveFormat::PPTX" in rule, "Must show full correct enum path"
+
+    def test_cpp_rule_block_no_export_namespace(self):
+        """TC-5330: C++ rule must forbid the Export:: sub-namespace."""
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+
+        rule = _build_import_rule_block("cpp", "Aspose::Slides::Foss")
+        assert "Export" in rule, "Must mention Export namespace as forbidden"
+
+    def test_other_platform_no_forbidden_block(self):
+        """TC-5330: .NET and Java platforms must NOT get the C++ forbidden-types block."""
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+
+        dotnet_rule = _build_import_rule_block("dotnet", "Aspose.Slides")
+        java_rule = _build_import_rule_block("java", "com.aspose.slides")
+        assert "System::DateTime" not in dotnet_rule, ".NET rule must not have C++ forbidden block"
+        assert "System::DateTime" not in java_rule, "Java rule must not have C++ forbidden block"
+
+
+class TestCppImportRuleHardeningTC5329:
+    """TC-5329: _build_import_rule_block for cpp must enumerate all forbidden .NET/C++CLI patterns."""
+
+    def test_cpp_rule_includes_system_makeobject_prohibition(self) -> None:
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+        rule = _build_import_rule_block("cpp", "Aspose::Slides::Foss")
+        assert "System::MakeObject" in rule, (
+            "C++ import rule must explicitly forbid System::MakeObject<>"
+        )
+
+    def test_cpp_rule_includes_managed_pointer_prohibition(self) -> None:
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+        rule = _build_import_rule_block("cpp", "Aspose::Slides::Foss")
+        assert "^" in rule, (
+            "C++ import rule must mention ^ managed-pointer syntax as forbidden"
+        )
+        assert "gcnew" in rule, (
+            "C++ import rule must mention gcnew as forbidden"
+        )
+
+    def test_cpp_rule_includes_iinterface_prohibition(self) -> None:
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+        rule = _build_import_rule_block("cpp", "Aspose::Slides::Foss")
+        assert "IInterface" in rule or "IPresentation" in rule, (
+            "C++ import rule must mention IInterface/IPresentation instantiation as forbidden"
+        )
+
+    def test_cpp_rule_includes_construction_guidance(self) -> None:
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+        rule = _build_import_rule_block("cpp", "Aspose::Slides::Foss")
+        # The rule must provide a correct C++ construction example
+        assert "pres(" in rule or "make_shared" in rule or "direct construction" in rule.lower(), (
+            "C++ import rule must include guidance on correct C++ object construction"
+        )
+
+    def test_cpp_rule_includes_exception_guidance(self) -> None:
+        from launcher.workers.generate.section_prompt import _build_import_rule_block
+        rule = _build_import_rule_block("cpp", "Aspose::Slides::Foss")
+        assert "std::runtime_error" in rule or "std::exception" in rule, (
+            "C++ import rule must suggest std::runtime_error or std::exception as correct alternative"
+        )
+
+    def test_cpp_forbidden_types_block_mentions_prose(self) -> None:
+        """TC-5335: Forbidden types block must explicitly prohibit .NET types in PROSE too."""
+        from launcher.workers.generate.section_prompt import _build_cpp_forbidden_types_block
+        block = _build_cpp_forbidden_types_block()
+        assert "prose" in block.lower(), (
+            "TC-5335: Forbidden types block must explicitly mention prose prohibition "
+            "to prevent .NET types appearing in prose descriptions"
+        )
+        assert "code block" in block.lower(), (
+            "Forbidden types block must still mention code blocks"
+        )
+
+
+class TestCppSectionDirectivesTC5334:
+    """TC-5334: _get_structure_directive must return C++ cmake directives for install sections."""
+
+    def test_cpp_installation_directive_has_cmake_not_pip_as_instruction(self) -> None:
+        """C++ installation section must mention find_package and not instruct to 'Show the pip install'."""
+        from launcher.workers.generate.section_prompt import _get_structure_directive
+        directive = _get_structure_directive("Installation", platform="cpp")
+        # Must NOT contain 'pip install' as a positive instruction (like "Show the pip install command").
+        # It's acceptable (even desirable) to say "NEVER write pip install" — check for the positive phrase.
+        assert "show the pip" not in directive.lower(), (
+            "C++ installation directive must not instruct to 'Show the pip install'"
+        )
+        assert "find_package" in directive or "cmake" in directive.lower(), (
+            "C++ installation directive must mention find_package or CMake"
+        )
+
+    def test_python_installation_directive_has_pip(self) -> None:
+        """Python installation section must still mention pip install (unchanged)."""
+        from launcher.workers.generate.section_prompt import _get_structure_directive
+        directive = _get_structure_directive("Installation", platform="python")
+        assert "pip" in directive.lower(), (
+            "Python installation directive must still mention pip install"
+        )
+
+    def test_cpp_prerequisites_directive_has_cmake_not_pip_as_instruction(self) -> None:
+        """C++ prerequisites section must mention CMake/find_package as positive instruction."""
+        from launcher.workers.generate.section_prompt import _get_structure_directive
+        directive = _get_structure_directive("Prerequisites", platform="cpp")
+        assert "cmake" in directive.lower() or "find_package" in directive, (
+            "C++ prerequisites directive must mention CMake or find_package"
+        )
+        # The default says "language version, pip install command" — cpp override should NOT have this
+        assert "language version, pip" not in directive.lower(), (
+            "C++ prerequisites directive must not use the Python-centric 'language version, pip install' phrase"
+        )
+
+    def test_cpp_quick_install_directive_has_cmake_not_pip_as_instruction(self) -> None:
+        """C++ quick install section must return cmake-based directive."""
+        from launcher.workers.generate.section_prompt import _get_structure_directive
+        directive = _get_structure_directive("Quick Install", platform="cpp")
+        assert "find_package" in directive or "cmake" in directive.lower(), (
+            "C++ quick install directive must mention find_package or cmake"
+        )
+        assert "show the pip" not in directive.lower(), (
+            "C++ quick install directive must not instruct to show pip install"
+        )
+
+    def test_no_platform_falls_through_to_standard(self) -> None:
+        """Without platform, installation directive is the Python-centric default."""
+        from launcher.workers.generate.section_prompt import _get_structure_directive
+        directive = _get_structure_directive("Installation", platform="")
+        assert "pip" in directive.lower(), (
+            "No-platform installation directive should return Python-centric default with pip"
+        )
+
+    def test_cpp_directive_case_insensitive(self) -> None:
+        """'INSTALLATION' (uppercase) must also return C++ override."""
+        from launcher.workers.generate.section_prompt import _get_structure_directive
+        directive = _get_structure_directive("INSTALLATION", platform="cpp")
+        assert "find_package" in directive or "cmake" in directive.lower(), (
+            "C++ installation directive must mention find_package or CMake even when heading is UPPERCASE"
+        )

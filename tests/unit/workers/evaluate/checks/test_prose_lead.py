@@ -24,7 +24,7 @@ class TestProseLead:
         findings = check_prose_lead(content, "test-page", page_role="howto_article")
         assert len(findings) == 1
         assert findings[0].check == "prose_lead"
-        assert findings[0].severity == "medium"
+        assert findings[0].severity == "low"
 
     def test_in_this_section_flags(self):
         content = (

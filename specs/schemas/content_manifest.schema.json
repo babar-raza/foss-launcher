@@ -303,6 +303,15 @@
       "items": { "type": "string" },
       "default": [],
       "description": "TC-FIX-217: Member names from api_facts for evaluate cross-check."
+    },
+    "understanding_checkpoint_run_id": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "TC-5306: run_id of the understand checkpoint side-loaded by generate worker."
+    },
+    "extraction_completeness": {
+      "description": "TC-5308: ExtractionCompleteness from the Understand worker. Used by check_extraction_quality.",
+      "default": null
     }
   },
   "additionalProperties": false

@@ -47,9 +47,10 @@ from .low_specificity import check_low_specificity
 # --- TC-EVAL-500: hallucination_rate additional functions ---
 from .hallucination_rate import check_content_grounding
 # --- TC-EVAL-502: New checks ---
-from .code_platform import check_code_platform
+from .code_platform import check_code_platform, check_ecosystem_contamination  # TC-5329
 from .unsourced_metrics import check_unsourced_metrics
 from .content_viability import check_content_viability
+from .extraction_quality import check_extraction_quality  # TC-5308
 
 __all__ = [
     "check_api_allowlist",
@@ -95,6 +96,8 @@ __all__ = [
     "check_structure",
     "check_terminal_section",
     "check_code_platform",
+    "check_ecosystem_contamination",
     "check_unsourced_metrics",
     "check_content_viability",
+    "check_extraction_quality",
 ]

@@ -1,12 +1,12 @@
 {
   "frontmatter": {
-    "canonical": "https://kb.aspose.org/slides/cpp/how-to-convert-presentations-cpp/",
-    "canonical_import": "Aspose::Slides",
-    "code_import": "Aspose::Slides",
-    "date": "2026-03-24T16:29:46Z",
-    "dateModified": "2026-03-24T16:29:46Z",
-    "datePublished": "2026-03-24T16:29:46Z",
-    "description": "The library supports round-trip fidelity for .pptx files and enables conversion to common output formats via the `Presentation` class.",
+    "canonical": "https://kb.aspose.org/slides/cpp/convert-presentations/",
+    "canonical_import": "Aspose::Slides::Foss",
+    "code_import": "Aspose::Slides::Foss",
+    "date": "2026-03-29T16:35:25Z",
+    "dateModified": "2026-03-29T16:55:07Z",
+    "datePublished": "2026-03-29T16:35:25Z",
+    "description": "The library enables loading `a` source `presentation` and saving it in another format such as PPTX, with full fidelity for `slides`, `shapes`, and `text`...",
     "display_name": "Aspose.Slides FOSS for C++",
     "family": "slides",
     "keywords": [
@@ -15,21 +15,19 @@
       "cppnow slides",
       "cppcon slides 2025",
       "aspose slides cpp",
-      "meeting cpp slides",
-      "python slides",
-      "python slides for beginners"
+      "meeting cpp slides"
     ],
-    "lastmod": "2026-03-24T16:29:46Z",
+    "lastmod": "2026-03-29T16:55:07Z",
     "page_role": "howto_article",
     "platform": "cpp",
     "reading_time": 1,
     "robots": "index, follow",
     "seoTitle": "How to Convert File Formats with Aspose.Slides FOSS for C++ | Guide",
-    "slug": "how-to-convert-presentations-cpp",
+    "slug": "convert-presentations",
     "title": "How to Convert File Formats with Aspose.Slides FOSS for C++",
     "type": "howto_article",
-    "url": "/kb.aspose.org/slides/cpp/how-to-convert-presentations-cpp/",
-    "weight": 12
+    "url": "/kb.aspose.org/slides/cpp/convert-presentations/",
+    "weight": 13
   },
   "page_id": "kb/how-to-convert-presentations-cpp",
   "page_role": "howto_article",
@@ -38,7 +36,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "You will load a presentation file and convert it to another format using Aspose.Slides FOSS for C++. The library supports round-trip fidelity for .pptx files and enables conversion to common output formats via the `Presentation` class.",
+          "content": "You will convert `presentation` files between supported formats using Aspose.Slides FOSS for C++. The library enables loading `a` source `presentation` and saving it in another format such as PPTX, with full fidelity for `slides`, `shapes`, and `text` content.",
           "items": [],
           "language": null,
           "level": null,
@@ -53,7 +51,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "You will convert presentation files using Aspose.Slides FOSS for C++. Ensure you have a compatible C++17 compiler and the Aspose.Slides FOSS for C++ library installed.",
+          "content": "You will convert `presentation` files between supported formats using Aspose.Slides FOSS for C++. Ensure you have the required C++ environment and input file ready before proceeding.",
           "items": [],
           "language": null,
           "level": null,
@@ -64,20 +62,12 @@
           "content": "",
           "items": [
             "C++17 or later compiler (e.g., GCC 9+, Clang 9+, MSVC 2019+)",
-            "Aspose.Slides FOSS for C++ library installed and accessible via standard include paths",
-            "Input presentation file in a supported format (e.g., .pptx)"
+            "Aspose.Slides FOSS for C++ library installed and linked in your build system",
+            "A source presentation file in a supported format (e.g., .pptx)"
           ],
           "language": null,
           "level": null,
           "type": "list"
-        },
-        {
-          "claim_ids": [],
-          "content": "#include <Aspose::Slides>\n\nint main() {\n    // Example placeholder — actual usage depends on available API surface\n    return 0;\n}",
-          "items": [],
-          "language": "cpp",
-          "level": null,
-          "type": "code"
         }
       ],
       "heading": "Prerequisites",
@@ -88,7 +78,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "You will load a presentation file, configure conversion settings, and save it to another format using Aspose.Slides FOSS for C++. This section walks you through the minimal steps required to convert between supported presentation formats such as PPTX, PPT, and others.",
+          "content": "You will convert `presentation` files between supported formats using Aspose.Slides FOSS for C++ by loading the source file, applying conversion settings, and saving to the target format using the `IPresentation` interface.",
           "items": [],
           "language": null,
           "level": null,
@@ -99,7 +89,7 @@
           "content": "",
           "items": [
             "Aspose.Slides FOSS for C++ installed and linked in your build environment",
-            "A source presentation file (e.g., .pptx) available on disk"
+            "A source presentation file in a supported format (e.g., .pptx)"
           ],
           "language": null,
           "level": null,
@@ -107,7 +97,7 @@
         },
         {
           "claim_ids": [],
-          "content": "Step 1: Load Source Presentation",
+          "content": "Step 1: Load Source `Presentation`",
           "items": [],
           "language": null,
           "level": null,
@@ -115,7 +105,7 @@
         },
         {
           "claim_ids": [],
-          "content": "Include the Aspose.Slides header and instantiate the `Presentation` class with the path to your source file. This loads the entire presentation into memory for manipulation or conversion.",
+          "content": "Initialize the `IPresentation` interface by constructing it with the path to your source file. This loads the entire `presentation` structure into memory for further processing.",
           "items": [],
           "language": null,
           "level": null,
@@ -123,7 +113,7 @@
         },
         {
           "claim_ids": [],
-          "content": "#include <Aspose::Slides>\n\nauto pres = System::[identifier omitted]<Aspose::Slides::Presentation>(u\"input.pptx\");",
+          "content": "using namespace Aspose::Slides::Foss;\n\nIPresentation presentation(u\"input.pptx\");",
           "items": [],
           "language": "cpp",
           "level": null,
@@ -131,7 +121,7 @@
         },
         {
           "claim_ids": [],
-          "content": "This returns a `Presentation` object containing all slides, shapes, and formatting from the source file.",
+          "content": "This creates `a` fully populated `IPresentation` object ready for format conversion.",
           "items": [],
           "language": null,
           "level": null,
@@ -147,7 +137,7 @@
         },
         {
           "claim_ids": [],
-          "content": "Call the `Save` method on the `Presentation` object, specifying the output file path and desired format. The library automatically infers the output format from the file extension.",
+          "content": "Call the appropriate `save` method on the `IPresentation` object, specifying the output path and desired format. The library automatically handles internal serialization based on the target extension.",
           "items": [],
           "language": null,
           "level": null,
@@ -155,7 +145,7 @@
         },
         {
           "claim_ids": [],
-          "content": "pres->Save(u\"output.pdf\", Aspose::Slides::[identifier omitted]::Pdf);",
+          "content": "presentation.Save(u\"output.pptx\", SaveFormat::Pptx);",
           "items": [],
           "language": "cpp",
           "level": null,
@@ -163,7 +153,7 @@
         },
         {
           "claim_ids": [],
-          "content": "The file `output.pdf` is written to disk in PDF format with full slide fidelity preserved.",
+          "content": "This writes the converted `presentation` to disk in the specified format with full fidelity.",
           "items": [],
           "language": null,
           "level": null,
@@ -179,7 +169,7 @@
         },
         {
           "claim_ids": [],
-          "content": "The `Presentation` class handles both loading and saving operations. The constructor accepts a file path and parses the input format (e.g., PPTX, PPT). The `Save` method supports multiple output formats including PDF, PNG, and other presentation types via the `[identifier omitted]` enum.",
+          "content": "The `IPresentation` constructor parses the source file and populates `slide`, shape, and `text` structures. The Save() method serializes the in-memory representation to the target format using internal format-specific writers. All operations occur within the `Aspose::Slides::Foss` namespace.",
           "items": [],
           "language": null,
           "level": null,
@@ -195,23 +185,7 @@
         },
         {
           "claim_ids": [],
-          "content": "Wrap operations in a `try` block and catch `System::Exception` to handle file not found, invalid format, or permission errors explicitly.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "try {\n    auto pres = System::[identifier omitted]<Aspose::Slides::Presentation>(u\"input.pptx\");\n    pres->Save(u\"output.pdf\", Aspose::Slides::[identifier omitted]::Pdf);\n} catch (const System::Exception& ex) {\n    // Handle error\n}",
-          "items": [],
-          "language": "cpp",
-          "level": null,
-          "type": "code"
-        },
-        {
-          "claim_ids": [],
-          "content": "This ensures robust handling of runtime issues during conversion.",
+          "content": "Wrap conversion logic in `a` try-catch block to handle `System::Exception` and `std::runtime_error`. These exceptions may be thrown for invalid file paths, unsupported formats, or I/O failures during `save`.",
           "items": [],
           "language": null,
           "level": null,
@@ -226,18 +200,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "",
-          "items": [
-            "Aspose.Slides FOSS for C++ installed and linked in your build environment",
-            "A valid .pptx file available for conversion"
-          ],
-          "language": null,
-          "level": null,
-          "type": "list"
-        },
-        {
-          "claim_ids": [],
-          "content": "Include the canonical header and instantiate a `Presentation` object with the input file path. Then call the appropriate save method with the target format extension.",
+          "content": "You will convert `a` `presentation` file from one format to another using the `IPresentation` interface and the Save method. Aspose.Slides FOSS for C++ supports round-trip conversion of `.pptx` files to other formats such as `.pdf`, `.jpg`, `.png`, and `.svg`.",
           "items": [],
           "language": null,
           "level": null,
@@ -245,7 +208,7 @@
         },
         {
           "claim_ids": [],
-          "content": "#include <Aspose::Slides>\n\nint main() {\n    auto pres = System::[identifier omitted]<Aspose::Slides::Presentation>(u\"input.pptx\");\n    pres->Save(u\"output.pdf\", Aspose::Slides::[identifier omitted]::Pdf);\n    return 0;\n}",
+          "content": "using namespace Aspose::Slides::Foss;\n\n// Load the source presentation\nauto pres = System::MakeObject<Presentation>(u\"input.pptx\");\n\n// Save as PDF\npres->Save(u\"output.pdf\", SaveFormat::Pdf);",
           "items": [],
           "language": "cpp",
           "level": null,
@@ -253,11 +216,19 @@
         },
         {
           "claim_ids": [],
-          "content": "This code loads `input.pptx`, converts it to PDF, and writes `output.pdf`. Ensure the output directory is writable and the input file exists.",
+          "content": "The `Presentation` constructor loads the `.pptx` file into memory. The Save method writes the output in the specified format. Supported output formats include PDF, `image` formats (JPEG, PNG, SVG), and other `presentation` formats. Ensure the output path includes the correct file extension matching the target format.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "Note: The `SaveFormat` enum values such as `Pdf`, `Jpeg`, `Png`, and `Svg` are used to specify the target format. Only formats explicitly listed in the product documentation are supported.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "callout"
         }
       ],
       "heading": "Code Example",
@@ -268,7 +239,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Slides FOSS for C++ enables conversion between common presentation file formats using the `Aspose::Slides` library. You will load a presentation file and save it in another supported format.",
+          "content": "Aspose.Slides FOSS for C++ supports conversion between common `presentation` file formats using the `IPresentation` interface. You can load `a` source `presentation` and `save` it in another format by specifying the target file extension.",
           "items": [],
           "language": null,
           "level": null,
@@ -276,7 +247,7 @@
         },
         {
           "claim_ids": [],
-          "content": "| Format | Extension | Notes |\n|--------|-----------|-------|\n| PowerPoint Open XML | .pptx | Full round-trip support |\n| PowerPoint 97-2003 | .ppt | Legacy format support |\n| PDF | .pdf | Export to PDF |\n| Image (PNG) | .png | Slide-to-image export |\n| Image (JPEG) | .jpg | Slide-to-image export |\n| SVG | .svg | Vector slide export |\n| HTML | .html | Export to HTML |\n| XPS | .xps | Microsoft XPS format |\n| ODP | .odp | [identifier omitted] Presentation |\n| TIFF | .tiff | Multi-page image export |\n| EPUB | .epub | E-book format |\n| MHTML | .mht | Web archive format |",
+          "content": "| Format | Extension | Notes |\n|--------|-----------|-------|\n| PowerPoint Open XML | `.pptx` | Default input and output format |\n| PowerPoint 97-2003 | `.ppt` | Legacy binary format |\n| PDF | `.pdf` | High-fidelity document export |\n| XPS | `.xps` | Fixed-page document format |\n| SVG | `.svg` | Vector graphics export |\n| TIFF | `.tiff` | Multi-page `image` export |\n| HTML | `.html` | Web-compatible `slide` export |\n| MHTML | `.mht` | Single-file web archive |\n| ODP | `.odp` | `Presentation` |\n| POTX | `.potx` | PowerPoint template |\n| POT | `.pot` | PowerPoint 97-2003 template |\n| PPSX | `.ppsx` | PowerPoint `slide` show |\n| PPS | `.pps` | PowerPoint 97-2003 `slide` show |\n| PPTM | `.pptm` | Macro-enabled `presentation` |\n| POTM | `.potm` | Macro-enabled template |\n| PPSM | `.ppsm` | Macro-enabled `slide` show |\n| PPT | `.ppt` | Alias for legacy PowerPoint |\n| ODP | `.odp` | format |\n| SVG | `.svg` | Scalable Vector Graphics |\n| XPS | `.xps` | XML Paper Specification",
           "items": [],
           "language": null,
           "level": null,
@@ -291,29 +262,13 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "Aspose.Slides FOSS for C++ -- Related conversion guides and format documentation.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "For details on see also, see the Aspose.Slides FOSS for C++ documentation.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
           "content": "",
           "items": [
-            "[Frequently asked questions](/kb.aspose.org/slides/cpp/faq/)",
-            "[Visual effects capabilities](/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/)",
-            "[Key features overview](/blog.aspose.org/slides/cpp/slides-key-features/)",
-            "[Create presentations from scratch](/docs.aspose.org/slides/cpp/developer-guide/presentation-creation/)",
-            "[Work with slides programmatically](/docs.aspose.org/slides/cpp/developer-guide/slide-manipulation/)"
+            "[Frequently asked questions](/slides/cpp/frequently-asked-questions/)",
+            "[Get up and running quickly](/slides/cpp/getting-started/)",
+            "[What's new in this release](/slides/cpp/slides-foss/)",
+            "[Core capabilities overview](/slides/cpp/slides-features/)",
+            "[Step-by-step presentation creation](/slides/cpp/developer-guide/presentation-creation/)"
           ],
           "language": null,
           "level": null,

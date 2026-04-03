@@ -1,0 +1,86 @@
+{
+  "blog.aspose.org/cells/python/introducing-cells-foss-python": {
+    "grade": "A",
+    "promoted_at": "2026-03-24T10:11:00.819201+00:00"
+  },
+  "blog.aspose.org/cells/python/testcreateallcharts-spreadsheets": {
+    "grade": "B",
+    "promoted_at": "2026-03-22T09:06:02.263005+00:00"
+  },
+  "docs.aspose.org/cells/python/developer-guide/formula-calculation": {
+    "grade": "C",
+    "promoted_at": "2026-03-24T10:11:00.819201+00:00"
+  },
+  "docs.aspose.org/cells/python/developer-guide/getting-started": {
+    "grade": "C",
+    "promoted_at": "2026-03-11T12:10:05.755244+00:00"
+  },
+  "docs.aspose.org/cells/python/developer-guide/installation": {
+    "grade": "C",
+    "promoted_at": "2026-03-24T10:11:00.819201+00:00"
+  },
+  "docs.aspose.org/cells/python/developer-guide/spreadsheet-operations": {
+    "grade": "B",
+    "promoted_at": "2026-03-22T09:06:02.263005+00:00"
+  },
+  "kb.aspose.org/cells/python/faq": {
+    "grade": "A",
+    "promoted_at": "2026-03-24T10:11:00.819201+00:00"
+  },
+  "kb.aspose.org/cells/python/how-to-convert-csv-to-json-python": {
+    "grade": "B",
+    "promoted_at": "2026-03-22T09:06:02.263005+00:00"
+  },
+  "kb.aspose.org/cells/python/how-to-fix-spreadsheets-errors-python": {
+    "grade": "C",
+    "promoted_at": "2026-03-24T10:11:00.819201+00:00"
+  },
+  "kb.aspose.org/cells/python/how-to-load-spreadsheets-python": {
+    "grade": "B",
+    "promoted_at": "2026-03-22T09:06:02.263005+00:00"
+  },
+  "kb.aspose.org/cells/python/how-to-optimize-spreadsheets-python": {
+    "grade": "B",
+    "promoted_at": "2026-03-22T09:06:02.263005+00:00"
+  },
+  "kb.aspose.org/cells/python/how-to-save-spreadsheets-python": {
+    "grade": "B",
+    "promoted_at": "2026-03-24T10:11:00.819201+00:00"
+  },
+  "kb.aspose.org/cells/python/troubleshooting": {
+    "grade": "A",
+    "promoted_at": "2026-03-11T12:10:05.755244+00:00"
+  },
+  "reference.aspose.org/cells/python/api-overview": {
+    "grade": "C",
+    "promoted_at": "2026-03-22T09:06:02.263005+00:00"
+  },
+  "reference.aspose.org/cells/python/auto-filter": {
+    "grade": "C",
+    "promoted_at": "2026-03-11T21:11:58.055485+00:00"
+  },
+  "reference.aspose.org/cells/python/cell": {
+    "grade": "B",
+    "promoted_at": "2026-03-11T12:00:16.271779+00:00"
+  },
+  "reference.aspose.org/cells/python/cells": {
+    "grade": "C",
+    "promoted_at": "2026-03-22T09:06:02.263005+00:00"
+  },
+  "reference.aspose.org/cells/python/csv-handler": {
+    "grade": "C",
+    "promoted_at": "2026-03-22T09:06:02.263005+00:00"
+  },
+  "reference.aspose.org/cells/python/filter-column": {
+    "grade": "C",
+    "promoted_at": "2026-03-11T21:11:58.055485+00:00"
+  },
+  "reference.aspose.org/cells/python/workbook": {
+    "grade": "C",
+    "promoted_at": "2026-03-22T09:06:02.263005+00:00"
+  },
+  "reference.aspose.org/cells/python/worksheet": {
+    "grade": "A",
+    "promoted_at": "2026-03-24T10:11:00.819201+00:00"
+  }
+}

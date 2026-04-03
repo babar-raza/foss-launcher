@@ -313,3 +313,177 @@ class TestHG21MethodCorrection:
         result = _correct_method_names_in_code(blocks, {})
         assert len(result) == 1
         assert result[0].content == code
+
+
+class TestStripSkeletonDirectives:
+    """TC-GEN-602: _strip_skeleton_directives removes 'ProductName -- desc' sentences."""
+
+    def test_strips_directive_sentence(self):
+        """Directive sentence is removed from paragraph content."""
+        from launcher.workers.generate.section_validator import _strip_skeleton_directives
+        content = "Aspose.Cells for Python via .NET -- Provide an overview of the library."
+        result = _strip_skeleton_directives(content, "Aspose.Cells for Python via .NET")
+        assert "Aspose.Cells for Python via .NET -- " not in result
+        assert "Provide an overview" not in result
+
+    def test_non_directive_paragraph_unchanged(self):
+        """Normal prose is not affected by the strip."""
+        from launcher.workers.generate.section_validator import _strip_skeleton_directives
+        content = "Aspose.Cells supports reading and writing Excel files."
+        result = _strip_skeleton_directives(content, "Aspose.Cells")
+        assert result == content
+
+    def test_empty_content_returns_empty(self):
+        """Empty string returns empty string."""
+        from launcher.workers.generate.section_validator import _strip_skeleton_directives
+        assert _strip_skeleton_directives("", "Aspose.Cells") == ""
+
+    def test_empty_display_name_returns_content_unchanged(self):
+        """When display_name is empty, content is returned unchanged."""
+        from launcher.workers.generate.section_validator import _strip_skeleton_directives
+        content = "Aspose.Note -- Write some content here."
+        result = _strip_skeleton_directives(content, "")
+        assert result == content
+
+    def test_display_name_with_regex_special_chars(self):
+        """display_name containing .NET (dot = regex special) is escaped correctly."""
+        from launcher.workers.generate.section_validator import _strip_skeleton_directives
+        content = "Aspose.Slides for .NET -- Describe the conversion workflow."
+        result = _strip_skeleton_directives(content, "Aspose.Slides for .NET")
+        assert "-- Describe" not in result
+
+    def test_real_content_preserved_after_strip(self):
+        """Real content after directive sentence is preserved (only directive removed)."""
+        from launcher.workers.generate.section_validator import _strip_skeleton_directives
+        content = "This library provides spreadsheet support."
+        result = _strip_skeleton_directives(content, "Aspose.Cells")
+        assert "spreadsheet support" in result
+
+
+class TestCodeBlockDedup:
+    """TC-GEN-605: deduplicate_sections removes duplicate code blocks >= 5 lines."""
+
+    def _make_section(self, heading: str, blocks: list) -> object:
+        from launcher.models.page_ir import SectionIR
+        return SectionIR(
+            section_id=heading.lower().replace(" ", "_"),
+            heading=heading,
+            blocks=blocks,
+        )
+
+    def _make_code(self, code: str) -> "BlockIR":
+        return BlockIR(type=BlockType.code, content=code, language="python", claim_ids=[])
+
+    def _make_para(self, text: str) -> "BlockIR":
+        return BlockIR(type=BlockType.paragraph, content=text, claim_ids=[])
+
+    def test_identical_large_code_blocks_deduplicated(self):
+        """Identical code blocks >= 5 lines: second occurrence removed."""
+        from launcher.workers.generate.section_validator import deduplicate_sections
+        code = "import aspose_cells_foss\nwb = Workbook()\nws = wb.worksheets[0]\ncell = ws.cells['A1']\ncell.put_value(42)"
+        s1 = self._make_section("Load", [self._make_code(code)])
+        s2 = self._make_section("Save", [self._make_code(code)])
+        result = deduplicate_sections([s1, s2])
+        blocks_s2 = result[1].blocks
+        assert len(blocks_s2) == 0, "Second section should have the duplicate removed"
+
+    def test_different_code_blocks_both_kept(self):
+        """Different code blocks are not deduplicated."""
+        from launcher.workers.generate.section_validator import deduplicate_sections
+        code1 = "import aspose_cells_foss\nwb = Workbook()\nws = wb.worksheets[0]\ncell = ws.cells['A1']\ncell.put_value(1)"
+        code2 = "import aspose_cells_foss\nwb = Workbook()\nws = wb.worksheets[0]\ncell = ws.cells['B1']\ncell.put_value(2)"
+        s1 = self._make_section("S1", [self._make_code(code1)])
+        s2 = self._make_section("S2", [self._make_code(code2)])
+        result = deduplicate_sections([s1, s2])
+        assert len(result[0].blocks) == 1
+        assert len(result[1].blocks) == 1
+
+    def test_short_code_blocks_not_deduplicated(self):
+        """Code blocks < 5 lines are exempt from dedup."""
+        from launcher.workers.generate.section_validator import deduplicate_sections
+        short_code = "wb = Workbook()\nwb.save('out.xlsx')"  # 2 lines
+        s1 = self._make_section("S1", [self._make_code(short_code)])
+        s2 = self._make_section("S2", [self._make_code(short_code)])
+        result = deduplicate_sections([s1, s2])
+        assert len(result[0].blocks) == 1
+        assert len(result[1].blocks) == 1
+
+    def test_prose_dedup_unaffected_by_code_dedup(self):
+        """Paragraph dedup still works independently of code block dedup."""
+        from launcher.workers.generate.section_validator import deduplicate_sections
+        prose = (
+            "Aspose.Cells provides comprehensive Excel manipulation. "
+            "You can read and write XLSX files natively without Microsoft Excel. "
+            "The library supports all major spreadsheet operations including formulas. "
+        )
+        s1 = self._make_section("Intro", [self._make_para(prose)])
+        s2 = self._make_section("Overview", [self._make_para(prose)])
+        result = deduplicate_sections([s1, s2])
+        # First section keeps paragraph, second has it removed
+        assert len(result[0].blocks) == 1
+        assert len(result[1].blocks) == 0
+
+
+# ---------------------------------------------------------------------------
+# TC-5314: Platform guard for import normalization
+# ---------------------------------------------------------------------------
+
+class TestImportNormalizationPlatformGuard:
+    """TC-5314: Python import normalization must NOT run for non-Python products
+    even when the code block fence tag says 'python'.
+    """
+
+    def _make_dotnet_product(self) -> object:
+        from launcher.models.product import ProductIdentity
+        return ProductIdentity(
+            display_name="Aspose.Cells",
+            canonical_import="Aspose.Cells",
+            platform="dotnet",
+            family="cells",
+            repo_url="https://github.com/example/repo",
+        )
+
+    def _make_python_product(self) -> object:
+        from launcher.models.product import ProductIdentity
+        return ProductIdentity(
+            display_name="Aspose.Cells",
+            canonical_import="aspose_cells_foss",
+            runtime_import="aspose_cells_foss",
+            platform="python",
+            family="cells",
+            repo_url="https://github.com/example/repo",
+        )
+
+    def test_dotnet_product_python_tagged_block_not_normalized(self):
+        """TC-5314: .NET product with language='python' block: normalization skipped.
+
+        A .NET product whose LLM output mistakenly tagged a C# code block as
+        'python' must NOT have its content rewritten by the Python import normalizer.
+        The C# 'using Aspose.Cells;' statement must be preserved unchanged.
+        """
+        from launcher.workers.generate.section_validator import _validate_block
+        raw = {
+            "type": "code",
+            "language": "python",
+            "content": "using Aspose.Cells;",
+        }
+        result = _validate_block(raw, product=self._make_dotnet_product(), allowed_claim_ids=set(), import_allowlist=[])
+        assert result is not None
+        # The 'using' statement should be unchanged (not converted to Python import syntax)
+        assert "using Aspose.Cells" in (result.content or "")
+        # Must NOT contain Python-style import
+        assert result.content != "import aspose_cells_foss"
+
+    def test_python_product_python_tagged_block_normalized(self):
+        """TC-5314: Python product with language='python' block: normalization DOES run."""
+        from launcher.workers.generate.section_validator import _validate_block
+        raw = {
+            "type": "code",
+            "language": "python",
+            "content": "import aspose.cells",
+        }
+        result = _validate_block(raw, product=self._make_python_product(), allowed_claim_ids=set(), import_allowlist=[])
+        assert result is not None
+        # Normalization ran — content should reference the canonical import
+        content = result.content or ""
+        assert "aspose_cells_foss" in content or "aspose.cells" in content

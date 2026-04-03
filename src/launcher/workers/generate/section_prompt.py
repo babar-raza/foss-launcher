@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -17,20 +18,11 @@ from launcher.models.product import (
 )
 from launcher.models.understanding import PlannedPage
 from launcher.shared.page_skeletons import SkeletonSection
-from launcher.shared.platform_utils import get_install_cmd, get_lang_tag
+from launcher.shared.families_loader import get_import_keyword, get_lang_tag
+from launcher.shared.platform_utils import get_install_cmd
 
 
 _PROMPT_PATH = Path(__file__).resolve().parents[2] / "prompts" / "section_writer.txt"
-
-# TC-CPP-411: Platform-aware language tag for verification code fences.
-_VERIFICATION_LANG: dict[str, str] = {
-    "python": "python",
-    "dotnet": "csharp",
-    "java": "java",
-    "cpp": "cpp",
-    "node": "javascript",
-    "typescript": "typescript",
-}
 
 # ---------------------------------------------------------------------------
 # TC-FIX-214: Prose contract loading
@@ -59,25 +51,19 @@ def _load_prose_contract(page_role: str) -> str:
 
 # ---------------------------------------------------------------------------
 # TC-GEN-212: Platform-aware import conventions for section_writer.txt
+# TC-5307: import_keyword now sourced from configs/families.yaml via families_loader
 # ---------------------------------------------------------------------------
-
-_IMPORT_KEYWORD: dict[str, str] = {
-    "python": "import",
-    "java": "import",
-    "dotnet": "using",
-    "cpp": "#include",
-    "node": "require/import",
-    "typescript": "import",
-}
 
 
 def _build_import_statement(platform: str, code_import: str) -> str:
     """Build the canonical import statement for the platform."""
-    kw = _IMPORT_KEYWORD.get(platform, "import")
+    kw = get_import_keyword(platform, "import")
     if platform == "dotnet":
         return f"using {code_import};"
     if platform == "cpp":
-        return f'#include <{code_import}>'
+        # TC-5324: C++ canonical import uses 'using namespace', NOT '#include <namespace>'
+        # (#include uses file paths like Aspose/Slides/Foss/Presentation.h, not :: namespace syntax)
+        return f"using namespace {code_import};"
     if platform in ("node", "typescript"):
         return f'import {{ ... }} from "{code_import}";'
     if platform == "java":
@@ -91,21 +77,79 @@ def _build_wrong_import_warning(platform: str, code_import: str) -> str:
     if platform == "python" and "aspose" in code_import.lower():
         return ' If you write "import aspose.cells" or any dotted Aspose path that differs from the one above, your output is wrong.'
     if platform == "cpp":
+        # TC-5324: Warn against the commercial namespace (without ::Foss suffix).
+        # The old warning appended ::Foss to the already-::Foss canonical_import, producing nonsense.
+        commercial_ns = code_import
+        if commercial_ns.endswith("::Foss"):
+            commercial_ns = commercial_ns[: -len("::Foss")]
         return (
-            f' Do NOT append, modify, or extend the namespace. '
-            f'For example, NEVER write `{code_import}::Foss` or any sub-namespace not listed in the API SURFACE.'
+            f" NEVER use the commercial namespace `{commercial_ns}` — always use "
+            f"`{code_import}`. Do not use internal sub-namespaces."
         )
     return ""
+
+
+def _build_cpp_forbidden_types_block() -> str:
+    """TC-5329/TC-5335: Return C++ forbidden-.NET/C++CLI patterns block.
+
+    The LLM (qwen3-next) is trained on Aspose .NET/C# docs and defaults to CLR idioms
+    in C++ code. This block explicitly forbids construction patterns, types, and syntax
+    that belong to .NET or C++/CLI but are invalid in standard C++ FOSS code.
+
+    TC-5335: Prohibition extended to prose as well as code blocks — the LLM was writing
+    .NET types in prose descriptions (e.g., "Use System::Drawing::PointF to specify
+    position") causing api_allowlist:HIGH findings.
+    """
+    # TC-5335: "in code blocks OR in prose" — LLM also writes .NET types in prose.
+    return (
+        "FORBIDDEN C++ PATTERNS — NEVER write any of the following in code blocks OR in prose: "
+        "`System::MakeObject<>` (use direct construction: `Presentation pres(\"file.pptx\");`), "
+        "`System::DynamicCast<>` or `System::SafeCast<>` (use `dynamic_cast<T*>()` or `static_cast<T*>()`), "
+        "`System::Exception`, `System::Exception^`, `InvalidOperationException` "
+        "(use `std::runtime_error` or `std::exception` for C++ exceptions), "
+        "`System::DateTime` (use `std::chrono::system_clock::time_point`), "
+        "`System::String` (use `std::string` or `std::u16string`), "
+        "`System::Drawing::`, `System::IO::` (the `System::` "
+        "namespace does not exist in standard C++ — it is .NET/CLR only), "
+        "`gcnew` keyword (C++/CLI only — not valid in standard C++), "
+        "`^` managed-pointer syntax such as `Type^ var` (C++/CLI only), "
+        "`IInterface` variable declarations such as `IPresentation p(\"file.pptx\")` "
+        "(interfaces cannot be instantiated — use the concrete class `Presentation`), "
+        "`.get_PropertyName()` accessor calls such as `->get_Message()` or `->get_Slides()` "
+        "(these are .NET property-accessor naming patterns — C++ FOSS uses direct member access). "
+        "C++ FOSS method names are lowercase snake_case: use `add_auto_shape()` not `AddAutoShape()`, "
+        "`remove()` not `Remove()`, `save()` not `Save()`. "
+        "Use ONLY the exact method names listed in the API SURFACE block — never PascalCase-convert them. "
+        "C++ enum members are UPPER_SNAKE_CASE: write `SaveFormat::PPTX` not `SaveFormat::Pptx`, "
+        "`SaveFormat::PDF` not `SaveFormat::Pdf`. "
+        "NEVER use `Aspose::Slides::Export::SaveFormat` — use `SaveFormat` directly after "
+        "`using namespace Aspose::Slides::Foss;`."
+    )
 
 
 def _build_import_rule_block(platform: str, code_import: str) -> str:
     """Build the CRITICAL IMPORT RULE block for section_writer.txt."""
     if platform == "python":
+        # TC-HEAL-006: When code_import ends with _foss, the base package (without _foss)
+        # often exists as a well-known PyPI package with strong LLM training priors.
+        # Explicitly name it as NEVER so the LLM doesn't revert to the commercial package.
+        _hardcoded_never: frozenset[str] = frozenset({"aspose.cells", "aspose.pydrawing"})
+        never_also = ""
+        if code_import.endswith("_foss"):
+            base = code_import[: -len("_foss")]       # e.g. aspose_email
+            base_dotted = base.replace("_", ".")       # e.g. aspose.email
+            if base_dotted.lower() not in _hardcoded_never:
+                never_also = (
+                    f" NEVER write `import {base_dotted}`, `from {base_dotted} import`, "
+                    f"or `import {base}` — these refer to the commercial package which does NOT "
+                    f"exist in this FOSS distribution and will cause ImportError at runtime."
+                )
         return (
             f"CRITICAL IMPORT RULE: The ONLY valid Python import for this product is "
             f"`{code_import}`. NEVER write `import aspose.cells`, `import aspose.pydrawing`, "
             f"`import Aspose.Cells`, or any dotted Aspose path that differs from `{code_import}`. "
-            f"ALWAYS write: `import {code_import}`. Any other import path is WRONG and will be rejected"
+            f"ALWAYS write: `import {code_import}`. Any other import path is WRONG and will be rejected."
+            f"{never_also}"
         )
     if platform == "dotnet":
         return (
@@ -121,12 +165,21 @@ def _build_import_rule_block(platform: str, code_import: str) -> str:
             f"ALWAYS write: `import {code_import}.*;<your specific class imports>`"
         )
     if platform == "cpp":
+        # TC-5324: Derive commercial namespace for the "NEVER use" example.
+        # The old rule used {code_import}::Foss which produced Aspose::Slides::Foss::Foss.
+        commercial_ns = code_import
+        if commercial_ns.endswith("::Foss"):
+            commercial_ns = commercial_ns[: -len("::Foss")]
+        # TC-5330: Append explicit .NET-type forbidden block — the LLM has strong .NET priors
+        # and reverts to System::DateTime, System::String, Drawing::PointF, etc. in C++ code.
+        forbidden = _build_cpp_forbidden_types_block()
         return (
             f"CRITICAL IMPORT RULE: The ONLY valid C++ namespace for this product is "
-            f"`{code_import}`. All `#include` directives and `using namespace` declarations "
-            f"MUST use exactly `{code_import}`. Do NOT append, modify, or extend the namespace "
-            f"(e.g., do NOT use `{code_import}::Foss` or any other variant). "
-            f"NEVER write Python-style imports or .NET-style using directives"
+            f"`{code_import}`. In every code block write `using namespace {code_import};`. "
+            f"NEVER use the commercial namespace `{commercial_ns}` — it refers to a different "
+            f"non-FOSS library. Do NOT append, modify, or extend the namespace beyond "
+            f"`{code_import}`. NEVER write Python-style imports or .NET-style using directives. "
+            f"{forbidden}"
         )
     # Fallback for node/typescript/unknown
     return (
@@ -139,6 +192,17 @@ def _build_import_rule_block(platform: str, code_import: str) -> str:
 # ---------------------------------------------------------------------------
 
 _REFERENCE_ROLES: set[str] = {"api_reference", "reference_object_page"}
+
+# TC-GEN-604: Pattern matching test-file paths in snippet source_file.
+# Matches: tests/<anything>, test/<anything>, *_test.py, test_*.py
+_TEST_FILE_PATH_RE = re.compile(r'(?i)(?:^|[/\\])tests?[/\\]|_test\.|(?:^|[/\\])test_')
+
+
+def _is_test_file_snippet(snippet: object) -> bool:
+    """Return True if snippet was extracted from a test file (BPW-02/UND-1 promoted)."""
+    source_file = getattr(snippet, "source_file", "") or ""
+    return bool(_TEST_FILE_PATH_RE.search(source_file.replace("\\", "/")))
+
 
 # TC-3902: Roles that require at least one code block per section.
 # When a section belongs to one of these roles AND no executable snippets are
@@ -609,8 +673,42 @@ _GENERIC_STRUCTURAL_DIRECTIVE: str = (
     "information for a developer who needs to accomplish a task."
 )
 
+# TC-5334: C++ platform overrides for install-related section directives.
+# These replace the Python-centric default directives (which mention "pip install")
+# when the page platform is "cpp". Keyed by lowercased section heading.
+_CPP_SECTION_DIRECTIVES: dict[str, str] = {
+    "installation": (
+        "Show the CMake find_package command in a cmake code block. "
+        "NEVER write pip install — C++ installation uses CMake: "
+        "`find_package(aspose_slides_foss REQUIRED)` in CMakeLists.txt. "
+        "Then describe including the main header `<Aspose/Slides/Foss>` "
+        "and using the canonical namespace."
+    ),
+    "install via package manager": (
+        "Show the CMake find_package command in a cmake code block. "
+        "NEVER write pip install or npm install. "
+        "C++ uses: `find_package(aspose_slides_foss REQUIRED)`"
+    ),
+    "prerequisites": (
+        "List the required C++ setup: a C++17-compatible compiler, CMake 3.16+, "
+        "and the find_package installation command. "
+        "NEVER mention pip install or Python setup. "
+        "Use a list block or short paragraphs."
+    ),
+    "quick install": (
+        "Show the CMake find_package command in a cmake code block. "
+        "NEVER write pip install. "
+        "C++ installation: `find_package(aspose_slides_foss REQUIRED)` in CMakeLists.txt."
+    ),
+    "system requirements": (
+        "List minimum C++ version (C++17), CMake version (3.16+), OS compatibility, "
+        "and any system dependencies in a list block. "
+        "NEVER mention Python version or pip."
+    ),
+}
 
-def _get_structure_directive(heading: str, page_role: str = "") -> str:
+
+def _get_structure_directive(heading: str, page_role: str = "", platform: str = "") -> str:
     """Return the structural directive for a section heading.
 
     4-tier lookup (TC-3879 Wave 1 F3):
@@ -630,6 +728,17 @@ def _get_structure_directive(heading: str, page_role: str = "") -> str:
         override = _REFERENCE_DIRECTIVE_OVERRIDES.get(key)
         if override:
             return override
+
+    # TC-5334: Tier 0 — C++ platform overrides for install-related sections.
+    # Must fire before Tier 1 to prevent pip-install directives reaching C++ pages.
+    if platform == "cpp":
+        cpp_directive = _CPP_SECTION_DIRECTIVES.get(key)
+        if cpp_directive:
+            return cpp_directive
+        # Also check Tier 3 prefix mapping against cpp overrides to catch "Quick Install" etc.
+        for keyword, directive_key in _HEADING_PREFIX_MAP.items():
+            if keyword in key and directive_key in _CPP_SECTION_DIRECTIVES:
+                return _CPP_SECTION_DIRECTIVES[directive_key]
 
     # Tier 1: exact match
     directive = _STRUCTURE_DIRECTIVES.get(key, "")
@@ -717,10 +826,11 @@ def _format_api_ids_guard(api_identifiers: "list[str] | None", display_name: str
     """
     if not api_identifiers:
         return ""
-    # Only show class-level identifiers (capitalized tokens) to keep the list short
-    class_names = [t for t in api_identifiers if t and t[0].isupper()][:30]
+    # Only show class-level identifiers (capitalized tokens) to keep the list short.
+    # TC-EVAL-507: cap raised from 30 → 60 to cover larger API surfaces.
+    class_names = [t for t in api_identifiers if t and t[0].isupper()][:60]
     if not class_names:
-        class_names = list(api_identifiers)[:30]
+        class_names = list(api_identifiers)[:60]
     names_str = ", ".join(class_names)
     return (
         f"KNOWN API CLASSES FOR {display_name.upper()} "
@@ -944,11 +1054,31 @@ def build_section_prompt(
 
     # Filter snippets linked to section claims, rank by quality, cap at 5
     section_claim_ids = {c.claim_id for c in section_claims}
-    section_snippets = _rank_snippets(snippets, section_claim_ids)
+    # TC-GEN-604 / TC-GEN-704: Prefer non-test snippets for ALL page roles to avoid
+    # TestCase boilerplate contaminating content pages.  Fall back to test snippets
+    # only if no non-test snippets are available (avoids EVIDENCE ABSENT).
+    _page_role = getattr(page, "page_role", "") or ""
+    snippets_for_section = snippets
+    non_test = [s for s in snippets if not _is_test_file_snippet(s)]
+    filtered_count = len(snippets) - len(non_test)
+    if filtered_count > 0:
+        logger.debug(
+            "[TC-GEN-704] Filtered %d test-file snippet(s) for role '%s' "
+            "(fallback=%s)",
+            filtered_count, _page_role, not bool(non_test),
+        )
+    snippets_for_section = non_test if non_test else snippets
+    section_snippets = _rank_snippets(snippets_for_section, section_claim_ids)
 
-    # Prioritize class_briefs based on page claims (AQ-03)
-    if class_briefs and page_claims:
-        class_briefs = _prioritize_class_briefs(class_briefs, page_claims)
+    # TC-HEAL-003: Prioritize class_briefs by section heading relevance (primary)
+    # and claim-mention (secondary). Works even with empty page_claims.
+    if class_briefs:
+        class_briefs = _prioritize_class_briefs(
+            class_briefs,
+            page_claims,
+            heading=section.heading,
+            content_hint=section.content_hint or "",
+        )
 
     # Build claims block
     claims_block = _format_claims(section_claims)
@@ -981,7 +1111,11 @@ def build_section_prompt(
     _page_role_str = getattr(page, "page_role", "unknown") or "unknown"
 
     # Build section-type-specific directive
-    structure_directive = _get_structure_directive(section.heading, page_role=_page_role_str)
+    # TC-5334: Pass platform so C++ install sections get find_package instead of pip install.
+    _platform_str = getattr(product, "platform", "") or ""
+    structure_directive = _get_structure_directive(
+        section.heading, page_role=_page_role_str, platform=_platform_str
+    )
 
     # Build golden reference block
     # golden_dir may be passed directly (from generate worker) or derived from page.golden
@@ -1184,7 +1318,7 @@ def build_section_prompt(
 
     # TC-4227 + TC-GEN-212: Platform-aware canonical import reminder at the top.
     # Overrides LLM world-knowledge bias toward commercial import paths.
-    _kw = _IMPORT_KEYWORD.get(product.platform, "import")
+    _kw = get_import_keyword(product.platform, "import")
     if product.platform == "python":
         _wrong_import_example = "aspose.cells" if "aspose" in code_import.lower() else f"import_{code_import.replace('_', '.')}"
         _canonical_reminder = (
@@ -1205,10 +1339,14 @@ def build_section_prompt(
             f"WRONG:    using {code_import}  \u2190 NEVER write .NET-style directives\n\n"
         )
     elif product.platform == "cpp":
+        # TC-5324: Derive commercial namespace for WRONG example (strip ::Foss to avoid ::Foss::Foss).
+        _cpp_commercial_ns = code_import
+        if _cpp_commercial_ns.endswith("::Foss"):
+            _cpp_commercial_ns = _cpp_commercial_ns[: -len("::Foss")]
         _canonical_reminder = (
             f"CANONICAL IMPORT REMINDER \u2014 THIS OVERRIDES YOUR WORLD KNOWLEDGE:\n"
             f"CORRECT:  using namespace {code_import};\n"
-            f"WRONG:    using namespace {code_import}::Foss;  \u2190 NEVER extend the namespace\n"
+            f"WRONG:    using namespace {_cpp_commercial_ns};  \u2190 NEVER use the commercial namespace\n"
             f"WRONG:    import {code_import}  \u2190 NEVER write Python-style imports\n\n"
         )
     else:
@@ -1216,7 +1354,14 @@ def build_section_prompt(
             f"CANONICAL IMPORT REMINDER:\n"
             f"CORRECT:  {_import_statement}\n\n"
         )
-    result = _canonical_reminder + result
+    # TC-5303: Link format reminder — prevents link_validity HIGH findings.
+    # LLM training data contains /docs.aspose.org/... paths; site-relative paths are required.
+    _link_format_reminder = (
+        "LINK FORMAT RULE: Internal links MUST use site-relative paths.\n"
+        "CORRECT:  [text](/3d/dotnet/developer-guide/...)\n"
+        "WRONG:    [text](/docs.aspose.org/3d/dotnet/...)  \u2190 NEVER include the subdomain\n\n"
+    )
+    result = _canonical_reminder + _link_format_reminder + result
 
     # TC-HYBRID-04: Inject install recipe block for install/getting-started pages.
     # TC-4084: Use install_command (renamed from pip_command) to support multi-platform.
@@ -1228,7 +1373,7 @@ def build_section_prompt(
         )
         if getattr(install_recipe, "verification_code", ""):
             _install_block += (
-                f"```{_VERIFICATION_LANG.get(product.platform, 'python')}\n" + install_recipe.verification_code + "\n```\n"
+                f"```{get_lang_tag(product.platform, 'python')}\n" + install_recipe.verification_code + "\n```\n"
             )
         result = result + _install_block
 
@@ -1286,6 +1431,9 @@ def build_section_prompt(
     if getattr(page, "page_role", "") == "faq":
         result = result + (
             "\n\n## FAQ writing rules\n"
+            "- Structure the FAQ as Q&A pairs: each question MUST be an H3 heading "
+            "(### How do I ...? / ### What is ...? / ### Can I ...?).\n"
+            "- You MUST include at least 3 question headings (H3) in this section.\n"
             "- Each answer must contain at least 3 complete sentences of explanation.\n"
             "- The FAQ page must include at least one code example (fenced code block) "
             "showing how to use the product for the most common question.\n"
@@ -1503,17 +1651,36 @@ def _prioritize_class_briefs(
     class_briefs: list[ClassBrief],
     page_claims: list[Claim],
     cap: int = 15,
+    *,
+    heading: str = "",
+    content_hint: str = "",
 ) -> list:
-    """Reorder class_briefs: claim-mentioned classes first, then rest (AQ-03)."""
-    import re
+    """Reorder class_briefs: heading-relevant first, then claim-mentioned, then rest.
+
+    TC-HEAL-003: Added heading/content_hint scoring as primary signal so sections
+    with sparse claims still receive the most topically relevant API classes first.
+    AQ-03 (claim-mention) is preserved as secondary sort key.
+    """
+    import re as _re
+
+    # Primary signal: word overlap between PascalCase class name and section heading/hint
+    _query_words: set[str] = set(
+        _re.findall(r'\b\w{3,}\b', (heading + " " + content_hint).lower())
+    )
+
+    def _pascal_words(name: str) -> set[str]:
+        return set(w.lower() for w in _re.findall(r'[A-Z][a-z0-9]+', name))
+
     claim_text = " ".join(c.text for c in page_claims)
-    mentioned = [
-        b for b in class_briefs
-        if re.search(r'\b' + re.escape(b.name) + r'\b', claim_text)
-    ]
-    mentioned_set = set(id(b) for b in mentioned)
-    rest = [b for b in class_briefs if id(b) not in mentioned_set]
-    return (mentioned + rest)[:cap]
+
+    def _score(brief: "ClassBrief") -> tuple[int, int]:
+        heading_score = len(_query_words & _pascal_words(brief.name)) if _query_words else 0
+        claim_score = 1 if claim_text and _re.search(
+            r'\b' + _re.escape(brief.name) + r'\b', claim_text
+        ) else 0
+        return (heading_score, claim_score)
+
+    return sorted(class_briefs, key=_score, reverse=True)[:cap]
 
 
 def _format_api_surface(

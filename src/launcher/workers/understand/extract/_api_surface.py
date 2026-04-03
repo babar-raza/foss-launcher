@@ -386,9 +386,26 @@ def _extract_api_surface(
     _total_raw_classes = 0
     _internal_filtered_count = 0
     _test_filtered_count = 0
+    _cpp_files_processed = 0    # OB-01: C++ routing observability
+    _cpp_fwd_decl_filtered = 0  # SR-01/TC-5312: forward-declaration stubs dropped
 
     for src_file in filtered_files:
-        result = analyze_file_safe(src_file, repo_dir=repo_dir)
+        # TC-5310: Route C++ files through the adapter's extract_class_details()
+        # which uses ts_analyzer(language="cpp") for accurate AST-based extraction.
+        # analyze_file_safe() does not parse C++ headers; the CppExtractor does.
+        if adapter and src_file.suffix.lower() in _CPP_EXTENSIONS:
+            _cpp_files_processed += 1
+            try:
+                classes_raw = adapter.extract_class_details(src_file, repo_dir, product)
+                result: dict | None = {"classes": classes_raw} if classes_raw else None
+            except Exception as _exc:
+                logger.warning(
+                    "cpp_adapter_failed: %s — falling back to analyze_file_safe for %s",
+                    _exc, src_file.name,
+                )
+                result = analyze_file_safe(src_file, repo_dir=repo_dir)
+        else:
+            result = analyze_file_safe(src_file, repo_dir=repo_dir)
         if not result:
             continue
         file_export_allowlist = _export_allowlist_for_source_file(
@@ -417,6 +434,27 @@ def _extract_api_surface(
             if _is_internal_class(cls_name, file_export_allowlist):
                 _internal_filtered_count += 1
                 continue
+
+            # SR-01/TC-5312: Skip C++ forward-declaration stubs. When ts_analyzer processes
+            # a header that forward-declares a class without defining it, the entry has 0
+            # methods + 0 method_details + 0 properties. The real definition in the class's
+            # own header will have full methods and will NOT be filtered.
+            # TC-5328: Exempt enum classes — they naturally have 0 methods/properties but
+            # are real definitions (e.g. SaveFormat) that must enter public_classes.
+            if src_file.suffix.lower() in _CPP_EXTENSIONS and isinstance(cls_entry, dict):
+                if (
+                    not cls_entry.get("methods")
+                    and not cls_entry.get("method_details")
+                    and not cls_entry.get("properties")
+                    and not cls_entry.get("is_enum", False)
+                ):
+                    _cpp_fwd_decl_filtered += 1
+                    continue
+                elif cls_entry.get("is_enum", False):
+                    logger.debug(
+                        "TC-5328: enum class %s passes SR-01 filter (%d members)",
+                        cls_name, len(cls_entry.get("enum_members") or []),
+                    )
 
             public_classes.append(cls_name)
             api_identifiers.add(cls_name)
@@ -492,6 +530,12 @@ def _extract_api_surface(
                         docstring_snippet=docstring_snippet,
                     ))
                     top_level_enums.extend(class_enums)
+                    # TC-5328: Add enum member names to api_identifiers so
+                    # api_allowlist recognises SaveFormat::Pptx, etc.
+                    for m in cls_entry.get("enum_members", []):
+                        mname = m["name"] if isinstance(m, dict) else str(m)
+                        if mname:
+                            api_identifiers.add(mname)
 
                 typed_properties = _dedupe_named_records(typed_properties)
                 properties = _dedupe_names(properties)
@@ -553,13 +597,16 @@ def _extract_api_surface(
             seen.add(cls)
             deduped_classes.append(cls)
 
-    # Deduplicate class_briefs by name (keep first occurrence)
-    seen_briefs: set[str] = set()
-    unique_briefs: list[ClassBrief] = []
+    # Deduplicate class_briefs by name (SR-01/TC-5310: keep richest occurrence,
+    # i.e. the one with the most typed methods. This prevents C++ forward-declaration
+    # entries — extracted from headers that forward-declare a class before defining it —
+    # from winning over the real definition in the class's own header file.)
+    name_to_brief: dict[str, ClassBrief] = {}
     for brief in class_briefs:
-        if brief.name not in seen_briefs:
-            seen_briefs.add(brief.name)
-            unique_briefs.append(brief)
+        existing = name_to_brief.get(brief.name)
+        if existing is None or len(brief.typed_methods) > len(existing.typed_methods):
+            name_to_brief[brief.name] = brief
+    unique_briefs = list(name_to_brief.values())
     unique_briefs = sorted(
         unique_briefs,
         key=lambda brief: _brief_sort_key(brief, _export_allowlist, class_depths),
@@ -573,8 +620,11 @@ def _extract_api_surface(
         if cls not in unique_classes:
             unique_classes.append(cls)
 
-    # Cap api_identifiers to avoid token bloat
-    sorted_ids = sorted(api_identifiers)[:500]
+    # Cap api_identifiers to avoid token bloat.
+    # SR-01/TC-5310: Raised from 500 to 2000. Python repos rarely exceed 500 identifiers.
+    # C++ repos with 250+ classes and 20+ methods each need ~5000 slots; 2000 is a reasonable
+    # cap that keeps all class names + most method names within the alphabetical sort window.
+    sorted_ids = sorted(api_identifiers)[:2000]
 
     # Filter stage observability log (GAP-08)
     logger.info(
@@ -585,6 +635,12 @@ def _extract_api_surface(
         "api_surface_classes: total=%d, test_filtered=%d, internal_filtered=%d, public=%d, briefs=%d",
         _total_raw_classes, _test_filtered_count, _internal_filtered_count, len(unique_classes), len(unique_briefs),
     )
+    if _cpp_files_processed:  # OB-01/SR-01: C++ routing + forward-decl filter log
+        logger.info(
+            "TC-5310 cpp_extraction: %d C++ headers processed → %d public classes, "
+            "%d api_identifiers (%d fwd-decl stubs filtered by SR-01)",
+            _cpp_files_processed, len(unique_classes), len(sorted_ids), _cpp_fwd_decl_filtered,
+        )
 
     return ApiSurface(
         public_classes=unique_classes,
@@ -601,7 +657,12 @@ def _extract_api_surface(
 _CODE_EXTENSIONS = {
     ".py", ".pyi", ".js", ".mjs", ".ts", ".tsx", ".jsx",
     ".java", ".cs", ".go", ".rs", ".rb", ".php",
+    ".cpp", ".hpp", ".h", ".cc", ".cxx", ".hxx",  # TC-5310: C++ headers/sources
 }
+
+# TC-5310: C++ file extensions — used to route files through adapter.extract_class_details()
+# (which uses ts_analyzer language="cpp") instead of the generic analyze_file_safe().
+_CPP_EXTENSIONS = frozenset({".cpp", ".hpp", ".h", ".cc", ".cxx", ".hxx"})
 
 _EXCLUDE_DIRS = {
     ".git", "__pycache__", "node_modules", ".venv", "venv",
@@ -609,7 +670,7 @@ _EXCLUDE_DIRS = {
 }
 
 
-def _find_source_files(repo_dir: Path, max_files: int = 300) -> list[Path]:
+def _find_source_files(repo_dir: Path, max_files: int = 500) -> list[Path]:  # SR-03/TC-5312: raised from 300→500 for C++ repos with 250+ headers
     """Discover source files for API surface extraction (all languages)."""
     files: list[Path] = []
     for src_file in sorted(repo_dir.rglob("*")):

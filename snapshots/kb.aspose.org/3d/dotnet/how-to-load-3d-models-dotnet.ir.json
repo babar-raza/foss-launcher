@@ -1,12 +1,12 @@
 {
   "frontmatter": {
-    "canonical": "https://kb.aspose.org/3d/dotnet/how-to-load-3d-models-dotnet/",
+    "canonical": "https://kb.aspose.org/3d/dotnet/load-3d-models/",
     "canonical_import": "Aspose.ThreeD",
     "code_import": "Aspose.ThreeD",
-    "date": "2026-03-24T16:49:31Z",
-    "dateModified": "2026-03-24T16:49:31Z",
-    "datePublished": "2026-03-24T16:49:31Z",
-    "description": "The `Scene` class provides the entry point for file loading, and format-specific classes like `ObjFormat`, `StlFormat`, `FbxFormat`, and `GltfFormat`...",
+    "date": "2026-03-26T10:24:20Z",
+    "dateModified": "2026-03-26T10:24:20Z",
+    "datePublished": "2026-03-26T10:24:20Z",
+    "description": "Aspose.3D: How to Load Files with Aspose.3D",
     "display_name": "Aspose.3D",
     "family": "3d",
     "keywords": [
@@ -16,19 +16,18 @@
       "is .net 3.5 safe",
       "shapr 3d cost",
       "difference between dotnet and dotnet framework",
-      "3d symptoms",
-      "python 3d logo"
+      "3d symptoms"
     ],
-    "lastmod": "2026-03-24T16:49:31Z",
+    "lastmod": "2026-03-26T10:24:20Z",
     "page_role": "howto_article",
     "platform": "dotnet",
     "reading_time": 1,
     "robots": "index, follow",
     "seoTitle": "How to Load Files with Aspose.3D | Guide",
-    "slug": "how-to-load-3d-models-dotnet",
+    "slug": "load-3d-models",
     "title": "How to Load Files with Aspose.3D",
     "type": "howto_article",
-    "url": "/kb.aspose.org/3d/dotnet/how-to-load-3d-models-dotnet/",
+    "url": "/kb.aspose.org/3d/dotnet/load-3d-models/",
     "weight": 11
   },
   "page_id": "kb/how-to-load-3d-models-dotnet",
@@ -38,22 +37,21 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "You will load a 3D file (e.g., OBJ, STL, FBX, GLTF) into an Aspose.3D `Scene` object using the appropriate format class and `CreateLoadOptions()` method. The `Scene` class provides the entry point for file loading, and format-specific classes like `ObjFormat`, `StlFormat`, `FbxFormat`, and `GltfFormat` support detection and loading via their static instances in `FileFormat`.",
+          "content": "Aspose.3D -- State concisely: loading a specific file type into the library.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
         },
         {
-          "claim_ids": [],
-          "content": "",
-          "items": [
-            "Install the Aspose.3D .NET package via NuGet.",
-            "Add `using Aspose.ThreeD;` at the top of your C# file."
+          "claim_ids": [
+            "CLM-3d-767c08"
           ],
+          "content": "Aspose.3D Example demonstrates loading OBJ files.",
+          "items": [],
           "language": null,
           "level": null,
-          "type": "list"
+          "type": "paragraph"
         }
       ],
       "heading": "Problem",
@@ -64,23 +62,21 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "You will load 3D files using Aspose.3D by initializing the `Scene` class and specifying the input file path. Ensure you have the Aspose.3D .NET library installed and reference it with the correct using directive.",
+          "content": "Aspose.3D -- Required installation and import statements.",
           "items": [],
           "language": null,
           "level": null,
           "type": "paragraph"
         },
         {
-          "claim_ids": [],
-          "content": "",
-          "items": [
-            "Install Aspose.3D for .NET via NuGet Package Manager: `Install-Package Aspose.3D`",
-            "Use .NET 6 or later for compatibility",
-            "Include `using Aspose.ThreeD;` at the top of your C# file"
+          "claim_ids": [
+            "CLM-3d-140841"
           ],
+          "content": "Aspose.3D Example demonstrates loading STL files.",
+          "items": [],
           "language": null,
           "level": null,
-          "type": "list"
+          "type": "paragraph"
         }
       ],
       "heading": "Prerequisites",
@@ -91,7 +87,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "You will load 3D files into an Aspose.3D `Scene` object using file paths or streams, with optional format-specific load settings. The `Scene` class serves as the root container for 3D content, and supported formats include OBJ, STL, FBX, GLTF, and COLLADA.",
+          "content": "Aspose.3D -- Show how to load the file with code — cover file paths, streams, and load options.",
           "items": [],
           "language": null,
           "level": null,
@@ -99,146 +95,7 @@
         },
         {
           "claim_ids": [],
-          "content": "",
-          "items": [
-            "A .NET project targeting .NET Framework 4.6.1 or later",
-            "Aspose.3D for .NET NuGet package installed"
-          ],
-          "language": null,
-          "level": null,
-          "type": "list"
-        },
-        {
-          "claim_ids": [],
-          "content": "Load a 3D file from a file path",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "heading"
-        },
-        {
-          "claim_ids": [],
-          "content": "Call the `Scene` constructor with the file path to load a supported 3D model. The library automatically detects the format using file extension and content inspection.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "using Aspose.[identifier omitted];\n\nvar scene = new Scene(\"model.fbx\");",
-          "items": [],
-          "language": "csharp",
-          "level": null,
-          "type": "code"
-        },
-        {
-          "claim_ids": [],
-          "content": "This creates a `Scene` instance populated with the entities, nodes, and geometry from the FBX file.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "Load from a stream with explicit format",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "heading"
-        },
-        {
-          "claim_ids": [],
-          "content": "When loading from a stream, specify the format explicitly using the corresponding format class to avoid ambiguity.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "using Aspose.[identifier omitted];\nusing System.IO;\n\nusing var stream = File.OpenRead(\"scene.stl\");\nvar scene = new Scene(stream, StlFormat.Instance);",
-          "items": [],
-          "language": "csharp",
-          "level": null,
-          "type": "code"
-        },
-        {
-          "claim_ids": [],
-          "content": "This loads the STL file content from the stream into the `Scene` object, using the `StlFormat` class to ensure correct parsing.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "Load with custom options",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "heading"
-        },
-        {
-          "claim_ids": [],
-          "content": "Use the `CreateLoadOptions()` method on the format class to obtain a load options object, then pass it to the `Scene` constructor.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "using Aspose.[identifier omitted];\n\nvar options = ColladaFormat.Instance.CreateLoadOptions();\nvar scene = new Scene(\"model.dae\", ColladaFormat.Instance, options);",
-          "items": [],
-          "language": "csharp",
-          "level": null,
-          "type": "code"
-        },
-        {
-          "claim_ids": [],
-          "content": "This allows configuration of format-specific loading behavior, such as coordinate system handling or unit scaling.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "Error handling",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "heading"
-        },
-        {
-          "claim_ids": [],
-          "content": "Wrap loading operations in a try-catch block to handle `ImportException` for malformed files or unsupported formats, and `ExportException` for I/O failures.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "Check the file path or stream validity before loading to avoid runtime exceptions. Use `CanDetect()` on format classes to verify format support for a given stream or file name.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "Next steps",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "heading"
-        },
-        {
-          "claim_ids": [],
-          "content": "After loading, explore the `Scene`'s `RootNode`, `ChildNodes`, and `Entity` members to inspect or modify the 3D content. See how to traverse the scene graph or export to other formats.",
+          "content": "For details on loading the file, see the Aspose.3D documentation.",
           "items": [],
           "language": null,
           "level": null,
@@ -253,7 +110,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "You will load a 3D file using Aspose.3D, inspect its scene structure, and print a summary of its nodes and entities. This example uses the canonical .NET import and demonstrates core loading and introspection capabilities.",
+          "content": "Aspose.3D -- Complete runnable example: load, inspect, print summary.",
           "items": [],
           "language": null,
           "level": null,
@@ -261,26 +118,7 @@
         },
         {
           "claim_ids": [],
-          "content": "",
-          "items": [
-            "A supported 3D file (e.g., .obj, .stl, .fbx, .gltf, .ply, .dae) available locally",
-            "Aspose.3D for .NET installed via NuGet"
-          ],
-          "language": null,
-          "level": null,
-          "type": "list"
-        },
-        {
-          "claim_ids": [],
-          "content": "Load and Inspect a 3D `Scene`",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "heading"
-        },
-        {
-          "claim_ids": [],
-          "content": "Call `Scene()` to create an empty scene, then use `Scene.Open()` to load a file. The `Scene` object exposes `SubScenes()` and `Library()` for navigation.",
+          "content": "The following example demonstrates how to get started with Aspose.3D.",
           "items": [],
           "language": null,
           "level": null,
@@ -288,75 +126,11 @@
         },
         {
           "claim_ids": [],
-          "content": "using Aspose.[identifier omitted];\n\nvar scene = new Scene();\nscene.Open(\"model.fbx\");\n\nConsole.WriteLine($\"Scene loaded with {scene.SubScenes().Count} subscenes and {scene.Library().Count} entities.\");",
+          "content": "import Aspose.ThreeD\n\n# Initialize — see the Aspose.ThreeD API reference for available classes",
           "items": [],
           "language": "csharp",
           "level": null,
           "type": "code"
-        },
-        {
-          "claim_ids": [],
-          "content": "This prints the count of subscenes and library entities after loading the file. The `Scene` object now holds the full hierarchy for further inspection.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "Traverse Nodes and `Entities`",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "heading"
-        },
-        {
-          "claim_ids": [],
-          "content": "Iterate over `Scene.RootNode.ChildNodes()` to access each node. For each node, call `Entity()` to retrieve its associated entity, if any.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "foreach (var node in scene.RootNode.ChildNodes())\n{\n    Console.WriteLine($\"Node: {node.AssetInfo().Name}\");\n    var entity = node.Entity();\n    if (entity != null)\n        Console.WriteLine($\"  Entity type: {entity.GetType().Name}\");\n}",
-          "items": [],
-          "language": "csharp",
-          "level": null,
-          "type": "code"
-        },
-        {
-          "claim_ids": [],
-          "content": "This outputs each node's name and its entity type (e.g., `Mesh`, `Group`, `Entity`). Use `GetBoundingBox()` on nodes or entities to retrieve spatial bounds.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
-          "content": "Error Handling",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "heading"
-        },
-        {
-          "claim_ids": [],
-          "content": "try\n{\n    scene.Open(\"model.fbx\");\n}\ncatch (ImportException ex)\n{\n    Console.WriteLine($\"Failed to import: {ex.Message}\");\n}",
-          "items": [],
-          "language": "csharp",
-          "level": null,
-          "type": "code"
-        },
-        {
-          "claim_ids": [],
-          "content": "This ensures robust handling of invalid or corrupted input files during loading operations.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
         }
       ],
       "heading": "Code Example",
@@ -367,7 +141,7 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "You will load 3D files using Aspose.3D by specifying the appropriate format class. The library supports a limited set of input formats, each represented by a dedicated format class in the `Aspose.[identifier omitted]` namespace.",
+          "content": "Aspose.3D -- Table of supported input formats: format name, extension, notes.",
           "items": [],
           "language": null,
           "level": null,
@@ -375,11 +149,11 @@
         },
         {
           "claim_ids": [],
-          "content": "| `Format` | `Extension` | Notes |\n|--------|-----------|-------|\n| Collada | .dae | Uses `ColladaFormat` class |\n| FBX | .fbx | Uses `FbxFormat` class |\n| GLTF | .gltf, .glb | Uses `GltfFormat` class |\n| OBJ | .obj | Uses `ObjFormat` class |\n| STL | .stl | Uses `StlFormat` class |\n| TMF | .tmf | Uses `TmfFormat` class |\n| PLY | .ply | Uses `PlyFormat` class |",
+          "content": "For details on supported formats, see the Aspose.3D documentation.",
           "items": [],
           "language": null,
           "level": null,
-          "type": "table"
+          "type": "paragraph"
         }
       ],
       "heading": "Supported Formats",
@@ -390,21 +164,13 @@
       "blocks": [
         {
           "claim_ids": [],
-          "content": "You will load 3D files using Aspose.3D classes such as `Scene` and format-specific readers like `ColladaReader`. This section points to related how-to guides for saving, converting, and working with supported formats.",
-          "items": [],
-          "language": null,
-          "level": null,
-          "type": "paragraph"
-        },
-        {
-          "claim_ids": [],
           "content": "",
           "items": [
-            "[Frequently asked questions](/kb.aspose.org/3d/dotnet/faq/)",
-            "[Core capabilities overview](/blog.aspose.org/3d/dotnet/3d-key-features/)",
-            "[Open-source .NET integration](/blog.aspose.org/3d/dotnet/introducing-3d-foss-dotnet/)",
-            "[Step-by-step file loading guide](/docs.aspose.org/3d/dotnet/developer-guide/model-loading/)",
-            "[Rendering 3D models tutorial](/docs.aspose.org/3d/dotnet/developer-guide/rendering/)"
+            "[Installation](/docs.aspose.org/3d/dotnet/developer-guide/installation/)",
+            "[Getting Started with Aspose.3D](/docs.aspose.org/3d/dotnet/getting-started/)",
+            "[Aspose.3D FAQ](/kb.aspose.org/3d/dotnet/faq/)",
+            "[3d Key Features](/blog.aspose.org/3d/dotnet/3d-features/)",
+            "[Introducing 3d Foss Dotnet](/blog.aspose.org/3d/dotnet/3d-foss/)"
           ],
           "language": null,
           "level": null,

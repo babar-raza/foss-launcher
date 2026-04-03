@@ -170,20 +170,33 @@ def test_prerequisites_with_claims_uses_claims_not_boilerplate():
 
 
 # ---------------------------------------------------------------------------
-# TC-3912-T5: Content hint stub still generated before boilerplate
+# TC-3912-T5: Skeleton directive NEVER emitted (TC-5301 regression guard)
 # ---------------------------------------------------------------------------
 
-def test_content_hint_stub_still_generated_for_prerequisites():
-    """content_hint paragraph is still prepended before boilerplate blocks."""
+def test_content_hint_skeleton_directive_never_emitted_for_prerequisites():
+    """TC-5301: content_hint engineering note is NOT emitted as content.
+
+    Previously the fallback prepended a ``"{display_name} -- {content_hint}."``
+    paragraph before boilerplate blocks. TC-5301 removed this because it is an
+    internal scaffold note, not user-facing content.
+    """
     sec = render_section_deterministic(
         _section("Prerequisites", "Required setup and knowledge"),
         claims=[],
         snippets=[],
         product=_product(),
     )
-    # First block should be the content_hint paragraph
-    assert sec.blocks[0].type == BlockType.paragraph
-    assert "Aspose.Cells -- Required setup and knowledge" in sec.blocks[0].content
+    # Skeleton directive must NOT appear in any block
+    skeleton_pattern = "Aspose.Cells --"
+    for block in sec.blocks:
+        content = getattr(block, "content", "") or ""
+        assert skeleton_pattern not in content, (
+            f"TC-5301: Skeleton directive must not be emitted by fallback: {content!r}"
+        )
+    # Must still produce list + code blocks (boilerplate not broken)
+    block_types = [b.type for b in sec.blocks]
+    assert BlockType.list in block_types, "Prerequisites boilerplate list still expected"
+    assert BlockType.code in block_types, "Prerequisites boilerplate code block still expected"
 
 
 # ---------------------------------------------------------------------------
@@ -207,3 +220,75 @@ def test_prerequisites_no_canonical_import_does_not_crash():
     )
     assert sec.blocks  # Must produce at least one block
     assert sec.heading == "Prerequisites"
+
+
+# ---------------------------------------------------------------------------
+# TC-5313: Platform-aware fallback rendering
+# ---------------------------------------------------------------------------
+
+class TestPlatformAwareFallback:
+    """TC-5313: Verify fallback.py dispatches on product.platform, not hardcoded Python."""
+
+    @staticmethod
+    def _product(platform: str) -> ProductIdentity:
+        return ProductIdentity(
+            display_name="Aspose.3D",
+            canonical_import="aspose-3d-foss",
+            platform=platform,
+            family="3d",
+            repo_url="https://github.com/example/repo",
+        )
+
+    def _prereq_content(self, platform: str) -> str:
+        from launcher.workers.generate.fallback import _render_prerequisites_blocks
+        blocks = _render_prerequisites_blocks(self._product(platform))
+        return " ".join(
+            (b.content or "") + " ".join(b.items or []) for b in blocks
+        )
+
+    def _code_example_content(self, platform: str) -> str:
+        from launcher.workers.generate.fallback import _render_code_example_blocks
+        blocks = _render_code_example_blocks(self._product(platform))
+        return " ".join((b.content or "") for b in blocks)
+
+    def test_cpp_prerequisites_no_python_content(self):
+        """TC-5313: C++ product prerequisites must not contain Python-specific content."""
+        content = self._prereq_content("cpp")
+        assert "Python 3.7+" not in content
+        assert "pip install" not in content
+        assert "C++17" in content or "vcpkg" in content
+
+    def test_java_prerequisites_no_python_content(self):
+        """TC-5313: Java product prerequisites must not contain Python-specific content."""
+        content = self._prereq_content("java")
+        assert "Python 3.7+" not in content
+        assert "pip install" not in content
+        assert "Java 8+" in content or "Maven" in content or "Gradle" in content
+
+    def test_dotnet_prerequisites_no_python_content(self):
+        """TC-5313: .NET product prerequisites must not contain Python-specific content."""
+        content = self._prereq_content("dotnet")
+        assert "Python 3.7+" not in content
+        assert "pip install" not in content
+        assert ".NET 6.0+" in content or "dotnet add package" in content
+
+    def test_python_prerequisites_unchanged(self):
+        """TC-5313: Python product prerequisites still contain pip install."""
+        content = self._prereq_content("python")
+        assert "pip install" in content
+        assert "Python 3.7+" in content
+
+    def test_cpp_code_example_no_python_import(self):
+        """TC-5313: C++ code example must not use Python import syntax."""
+        content = self._code_example_content("cpp")
+        # No bare 'import X' Python-style statement
+        # (C++ code uses #include comments or // comments)
+        assert "import aspose" not in content.lower()
+
+    def test_java_code_example_has_java_import(self):
+        """TC-5313: Java code example uses Java import syntax."""
+        content = self._code_example_content("java")
+        # Java uses 'import X.*;' syntax
+        assert "import" in content
+        # Not Python-style 'import aspose_3d_foss'
+        assert "import aspose_3d_foss" not in content

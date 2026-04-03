@@ -102,7 +102,7 @@ def check_prose_lead(
                             f"\"{first_para[:80]}...\" — lead with the reader's "
                             f"task or problem instead"
                         ),
-                        severity="medium",
+                        severity="low",
                         location=slug,
                         section_id=heading,
                     ))

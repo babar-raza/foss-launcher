@@ -1,28 +1,27 @@
 ---
 canonical: https://docs.aspose.org/slides/_index/
-canonical_import: Aspose.Slides
-code_import: Aspose.Slides
-date: '2026-03-24T17:07:48Z'
-dateModified: '2026-03-24T17:07:48Z'
-datePublished: '2026-03-24T17:07:48Z'
-description: All operations rely on the canonical `using Aspose.Slides;` namespace.
-display_name: Aspose.Slides
+canonical_import: Aspose::Slides::Foss
+code_import: Aspose::Slides::Foss
+date: '2026-04-01T14:10:08Z'
+dateModified: '2026-04-01T14:41:49Z'
+datePublished: '2026-04-01T14:10:08Z'
+description: Developers can manipulate `.pptx` files by adding, removing, cloning,
+  and reordering `slides`, as well as working with `shapes`, `text`, and formatting.
+display_name: Aspose.Slides FOSS for C++
 family: slides
 keywords:
-- python slides
-- python slides for beginners
-- python slideshare
-- python slideshow
-- python slides ppt
-- python slides pdf
-- python slideshow py
-- python slideshow with transitions
-lastmod: '2026-03-24T17:07:48Z'
+- cppcon slides
+- cpp slides
+- cppnow slides
+- cppcon slides 2025
+- aspose slides cpp
+- meeting cpp slides
+lastmod: '2026-04-01T14:41:49Z'
 page_role: toc
-platform: dotnet
+platform: cpp
 reading_time: 1
 robots: noindex, follow
-seoTitle: Aspose.Slides Docs _Index
+seoTitle: Aspose.Slides FOSS Docs _Index
 slug: _index
 title: Docs _Index
 type: toc
@@ -32,53 +31,44 @@ weight: 2
 
 ## Capabilities
 
-This section covers the core capabilities of Aspose.Slides for .NET, focusing on presentation file handling, slide management, and shape/text formatting using the documented API surface. All operations rely on the canonical `using Aspose.Slides;` namespace.
+Aspose.Slides FOSS for C++ provides core `presentation` processing capabilities through the `Aspose::Slides::Foss` namespace. Developers can manipulate `.pptx` files by adding, removing, cloning, and reordering `slides`, as well as working with `shapes`, `text`, and formatting.
 
-- Load, create, and save `.pptx` presentations with full fidelity using Presentation and related package-level operations
-- Manage slides: add, remove, clone, reorder, and iterate via `AddEmptySlide`, `AddClone`, and slide reference methods
-- Work with shapes: auto shapes, picture frames, tables, and connectors using `AddAutoShape`, `AddPictureFrame`, `AddTable`, and `AddConnector`
-- Format text at portion, paragraph, and text frame levels using `BasePortionFormat`, `BulletFormat`, and `FillFormat`
-- Apply fill types (solid, gradient, pattern, picture) and effects via `FillFormat`, GradientStopCollection, and `EffectFormat`
+The library supports shape formatting via `FillFormat`, `GradientFormat`, `EffectFormat`, and `BulletFormat`, enabling control over solid, gradient, and `picture` fills, as well as shadow and glow effects. Text formatting includes paragraph and portion-level properties, with `bullet` configuration through `BulletFormat`.
+
+- Slide management — add, remove, clone, reorder, and iterate slides
+- Shape handling — AutoShapes, PictureFrames, Tables, Connectors
+- Text formatting — `TextFrame`, `Paragraph`, `Portion`, and `BulletFormat`
+- Fill and effects — `FillFormat`, `GradientFormat`, `EffectFormat`
+- Document properties — `DocumentProperties`, `IDocumentProperties`
+- Comments — `Comment`, `IComment` with author, position, and timestamp support
 
 ## Quick Install
 
-This section covers installation and setup for Aspose.Slides on .NET. Aspose.Slides provides classes such as `BasePortionFormat`, `BulletFormat`, `Camera`, `ColorFormat`, `Comment`, `CommentCollection`, `DocumentProperties`, `EffectFormat`, `FillFormat`, GradientStop, GradientStopCollection, IComment, IDocumentProperties, IImage, and Image for working with presentations programmatically.
+This section covers installation of Aspose.Slides FOSS for C++, `a` library for creating, reading, and manipulating PowerPoint-compatible presentations using the Aspose.Slides FOSS for C++ namespace.
 
 ```bash
-dotnet add package Aspose.Slides
+pip install aspose-slides-foss
 ```
 
-After installation, verify the package is correctly referenced by adding `using Aspose.Slides;` at the top of your C# file and compiling a minimal project. No additional configuration or post-install steps are required.
+After installation, verify the setup by importing the namespace and instantiating `a` `Presentation` object. Confirm that the constructor completes without error and that basic operations like adding `a` `slide` succeed.
 
 ## Getting Started
 
-This section covers the .NET API for presentation creation, reading, and manipulation using Aspose.Slides. It includes core classes such as `BasePortionFormat`, `BulletFormat`, `Camera`, `ColorFormat`, `Comment`, `CommentCollection`, `DocumentProperties`, `EffectFormat`, `FillFormat`, GradientStop, GradientStopCollection, IComment, IDocumentProperties, IImage, and Image.
+This section covers the minimal setup and first steps for using Aspose.Slides FOSS for C++. It introduces the core namespace and demonstrates how to instantiate `a` `Presentation` object to `begin` working with `slide` decks.
 
-```csharp
-using Aspose.Slides;
+```cpp
+using namespace Aspose::Slides::Foss;
 
-var presentation = new Presentation();
-presentation.Save("output.pptx", SaveFormat.Pptx);
+int main() {
+ auto presentation = System::MakeObject<Presentation>();
+ return 0;
+}
 ```
 
 ## Developer Guide
 
-This section covers the .NET API for presentation processing using Aspose.Slides, focusing on core classes for slide, shape, text, and formatting operations. Developers work directly with Slide, ShapeCollection, TextFrame, Portion, and `FillFormat` to build, modify, and export presentations.
+This section covers core operations for working with presentations using Aspose.Slides FOSS for C++. It includes handling `presentation` metadata, `slide` content, and shape formatting through the documented API surface.
 
-Key operations include loading and saving presentations, adding slides and shapes, applying fills and effects, and managing text formatting through `BulletFormat`, `BasePortionFormat`, and `EffectFormat`. The API supports programmatic control over camera presets, gradient stops, and comment authoring via `Camera`, GradientStopCollection, and `CommentCollection`.
+Use `DocumentProperties` and `IDocumentProperties` to read and write `presentation` metadata such as `title`, `subject`, and application `name`. Access `slide`-level `comments` via `Comment` and `IComment` to manage annotations with timestamps and `author` context.
 
-- Create and manipulate slides, shapes, and text frames
-- Apply solid, gradient, and picture fills using `FillFormat`
-- Configure bullets and text formatting with `BulletFormat` and `BasePortionFormat`
-- Add and manage comments via `Comment` and `CommentCollection`
-- Control 3D camera settings and effects using `Camera` and `EffectFormat`
-
-## See Also
-
-This section covers the Aspose.Slides .NET API surface for presentation authoring, including slide, shape, text, and formatting operations.
-
-- Working with slides — add, remove, clone, and reorder slides in a presentation
-- Managing shapes — insert and configure auto shapes, picture frames, tables, and connectors
-- Text formatting — apply character, paragraph, and text frame formatting using `BasePortionFormat`, `BulletFormat`, and `FillFormat`
-- Slide effects and 3D — configure camera presets, bevels, and gradient fills via `Camera`, `EffectFormat`, and GradientStopCollection
-- Comments and metadata — add comments via `Comment` and `CommentCollection`, and manage document properties via `DocumentProperties`
+Format `shapes` using `FillFormat`, `GradientFormat`, `EffectFormat`, and `BulletFormat` to control visual appearance, including solid and gradient fills, shadow/glow effects, and paragraph `bullet` styling.

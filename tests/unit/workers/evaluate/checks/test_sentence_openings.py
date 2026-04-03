@@ -27,7 +27,7 @@ class TestSentenceOpenings:
         findings = check_sentence_openings(content, "test-page")
         assert len(findings) >= 1
         assert findings[0].check == "sentence_openings"
-        assert findings[0].severity == "medium"
+        assert findings[0].severity == "low"
 
     def test_you_can_repetition_flags(self):
         content = (

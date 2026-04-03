@@ -169,25 +169,145 @@ def _static_fallback(
     )
 
 
+def route_after_evaluate(
+    report: "EvaluationReport",
+    re_run_count: int,
+    max_re_runs: int,
+) -> "PipelineAdvice":
+    """Deterministic routing decision after evaluate emits NO_GO.
+
+    Decision rules (in priority order):
+    1. Budget exhausted → stop
+    2. extraction_quality HIGH findings on first re-run → heal_understand
+       (re-run understand + planner + generate to fix thin API extraction)
+    3. CRITICAL finding rate > 50% → stop (LLM cannot fix structural issues)
+    4. Default → heal_generate
+
+    Does NOT require an LLM call. Deterministic and reproducible.
+    """
+    from launcher.models.evaluation import PipelineAdvice, Grade
+
+    # Rule 1: Budget exhausted
+    if re_run_count >= max_re_runs:
+        return PipelineAdvice(
+            routing="stop",
+            analysis=f"Heal budget exhausted ({re_run_count}/{max_re_runs} re-runs used).",
+            confidence=1.0,
+            target_pages=[],
+            strategy="",
+            priority_checks=[],
+            stop_reason="Budget exhausted.",
+        )
+
+    all_pages = report.pages or []
+    all_findings = [f for p in all_pages for f in (p.findings or [])]
+    total_pages = len(all_pages) or 1
+
+    # Rule 2: extraction_quality HIGH on first re-run → heal_understand
+    # Only on re_run_count == 0: if understand was already re-run and extraction
+    # is still thin, fall through to heal_generate (then stop on next budget check).
+    extraction_high = [
+        f for f in all_findings
+        if getattr(f, "check", "") == "extraction_quality"
+        and getattr(f, "severity", "") == "high"
+    ]
+    if extraction_high and re_run_count == 0:
+        logger.info(
+            "TC-5311: extraction_quality HIGH on %d finding(s) — routing heal_understand. "
+            "Will re-run understand + planner + generate with fresh API extraction.",
+            len(extraction_high),
+        )
+        return PipelineAdvice(
+            routing="heal_understand",
+            analysis=(
+                f"extraction_quality HIGH on {len(extraction_high)} finding(s). "
+                "API surface extraction is near-empty. Re-running understand before generate."
+            ),
+            confidence=1.0,
+            target_pages=sorted(set(getattr(f, "location", "") for f in extraction_high)),
+            strategy="Re-extract API surface, then re-run planner and generate.",
+            priority_checks=["extraction_quality"],
+            stop_reason=None,
+        )
+
+    # Rule 3: CRITICAL finding rate > 50% → stop
+    critical_pages = sum(
+        1 for p in all_pages
+        if any(getattr(f, "severity", "") == "critical" for f in (p.findings or []))
+    )
+    if critical_pages / total_pages > 0.5:
+        return PipelineAdvice(
+            routing="stop",
+            analysis=(
+                f"{critical_pages}/{total_pages} pages have CRITICAL findings. "
+                "Re-generating will not fix structural issues."
+            ),
+            confidence=1.0,
+            target_pages=[],
+            strategy="",
+            priority_checks=[],
+            stop_reason=f"CRITICAL rate {critical_pages/total_pages:.0%} exceeds 50% threshold.",
+        )
+
+    # Rule 4: Default → heal_generate
+    _FAILING_GRADES = {Grade.C, Grade.D, Grade.F}
+    failing = [
+        p.slug for p in all_pages
+        if p.grade in _FAILING_GRADES
+    ]
+    return PipelineAdvice(
+        routing="heal_generate",
+        analysis=(
+            f"{len(failing)}/{total_pages} pages below threshold. "
+            "Re-generating with current evidence."
+        ),
+        confidence=1.0,
+        target_pages=sorted(set(failing)),
+        strategy="Re-generate failing pages.",
+        priority_checks=[],
+        stop_reason=None,
+    )
+
+
 def call_pipeline_advisor(
     report: "EvaluationReport",
     re_run_count: int,
     max_re_runs: int,
     run_dir: Path,
 ) -> "PipelineAdvice":
-    """Public entry — calls advisor LLM, falls back to static if any step fails. Never raises."""
+    """Public entry — deterministic routing with optional LLM override for heal_generate cases.
+
+    TC-5311: Runs route_after_evaluate() first. Only calls LLM when routing is heal_generate
+    and budget remains — avoiding LLM non-determinism for clear-cut stop/budget decisions.
+    Never raises.
+    """
     try:
-        prompt = _build_advisor_prompt(report, re_run_count, max_re_runs)
-        response = _call_llm(prompt, run_dir)
-        if response:
-            advice = _parse_advice(response)
-            if advice is not None:
-                return advice
+        # Deterministic routing runs first — always fast and reproducible.
+        deterministic = route_after_evaluate(report, re_run_count, max_re_runs)
+
+        # LLM override: only for heal_generate (borderline cases). Skip LLM for stop decisions.
+        if deterministic.routing == "heal_generate" and re_run_count < max_re_runs:
+            try:
+                prompt = _build_advisor_prompt(report, re_run_count, max_re_runs)
+                response = _call_llm(prompt, run_dir)
+                if response:
+                    advice = _parse_advice(response)
+                    if advice is not None:
+                        logger.info(
+                            "pipeline_advisor: LLM routing=%s (deterministic was %s)",
+                            advice.routing, deterministic.routing,
+                        )
+                        return advice
+            except Exception as llm_exc:
+                logger.warning(
+                    "pipeline_advisor: LLM call failed, using deterministic: %s", llm_exc
+                )
+
+        return deterministic
+
     except Exception as exc:
         logger.error(
-            "pipeline_advisor: unexpected error (falling back to static routing): %s",
-            exc,
-            exc_info=True,
+            "pipeline_advisor: unexpected error in route_after_evaluate (falling back): %s",
+            exc, exc_info=True,
         )
-
-    return _static_fallback(re_run_count, max_re_runs)
+        return _static_fallback(re_run_count, max_re_runs, report=report)

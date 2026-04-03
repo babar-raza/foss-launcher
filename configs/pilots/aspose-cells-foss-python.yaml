@@ -6,7 +6,7 @@ validation_profile: pilot
 product_name: "Aspose.Cells FOSS for Python"
 display_name: "Aspose.Cells FOSS"
 canonical_import: "aspose_cells_foss"
-runtime_import: "aspose.cells"
+runtime_import: "aspose.cells_foss"
 
 llm:
   primary:
@@ -19,7 +19,7 @@ llm:
     model: "gemma3:12b"
   routing:
     extract: standard
-    generate: reasoning
+    generate: standard
     review: reasoning
   temperature: 0.0
   max_tokens: 6000

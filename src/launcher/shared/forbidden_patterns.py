@@ -115,6 +115,41 @@ FORBIDDEN_PATTERNS: list[ForbiddenPattern] = [
         severity="high",
         description="Internal block_type reference leaked into published content",
     ),
+    # TC-NET-005A: Bare CLM ID in table cell or prose (no colon/brackets).
+    # The existing patterns only catch "CLM-x-hash:" (colon) and "[CLM-...]"
+    # (brackets); table-cell form "CLM-3d-982d2f" (neither) was not caught.
+    ForbiddenPattern(
+        regex=re.compile(r"\bCLM-[A-Za-z0-9]+-[a-f0-9]{6}\b"),
+        category="claim_id_leak",
+        severity="critical",
+        description="Bare claim ID leaked into published content (table cell or prose)",
+    ),
+    # TC-NET-005B: Template content-hint directive leaked verbatim.
+    # Matches lines like "Aspose.3D -- What the reader will build" where the LLM
+    # copied a generation directive instead of replacing it with real content.
+    ForbiddenPattern(
+        regex=re.compile(r"[A-Za-z][A-Za-z0-9.]+\.[A-Za-z0-9]+ -- [A-Z][a-z]"),
+        category="template_placeholder",
+        severity="high",
+        description="Template content-hint directive leaked verbatim into page prose",
+    ),
+    # TC-NET-005C: Generic documentation filler sentence.
+    # Matches boilerplate like "For details on methods, see the Aspose.3D documentation."
+    ForbiddenPattern(
+        regex=re.compile(r"For details on \w+, see the \w+ documentation\."),
+        category="template_placeholder",
+        severity="high",
+        description="Generic filler sentence not replaced with actual content",
+    ),
+    # TC-5329: C++ contamination annotation marker from section_validator.py.
+    # This marker is used internally by the generate worker retry loop. If it
+    # survives to published content it means the strip step was missed.
+    ForbiddenPattern(
+        regex=re.compile(r"#\s*__CPP_CONTAMINATION__:"),
+        category="internal_metadata",
+        severity="critical",
+        description="C++ contamination annotation marker leaked into published content",
+    ),
 ]
 
 

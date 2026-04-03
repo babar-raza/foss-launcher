@@ -45,6 +45,7 @@ pythonpath = ["src"]
 asyncio_mode = "strict"  # require explicit @pytest.mark.asyncio on async tests
 markers = [
     "golden: golden corpus regression tests — run with -m golden",
+    "slow: performance benchmarks — skip in fast CI with -m 'not slow'",
 ]
 
 [tool.ruff]

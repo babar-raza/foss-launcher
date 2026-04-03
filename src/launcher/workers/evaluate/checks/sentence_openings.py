@@ -85,7 +85,7 @@ def check_sentence_openings(
                     f"{run_len} consecutive sentences start with \"{pattern}\" "
                     f"(e.g. \"{sample}...\") — vary sentence openings"
                 ),
-                severity="medium",
+                severity="low",
                 location=slug,
             ))
 

@@ -1,0 +1,223 @@
+{
+  "frontmatter": {
+    "canonical": "https://reference.aspose.org/slides/cpp/table-operations/",
+    "canonical_import": "Aspose::Slides::Foss",
+    "code_import": "Aspose::Slides::Foss",
+    "date": "2026-04-01T14:10:08Z",
+    "dateModified": "2026-04-01T14:41:49Z",
+    "datePublished": "2026-04-01T14:10:08Z",
+    "description": "It serves as the foundational `type` for all `color` operations in Aspose.Slides FOSS for C++.",
+    "display_name": "Aspose.Slides FOSS for C++",
+    "family": "slides",
+    "keywords": [
+      "cppcon slides",
+      "cpp slides",
+      "cppnow slides",
+      "cppcon slides 2025",
+      "aspose slides cpp",
+      "meeting cpp slides"
+    ],
+    "lastmod": "2026-04-01T14:41:49Z",
+    "page_role": "reference_object_page",
+    "platform": "cpp",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Color: Represents an ARGB color, equivalent to System | Guide",
+    "slug": "table-operations",
+    "title": "Color: Represents an ARGB color, equivalent to System",
+    "type": "reference_object_page",
+    "url": "/reference.aspose.org/slides/cpp/table-operations/",
+    "weight": 22
+  },
+  "page_id": "reference/table",
+  "page_role": "reference_object_page",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-5f492f"
+          ],
+          "content": "The `Color` class represents an ARGB `color` value and provides static factory methods to construct colors in various formats. It serves as the foundational `type` for all `color` operations in Aspose.Slides FOSS for C++.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-5f492f"
+          ],
+          "content": "using namespace Aspose::Slides::Foss;\n\nint main() {\n auto color1 = Color::from_argb(255, 0, 70, 127);\n auto color2 = Color::from_argb(128, 255, 0, 0);\n return 0;\n}",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-5f492f"
+          ],
+          "content": "The `Color` class represents an ARGB `color` value and provides constructors to instantiate colors from various component representations. It supports construction from alpha, red, green, and blue byte values, as well as from predefined `color` constants.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-5f492f",
+            "CLM-slides-bcf74a"
+          ],
+          "content": "| Constructor | Parameters | Description |\n|-------------|------------|-------------|\n| `Color()` | — | Constructs `a` default `Color` instance (transparent black). |\n| `Color(uint8_t a, uint8_t r, uint8_t g, uint8_t b)` | `a`: Alpha component (0–255), `r`: Red component (0–255), `g`: Green component (0–255), `b`: Blue component (0–255) | Constructs `a` `Color` from individual ARGB byte components. |\n| `Color(uint32_t argb)` | argb: 32-bit ARGB value | Constructs `a` `Color` from `a` packed 32-bit ARGB integer. |\n| `Color(ColorType type, float c1, float c2, float c3, float c4)` | `type`: `ColorType` enum value, c1–c4: `Color` components (interpretation depends on `type`) | Constructs `a` `Color` using `a` specified `color` mode and component values. |\n| `Color(Aspose.Slides FOSS for C++::Color)` | other: Another `Color` instance | Copy constructor. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        }
+      ],
+      "heading": "Constructor",
+      "level": 2,
+      "section_id": "constructor"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-5f492f",
+            "CLM-slides-588933"
+          ],
+          "content": "The `Color` class provides access to its underlying ARGB components through read-only properties. These properties expose the individual alpha, red, green, and blue channel values as 8-bit integers.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-5f492f",
+            "CLM-slides-bcf74a"
+          ],
+          "content": "| Name | Type | Description |\n|------|------|-------------|\n| `a`() | [[nodiscard]] uint8_t | Returns the alpha component of the `color`. |\n| `r`() | [[nodiscard]] uint8_t | Returns the red component of the `color`. |\n| `g`() | [[nodiscard]] uint8_t | Returns the green component of the `color`. |\n| `b`() | [[nodiscard]] uint8_t | Returns the blue component of the `color`. |\n| `color_type`() | [[nodiscard]] `ColorType` | Returns the `color` mode of the `color`. |\n| value() | [[nodiscard]] uint32_t | Returns the 32-bit ARGB value of the `color`. |\n",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-5f492f",
+            "CLM-slides-bcf74a"
+          ],
+          "content": "using namespace Aspose::Slides::Foss;\n\nColor red{255, 0, 0, 255};\nuint8_t a = red.a();\nuint8_t r = red.r();\nuint8_t g = red.g();\nuint8_t b = red.b();\nColorType type = red.color_type();\nuint32_t val = red.value();",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Properties",
+      "level": 2,
+      "section_id": "properties"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-5f492f",
+            "CLM-slides-588933"
+          ],
+          "content": "The `Color` class provides methods to inspect and compare ARGB `color` values. Methods include equality checks, component access, and conversion helpers.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-5f492f",
+            "CLM-slides-588933",
+            "CLM-slides-bcf74a"
+          ],
+          "content": "| Method | Return Type | Description |\n|--------|-------------|-------------|\n| `get_A() const` | int32_t | Returns the alpha component (0–255). |\n| `get_R() const` | int32_t | Returns the red component (0–255). |\n| `get_G() const` | int32_t | Returns the green component (0–255). |\n| `get_B() const` | int32_t | Returns the blue component (0–255). |\n| `get_value() const` | uint32_t | Returns the 32-bit ARGB value. |\n| `Equals(const Color&) const` | bool | Returns true if the `color` matches another ARGB value. |\n| `Equals(const System::SharedPtr<Object>&) const` | bool | Returns true if the object is `a` `Color` with identical ARGB value. |\n| `ToArgb() const` | int32_t | Returns the signed 32-bit ARGB value. |\n| `ToKnownColor() const` | `ColorType` | Returns the `ColorType` enum representing the `color` mode. |\n| `ToString() const` | System::String | Returns `a` string representation of the ARGB value in hex format. |",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "table"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-5f492f",
+            "CLM-slides-588933"
+          ],
+          "content": "using namespace Aspose::Slides::Foss;\n\nColor red = Color::get_Red();\nint32_t r = red.get_R();\nint32_t a = red.get_A();\nbool isRed = red.Equals(Color::get_Red());\nSystem::String hex = red.ToString();",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Methods",
+      "level": 2,
+      "section_id": "methods"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-5f492f",
+            "CLM-slides-588933"
+          ],
+          "content": "The `Color` class provides static factory methods to construct ARGB `color` values. The following example demonstrates creating `a` solid fill `color` using `Color::from_argb()` and applying it to `a` `text` portion.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-5f492f",
+            "CLM-slides-588933"
+          ],
+          "content": "using namespace Aspose::Slides::Foss;\n\nPresentation pres;\nauto& shape = pres.slides()[0].shapes().add_auto_shape(ShapeType::RECTANGLE, 50, 50, 300, 100);\nauto& tf = shape.add_text_frame(\"Sample text\");\nauto& portion = tf.paragraphs()[0].portions()[0];\nportion.portion_format().fill_format().solid_fill_color().set_color(Color::from_argb(255, 128, 64, 192));\npres.save(\"color-fill.pptx\", SaveFormat::PPTX);",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Example",
+      "level": 2,
+      "section_id": "example"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Introducing Slides FOSS for C++](/slides/cpp/slides-introduction/)",
+            "[Key features of Slides FOSS](/slides/cpp/slides-key-features/)",
+            "[Create presentations with Slides FOSS](/slides/cpp/developer-guide/presentation-creation/)",
+            "[Work with slides using Slides FOSS](/slides/cpp/developer-guide/slide-manipulation/)",
+            "[Convert file formats with Slides FOSS](/slides/cpp/convert-pptx-to-fodp/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Color: Represents an ARGB color, equivalent to System"
+}

@@ -49,6 +49,33 @@
       "type": "string",
       "format": "date-time",
       "description": "ISO-8601 timestamp of discovery."
+    },
+    "acquisition_confidence": {
+      "type": "string",
+      "description": "TC-5321: Overall identity resolution quality (high/medium/low or empty)."
+    },
+    "import_confidence": {
+      "type": "string",
+      "description": "TC-5321: Confidence that canonical_import matches repo truth (high/medium/low/none or empty)."
+    },
+    "canonical_import_candidates": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "TC-5321: Top import candidates extracted directly from repo source files."
+    },
+    "repo_signals": {
+      "type": "object",
+      "description": "TC-5321: Repo health signals (readme_present, is_empty_clone, license_detected, etc.).",
+      "additionalProperties": true
+    },
+    "field_provenance": {
+      "type": "object",
+      "description": "TC-5321: Per-field source (families_yaml, config_override, inferred_default).",
+      "additionalProperties": { "type": "string" }
+    },
+    "is_fresh_clone": {
+      "type": "boolean",
+      "description": "TC-5321: True if the repo was freshly cloned (not served from cache)."
     }
   },
   "additionalProperties": false

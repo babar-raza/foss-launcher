@@ -46,6 +46,11 @@ class TestAdvisorRoute:
         state = {"advisor_decision": {"routing": "heal_generate"}}
         assert route(state) == "__re_run__"
 
+    def test_heal_understand_routes_to_re_run_understand(self):
+        route = _make_advisor_route({"publish": "publish_worker"})
+        state = {"advisor_decision": {"routing": "heal_understand"}}
+        assert route(state) == "__re_run_understand__"
+
     def test_publish_with_publish_worker(self):
         route = _make_advisor_route({"publish": "publish_worker"})
         state = {"advisor_decision": {"routing": "publish"}}

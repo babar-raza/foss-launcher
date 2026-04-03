@@ -40,8 +40,20 @@ _LLM_CHECK_NAMES: frozenset[str] = frozenset({
     "opener_boilerplate",
     "content_tone",
     "explanation_depth",
-    "api_consistency",   # TC-5199: LLM-subjective API consistency check
-    "content_density",   # TC-5199: LLM-subjective content density check
+    "api_consistency",       # TC-5199: LLM-subjective API consistency check
+    "content_density",       # TC-5199: LLM-subjective content density check
+    # TC-EVAL-602: Heuristic pattern-matching checks — HIGHs from these are
+    # stylistic opinions, not factual errors.  Cap to MEDIUM so they don't
+    # create a C-grade ceiling on otherwise-correct pages.
+    "heading_echo",          # Jaccard heading↔paragraph overlap
+    "prose_lead",            # Generic opener detection
+    "sentence_openings",     # Repetitive 2-word opener patterns
+    "paragraph_monotony",    # Consecutive paragraph structure repetition
+    "low_specificity",       # Generic verbs without concrete details
+    "explanation_gap",       # Noun/verb ratio heuristic
+    "content_grounding",     # Token-overlap hallucination heuristic
+    "content_utility",       # Content utility heuristic
+    "content_viability",     # Content viability heuristic
 })
 
 # TC-5199: Checks eligible for HIGH severity promotion when message contains
@@ -93,6 +105,16 @@ def _effective_severity(finding: Finding) -> str:
     return "medium"
 
 
+def annotate_graded_severity(findings: list[Finding]) -> list[Finding]:
+    """TC-5316: Return new Finding copies with graded_severity populated.
+
+    Uses ``_effective_severity`` to compute the severity the grader actually uses
+    for scoring (which may differ from ``Finding.severity`` for LLM checks).
+    Since LauncherBaseModel is frozen=True, uses model_copy() to produce new objects.
+    """
+    return [f.model_copy(update={"graded_severity": _effective_severity(f)}) for f in findings]
+
+
 def _is_editorial_critical(finding: Finding) -> bool:
     """Return True if this finding's check is editorial-critical (Grade D on any HIGH).
 
@@ -119,6 +141,27 @@ def _is_safety_critical(finding: Finding) -> bool:
     return True
 
 
+def _is_skeleton_directive(finding: Finding) -> bool:
+    """Return True if this finding reports skeleton/template content leaked into prose.
+
+    TC-HEAL-001: Skeleton directives and filler sentences are evidence of
+    content-void pages that must grade D, not C. Matches specific HIGH findings
+    from the ``artifacts`` check (TC-GEN-602) and ``forbidden_content`` check
+    (TC-NET-005B/C) that indicate no real content was generated for the section.
+
+    These substrings are unique to skeleton/filler-related finding messages and
+    will not match legitimate quality findings (keyword stuffing, broken links, etc.).
+    """
+    if finding.check not in {"artifacts", "forbidden_content"}:
+        return False
+    msg = finding.message or ""
+    return any(kw in msg for kw in (
+        "skeleton-directive",
+        "Template content-hint directive",
+        "Generic filler sentence",
+    ))
+
+
 def grade_page(findings: list[Finding]) -> Grade:
     """Assign a grade based on severity of findings.
 
@@ -126,6 +169,9 @@ def grade_page(findings: list[Finding]) -> Grade:
       F = any CRITICAL finding
       D = any safety-critical HIGH (safety, slug_safety, claim_leakage, spec_leakage,
                                     seo/https, frontmatter, structure)
+        OR any editorial-critical HIGH (route_consistency, claim_coverage, code errors, etc.)
+        OR any skeleton-directive HIGH (TC-HEAL-001: skeleton directive or filler sentence
+                                        leaked into content — content-void page)
       C = 2+ non-safety-critical HIGH, OR 3+ MEDIUM
       B = 1 non-safety-critical HIGH, OR 1-2 MEDIUM
       A = 0 HIGH, 0 MEDIUM (LOW-only or clean)
@@ -141,15 +187,20 @@ def grade_page(findings: list[Finding]) -> Grade:
     critical = sum(1 for _, sev in effective if sev == "critical")
     safety_high = sum(1 for f, sev in effective if sev == "high" and _is_safety_critical(f))
     editorial_high = sum(1 for f, sev in effective if sev == "high" and _is_editorial_critical(f))
+    # TC-HEAL-001: skeleton-directive HIGH — content-void pages must grade D, not C.
+    skeleton_high = sum(1 for f, sev in effective if sev == "high" and _is_skeleton_directive(f))
     non_safety_high = sum(
         1 for f, sev in effective
-        if sev == "high" and not _is_safety_critical(f) and not _is_editorial_critical(f)
+        if sev == "high"
+        and not _is_safety_critical(f)
+        and not _is_editorial_critical(f)
+        and not _is_skeleton_directive(f)
     )
     medium = sum(1 for _, sev in effective if sev == "medium")
 
     if critical > 0:
         return Grade.F
-    if safety_high > 0 or editorial_high > 0:  # TC-4031 Wave 4F: editorial-critical → D
+    if safety_high > 0 or editorial_high > 0 or skeleton_high > 0:
         return Grade.D
     if non_safety_high >= 2 or medium >= 3:
         return Grade.C

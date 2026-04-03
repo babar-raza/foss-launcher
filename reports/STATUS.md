@@ -1,3 +1,442 @@
+# Pipeline Status — Session 33: TC-5331/5332/5333/5334/5335 + fresh C++ pilot run (2026-04-02)
+
+## Summary (Session 33 — Current)
+
+Five taskcards completed. Fresh C++ pilot run started with all fixes applied.
+
+- **TC-5331**: `check_ecosystem_contamination()` wired in evaluate worker — detects .NET/C++CLI tokens in C++ code fences (Done — was already implemented).
+- **TC-5332**: 100 regression tests for contamination scanner, ecosystem check, and import rule (Done — all passing).
+- **TC-5333**: Platform detection bug fixed (`content[:500]` → `content`), cpp routing changed to `review: standard`, 3 regression tests added.
+- **TC-5334**: Platform-unaware `_STRUCTURE_DIRECTIVES` fixed. Added `_CPP_SECTION_DIRECTIVES` for install sections (find_package, not pip). Added Python-fence detection in generate worker retry loop.
+- **TC-5335**: Extended C++ forbidden types prohibition to prose as well as code blocks.
+- **Tests**: 5932 passed, 8 skipped (unit suite)
+
+### Expected improvements in next pilot run
+
+| Fix | Expected effect |
+|-----|----------------|
+| TC-5334: cmake directives | 2 F-grade _index pages → C/D (pip install eliminated) |
+| TC-5334: Python fence retry | 4 D-grade pages improve (installation, fix-errors, presentation-creation, slide-manipulation) |
+| TC-5335: prose prohibition | api_allowlist:HIGH for System/MakeObject/Drawing in prose → reduced |
+
+---
+
+# Pipeline Status — Session 32: TC-5329/5330/5333 + fresh C++ pilot run (2026-04-02)
+
+## Summary (Session 32 — Current)
+
+Three taskcards implemented. Fresh C++ pilot run `260402_065901_slides_cpp_889a` started.
+
+- **TC-5329**: Added `_CPP_STDLIB` (47 entries) to `api_allowlist.py`. C++ stdlib + exception types exempt from api_allowlist false-positive findings.
+- **TC-5330**: Wired `_build_cpp_forbidden_types_block()` into `_build_import_rule_block()` for C++. Added `InvalidOperationException`, snake_case method name guidance.
+- **TC-5333**: Fixed platform detection bug (`content[:500]` → `content`) in `api_allowlist.py` + `code_platform.py`. Changed cpp pilot routing: `review: reasoning` → `review: standard`. Added 3 regression tests.
+- **Tests**: 6207 passed (up from 6199), 9 skipped, 3 xfailed
+
+### Session 32 C++ Pilot Results (run: 260402_065901_slides_cpp_889a — partial from checkpoint)
+
+| Grade | Old (S31) | New (S32) | Change |
+|-------|-----------|-----------|--------|
+| A | 0 | 2 | +2 |
+| B | 4 | 3 | -1 |
+| C | 17 | 9 | -8 |
+| D | 1 | 6 | +5 |
+| F | 0 | 2 | +2 |
+
+**Go criteria:**
+- [FAIL] D+F rate: 36% (threshold: ≤30%) — regression from 5% in S31
+- [FAIL] A+B rate: 23% (threshold: ≥50%)
+
+**Note**: S32 run is from NEW generate content (TC-5330 prompt changes). Old S31 run used different content. The D/F regression reflects both: (a) new content having more code_platform/canonical_import issues, and (b) qwen3-next grader vs `recommended` grading differently. factual_accuracy:high improved significantly: **26 → 13** (TC-5330 effect).
+
+**Key finding - platform detection bug was causing 52 false api_allowlist:medium findings.**
+After TC-5333 fix: api_allowlist:medium = **13** (restored to correct baseline).
+
+**Remaining bottlenecks:**
+1. LLM still writing .NET code in 5/22 pages (MakeObject, System::String, Drawing::PointF) despite TC-5330 prompt
+2. `code_platform` failing 6/22 pages (wrong fence language or install command)
+3. `canonical_import` failing 3/22 pages
+4. `completeness` failing 9/22 pages
+
+---
+
+# Pipeline Status — Session 31: TC-5328 C++ enum class fix + verified run (2026-04-01)
+
+## Summary (Session 31 — Previous)
+
+TC-5328 implemented and verified: C++ `enum class` types now enter `api_surface.public_classes`.
+Run `260330_163303_slides_cpp_d438` confirms all api_allowlist false positives eliminated.
+
+- **TC-5328**: SR-01 forward-declaration filter now exempts `is_enum=True` entries. `SaveFormat` + enum members enter `public_classes` and `api_identifiers`. **api_allowlist HIGHs: 19 → 0.**
+- **public_classes**: 180 → 222 (+42 enum class types extracted)
+- **Tests**: 6181 passed, 9 skipped, 3 xfailed (up from 6138)
+
+### Session 31 C++ Pilot Results (run: 260330_163303_slides_cpp_d438)
+
+| Grade | Count | % | vs Session 30 |
+|-------|-------|---|--------------|
+| A | 0 | 0% | — |
+| B | 4 | 18% | +2 |
+| C | 17 | 77% | -1 |
+| D | 1 | 4% | -1 |
+
+**Go criteria:**
+- [PASS] D+F rate: 4% (threshold: ≤30%) ← was 9% in session 30
+- [FAIL] A+B rate: 18% (threshold: ≥50%)
+
+**api_allowlist HIGHs: 0** (SaveFormat, Pptx, Pdf, Png, Jpeg, Svg — all eliminated)
+
+**Remaining bottleneck: LLM code quality**
+- LLM writes .NET-style code for C++ (System, IO, Drawing, MakeObject, etc.)
+- FPR-03 violations persist: Aspose, Foss, Slides, MakeObject not in public_classes (namespace components vs class names)
+- code_correctness HIGHs drive most C→D demotions
+
+---
+
+## Previous Status (Session 30 — 2026-03-29)
+
+Three pipeline-blocker fixes. C++ Slides pilot completed: **22 pages, B=2 C=18 D=2**.
+- **TC-5326**: `intake_bundle.schema.json` missing 6 TC-5321 fields → schema validation crash at intake. Fixed.
+- **TC-5327**: `claim_coverage` ratio > 1.0 when pages use claims beyond assigned set → schema crash at evaluate. Fixed (conditional intersection).
+- **Tests**: 6138 passed, 9 skipped, 3 xfailed (up from 6123).
+
+### Session 30 C++ Pilot Results (run: 260329_154405_slides_cpp_fa02)
+
+| Grade | Count | % |
+|-------|-------|---|
+| A | 0 | 0% |
+| B | 2 | 9% |
+| C | 18 | 82% |
+| D | 2 | 9% |
+
+**Go criteria:**
+- [PASS] CRITICAL findings: 0 (threshold: 0)
+- [PASS] D+F rate: 9% (threshold: ≤30%)  ← was 16% in session 28
+- [PASS] Editorial-critical HIGH rate: 9% (threshold: ≤15%)
+- [FAIL] A+B rate: 9% (threshold: ≥50%)
+
+**Top HIGH findings by check:**
+| Check | HIGHs | Notes |
+|-------|-------|-------|
+| factual_accuracy | 23 | LLM review (capped to MEDIUM in grading) |
+| api_allowlist | 19 | 6/22 pages — TC-5325 helped (was 13/18 pages) |
+| api_consistency | 17 | LLM review (capped to MEDIUM) |
+| code_correctness | 15 | Deterministic — real code errors |
+| content_grounding | 5 | Deterministic |
+| completeness | 5 | Deterministic |
+| canonical_import | 4 | Wrong import in content |
+
+**D pages:**
+- `frequently-asked-questions`: claim_coverage HIGH (editorial-critical)
+- `add-shape`: route_consistency + artifacts HIGH (editorial-critical)
+
+**Remaining api_allowlist root cause (TC-5328):**
+- `SaveFormat`, `Pptx`, `Pdf`, `Png`, `Jpeg`, `Svg` → `enum class SaveFormat` not extracted
+- `System`, `IO`, `Stream` → LLM hallucinating .NET-style code for C++ (real quality issue)
+- `Rectangle`, `Drawing` → geometry/drawing namespace types missing from api_surface
+
+**Next step:** TC-5328 — Add `enum class` extraction to C++ api_surface adapter. Expected to eliminate ~10/19 api_allowlist HIGHs (SaveFormat and its values).
+
+---
+
+## Summary (Session 29 — Previous)
+
+Four structural root-cause fixes applied to the C++ pipeline seams. No pilot run yet (TC-5322/5323/5324 affect Scout/Understand/Generate workers which require a full pipeline rerun to measure impact). All 4 taskcards Done. Full test suite: **6127 passed, 9 skipped, 3 xfailed**.
+
+| TC | Phase | Root Cause Fixed | Impact |
+|----|-------|-----------------|--------|
+| TC-5322 | Scout | `.h` → "c" primary_language (260 .h > 206 .cpp) | `primary_language="cpp"` → correct install recipe |
+| TC-5323 | Understand | `::Internal` namespace leaked into import_allowlist | Allowlist stays clean; canonical namespace breaks early |
+| TC-5324 | Generate | `#include <Aspose::Slides::Foss>` invalid C++ in prompt | `using namespace Aspose::Slides::Foss;` → LLM generates valid C++ |
+| TC-5325 | Evaluate | `_build_allowlist` split on `.` only (not `::`) | Namespace qualifiers exempt from api_allowlist; 82% false-positive rate expected to drop to ~0% |
+
+### Expected Impact on Session 28 Failing Checks
+
+| Check | Session 28 Rate | Expected After Fix | Fix |
+|-------|-----------------|-------------------|-----|
+| api_allowlist | 82% (18/22) | ~5-15% (real hallucinations only) | TC-5325 |
+| code_correctness | 73% (16/22) | ~30-50% | TC-5324 (correct import instruction) |
+| factual_accuracy | 100% (22/22) | ~80-90% (LLM quality gap) | TC-5324 (better namespace context) |
+| api_consistency | 77% (17/22) | ~60-70% | TC-5323/5324 |
+
+### Stale Phase Store — Snippet Gap (NOT a code bug)
+
+Both `phase_store/slides/cpp/understand.json` and `phase_store/3d/java/understand.json` show **0 snippet_facts** — these are old cached artifacts. The current code extracts snippets correctly:
+
+- **C++ README**: 9 `cpp` fenced code blocks with correct `using namespace Aspose::Slides::Foss;` + real API usage (`Presentation`, `save()`, `slides()`)
+- **Java 3D SceneTest.java**: `_extract_java_test_slices` extracts 2 slices with real `Scene`, `Node`, `Transform` usage
+- tree-sitter validation passes for both
+
+A pipeline re-run regenerates the phase_store with real snippets injected into LLM prompts — directly addressing `factual_accuracy: 100%` failure rate.
+
+### Expected Grade Impact After Re-Run
+
+With TC-5322/5323/5324/5325 + snippet extraction:
+- `api_allowlist` 82% → ~5-15% (TC-5325 eliminates namespace qualifier false positives)
+- `code_correctness` 73% → ~20-40% (correct `using namespace` instruction + real code examples)
+- `factual_accuracy` 100% → ~40-60% (9 C++ snippets from README show correct API usage)
+- Grade: 0% A+B → target **20-40% A+B** (optimistic: 30%+)
+
+### Next Step: Pipeline Re-Run
+
+Run C++ pilot with all fixes to measure actual grade improvement:
+```bash
+PYTHONHASHSEED=0 .venv/Scripts/python.exe -m launcher.cli.main run configs/pilots/aspose-slides-foss-cpp.yaml
+```
+
+### Evidence Files
+
+- `reports/TC-5322/evidence.md` — Scout primary_language fix
+- `reports/TC-5323/evidence.md` — Understand allowlist fix
+- `reports/TC-5324/evidence.md` — Generate import statement fix
+- `reports/TC-5325/evidence.md` — Evaluate allowlist split fix
+
+---
+
+# Pipeline Status — Session 28: TC-5312 Pilot Rerun Comparison (2026-03-28)
+
+## Summary (Session 28 — Current)
+
+Pilot rerun completed for C++ Slides (`260327_163318_slides_cpp_a36c`) with TC-5310/TC-5312 extraction fixes. Full before/after comparison produced.
+
+### Extraction Quality (TC-5310 + TC-5312)
+
+| Metric | BEFORE (260324_180011) | AFTER (260327_163318) | Delta |
+|--------|------------------------|------------------------|-------|
+| public_classes | **0** | **180** | +180 |
+| api_identifiers | **0** | **1003** | +1003 |
+| import_allowlist | **0** | **30** | +30 |
+| claims | 29 | 92 | +317% |
+| class_briefs | 0 | 180 | +180 |
+| snippets | 9 | 77 | +756% |
+| richness_tier | **C** | **A** | C→A |
+| api_confidence | **low** | **high** | low→high |
+| SR-01 fwd-decl filtered | — | 71 stubs | — |
+
+### Evaluation Grade Distribution
+
+| Grade | BEFORE (18 pages) | AFTER (22 pages) | Delta |
+|-------|-------------------|------------------|-------|
+| A | 0 (0%) | 0 (0%) | — |
+| B | 0 (0%) | 0 (0%) | — |
+| C | 16 (89%) | 21 (95%) | — |
+| D | 2 (11%) | 1 (5%) | **-6%** |
+| F | 0 (0%) | 0 (0%) | — |
+| **A+B** | **0%** | **0%** | — |
+| **D+F** | **11%** | **5%** | **-6%** |
+
+### Check Failures (count/pages)
+
+| Check | BEFORE | AFTER | Direction |
+|-------|--------|-------|-----------|
+| factual_accuracy | 18/18 (100%) | 22/22 (100%) | unchanged |
+| api_allowlist | 16/18 (89%) | 18/22 (82%) | ↑ improved |
+| code_correctness | 18/18 (100%) | 16/22 (73%) | **↑ improved** |
+| api_consistency | 14/18 (78%) | 17/22 (77%) | unchanged |
+| code_formatting | 7/18 (39%) | 3/22 (14%) | **↑ improved** |
+| content_density | 7/18 (39%) | 5/22 (23%) | **↑ improved** |
+| artifacts | 3/18 (17%) | 0/22 (0%) | **✓ eliminated** |
+| claim_coverage | 1/18 | 0/22 | **✓ eliminated** |
+
+### Analysis
+
+TC-5312 extraction fixes proved: 0→180 classes, 0→1003 identifiers, richness tier C→A. Generation quality improved measurably (code_formatting 39%→14%, code_correctness 100%→73%, artifacts eliminated). **Remaining bottleneck**: LLM generates .NET-style PascalCase C++ code (`Aspose::Slides::Presentation`) instead of actual FOSS C++ snake_case API (`Aspose::Slides::Foss`, `add_auto_shape()`). Requires canonical_import fix and better prompting for the C++ FOSS namespace.
+
+### New Issues Found
+
+- **Schema sync bug**: `evaluation_report.schema.json` missing `graded_severity` field → evaluate checkpoint can't be written (TC-5316 model change not propagated to schema)
+- **content_manifest schema sync bug**: `understanding_checkpoint_run_id` and `extraction_completeness` not in schema at pipeline start → generate checkpoint failed → manually reconstructed
+- **FPR-03 false retries**: LLM correctly uses `Aspose::Slides::Foss` namespace but `Aspose`, `Slides` are not in `public_classes`. Causes 2 retries per section, tripling LLM calls. Needs C++ namespace exemptions.
+- **canonical_import wrong**: Config has `"Aspose::Slides"` but actual namespace is `"Aspose::Slides::Foss"`. LLM learns wrong namespace from config.
+
+---
+
+# Pipeline Status — Session 27: TC-5313..TC-5318 Production Architecture Fixes (2026-03-27)
+
+## Summary (Session 27 — Current)
+
+6-taskcard execution from plan `logical-squishing-cascade.md` (production architectural review). All 6 structural root causes addressed in Phase 0 (platform correctness) and Phase 1 (heal loop quality).
+
+| TC | Title | Status | Files Changed |
+|----|-------|--------|---------------|
+| TC-5313 | Platform-aware fallback.py (no Python-hardcoded content for C++/Java/.NET) | **Done** | fallback.py |
+| TC-5314 | Import normalization platform guard in section_validator.py | **Done** | section_validator.py |
+| TC-5315 | _JAVA_STDLIB allowlist in api_allowlist.py (eliminate Java false positives) | **Done** | api_allowlist.py |
+| TC-5316 | graded_severity field on Finding + annotate_graded_severity() | **Done** | evaluation.py, grader.py, worker.py |
+| TC-5317 | Identifier repair: mark-not-delete code lines (replace with _UNKNOWN_ marker) | **Done** | _identifier_repair.py, api_allowlist.py |
+| TC-5318 | Finding-derived targeted heal directives (_FINDING_TO_DIRECTIVE mapping) | **Done** | graph_builder.py |
+
+**Full unit suite: 5824 passed, 8 skipped, 0 failed** (self-review added +19 tests)
+
+### Root Causes Fixed (Session 27)
+
+- **Root Cause B (TC-5313, TC-5314)**: Fallback path no longer produces Python-specific content (pip install, Python 3.7+, `import` syntax) for C++/Java/.NET products. Platform-dispatch dicts `_RUNTIME_REQUIREMENTS`, `_INSTALL_COMMANDS`, `_IMPORT_SYNTAX` added. Import normalization in `section_validator.py` now guarded by `product.platform == "python"` check.
+- **Root Cause B (TC-5315)**: Java stdlib false positives eliminated. `_JAVA_STDLIB` frozenset (~80 entries: java.lang, java.util, java.io, common generics) added to `api_allowlist.py`. Applied when frontmatter platform == "java".
+- **Root Cause C (TC-5316)**: Severity cap is now visible. `Finding.graded_severity` field added (default `""`). `annotate_graded_severity()` function added to `grader.py`. `evaluate/worker.py` calls it before building `PageEvaluation`. Routing can now use `graded_severity` instead of `severity` for consistency with actual page grade.
+- **Root Cause A (TC-5317)**: Identifier repair no longer silently deletes code lines (TC-GEN-601). Lines with hallucinated identifiers are preserved with `_UNKNOWN_{token}_` substitution. Surrounding code structure remains coherent. `api_allowlist.py` now detects `_UNKNOWN_` markers and fires HIGH findings.
+- **Root Cause heal directives (TC-5318)**: `_build_failing_check_directives()` now uses `_FINDING_TO_DIRECTIVE` mapping to produce specific actionable instructions per failing check (e.g., "UNKNOWN IDENTIFIER detected" for api_allowlist, "CODE ERROR detected" for code_correctness) instead of generic "Top failing checks: X, Y" labels. Uses `graded_severity` when available.
+
+### Expected Impact
+
+- **Java pilot**: api_allowlist false positives from Java stdlib drop to zero. D+F rate reduction expected.
+- **C++/Java fallback path**: Pages hitting deterministic fallback no longer fail `code_platform` check immediately. Content now contains platform-appropriate install commands and import syntax.
+- **C++ pilot**: `[identifier omitted]` placeholder problem addressed — lines are preserved with visible markers instead of being deleted, preserving code structure. Heal cycles will have better signal.
+- **Heal loop**: Directives now tell the LLM *what specifically went wrong*, not just which claims to cover. Heal convergence expected to improve.
+
+---
+
+# Pipeline Status — Session 26: TC-5312 C++ Extraction Quality Filters (2026-03-27)
+
+## Summary (Session 26 — Current)
+
+Continuation of orchestrator plan `bright-nibbling-elephant.md`. Session 26 completed TC-5312.
+
+| TC | Title | Status | New Tests |
+|----|-------|--------|-----------|
+| TC-5312 | C++ extraction quality filters — SR-01 fwd-decl, SR-02 internal paths, SR-03 cap | **Done** | +9 |
+
+**Full unit suite: 5804 passed, 8 skipped, 0 failed**
+
+### Root Causes Fixed (Session 26)
+
+- **ISSUE-04 follow-up (TC-5312)**: Three C++ extraction quality improvements applied:
+  - **SR-01**: Forward-declaration stubs (0 methods + 0 method_details + 0 properties in `.h`/`.hpp`/etc.) are now dropped from `public_classes`. Eliminates `OpcPackage`, `InMemoryOpcPackage`, `CommentAuthorsPart` and similar internal forward-declaration noise.
+  - **SR-02**: `CppExtractor.build_import_allowlist()` now skips headers under `_internal/` directories. Only public API headers are included.
+  - **SR-03**: `_find_source_files()` default `max_files` raised from 300 → 500, allowing full discovery of C++ repos with 250+ header files.
+
+### Phases Remaining
+
+| Phase | TC | Scope | Status |
+|-------|----|-------|--------|
+| Phase 3 follow-up | TC-5309-BBN-02 | Remove `_filter_weak_evidence()` BBN-02 sparse elevation (optional) | Future |
+| Pilot run | — | Run C++ + Java pilots with all fixes to verify A+B improvement | **Next step** |
+
+---
+
+# Pipeline Status — Session 25: TC-5311 Full Scope + TC-5309 Sparse Grounding Bypass (2026-03-27)
+
+## Summary (Session 25)
+
+Continuation of orchestrator plan `bright-nibbling-elephant.md`. Session 25 completed TC-5311 full scope and TC-5309.
+
+| TC | Title | Status | New Tests |
+|----|-------|--------|-----------|
+| TC-5311 | Deterministic routing — full scope: heal_understand wired in graph + PipelineAdvice | **Done** | +6 |
+| TC-5309 | Remove llm_sparse_grounding bypass — drop unbound LLM claims | **Done** | +15 |
+
+**Full unit suite: 5797 passed, 8 skipped, 0 failed**
+
+### Root Causes Fixed (Session 25)
+
+- **ISSUE-07 (complete)**: `heal_understand` routing fully implemented. When `extraction_quality` fires HIGH on first re-run, `route_after_evaluate()` returns `"heal_understand"`. Graph routes through `__re_run_understand__` → understand → planner → generate. `re_run_count == 0` guard prevents infinite loops.
+- **ISSUE-03 (partial — `_validate_fact_binding` fixed)**: `llm_sparse_grounding` bypass removed from `_validate_fact_binding()`. Unbound LLM claims are now dropped. `harvest_evidence_claims()` (already in pipeline) provides deterministic fallback. Citation rate WARNING fires when < 50% bound. BBN-02 path in `_filter_weak_evidence()` is a separate follow-up.
+
+### TC-5309 Impact
+
+Claims with no valid `source_fact_id` in ExtractionDatabase are dropped instead of being admitted at confidence=0.55 with `claim_source="llm_sparse_grounding"`. This removes one class of hallucination risk from the generation pipeline. The existing `harvest_evidence_claims()` call (TC-UND-211) ensures deterministic coverage from ExtractionDatabase api_facts/format_facts/snippet_facts.
+
+---
+
+# Pipeline Status — Session 24: C++ Extraction Root Cause Fix (2026-03-27)
+
+## Summary (Session 24)
+
+Continuation of orchestrator plan `bright-nibbling-elephant.md`. Session 24 completed TC-5310 and TC-5311 (partial → deterministic advisor logic).
+
+| TC | Title | Status | New Tests |
+|----|-------|--------|-----------|
+| TC-5311 | Deterministic routing — route_after_evaluate() | **Done (reduced scope, completed session 25)** | 23 |
+| TC-5310 | C++ file discovery fix — add C++ extensions to _CODE_EXTENSIONS + adapter routing | **Done** | 14 |
+
+**Total new tests session 24: +37**
+**Full unit suite: 5777 passed, 8 skipped, 0 failed**
+
+### Root Causes Fixed (Session 24)
+
+- **ISSUE-04 (root cause fixed)**: C++ `api_class_count` was 0 because `.h`/`.hpp`/`.cpp` were missing from `_CODE_EXTENSIONS`. Fix: added C++ extensions + route through `adapter.extract_class_details()` (ts_analyzer language="cpp"). Result: **251 classes extracted** from aspose_slides_cpp (was 0).
+
+### Impact of TC-5310
+
+```
+api_class_count: 0 → 251
+api_method_count: 0 → hundreds
+overall_completeness: 0.26 → expected ≥ 0.7
+```
+Expected downstream impact: A+B target ≥ 30% (from 5%), api_allowlist failures drop from 13/18, `[identifier omitted]` placeholders target 0.
+
+---
+
+# Pipeline Status — Session 23: Architectural Revamp — Canonical Evidence Architecture (2026-03-27)
+
+## Summary (Session 23)
+
+Orchestrator-led plan `bright-nibbling-elephant.md` — 7 taskcards across Phases 0–2 of the canonical evidence architecture revamp.
+
+| TC | Title | Status | New Tests |
+|----|-------|--------|-----------|
+| TC-5304 | Fix claim_coverage always-1.0 bug (evaluate/worker.py:547) | **Done** | 5 |
+| TC-5305 | Wire verify worker in _resolve_input_model() | **Done** | 3 |
+| TC-5306 | Annotate generate side-load + understanding_checkpoint_run_id | **Done** | ~2 |
+| TC-5307 | Platform config unification (families_loader.py) | **Done** | 59 |
+| TC-5308 | Extraction quality check (check_extraction_quality) | **Done** | 9 |
+
+**Total new tests: +68**
+**Full unit suite: 5740 passed, 0 failed** (baseline: 5672 session-start)
+
+---
+
+# Pipeline Status — Session 22: A+B Production Redesign (2026-03-27)
+
+## Summary (Session 22 — Current)
+
+Orchestrator-led plan `snug-petting-quill.md` — 5 taskcards targeting D:21 3D DotNet root causes.
+
+| TC | Title | Status | New Tests |
+|----|-------|--------|-----------|
+| TC-5301 | Remove skeleton directive from fallback.py | **Done** | 4 |
+| TC-5303 | Normalize internal links post-processor | **Done** | 7 |
+| TC-5300 | Intake stale-cache fallback + worker_failed event | **Done** | 4 |
+| TC-5302 | Fix output token budget + finish_reason=length retry | **Done** | 6 |
+| TC-HEAL-003 | Heading-relevance ranking for class_briefs | **Done** | 4 |
+| Test fixes | Update _call_llm mocks to return tuples | **Done** | — |
+
+**Total new tests: 25**
+**Full unit suite: 5664 passed, 0 failed** (confirmed)
+
+### Root Causes Fixed
+
+- **RC-3**: `fallback.py` no longer emits `"{display_name} -- {content_hint}."` → skeleton_high = 0 for fallback sections
+- **RC-2**: `_sec_max_tokens` floor raised from 1024 → 2048 (+1024 for code-required); `finish_reason=length` now retried with doubled budget
+- **RC-4**: `_normalize_internal_links()` strips `/docs.aspose.org/` subdomain prefixes from generated links; prompt instruction added
+- **RC-1 (SW-1)**: Stale cache preserved before fresh clone attempt; `worker_failed` event emitted on all worker exceptions. Directly addresses confirmed intake failures.
+- **RC-6**: `_prioritize_class_briefs()` now ranks by section heading/content_hint overlap (primary) + claim mention (secondary)
+
+### Post-Diagnosis Findings (Session 22) — Three Diagnostic Agents
+
+**Reconciled findings across agents:**
+
+| Finding | Evidence | Impact |
+|---------|----------|--------|
+| finish_reason="length": 223/514 calls (43.4%) | events.ndjson from 3D DotNet run | ✓ TC-5302 was critical |
+| Intake CONFIRMED failing for 10/11 pilots | Failed run events.ndjson = 2 lines only; successful = 241 lines | TC-5300 directly relevant |
+| Pattern: ALL non-dotnet pilots fail before clone_completed | events.ndjson analysis of cells/python vs 3d/dotnet | Root cause still unknown — now observable via worker_failed |
+| 347+ historical successful runs exist | Older run directories | Non-blocking — past success doesn't prevent current failures |
+| class_briefs docstring_snippet = empty for 3D DotNet | understand.json analysis | AST extraction didn't yield docs |
+
+**RC-1 Status**: Intake IS failing. The exception is caught by `graph_builder.py:297-302` without emitting `worker_failed`. TC-5300 fixes: (1) stale-cache fallback so clone failures use cached content, (2) `worker_failed` event now emitted — next run will expose the exact error message.
+
+**Unknown**: WHY clone fails for non-dotnet pilots. Could be network, path, or platform-specific. Will be visible in `worker_failed.error` field on next run.
+
+### Expected Impact
+
+| Pilot | Current A+B | Target A+B | Blocking Fix |
+|-------|------------|------------|-------------|
+| 3D DotNet | ~0% (D:21) | ≥60% | TC-5301 + TC-5302 (confirmed critical) |
+| Python/Java/C++ pilots | Blocked | Unblocked | TC-5300 stale-cache fallback |
+| Java 3D | ~19% → higher | ≥50% | TC-5300 + TC-HEAL-003 |
+| C++ Slides | ~5% → higher | ≥30% | TC-5300 + TC-HEAL-003 |
+
+---
+
 # Pipeline Status — Session 21: Unified Quality Fix (2026-03-25)
 
 ## Summary (Session 21 — Current)

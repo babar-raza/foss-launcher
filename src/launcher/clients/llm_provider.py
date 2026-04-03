@@ -366,8 +366,19 @@ class LLMProviderClient:
             usage: Dict[str, Any] = {}
             l1_validation_result = None
             effective_timeout = timeout if timeout is not None else self.timeout
+            # TC-L1-02: capture base temperature so retries can escalate it
+            _base_temperature = float(request_payload.get("temperature", 0.0))
 
             for _l1_attempt in range(MAX_L1_RETRIES + 1):
+                # TC-L1-02: escalate temperature on retries to break degenerate empty-output loops
+                if _l1_attempt > 0:
+                    _retry_temperature = min(0.3, _base_temperature + _l1_attempt * 0.1)
+                    l1_retry_payload = dict(l1_retry_payload)
+                    l1_retry_payload["temperature"] = _retry_temperature
+                    logger.debug(
+                        "L1_RETRY_TEMPERATURE attempt=%d call_id=%s base=%.2f retry=%.2f",
+                        _l1_attempt, call_id, _base_temperature, _retry_temperature,
+                    )
                 # Proactive routing when circuit breaker is OPEN
                 _cb_use_fallback = (
                     self.circuit_breaker is not None
@@ -456,6 +467,16 @@ class LLMProviderClient:
                 if l1_validation_result.is_valid:
                     content = _raw_content
                     break
+
+                # TC-L1-02: distinguish empty responses from malformed JSON
+                if not _raw_content.strip():
+                    logger.warning(
+                        "L1_EMPTY_RESPONSE attempt=%d/%d call_id=%s model=%s",
+                        _l1_attempt + 1,
+                        MAX_L1_RETRIES + 1,
+                        call_id,
+                        effective_model,
+                    )
 
                 # Validation failed
                 if _l1_attempt < MAX_L1_RETRIES:

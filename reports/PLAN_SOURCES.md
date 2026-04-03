@@ -1,4 +1,60 @@
-# PLAN_SOURCES — Orchestrator Session 20 (2026-03-24) — Evaluation Check Registry Gap Closure
+# Plan Sources — .NET Pilot Publishability Fix
+
+**Generated**: 2026-03-25
+**Session**: .NET pilot publishability audit + fix
+
+## PrimaryPlanSource
+
+`C:\Users\prora\.claude\plans\snuggly-painting-widget.md`
+
+Derived from: chat-based audit of deployed .NET content + current-state reassessment of source files.
+
+**SubstantialityCheck**: SUBSTANTIAL (6 actionable taskcards, 6 concrete root-cause gaps, acceptance criteria + grep evidence commands defined)
+
+## ChatExtractedSteps
+
+1. TC-NET-001: Fix `_identifier_repair.py` — add `canonical_import` components to exempt set
+2. TC-NET-002: Add C# `using` normalizer in `section_validator.py`
+3. TC-NET-003: Detect Python-style imports in non-Python fences in `code_platform.py`
+4. TC-NET-004: Platform-aware SEO keyword filter in `seo_metadata.py`
+5. TC-NET-005: Extend `forbidden_patterns.py` — bare CLM IDs + template stub patterns
+6. TC-NET-006: .NET stdlib exemptions in `api_allowlist.py`
+
+## ChatExtractedGapsAndFixes
+
+1. `[identifier omitted]` in 46 code locations across 24 .NET files → fix: exempt canonical_import tokens in identifier repair
+2. `using Aspose.Slides.Foss;` wrong namespace → fix: C# using normalizer
+3. Python syntax in csharp fences (4 files) → fix: content-grammar check in code_platform
+4. Python SEO keywords on all 28 .NET pages → fix: platform-aware keyword filter
+5. Bare CLM IDs in published tables → fix: new forbidden pattern
+6. Template stub sentences in prose (7 files) → fix: new forbidden patterns
+
+## ChatMentionedFiles
+
+- `src/launcher/workers/generate/_identifier_repair.py`
+- `src/launcher/workers/generate/worker.py`
+- `src/launcher/workers/generate/section_validator.py`
+- `src/launcher/workers/evaluate/checks/code_platform.py`
+- `src/launcher/workers/generate/seo_metadata.py`
+- `src/launcher/shared/forbidden_patterns.py`
+- `src/launcher/workers/evaluate/checks/api_allowlist.py`
+
+## SecondarySources
+
+- `C:\Users\prora\.claude\plans\snuggly-painting-widget.md` (same as primary — plan file)
+- `deploy/**/dotnet/**/*.md` (evidence: grep results showing 46+ placeholder occurrences)
+
+## MissingCandidates
+
+None — all source files verified to exist.
+
+## ResolutionStrategy
+
+Chat-derived plan is authoritative. All 6 taskcards map 1:1 to verified root-cause bugs in named source files.
+
+---
+
+# Plan Sources — .NET Pilot Publishability Fix (Session 20, 2026-03-25)
 
 ## PrimaryPlanSource (Session 20)
 
@@ -429,14 +485,14 @@ None — all sources resolved.
 | `plans/taskcards/TC-5172..TC-5173` | Thread B — intake sync + scan_state persistence |
 
 ## ChatExtractedSteps (Session 17)
-1. ✅ Run all 11 FOSS pilots through --stop-after understand
-2. ✅ Compare before/after metrics (3 infra bugs found + fixed)
-3. ⏳ Fix UEX-01: 3d/java 94% claim regression (TC-5174)
-4. ⏳ Fix UEX-02: email/python API extraction failure (TC-5175)
-5. ⏳ Fix UEX-03: corrupt clone cache auto-recovery (TC-5176)
-6. ⏳ Implement intake sync command (TC-5172)
-7. ⏳ intake onboard → scan_state.json persistence (TC-5173)
-8. ⏳ Low-priority: product_name fix (TC-5178), import errors (TC-5179)
+1. Run all 11 FOSS pilots through --stop-after understand
+2. Compare before/after metrics (3 infra bugs found + fixed)
+3. Fix UEX-01: 3d/java 94% claim regression (TC-5174)
+4. Fix UEX-02: email/python API extraction failure (TC-5175)
+5. Fix UEX-03: corrupt clone cache auto-recovery (TC-5176)
+6. Implement intake sync command (TC-5172)
+7. intake onboard → scan_state.json persistence (TC-5173)
+8. Low-priority: product_name fix (TC-5178), import errors (TC-5179)
 
 ## SubstantialityCheck
 SUBSTANTIAL — 8 steps, 6 gaps with fixes, acceptance criteria in UEX-00
@@ -485,6 +541,200 @@ P0: FPRPS-01 (correctness) → P1: FPRPS-03+05 (test+observability) → P2: FPRP
 
 ## MissingCandidates (Session 18)
 None.
+
+---
+
+---
+
+# PLAN_SOURCES — Session 21 (2026-03-26) — Healing Investigation: FOSS Pilot A+B 100% Gap Analysis
+
+## PrimaryPlanSource (Session 21)
+
+| Field | Value |
+|-------|-------|
+| Path | `C:\Users\prora\.claude\plans\snug-petting-quill.md` |
+| Type | Healing investigation report (plan-mode artifact) |
+| Why selected | Evidence-based investigation of all 11 FOSS pilots. 7 sections including pilot-by-pilot findings, root-cause map, 6 healing items TC-HEAL-001..006, implementation sequence. |
+| Key sections | Executive Summary, Pilot-by-Pilot Findings, Systemic Pain Points, Root-Cause Map, Healing Plan, Implementation Sequence, Confidence and Blind Spots |
+| SelectedAsPrimary | true (session 21) |
+
+### ChatExtractedSteps (Session 21)
+
+1. TC-HEAL-001: Fix grader.py — add `_is_skeleton_directive()` + `skeleton_high` → Grade D
+2. TC-HEAL-002: Confirm generate phase fails loudly (anti-echo guard / GEN-2 taskcard)
+3. TC-HEAL-003: Verify `class_briefs` present in `api_surface_block` for compiled-language pilots
+4. TC-HEAL-004: Re-evaluate old C++/Java deployed content, demote `[identifier omitted]` pages
+5. TC-HEAL-005: Fix `seo_metadata.py` — add `_is_irrelevant_keyword()` filter
+6. TC-HEAL-006: Fix `section_prompt.py` — explicit negative-example import rule for `_foss` packages
+
+### ChatExtractedGapsAndFixes (Session 21)
+
+| Gap | Root Cause | Fix | Confirmed |
+|-----|-----------|-----|-----------|
+| Skeleton content grades C | `artifacts`/`forbidden_content` HIGH = non-safety-critical | Add skeleton_high → Grade D in grader.py | YES (grader.py line 154 verified) |
+| Garbage SEO keywords | `_enhance_keywords()` adds research bundle keywords without validation | Add `_is_irrelevant_keyword()` filter | YES (seo_metadata.py lines 419-441 verified) |
+| aspose.email vs aspose.email_foss | Python import rule doesn't name `aspose.email` explicitly | Add negative example for base package in `_foss` case | YES (section_prompt.py line 107 verified) |
+| phase_store missing generate.json | EXPECTED — generate outputs to runs/{run_id}/ | No code change needed; investigation resolved | YES (agent investigation confirmed) |
+| api_surface_block is flat | INCORRECT — class-grouped when class_briefs present | No code change needed; investigation corrected assumption | YES (agent investigation confirmed) |
+
+### SubstantialityCheck (Session 21)
+
+SUBSTANTIAL: 6 steps, 5 gaps with confirmed fixes, acceptance criteria + evidence commands.
+
+### ResolutionStrategy (Session 21)
+
+P0: TC-HEAL-001 (grader.py) — immediate, highest ROI
+P1: TC-HEAL-005 (seo_metadata.py) + TC-HEAL-006 (section_prompt.py) — parallel
+P2: TC-HEAL-002 (generate phase investigation) — taskcard created for next session
+P3: TC-HEAL-003/004 — data verification tasks
+
+---
+
+---
+
+# PLAN_SOURCES — Session 22 (2026-03-27) — Production-Grade A+B 100% Redesign
+
+## PrimaryPlanSource (Session 22)
+
+| Field | Value |
+|-------|-------|
+| Path | `C:\Users\prora\.claude\plans\snug-petting-quill.md` (REWRITTEN) |
+| Type | Plan-mode artifact (production-grade redesign — deep pass) |
+| Why selected | Second-pass deeper investigation corrected wrong hypotheses from first analysis. Identified 6 confirmed root causes (intake silent failure, output token budget, fallback skeleton paragraph, subdomain link format, flat api_surface, finish_reason swallowed). All root causes code-traced to specific file:line. |
+| Key sections | What Was Wrong in Previous Analysis, Confirmed Root Causes (RC-1..RC-6), Structural Weaknesses (SW-1..SW-5), Implementation Plan (TC-5300..TC-5303, TC-HEAL-003), Execution Sequence A-F, Honest Limits |
+| SelectedAsPrimary | true (session 22) |
+
+### ChatExtractedSteps (Session 22)
+
+1. TC-5301: Remove skeleton directive paragraph from `fallback.py` lines 119-126
+2. TC-5302: Fix output token budget formula `max(1024, ...)` → code-aware formula; surface and handle `finish_reason="length"`; add JSON healing
+3. TC-5303: Normalize internal links in generate worker post-processor + prompt instruction
+4. TC-5300: Diagnose and fix intake worker silent failure for 10/11 pilots
+5. TC-HEAL-003: Class-grouped relevance-ranked api_surface_block in `section_prompt.py`
+
+### ChatExtractedGapsAndFixes (Session 22)
+
+| Gap | Root Cause (code-traced) | Fix | Confirmed |
+|-----|--------------------------|-----|-----------|
+| All 3D DotNet pages grade D | `fallback.py:119-126` emits `"{product} -- {content_hint}"` unconditionally | Delete 7-line block | YES (fallback.py read) |
+| finish_reason=length ignored | `llm_provider.py:529,548,557` captures it but generate worker never reads it | Surface + retry with doubled budget | YES (confirmed by agent) |
+| 1024-token cap truncates JSON | `worker.py:1158-1159` `max_tokens = max(1024, max_words * 5)` | Code-aware formula: min 2048, +1024 for code sections | YES (worker.py read) |
+| LLM generates subdomain paths | section_prompt.py has no link format instruction | Post-processor regex + prompt instruction | YES (link_validity.py confirmed pure regex) |
+| 10/11 pilots stuck at intake | Intake fails silently, no checkpoint, all downstream skipped | Pre-flight validation + structured error event | DIAGNOSING (TC-5300) |
+
+### ChatMentionedFiles (Session 22)
+
+- `src/launcher/workers/generate/fallback.py` (lines 119-126 — TC-5301 target)
+- `src/launcher/workers/generate/worker.py` (lines 1158-1159 — TC-5302 target)
+- `src/launcher/clients/llm_provider.py` (lines 529,548,557 — TC-5302 finish_reason)
+- `src/launcher/workers/generate/section_prompt.py` (api_surface_block — TC-HEAL-003)
+- `src/launcher/workers/intake/worker.py` (TC-5300 target)
+- `src/launcher/workers/evaluate/checks/link_validity.py` (HIGH for subdomain paths)
+- `graph_builder.py:256-264` (error propagation — DO NOT CHANGE)
+
+### SubstantialityCheck (Session 22)
+
+SUBSTANTIAL: 5 taskcards, 6 confirmed root causes with code-traced evidence, execution sequence A-F, regression controls, honest limits per pilot family.
+
+### ResolutionStrategy (Session 22)
+
+Phase A (immediate): TC-5301 (no blockers — 7 line deletion)
+Phase B (immediate): TC-5303 (no blockers — regex post-processor)
+Phase C (after diagnosis): TC-5300 (intake fix)
+Phase D (after diagnosis): TC-5302 (token budget + finish_reason)
+Phase E (after C+D): TC-HEAL-003 (class-grouped api surface)
+
+## SecondarySources (Session 22)
+
+- `plans/from_chat/20260327_000000_from_chat_a-plus-b-production-redesign.md`
+- `reports/TASK_BACKLOG.md` (Session 22 workstream)
+
+## MissingCandidates (Session 22)
+None — all sources verified.
+
+---
+
+---
+
+# PLAN_SOURCES — Session 23 (2026-03-27) — Architectural Revamp: Canonical Evidence Architecture
+
+## PrimaryPlanSource (Session 23)
+
+| Field | Value |
+|-------|-------|
+| Path | `C:\Users\prora\.claude\plans\bright-nibbling-elephant.md` |
+| Type | Plan-mode artifact (2-pass deep architectural audit + production-grade revamp) |
+| Why selected | Comprehensive audit of all 8 workers, shared modules, prompts, configs, schemas, tests, orchestrator. Integrates second external review. Identifies 13 structural issues with code-traced evidence. Distinguishes what works from what is structurally broken. Proposes canonical evidence architecture, 9-phase implementation plan, phase priority matrix. |
+| Key sections | Executive Judgment, Mental Model, Architecture Map (What Works / What Is Broken), Issue Register (ISSUE-01..13), Bottleneck Analysis, Multi-Platform Readiness, Verification Assessment, Production Architecture Proposal, 9-Phase Implementation Plan, Anti-Patterns, Tradeoffs, Open Questions |
+| SelectedAsPrimary | true (session 23) |
+
+### ChatExtractedSteps (Session 23)
+
+Phase 0 (P0, immediate, very low risk):
+1. TC-5304: Fix `evaluate/worker.py:547` — replace always-1.0 `claim_coverage` formula
+2. TC-5305: Add verify case to `graph_builder.py:39-60` `_resolve_input_model()`
+3. TC-5306: Annotate `generate/worker.py:288` side-load with logging + run_id validation
+
+Phase 1 (P0, 2 sessions):
+4. TC-5307: Create `shared/platform_config.py` — unified PlatformConfig from `configs/families.yaml`
+5. Replace `_VERIFICATION_LANG` (section_prompt.py:27-34), `_IMPORT_KEYWORD` (section_prompt.py:65-72), `_MANIFEST_LANGUAGE_MAP` (acquisition.py:59-71), platform exemption sets (api_allowlist.py)
+
+Phase 2 (P0, 1 session):
+6. TC-5308: Add `ExtractionQualitySummary` to `models/understanding.py` + wire in evaluate
+
+Phase 3 (P1, 2 sessions):
+7. TC-5309: Remove `llm_sparse_grounding` bypass in `_entry.py:535-540`; deterministic fallback
+
+Phase 4 (P1, 3-4 sessions):
+8. TC-5310: `_cpp_ast.py` using `shared/ts_analyzer.py` — C++ tree-sitter extraction
+
+Phase 5 (P1, 1 session):
+9. TC-5311: Replace LLM advisor with deterministic `route_after_evaluate()`; add `heal_understand` path
+
+### ChatExtractedGapsAndFixes (Session 23)
+
+| Issue | Root Cause (code-traced) | Fix | Confirmed |
+|-------|--------------------------|-----|-----------|
+| ISSUE-01 | generate side-loads UnderstandingBundle (`worker.py:288`) | Log warning + run_id validation | YES (worker.py read) |
+| ISSUE-02 | `claim_coverage = len/len = 1.0` (`evaluate/worker.py:547`) | Real coverage formula | YES (worker.py read) |
+| ISSUE-03 | `llm_sparse_grounding` bypass (`_entry.py:535-540`) | Deterministic fallback, remove bypass | YES (confirmed) |
+| ISSUE-04 | C++ adapter regex-only, no AST | Tree-sitter via `ts_analyzer.py` | YES (C++ A+B=5%) |
+| ISSUE-05 | Understand god-phase, no sub-checkpoints | Sub-phase checkpointing | YES (_entry.py) |
+| ISSUE-06 | Platform logic in 6+ modules | `PlatformConfig` from `families.yaml` | YES (6 locations) |
+| ISSUE-07 | LLM advisor for routing | Deterministic `route_after_evaluate()` | YES (advisor.py) |
+| ISSUE-08 | Heal loop can't escalate to understand | `re_run_targets: [understand, planner, generate]` | YES (pipeline.yaml:44) |
+| ISSUE-11 | verify missing from `_resolve_input_model()` | Add verify case | YES (graph_builder.py) |
+
+### ChatMentionedFiles (Session 23)
+
+- `src/launcher/workers/evaluate/worker.py` (line 547 — TC-5304)
+- `src/launcher/orchestrator/graph_builder.py` (lines 39-60 — TC-5305)
+- `src/launcher/workers/generate/worker.py` (line 288 — TC-5306)
+- `src/launcher/workers/understand/extract/_entry.py` (lines 535-540 — TC-5309)
+- `src/launcher/workers/understand/adapters/_cpp.py` (thin extraction — TC-5310)
+- `src/launcher/shared/ts_analyzer.py` (66K, already deployed — TC-5310)
+- `src/launcher/orchestrator/pipeline_advisor.py` (LLM routing — TC-5311)
+- `src/launcher/workers/generate/section_prompt.py` (platform tables — TC-5307)
+- `src/launcher/workers/intake/acquisition.py` (platform table — TC-5307)
+- `src/launcher/workers/evaluate/checks/api_allowlist.py` (exemption sets — TC-5307)
+- `configs/pipeline.yaml` (re_run_targets:44 — TC-5311)
+
+### SubstantialityCheck (Session 23)
+
+SUBSTANTIAL: 8 issues with code-traced evidence, 9 phases, 8 taskcards, explicit acceptance criteria, priority matrix with fastest path identified.
+
+### ResolutionStrategy (Session 23)
+
+Fastest path to measurable quality improvement: Phase 0 (1 session, fixes false reporting) + Phase 4 (3-4 sessions, C++ A+B 5%→30%+) + Phase 5 (1 session, stops wasted heal iterations).
+Phase 0 has zero risk and executes immediately. Phase 4 is highest ROI. Phase 5 makes Phase 4 work observable.
+
+## SecondarySources (Session 23)
+
+- `plans/from_chat/20260327_120000_from_chat_arch-revamp-canonical-evidence.md` (materialized plan)
+
+## MissingCandidates (Session 23)
+
+None — all sources verified against actual code.
 
 ---
 

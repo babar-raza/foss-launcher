@@ -71,10 +71,13 @@ class TestBlockStripping:
 # Single method comment-out
 # ---------------------------------------------------------------------------
 
-class TestSingleMethodCommentOut:
-    """Blocks with exactly 1 hallucinated tracked method get the line commented."""
+class TestSingleMethodRemoval:
+    """Blocks with exactly 1 hallucinated tracked method get the offending line removed.
 
-    def test_one_unknown_method_commented(self):
+    TC-GEN-601: No visible HG-22 markers in published code — line is silently dropped.
+    """
+
+    def test_one_unknown_method_removed(self):
         code = "wb = Workbook()\nwb.save('out.xlsx')\nwb.create_chart()"
         blocks = [_code_block(code)]
         result = _strip_hallucinated_method_calls(
@@ -82,11 +85,11 @@ class TestSingleMethodCommentOut:
         )
         assert len(result) == 1
         assert result[0].type == BlockType.code
-        assert "# HG-22:" in result[0].content
+        assert "# HG-22:" not in result[0].content
         assert "wb.save" in result[0].content  # valid line preserved
-        assert "create_chart" in result[0].content  # present in comment
+        assert "create_chart" not in result[0].content  # hallucinated line removed
 
-    def test_commented_line_preserves_rest(self):
+    def test_removal_preserves_other_lines(self):
         code = "wb = Workbook()\nwb.load('in.xlsx')\nwb.fake_method()\nprint('done')"
         blocks = [_code_block(code)]
         result = _strip_hallucinated_method_calls(
@@ -94,14 +97,13 @@ class TestSingleMethodCommentOut:
         )
         assert len(result) == 1
         lines = result[0].content.split("\n")
-        # Original 4 lines preserved
-        assert len(lines) == 4
-        # Line 2 (index 2) is commented
-        assert lines[2].startswith("# HG-22:")
+        # Hallucinated line removed: 4 → 3 lines
+        assert len(lines) == 3
+        assert "# HG-22:" not in result[0].content
         # Other lines unchanged
         assert lines[0] == "wb = Workbook()"
         assert lines[1] == "wb.load('in.xlsx')"
-        assert lines[3] == "print('done')"
+        assert lines[2] == "print('done')"
 
 
 # ---------------------------------------------------------------------------

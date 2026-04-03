@@ -1,0 +1,262 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/slides/cpp/getting-started/",
+    "canonical_import": "Aspose::Slides::Foss",
+    "code_import": "Aspose::Slides::Foss",
+    "date": "2026-04-01T14:10:08Z",
+    "dateModified": "2026-04-01T14:41:49Z",
+    "datePublished": "2026-04-01T14:10:08Z",
+    "description": "This library enables programmatic `slide` manipulation, `text` formatting, and shape handling without requiring Microsoft PowerPoint.",
+    "display_name": "Aspose.Slides FOSS for C++",
+    "family": "slides",
+    "keywords": [
+      "cppcon slides",
+      "cpp slides",
+      "cppnow slides",
+      "cppcon slides 2025",
+      "aspose slides cpp",
+      "meeting cpp slides"
+    ],
+    "lastmod": "2026-04-01T14:41:49Z",
+    "page_role": "getting_started",
+    "platform": "cpp",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Getting Started with Aspose.Slides FOSS for C++ | Guide",
+    "slug": "getting-started",
+    "title": "Getting Started with Aspose.Slides FOSS for C++",
+    "type": "getting_started",
+    "url": "/docs.aspose.org/slides/cpp/getting-started/",
+    "weight": 4
+  },
+  "page_id": "docs/getting-started",
+  "page_role": "getting_started",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Getting started with Aspose.Slides FOSS for C++ means building applications that create, modify, and `save` PowerPoint-compatible presentations using open-source C++ code. This library enables programmatic `slide` manipulation, `text` formatting, and shape handling without requiring Microsoft PowerPoint.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-541e7e",
+            "CLM-slides-ed2cf4"
+          ],
+          "content": "You can work with `slide` content including `paragraphs` and `bullet` formatting through the `BulletFormat` class, which exposes methods like `BulletType()`, `set_type()`, and `set_character()` to control list styling. `Slide` `comments` are represented by the `Comment` class, supporting `text` content and creation timestamps via `text()`, `set_text()`, `created_time()`, and `set_created_time()`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-bebf9a",
+            "CLM-slides-8145aa"
+          ],
+          "content": "The library supports core `presentation` operations such as adding `shapes`, applying fills (solid, gradient, pattern), and managing document properties like `title` and `subject`. It reads and writes `PPTX` files with full fidelity and also supports writing to `FODP` format.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "To use Aspose.Slides FOSS for C++, ensure you have C++17 or later installed, along with CMake 3.16 or newer for dependency management. Install the library using CMake’s find_package mechanism as shown in the installation `reference`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "find_package(aspose_slides_foss REQUIRED)",
+          "items": [],
+          "language": "cmake",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-0a6e83",
+            "CLM-slides-d85b67",
+            "CLM-slides-3b817b"
+          ],
+          "content": "Include the main header and use the canonical namespace `Aspose::Slides::Foss`. The `Presentation` class enables creating and manipulating `slides`, while `DocumentProperties` allows setting metadata such as the `author` via `set_author()`. The `Camera` class supports 3D scene rendering, and its `has_parent()` method returns true if initialized with `a` parent `XML` element.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Install Aspose.Slides FOSS for C++ using CMake’s find_package directive to integrate the library into your build system. This ensures correct linking and header inclusion without manual path configuration.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "find_package(aspose_slides_foss REQUIRED)",
+          "items": [],
+          "language": "cmake",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-3b817b",
+            "CLM-slides-bebf9a"
+          ],
+          "content": "After installation, include the main header and use the canonical namespace `Aspose::Slides::Foss`. The `Camera` class represents `camera` properties for 3D scene rendering, and `DocumentProperties.set_subject()` sets the `subject` of the `presentation`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-3b817b",
+            "CLM-slides-bebf9a"
+          ],
+          "content": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/document_properties.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\npres.document_properties().set_subject(\"Q1 Financial Summary\");",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Installation",
+      "level": 2,
+      "section_id": "installation"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-3b817b",
+            "CLM-slides-654bec"
+          ],
+          "content": "To create and modify `a` `presentation` using Aspose.Slides FOSS for C++, include the main header and use the canonical namespace `Aspose::Slides::Foss`. The `Presentation` class provides the entry point for working with `slides`, `shapes`, and document properties.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-654bec",
+            "CLM-slides-bebf9a",
+            "CLM-slides-0a6e83"
+          ],
+          "content": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\npres.document_properties().set_title(\"Quick Start Demo\");\npres.document_properties().set_subject(\"FOSS C++ Presentation\");\npres.save(\"quick_start.pptx\", SaveFormat::PPTX);",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-e5aa98",
+            "CLM-slides-ed2cf4"
+          ],
+          "content": "You can also add `comments` to `slides` using the `Comment` class. Construct `a` comment with `text`, associated `slide`, `author`, `position`, and creation time, then attach it to `a` `slide`'s comment collection.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-e5aa98",
+            "CLM-slides-ed2cf4",
+            "CLM-slides-1e632d",
+            "CLM-slides-11f9c6"
+          ],
+          "content": "#include <Aspose/Slides/Foss/presentation.h>\n#include <Aspose/Slides/Foss/comment.h>\n#include <Aspose/Slides/Foss/comment_author.h>\n#include <Aspose/Slides/Foss/export/save_format.h>\n\nusing namespace Aspose::Slides::Foss;\n\nPresentation pres;\nauto& slide = pres.slides()[0];\nauto author = pres.comment_authors().add_author(u\"Author Name\", u\"AN\");\nauto comment = new Comment(u\"This is a sample comment.\", &slide, author, Drawing::PointF(100, 100), std::chrono::system_clock::now());\nslide.comments().add(comment);\npres.save(\"with_comment.pptx\", SaveFormat::PPTX);",
+          "items": [],
+          "language": "cpp",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Quick Start",
+      "level": 2,
+      "section_id": "quick_start"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-slides-1e632d",
+            "CLM-slides-f44917"
+          ],
+          "content": "To continue working with Aspose.Slides FOSS for C++, explore how to manipulate `slide` `comments` with precise timestamps using `Comment.set_created_time()` and adjust shape geometry using `AdjustValue`.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-slides-541e7e",
+            "CLM-slides-654bec"
+          ],
+          "content": "",
+          "items": [
+            "Learn how to format paragraph bullets using `BulletFormat` in the [Text Formatting Guide](/slides/cpp/developer-guide/text-formatting).",
+            "Review all available shape types and their properties in the [Shapes API Reference](/slides/cpp/api-reference).",
+            "Understand how to manage presentation metadata like author and subject via `DocumentProperties` in the [Document Properties Tutorial](/slides/cpp/developer-guide/document-properties)."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Next Steps",
+      "level": 2,
+      "section_id": "next_steps"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Aspose.Slides FOSS for C++ API Reference](/slides/cpp/api-overview/)",
+            "[How to Convert File Formats with Aspose.Slides FOSS for C++](/slides/cpp/convert-pptx-to-fodp/)",
+            "[How to Fix Common Errors with Aspose.Slides FOSS for C++](/slides/cpp/fix-presentations-errors/)",
+            "[How to Load Files with Aspose.Slides FOSS for C++](/slides/cpp/load-presentations/)",
+            "[How to Optimize Performance with Aspose.Slides FOSS for C++](/slides/cpp/optimize-presentations/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Getting Started with Aspose.Slides FOSS for C++"
+}

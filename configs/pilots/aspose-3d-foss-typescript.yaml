@@ -5,7 +5,7 @@ launch_tier: auto
 validation_profile: pilot
 product_name: Aspose.3D-FOSS-for-TypeScript
 display_name: Aspose.3D
-canonical_import: "@aspose/3d-foss"
+canonical_import: "@aspose/3d"
 llm:
   primary:
     base_url: https://llm.professionalize.com/v1
@@ -17,7 +17,7 @@ llm:
     model: gemma3:12b
   routing:
     extract: standard
-    generate: reasoning
+    generate: standard
     review: reasoning
   temperature: 0.0
   max_tokens: 6000

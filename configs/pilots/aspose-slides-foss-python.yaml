@@ -6,7 +6,7 @@ validation_profile: pilot
 product_name: Aspose.Slides FOSS for Python
 display_name: Aspose.Slides
 canonical_import: aspose_slides_foss
-runtime_import: aspose.slides
+runtime_import: "aspose.slides_foss"
 llm:
   primary:
     base_url: https://llm.professionalize.com/v1
@@ -18,7 +18,7 @@ llm:
     model: gemma3:12b
   routing:
     extract: standard
-    generate: reasoning
+    generate: standard
     review: reasoning
   temperature: 0.0
   max_tokens: 6000

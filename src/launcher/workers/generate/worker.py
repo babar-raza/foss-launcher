@@ -286,6 +286,8 @@ class GenerateWorker(WorkerContract):
 
         # Load understanding data from checkpoint (product, claims, snippets, etc.)
         understand = _load_understanding(context)
+        # TC-5306: capture which run produced the checkpoint so evaluate can detect staleness.
+        _understand_checkpoint_run_id: str = context.run_id
 
         context.log.info("[Generate] Starting content generation for %d pages", len(plan.pages))
         context.emit_event("worker_started", {"pages": len(plan.pages)}, worker=self.name)
@@ -713,6 +715,10 @@ class GenerateWorker(WorkerContract):
                 role: score.model_dump(mode="json") if hasattr(score, "model_dump") else dict(score)
                 for role, score in (getattr(understand, "page_evidence_index", {}) or {}).items()
             },
+            # TC-5306: side-load traceability — lets Evaluate detect stale understanding checkpoints.
+            understanding_checkpoint_run_id=_understand_checkpoint_run_id,
+            # TC-5308: Embed extraction completeness for evaluate quality gating.
+            extraction_completeness=understand.extraction_db.completeness if (understand.extraction_db is not None) else None,
         )
 
         context.log.info(
@@ -1155,14 +1161,50 @@ async def _generate_page(
                 )
                 section_prompt_str = prompt
 
-                _sec_max_tokens = max(512, (skel_section.max_words or 200) * 3)
+                # TC-5302: Code-aware output token budget.
+                # Old formula max(1024, max_words*5) capped at 1024 for typical sections,
+                # guaranteed truncation for any section with code blocks (300-400 tokens each).
+                # New formula: 1.3 tokens/word prose × 4 chars/token + 30% JSON overhead,
+                # floor 2048 (minimum safe for a JSON-wrapped code section),
+                # +1024 bonus for code-required page roles.
+                _sec_is_code_required = page_plan.page_role in _CODE_REQUIRED_ROLES
+                _sec_code_bonus = 1024 if _sec_is_code_required else 0
+                _sec_max_tokens = max(2048, int((skel_section.max_words or 200) * 4 * 1.3) + _sec_code_bonus)
 
                 # TC-4220: Retry loop — re-invoke LLM if prose word count is below
                 # threshold for non-optional sections (capped at _MAX_SECTION_RETRIES).
                 _retry_prompt = prompt
+                _cur_max_tokens = _sec_max_tokens
                 for _attempt in range(_MAX_SECTION_RETRIES + 1):
-                    raw_response = await _call_llm(_retry_prompt, context, max_tokens=_sec_max_tokens)
+                    # TC-GEN-701: Escalate temperature on retry attempts so the LLM
+                    # does not reproduce the same broken output at temp=0.
+                    _attempt_temp: float | None = None
+                    if _attempt > 0:
+                        _base = context.llm_config.temperature if context.llm_config else 0.0
+                        _attempt_temp = min(0.25, _base + _attempt * 0.1)
+                    raw_response, _finish_reason = await _call_llm(
+                        _retry_prompt, context, max_tokens=_cur_max_tokens,
+                        _override_temperature=_attempt_temp,
+                    )
                     _llm += 1
+
+                    # TC-5302: Detect output truncation and retry once with doubled budget.
+                    # finish_reason="length" means the LLM ran out of output tokens mid-JSON,
+                    # so parse_and_validate_blocks would fail anyway. Retry before falling back.
+                    if _finish_reason == "length" and _attempt == 0:
+                        logger.warning(
+                            "[Generate] TC-5302: finish_reason=length for section %r "
+                            "(max_tokens=%d) — retrying with doubled budget %d",
+                            skel_section.heading,
+                            _cur_max_tokens,
+                            _cur_max_tokens * 2,
+                        )
+                        _cur_max_tokens = _cur_max_tokens * 2
+                        raw_response, _finish_reason = await _call_llm(
+                            _retry_prompt, context, max_tokens=_cur_max_tokens,
+                            _override_temperature=_attempt_temp,
+                        )
+                        _llm += 1
 
                     if not raw_response:
                         break
@@ -1184,6 +1226,10 @@ async def _generate_page(
                         _pc_set = set(public_classes)
                         for _blk in blocks:
                             if _blk.type == BlockType.code and _blk.content:
+                                # TC-5336: Skip cmake blocks — CMake has uppercase keywords
+                                # (REQUIRED, PRIVATE, PUBLIC, etc.) that are not API class names.
+                                if (_blk.language or "").lower() == "cmake":
+                                    continue
                                 _unknown_ids = _scan_code_block_api_identifiers(
                                     _blk.content, _pc_set,
                                 )
@@ -1261,18 +1307,63 @@ async def _generate_page(
                     _is_python_product = (
                         getattr(product, "language_tag", "") or ""
                     ).lower() in ("python", "py")
-                    _has_syntax_errors = any(
-                        not _accept_code_block(
-                            b.content or "",
-                            b.language if b.language else ("python" if _is_python_product else ""),
+                    # TC-GEN-702: Collect per-block SyntaxError messages for retry directive.
+                    _syntax_error_msgs: list[str] = []
+                    for b in blocks:
+                        if b.type != BlockType.code:
+                            continue
+                        _blk_lang = (b.language or "").lower()
+                        if _blk_lang not in ("python", "py", "python3") and not (_is_python_product and not b.language):
+                            continue
+                        _eff_lang = b.language if b.language else ("python" if _is_python_product else "")
+                        _ok, _err = _accept_code_block(b.content or "", _eff_lang)
+                        if not _ok:
+                            _syntax_error_msgs.append(_err)
+                    _has_syntax_errors = len(_syntax_error_msgs) > 0
+
+                    # TC-5329: Detect wrong-ecosystem (.NET/C++CLI) patterns in C++ code blocks.
+                    # section_validator.py annotates contaminated blocks with a marker comment;
+                    # we collect those labels here to drive a targeted retry directive.
+                    _is_cpp_product = (
+                        getattr(product, "platform", "") or ""
+                    ).lower() == "cpp"
+                    _cpp_contamination_labels: list[str] = []
+                    if _is_cpp_product:
+                        from launcher.workers.generate.section_validator import (
+                            _CPP_FENCE_LANGS,
+                            _CPP_CONTAMINATION_MARKER,
                         )
-                        for b in blocks
-                        if b.type == BlockType.code
-                        and (
-                            (b.language or "").lower() in ("python", "py", "python3")
-                            or (_is_python_product and not b.language)
-                        )
-                    )
+                        for _blk in blocks:
+                            if (
+                                _blk.type == BlockType.code
+                                and (_blk.language or "").lower() in _CPP_FENCE_LANGS
+                                and _blk.content
+                                and _CPP_CONTAMINATION_MARKER in _blk.content
+                            ):
+                                _marker_line = next(
+                                    (ln for ln in _blk.content.splitlines()
+                                     if ln.startswith(_CPP_CONTAMINATION_MARKER)),
+                                    "",
+                                )
+                                _raw_labels = _marker_line[len(_CPP_CONTAMINATION_MARKER):].strip()
+                                _cpp_contamination_labels.extend(
+                                    lbl.strip() for lbl in _raw_labels.split(",") if lbl.strip()
+                                )
+                    _has_cpp_contamination = _is_cpp_product and bool(_cpp_contamination_labels)
+
+                    # TC-5334: Detect Python fence blocks on C++ pages.
+                    # The LLM sometimes writes ```python placeholder blocks (e.g.
+                    # "import Aspose::Slides::Foss") on C++ pages when it has no
+                    # valid C++ snippet evidence. These cause code_platform:HIGH in evaluate.
+                    _has_python_fence_on_cpp = False
+                    if _is_cpp_product:
+                        for _blk in blocks:
+                            if (
+                                _blk.type == BlockType.code
+                                and (_blk.language or "").lower() in ("python", "py", "python3")
+                            ):
+                                _has_python_fence_on_cpp = True
+                                break
 
                     _candidate_ir = SectionIR(
                         section_id=skel_section.heading.lower().replace(" ", "_"),
@@ -1304,11 +1395,57 @@ async def _generate_page(
                             _needs_code_retry = True
 
                     _prose_ok = _prose_count >= _MIN_SECTION_PROSE_WORDS or _is_optional
-                    if _prose_ok and not _needs_code_retry and not _has_syntax_errors and not _has_api_violations:
+                    if (
+                        _prose_ok
+                        and not _needs_code_retry
+                        and not _has_syntax_errors
+                        and not _has_api_violations
+                        and not _has_cpp_contamination
+                        and not _has_python_fence_on_cpp
+                    ):
                         section_ir = _candidate_ir
                         break
                     if _attempt < _MAX_SECTION_RETRIES:
                         _retry_additions = []
+                        if _has_python_fence_on_cpp:
+                            # TC-5334: Python fence found on C++ page — reject and retry.
+                            logger.warning(
+                                "[Generate] TC-5334: python_fence_on_cpp: section '%s'"
+                                " page '%s' attempt %d/%d — rejecting Python fence block",
+                                skel_section.heading,
+                                page_plan.page_id,
+                                _attempt + 1,
+                                _MAX_SECTION_RETRIES,
+                            )
+                            _retry_additions.append(
+                                "WRONG FENCE LANGUAGE DETECTED: You wrote a ```python code block "
+                                "on a C++ page. C++ code blocks MUST use ```cpp fence language. "
+                                "NEVER use ```python, ```py, or ```python3 on a C++ page. "
+                                "Rewrite the code block using valid C++17 syntax with the ```cpp "
+                                "fence language. Include `#include <Aspose/Slides/Foss>` and "
+                                "`using namespace Aspose::Slides::Foss;` at the top. "
+                                "Use direct construction, not import statements."
+                            )
+                        if _has_cpp_contamination:
+                            logger.warning(
+                                "[Generate] TC-5329: cpp_contamination: section '%s'"
+                                " page '%s' attempt %d/%d — wrong-ecosystem patterns: %s",
+                                skel_section.heading,
+                                page_plan.page_id,
+                                _attempt + 1,
+                                _MAX_SECTION_RETRIES,
+                                ", ".join(set(_cpp_contamination_labels)),
+                            )
+                            _retry_additions.append(
+                                "CONTAMINATION DETECTED — your C++ code block used wrong-ecosystem "
+                                "(.NET/C++CLI) patterns: "
+                                + ", ".join(f"`{lbl}`" for lbl in sorted(set(_cpp_contamination_labels)))
+                                + ". These idioms do NOT exist in this standard C++ FOSS library. "
+                                "Rewrite all code blocks using only standard C++ with "
+                                "`using namespace Aspose::Slides::Foss;`. "
+                                "Use direct construction (e.g. `Presentation pres(\"file.pptx\");`), "
+                                "`dynamic_cast<T*>()`, and `std::runtime_error` for exceptions."
+                            )
                         if _has_api_violations:
                             logger.warning(
                                 "[Generate] FPR-03/FPRSR-04: api_surface_retry: section '%s'"
@@ -1318,12 +1455,25 @@ async def _generate_page(
                                 _attempt + 1,
                                 _MAX_SECTION_RETRIES,
                             )
+                            # TC-GEN-703: Derive retry class list from section claims
+                            # instead of alphabetical-first-20. Falls back to top 5 if
+                            # fewer than 3 claim-relevant classes found.
+                            _section_relevant: set[str] = set()
+                            if sec_claims and public_classes:
+                                for _cls in public_classes:
+                                    _cls_low = _cls.lower()
+                                    for _cl in sec_claims:
+                                        if _cls_low in (getattr(_cl, "text", "") or "").lower():
+                                            _section_relevant.add(_cls)
+                                            break
+                            if len(_section_relevant) < 3:
+                                _section_relevant.update(sorted(public_classes)[:5])
                             _retry_additions.append(
                                 "CRITICAL: Only use these known API classes: "
-                                + ", ".join(sorted(public_classes)[:20])
+                                + ", ".join(sorted(_section_relevant))
                                 + ". Do NOT invent class names. "
                                 + "The following names are NOT valid API classes: "
-                                + ", ".join(sorted(set(_api_violation_names))[:5])
+                                + ", ".join(sorted(set(_api_violation_names)))
                                 + "."
                             )
                             _api_violation_names = []  # reset for next attempt
@@ -1336,11 +1486,20 @@ async def _generate_page(
                                 _attempt + 1,
                                 _MAX_SECTION_RETRIES,
                             )
-                            _retry_additions.append(
-                                "CRITICAL: Your Python code blocks must be syntactically valid."
-                                " Every ```python block must compile without errors."
-                                " Do not use placeholder text (e.g. [identifier omitted]) in code."
-                            )
+                            # TC-GEN-702: Include specific SyntaxError details in retry directive.
+                            if _syntax_error_msgs:
+                                _retry_additions.append(
+                                    "CRITICAL: Your Python code blocks have syntax errors:\n"
+                                    + "\n".join(f"  - {msg}" for msg in _syntax_error_msgs)
+                                    + "\nFix these exact errors. Every ```python block must compile without errors."
+                                    " Do not use placeholder text (e.g. [identifier omitted]) in code."
+                                )
+                            else:
+                                _retry_additions.append(
+                                    "CRITICAL: Your Python code blocks must be syntactically valid."
+                                    " Every ```python block must compile without errors."
+                                    " Do not use placeholder text (e.g. [identifier omitted]) in code."
+                                )
                         if not _prose_ok:
                             logger.warning(
                                 "[Generate] Section %r has < %d prose words (attempt %d/%d) — retrying",
@@ -1389,7 +1548,8 @@ async def _generate_page(
                                         if _blk.language
                                         else ("python" if _is_python_product else "")
                                     )
-                                    if not _accept_code_block(_blk.content or "", _blk_lang):
+                                    _evl1_ok, _ = _accept_code_block(_blk.content or "", _blk_lang)
+                                    if not _evl1_ok:
                                         _evl1_stripped += 1
                                         logger.info(
                                             "[EVL-1] Stripped syntax-invalid code block"
@@ -1407,10 +1567,91 @@ async def _generate_page(
                                     skel_section.heading,
                                     _MAX_SECTION_RETRIES,
                                 )
+                                # TC-GEN-705B: After EVL-1 strips syntax-invalid blocks,
+                                # attempt snippet-pool replacement so the section retains
+                                # a working code example rather than losing it entirely.
+                                if sec_snippets:
+                                    _repl = _find_snippet_replacement(
+                                        sec_snippets,
+                                        [c.claim_id for c in sec_claims] if sec_claims else [],
+                                        "python" if _is_python_product else "",
+                                    )
+                                    if _repl is not None:
+                                        _evl1_kept.append(_repl)
+                                        logger.info(
+                                            "[GEN-4/EVL-1] Snippet fallback after syntax"
+                                            " exhaustion (section=%s)",
+                                            skel_section.heading,
+                                        )
                                 _candidate_ir = _candidate_ir.model_copy(
                                     update={"blocks": _evl1_kept}
                                 )
-                        else:
+                        # TC-5329: Drop C++ code blocks that still contain .NET contamination
+                        # after all retries. A section without a code block is preferable to
+                        # one with wrong-ecosystem code reaching published output.
+                        if _has_cpp_contamination:
+                            from launcher.workers.generate.section_validator import (
+                                _CPP_FENCE_LANGS,
+                                _CPP_CONTAMINATION_MARKER,
+                            )
+                            _cpp_kept: list[BlockIR] = []
+                            _cpp_dropped = 0
+                            for _blk in _candidate_ir.blocks:
+                                if (
+                                    _blk.type == BlockType.code
+                                    and (_blk.language or "").lower() in _CPP_FENCE_LANGS
+                                    and _blk.content
+                                    and _CPP_CONTAMINATION_MARKER in _blk.content
+                                ):
+                                    _cpp_dropped += 1
+                                    logger.warning(
+                                        "[TC-5329] Dropped contaminated C++ block after"
+                                        " retry exhaustion (section=%r, %d chars)",
+                                        skel_section.heading,
+                                        len(_blk.content),
+                                    )
+                                    continue
+                                # Strip marker from clean blocks (belt-and-suspenders)
+                                if _blk.type == BlockType.code and _blk.content:
+                                    _cleaned = "\n".join(
+                                        ln for ln in _blk.content.splitlines()
+                                        if not ln.startswith(_CPP_CONTAMINATION_MARKER)
+                                    )
+                                    _cpp_kept.append(
+                                        _blk.model_copy(update={"content": _cleaned})
+                                        if _cleaned != _blk.content else _blk
+                                    )
+                                else:
+                                    _cpp_kept.append(_blk)
+                            if _cpp_dropped:
+                                _candidate_ir = _candidate_ir.model_copy(
+                                    update={"blocks": _cpp_kept}
+                                )
+                        # TC-5334: Drop Python fence blocks on C++ pages after retry exhaustion.
+                        # A section without a code block is preferable to one with a Python
+                        # placeholder block in published C++ output.
+                        if _has_python_fence_on_cpp:
+                            _py_kept: list[BlockIR] = []
+                            _py_dropped = 0
+                            for _blk in _candidate_ir.blocks:
+                                if (
+                                    _blk.type == BlockType.code
+                                    and (_blk.language or "").lower() in ("python", "py", "python3")
+                                ):
+                                    _py_dropped += 1
+                                    logger.warning(
+                                        "[TC-5334] Dropped Python fence block on C++ page after"
+                                        " retry exhaustion (section=%r, %d chars)",
+                                        skel_section.heading,
+                                        len(_blk.content or ""),
+                                    )
+                                    continue
+                                _py_kept.append(_blk)
+                            if _py_dropped:
+                                _candidate_ir = _candidate_ir.model_copy(
+                                    update={"blocks": _py_kept}
+                                )
+                        if not _has_cpp_contamination and not _has_python_fence_on_cpp:
                             logger.warning(
                                 "[Generate] Section %r still fails quality checks after %d retries — using last result",
                                 skel_section.heading,
@@ -1465,6 +1706,12 @@ async def _generate_page(
             if comp_fixed_blocks != list(section_ir.blocks):
                 section_ir = section_ir.model_copy(update={"blocks": comp_fixed_blocks})
 
+            # TC-5303: Normalize internal Aspose link paths — strip subdomain prefix.
+            # LLM writes /docs.aspose.org/... instead of site-relative /3d/dotnet/...
+            link_normed_blocks = _normalize_internal_links(list(section_ir.blocks))
+            if link_normed_blocks != list(section_ir.blocks):
+                section_ir = section_ir.model_copy(update={"blocks": link_normed_blocks})
+
             # TC-4213: Post-LLM identifier repair — replace hallucinated PascalCase
             # class names in prose and annotate them in code blocks.
             # Wrapped in try/except so a repair failure never blocks generation.
@@ -1474,6 +1721,10 @@ async def _generate_page(
                     _repaired_blocks: list[BlockIR] = []
                     _section_repairs: list[str] = []
                     _product_display = getattr(product, "display_name", "") or ""
+                    # TC-NET-001: pass canonical_import so namespace path tokens
+                    # (e.g. "ThreeD" from "Aspose.ThreeD") are never stripped.
+                    _canonical_import = getattr(product, "canonical_import", "") or ""
+                    _import_allowlist = list(getattr(api_surface, "import_allowlist", None) or [])
                     for _blk in section_ir.blocks:
                         _blk_content = _blk.content or ""
                         if not _blk_content:
@@ -1486,6 +1737,8 @@ async def _generate_page(
                             _fenced = f"```{_lang}\n{_blk_content}\n```\n"
                             _repaired_fenced, _blk_repairs = _repair_ids(
                                 _fenced, api_surface, _product_display,
+                                canonical_import=_canonical_import,
+                                import_allowlist=_import_allowlist,
                             )
                             # Extract content between fence delimiters
                             _fenced_lines = _repaired_fenced.splitlines()
@@ -1497,6 +1750,8 @@ async def _generate_page(
                         else:
                             _repaired_content, _blk_repairs = _repair_ids(
                                 _blk_content, api_surface, _product_display,
+                                canonical_import=_canonical_import,
+                                import_allowlist=_import_allowlist,
                             )
                         _section_repairs.extend(_blk_repairs)
                         if _repaired_content != _blk_content:
@@ -1588,6 +1843,17 @@ async def _generate_page(
     except Exception:
         logger.debug("[Generate] deduplicate_sections failed; skipping dedup", exc_info=True)
 
+    # TC-GEN-706: Strip empty See Also sections that were created by GEN-6 bypass.
+    # The linker (inject_links) will create a fresh See Also section if it has
+    # cross-links; an empty one just triggers content_density/semantic_structure HIGHs.
+    sections = [
+        s for s in sections
+        if not (
+            s.heading.lower().strip() in _SKIP_LLM_HEADINGS
+            and not s.blocks
+        )
+    ]
+
     page_ir = PageIR(
         page_id=page_plan.page_id,
         page_role=page_plan.page_role,
@@ -1599,13 +1865,30 @@ async def _generate_page(
     return page_ir, llm_calls, fallback_count, template_used, variant, _page_repair_log
 
 
-async def _call_llm(prompt: str, context: WorkerContext, max_tokens: int | None = None) -> str | None:
-    """Call the LLM with the given prompt. Returns raw response or None on failure."""
+async def _call_llm(
+    prompt: str,
+    context: WorkerContext,
+    max_tokens: int | None = None,
+    _override_temperature: float | None = None,
+) -> tuple[str | None, str]:
+    """Call the LLM with the given prompt.
+
+    Returns ``(content, finish_reason)`` where ``content`` is the raw text
+    response (or ``None`` on complete failure) and ``finish_reason`` is the
+    LLM stop reason (``"stop"``, ``"length"``, ``""`` on error).
+
+    TC-5302: finish_reason is now surfaced to callers so that ``"length"``
+    (output token truncation) can be detected and retried with a larger budget.
+
+    TC-GEN-701: ``_override_temperature`` — when set, overrides both the config
+    temperature and the heal_temperature.  Used by the section retry loop to
+    escalate temperature on successive attempts.
+    """
     import asyncio
     import os
 
     if not context.llm_config:
-        return None
+        return None, ""
 
     api_key = os.environ.get("litellm_key", "")
 
@@ -1613,6 +1896,9 @@ async def _call_llm(prompt: str, context: WorkerContext, max_tokens: int | None 
     # different output rather than reproducing the same deterministic result at temp=0.
     _heal_temp = (context.heal_metadata or {}).get("heal_temperature")
     _eff_temperature = _heal_temp if _heal_temp is not None else context.llm_config.temperature
+    # TC-GEN-701: Per-attempt temperature escalation takes precedence.
+    if _override_temperature is not None:
+        _eff_temperature = _override_temperature
     if _heal_temp is not None:
         logger.debug(
             "[Generate][ARC-2] heal_temperature override active: %.2f (config=%.2f)",
@@ -1644,7 +1930,9 @@ async def _call_llm(prompt: str, context: WorkerContext, max_tokens: int | None 
         loop = asyncio.get_running_loop()
         _mt = max_tokens
         response = await loop.run_in_executor(None, lambda: client.chat_completion(messages, task_type="generate", max_tokens=_mt))
-        return response.get("content", "") if isinstance(response, dict) else str(response)
+        if isinstance(response, dict):
+            return response.get("content", ""), response.get("finish_reason", "")
+        return str(response), ""
     except Exception as e:
         logger.warning(
             "[Generate] LLM primary failed: type=%s msg=%s",
@@ -1672,14 +1960,16 @@ async def _call_llm(prompt: str, context: WorkerContext, max_tokens: int | None 
                 )
                 loop = asyncio.get_running_loop()
                 response = await loop.run_in_executor(None, lambda: client.chat_completion(messages, task_type="generate", max_tokens=_mt))
-                return response.get("content", "") if isinstance(response, dict) else str(response)
+                if isinstance(response, dict):
+                    return response.get("content", ""), response.get("finish_reason", "")
+                return str(response), ""
             except Exception as e2:
                 logger.warning(
                     "[Generate] Fallback LLM also failed: type=%s msg=%s",
                     type(e2).__name__, e2,
                 )
 
-        return None
+        return None, ""
 
 
 def _section_needs_regen(section_ir: SectionIR, page_role: str) -> bool:
@@ -1899,7 +2189,7 @@ async def enforce_block_spec(
                 prepend = prepend[:500]  # raised from 300 — type-reminder + violations can now fit
                 retry_prompt = prepend + original_prompt
                 try:
-                    retry_response = await _call_llm(retry_prompt, context)
+                    retry_response, _ = await _call_llm(retry_prompt, context)
                     if retry_response:
                         from launcher.workers.generate.section_validator import parse_and_validate_blocks
                         allowed_ids = {c.claim_id for c in section_claims}
@@ -1963,6 +2253,12 @@ def _load_understanding(context: WorkerContext) -> UnderstandingBundle:
             f"Understanding checkpoint not found: {checkpoint_path}. "
             "The understand worker must run before generate."
         )
+    # TC-5306: Log pipeline contract violation so operators can trace stale-evidence bugs.
+    logger.warning(
+        "PIPELINE CONTRACT VIOLATION (TC-5306): generate side-loading UnderstandingBundle "
+        "from disk, bypassing graph state contract. Path: %s",
+        checkpoint_path,
+    )
     raw = json.loads(checkpoint_path.read_text(encoding="utf-8"))
     return UnderstandingBundle.model_validate(raw)
 
@@ -2105,17 +2401,19 @@ def _scan_code_block_api_identifiers(
     return sorted(unknown)
 
 
-def _accept_code_block(code: str, lang: str) -> bool:
-    """Return True iff *code* is acceptable for the generate sandwich.
+def _accept_code_block(code: str, lang: str) -> tuple[bool, str]:
+    """Return ``(ok, error_msg)`` for the generate sandwich syntax gate.
 
     For Python language blocks (``lang`` in ``python``, ``py``, ``python3``),
     performs a compile-time syntax check via stdlib ``compile()``.
-    Non-Python blocks always return True (no parser to apply).
+    Non-Python blocks always pass (no parser to apply).
 
     Shell-like first lines (``pip install``, ``$ ``, shebangs) are skipped
     to avoid false positives on install instructions.
 
     FPR-04 (2026-03-22).
+    TC-GEN-702: Changed return type from ``bool`` to ``tuple[bool, str]``
+    so that ``SyntaxError`` details can be propagated to the retry directive.
 
     Parameters
     ----------
@@ -2126,23 +2424,27 @@ def _accept_code_block(code: str, lang: str) -> bool:
 
     Returns
     -------
-    bool
-        True if the block passes all checks; False if it should be retried.
+    tuple[bool, str]
+        ``(True, "")`` if the block passes; ``(False, error_description)`` otherwise.
     """
     if lang.lower() not in ("python", "py", "python3"):
-        return True
+        return True, ""
     code_stripped = code.strip()
     if not code_stripped:
-        return True
+        return True, ""
     # Skip install/shell commands that aren't ast-parseable Python.
     first_line = code_stripped.split("\n")[0].strip()
     if first_line.startswith(("pip ", "pip3 ", "$ ", "#!/", "#!")):
-        return True
+        return True, ""
     try:
         compile(code_stripped, "<string>", "exec")
-        return True
-    except SyntaxError:
-        return False
+        return True, ""
+    except SyntaxError as e:
+        _msg = getattr(e, "msg", str(e)) or str(e)
+        _lineno = getattr(e, "lineno", None)
+        if _lineno is not None:
+            return False, f"SyntaxError: {_msg} (line {_lineno})"
+        return False, f"SyntaxError: {_msg}"
 
 
 def _find_snippet_replacement(
@@ -2258,6 +2560,55 @@ _COMMERCIAL_URL_RE = re.compile(
     r"https?://(?:docs|purchase|reference|releases|products|blog)\."
     r"aspose\.com\S*",
 )
+
+# TC-5303: Subdomain-prefixed internal link paths that should be site-relative.
+# LLM hallucinates /docs.aspose.org/... instead of /3d/dotnet/... in markdown links.
+# link_validity.py flags these as HIGH ("subdomain prefix in URL path").
+_INTERNAL_SUBDOMAIN_LINK_RE = re.compile(
+    r"\]\(/(?:docs|kb|products|reference|blog)\.aspose\.org/"
+)
+
+
+def _normalize_internal_links(blocks: list[BlockIR]) -> list[BlockIR]:
+    """Strip subdomain prefixes from internal Aspose markdown links (TC-5303).
+
+    The LLM generates ``[text](/docs.aspose.org/3d/dotnet/...)`` paths from
+    training data instead of site-relative ``[text](/3d/dotnet/...)`` paths.
+    ``link_validity.py`` (TC-LINK-01) detects these as HIGH findings.
+
+    This post-processor converts all such markdown link URLs to site-relative
+    by removing the ``/docs.aspose.org``, ``/kb.aspose.org``, etc. prefix,
+    leaving only the path component that starts after the subdomain segment.
+    """
+    fixed = 0
+
+    def _fix(text: str) -> str:
+        nonlocal fixed
+        result = _INTERNAL_SUBDOMAIN_LINK_RE.sub("](/", text)
+        if result != text:
+            fixed += 1
+        return result
+
+    out: list[BlockIR] = []
+    for block in blocks:
+        new_content = _fix(block.content) if block.content else block.content
+        new_items = [
+            _fix(item) if isinstance(item, str) else item
+            for item in (block.items or [])
+        ]
+        out.append(BlockIR(
+            type=block.type,
+            content=new_content,
+            language=block.language,
+            claim_ids=block.claim_ids,
+            items=new_items,
+            level=block.level,
+        ))
+
+    if fixed:
+        logger.debug("[Generate] Normalized internal link subdomain prefixes in %d blocks", fixed)
+
+    return out
 
 
 def _strip_commercial_urls(blocks: list[BlockIR]) -> list[BlockIR]:

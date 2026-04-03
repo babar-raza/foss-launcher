@@ -1,0 +1,269 @@
+{
+  "frontmatter": {
+    "canonical": "https://docs.aspose.org/cells/python/getting-started/",
+    "canonical_import": "aspose.cells",
+    "code_import": "aspose.cells",
+    "date": "2026-03-27T07:02:41Z",
+    "dateModified": "2026-03-27T07:02:41Z",
+    "datePublished": "2026-03-27T07:02:41Z",
+    "description": "The library supports core spreadsheet operations such as reading and writing `cell` data, managing `worksheets`, and exporting to common formats like CSV...",
+    "display_name": "Aspose.Cells FOSS",
+    "family": "cells",
+    "keywords": [
+      "cells python",
+      "python cells in excel",
+      "python cells vscode",
+      "cell python docx",
+      "cell python spyder",
+      "aspose cells python",
+      "code cells python",
+      "voronoi cells python"
+    ],
+    "lastmod": "2026-03-27T07:02:41Z",
+    "page_role": "getting_started",
+    "platform": "python",
+    "reading_time": 1,
+    "robots": "index, follow",
+    "seoTitle": "Getting Started with Aspose.Cells FOSS | Guide",
+    "slug": "getting-started",
+    "title": "Getting Started with Aspose.Cells FOSS",
+    "type": "getting_started",
+    "url": "/docs.aspose.org/cells/python/getting-started/",
+    "weight": 4
+  },
+  "page_id": "docs/getting-started",
+  "page_role": "getting_started",
+  "sections": [
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Getting started with Aspose.Cells FOSS enables you to programmatically create, load, and manipulate Excel-compatible workbooks using Python. The library supports core spreadsheet operations such as reading and writing `cell` data, managing `worksheets`, and exporting to common formats like CSV and JSON. To begin, install the package via pip and import the `aspose.cells` module.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-1fbd95",
+            "CLM-cells-6faf16"
+          ],
+          "content": "import aspose.cells\n\n# Load an existing workbook\nworkbook = aspose.cells.Workbook(\"input.xlsx\")\n\n# Save as CSV\naspose.cells.CSVHandler.save_csv(workbook, \"output.csv\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-4c3881",
+            "CLM-cells-044e50",
+            "CLM-cells-fdf893"
+          ],
+          "content": "You can also load CSV data directly from a string using `CSVHandler.load_csv_from_string()`, which populates a workbook with tabular content without requiring a physical file. For `cell`-level editing, use the `Cell` class to set or `clear` `values` and formulas. The `clear_value()` method sets a `cell`'s `value` to `None`, while `clear_formula()` resets its `formula` expression.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-044e50",
+            "CLM-cells-4d372e"
+          ],
+          "content": "import aspose.cells\n\n# Create a new workbook\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\n\n# Access a cell and clear its value\ncell = worksheet.cells.cell(1, 1)\ncell.clear_value()\n\n# Save the workbook\nworkbook.save(\"output.xlsx\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Overview",
+      "level": 2,
+      "section_id": "overview"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "To use Aspose.Cells FOSS in your Python project, ensure you have Python 3.7 or later installed. Install the package using pip with the command `pip install aspose-cells-foss>=26.3.1`. After installation, verify it works by running `import aspose.cells` in your environment — no other import path is valid.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose.cells\nprint('Installation successful')",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "Python 3.7 or later",
+            "pip package manager",
+            "aspose-cells-foss package (>=26.3.1)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Prerequisites",
+      "level": 2,
+      "section_id": "prerequisites"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "Install Aspose.Cells FOSS for Python using pip. The package `name` is aspose-`cells`-foss and requires version 26.3.1 or later.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "pip install aspose-cells-foss>=26.3.1",
+          "items": [],
+          "language": "bash",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [],
+          "content": "After installation, verify the setup by importing the library and printing a confirmation message. Use the canonical import path `aspose.cells` — no aliases or alternative paths are valid.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [],
+          "content": "import aspose.cells\nprint('Installation successful')",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Installation",
+      "level": 2,
+      "section_id": "installation"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [
+            "CLM-cells-4c3881"
+          ],
+          "content": "To begin using Aspose.Cells FOSS in Python, install the package and load a spreadsheet file into a `Workbook` object. The `Workbook` class represents an Excel file and provides methods to manipulate its contents.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-1fbd95",
+            "CLM-cells-6faf16"
+          ],
+          "content": "import aspose.cells\n\n# Load an existing Excel file\nworkbook = aspose.cells.Workbook(\"input.xlsx\")\n\n# Access the first worksheet\nworksheet = workbook.worksheets[0]\n\n# Write a value to cell A1\nworksheet.cells[\"A1\"].value = \"Hello, Aspose.Cells FOSS!\"\n\n# Save the workbook as CSV\naspose.cells.CSVHandler.save_csv(workbook, \"output.csv\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-0c4b8c",
+            "CLM-cells-042a6f"
+          ],
+          "content": "You can also create a new workbook from scratch and populate it with data. Use the `Cells` collection to access individual `cells` by A1-`style` coordinates or row/column indices. The `coordinate_from_string()` method converts A1 notation to a (row, column) tuple, and `coordinate_to_string()` does the reverse.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-0c4b8c",
+            "CLM-cells-042a6f",
+            "CLM-cells-4d372e"
+          ],
+          "content": "import aspose.cells\n\n# Create a new workbook\nworkbook = aspose.cells.Workbook()\nworksheet = workbook.worksheets[0]\n\n# Access cell B2 using A1 coordinate\nworksheet.cells[\"B2\"].value = 100\n\n# Access cell using row/column indices (1-based)\ncell = worksheet.cells.cell(3, 2) # Row 3, Column 2 = C3\ncell.value = 200\n\n# Convert coordinate\nrow, col = aspose.cells.Cells.coordinate_from_string(\"D4\")\ncoord_str = aspose.cells.Cells.coordinate_to_string(row, col)\n\n# Save as XLSX\nworkbook.save(\"output.xlsx\")",
+          "items": [],
+          "language": "python",
+          "level": null,
+          "type": "code"
+        }
+      ],
+      "heading": "Quick Start",
+      "level": 2,
+      "section_id": "quick_start"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "To continue working with Aspose.Cells FOSS in your Python project, explore these focused resources that build on the Quick Start examples.",
+          "items": [],
+          "language": null,
+          "level": null,
+          "type": "paragraph"
+        },
+        {
+          "claim_ids": [
+            "CLM-cells-283c4c",
+            "CLM-cells-042a6f",
+            "CLM-cells-0c4b8c",
+            "CLM-cells-4c3881",
+            "CLM-cells-e7aacb",
+            "CLM-cells-6faf16"
+          ],
+          "content": "",
+          "items": [
+            "Learn how to clear cell contents using `Cell.clear()` to reset both value and formula in a single call.",
+            "Convert between A1-style coordinates and row/column indices using `Cells.coordinate_to_string()` and `Cells.coordinate_from_string()`.",
+            "Import CSV data directly from strings with `CSVHandler.load_csv_from_string()` or export to CSV strings using `CSVHandler.save_csv_to_string()`.",
+            "Save individual worksheets to CSV files on disk with `CSVHandler.save_csv()` for interoperability."
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "Next Steps",
+      "level": 2,
+      "section_id": "next_steps"
+    },
+    {
+      "blocks": [
+        {
+          "claim_ids": [],
+          "content": "",
+          "items": [
+            "[Explore the API reference](/cells/python/api-overview/)",
+            "[Convert file formats step by step](/cells/python/convert-csv-json-python/)",
+            "[Fix common errors and issues](/cells/python/fix-spreadsheets-errors-python/)",
+            "[Load files efficiently and correctly](/cells/python/load-spreadsheets-python/)",
+            "[Optimize performance for large workbooks](/cells/python/optimize-spreadsheets-python/)"
+          ],
+          "language": null,
+          "level": null,
+          "type": "list"
+        }
+      ],
+      "heading": "See Also",
+      "level": 2,
+      "section_id": "see_also"
+    }
+  ],
+  "title": "Getting Started with Aspose.Cells FOSS"
+}

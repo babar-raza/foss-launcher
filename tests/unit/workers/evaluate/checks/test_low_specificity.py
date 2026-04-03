@@ -28,7 +28,7 @@ class TestLowSpecificity:
         findings = check_low_specificity(content, "test-page", page_role="howto_article")
         assert len(findings) >= 1
         assert findings[0].check == "low_specificity"
-        assert findings[0].severity == "medium"
+        assert findings[0].severity == "low"
 
     def test_mixed_generic_and_specific_passes(self):
         content = (

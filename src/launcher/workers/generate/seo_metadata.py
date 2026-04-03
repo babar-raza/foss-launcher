@@ -43,11 +43,54 @@ class GeminiClientLike(Protocol):
 
 
 # Shared stop-word set for SEO keyword extraction (SEO-04).
+# TC-SEO-601: Expanded with common 4+ char function words and domain-generic nouns
+# that appear in every page and provide no discriminating SEO value.
 SEO_STOP_WORDS: frozenset[str] = frozenset({
+    # Original: articles, conjunctions, prepositions, basic verbs
     "a", "an", "the", "and", "but", "or", "for", "in", "on", "to",
     "of", "is", "it", "by", "at", "as", "how", "with", "this", "that",
     "can", "be", "are", "was", "has", "have", "not", "from", "table",
+    # TC-SEO-601: Common 4+ char function words missed by original set
+    "when", "then", "also", "into", "more", "over", "such", "been",
+    "will", "your", "they", "them", "these", "what", "some", "very",
+    "just", "each", "both", "than", "only", "well", "here", "does",
+    "were", "even", "used", "uses", "which", "while", "about",
+    "their", "there", "where", "after", "other", "would", "could",
+    "should", "using", "being", "those", "every", "under", "between",
+    # TC-SEO-601: Domain-generic technical nouns that appear on every Aspose page
+    "code", "data", "page", "file", "docs", "type", "time", "list",
+    "item", "make", "need", "want", "note", "work", "like", "take",
 })
+
+# TC-HEAL-005: Patterns that identify question-style or irrelevant search queries
+# that should never appear in product documentation keyword lists.
+# These typically come from external keyword research tools that include
+# informational/navigational queries alongside commercial/product queries.
+_KEYWORD_REJECT_PATTERNS: tuple[re.Pattern[str], ...] = (
+    # Question-opener patterns — informational queries not suitable for doc keywords
+    re.compile(r"^\s*(is|are|can|how|what|why|when|where|which|does|do|did)\s", re.IGNORECASE),
+    # Commercial/comparison signals — not relevant to product docs
+    re.compile(r"\b(cost|price|pricing|versus|alternative|symptoms?)\b", re.IGNORECASE),
+    # "vs " comparison shorthand (require trailing space to avoid "vs." at end)
+    re.compile(r"\bvs\s", re.IGNORECASE),
+    # Comparison phrasing
+    re.compile(r"difference\s+between", re.IGNORECASE),
+    # NOTE: "\bsafe\b" intentionally omitted — "is X safe" is caught by the
+    # question-opener above; standalone "safe" causes false positives on
+    # legitimate doc keywords like "thread-safe", "type-safe", "fail-safe".
+)
+
+
+def _is_irrelevant_keyword(kw: str) -> bool:
+    """Return True if a keyword is a question-pattern or irrelevant search query.
+
+    TC-HEAL-005: Filters out informational/navigational queries that harm SEO
+    relevance and credibility when they appear in product documentation frontmatter.
+    Only rejects keywords that clearly match question or comparison patterns —
+    product-specific terms like "dotnet 3d library" are always accepted.
+    """
+    return any(p.search(kw) for p in _KEYWORD_REJECT_PATTERNS)
+
 
 # Subdomain map for canonical URL construction.
 _SUBDOMAIN_MAP: dict[str, str] = {
@@ -147,7 +190,10 @@ def optimize_seo_metadata(
     enhanced = _enhance_keywords(
         existing_kw, claims, product.family, keyword_bundle,
     )
-    fm["keywords"] = enhanced
+    # TC-NET-004: Remove keywords that belong to competing platforms so that,
+    # e.g., "python slides" never appears in a .NET page's frontmatter.
+    _platform = getattr(product, "platform", "") or ""
+    fm["keywords"] = _filter_platform_keywords(enhanced, _platform)
 
     # 7. Final quality enforcement.
     fm = _enforce_metadata_quality(fm)
@@ -391,7 +437,8 @@ def _enhance_keywords(
 
     def _add(kw: str) -> None:
         key = kw.lower().strip()
-        if key and key not in seen:
+        # TC-HEAL-005: Skip question-pattern and irrelevant search queries.
+        if key and key not in seen and not _is_irrelevant_keyword(kw):
             seen.add(key)
             result.append(kw.strip())
 
@@ -412,7 +459,12 @@ def _enhance_keywords(
             w = re.sub(r"[^a-z0-9]", "", w)
             if w and len(w) > 3 and w not in SEO_STOP_WORDS:
                 word_freq[w] = word_freq.get(w, 0) + 1
-    top_claim_words = sorted(word_freq, key=word_freq.get, reverse=True)[:3]
+    # TC-SEO-602: require frequency >= 2 to exclude single-occurrence jargon.
+    top_claim_words = sorted(
+        (w for w in word_freq if word_freq[w] >= 2),
+        key=word_freq.get,
+        reverse=True,
+    )[:3]
     for w in top_claim_words:
         _add(w)
 
@@ -422,6 +474,28 @@ def _enhance_keywords(
         _add(family_kw)
 
     return result[:8]
+
+
+# TC-NET-004: Terms that must not appear in keywords for each platform.
+# Each entry is a frozenset of lowercase substrings to reject.
+_PLATFORM_REJECT_TERMS: dict[str, frozenset[str]] = {
+    "dotnet":     frozenset({"python", "pip ", "java ", "npm ", "nodejs", "typescript"}),
+    "python":     frozenset({"dotnet", "csharp", "nuget", "java ", "npm ", "nodejs"}),
+    "java":       frozenset({"python", "pip ", "dotnet", "csharp", "nuget", "npm "}),
+    "typescript": frozenset({"python", "pip ", "java ", "dotnet", "csharp", "nuget"}),
+    "cpp":        frozenset({"python", "pip ", "java ", "dotnet", "csharp", "npm "}),
+}
+
+
+def _filter_platform_keywords(keywords: list[str], platform: str) -> list[str]:
+    """Remove keywords containing terms from competing platforms (TC-NET-004).
+
+    For example, "python slides" is filtered out of a .NET page's keywords.
+    """
+    reject = _PLATFORM_REJECT_TERMS.get(platform, frozenset())
+    if not reject:
+        return keywords
+    return [kw for kw in keywords if not any(r in kw.lower() for r in reject)]
 
 
 def _enforce_metadata_quality(fm: dict) -> dict:

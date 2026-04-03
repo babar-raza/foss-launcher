@@ -1,12 +1,12 @@
 ---
 canonical: https://blog.aspose.org/slides/cpp/slides-key-features/
-canonical_import: Aspose::Slides
-code_import: Aspose::Slides
-date: '2026-03-24T16:29:46Z'
-dateModified: '2026-03-24T16:29:46Z'
-datePublished: '2026-03-24T16:29:46Z'
-description: Built around the `Aspose::Slides` namespace, it enables developers to
-  generate, edit, and export `.pptx` presentations directly in native C++ code.
+canonical_import: Aspose::Slides::Foss
+code_import: Aspose::Slides::Foss
+date: '2026-04-01T14:10:08Z'
+dateModified: '2026-04-01T14:41:49Z'
+datePublished: '2026-04-01T14:10:08Z'
+description: Built on the `Aspose::Slides::Foss` namespace, it supports core `presentation`
+  operations including `slide` manipulation, shape rendering, and format...
 display_name: Aspose.Slides FOSS for C++
 family: slides
 keywords:
@@ -16,9 +16,7 @@ keywords:
 - cppcon slides 2025
 - aspose slides cpp
 - meeting cpp slides
-- python slides
-- python slides for beginners
-lastmod: '2026-03-24T16:29:46Z'
+lastmod: '2026-04-01T14:41:49Z'
 page_role: feature_blog
 platform: cpp
 reading_time: 1
@@ -28,66 +26,58 @@ slug: slides-key-features
 title: Slides Key Features
 type: feature_blog
 url: /blog.aspose.org/slides/cpp/slides-key-features/
-weight: 16
+weight: 17
 ---
 
 ## Introduction
 
-If you have ever needed to programmatically create or modify PowerPoint presentations in C++ without relying on Microsoft Office, Aspose.Slides FOSS for C++ delivers a lightweight, header-only solution. Built around the `Aspose::Slides` namespace, it enables developers to generate, edit, and export `.pptx` presentations directly in native C++ code.
+If you have ever needed to programmatically create, edit, or convert PowerPoint presentations in `a` C++ application without relying on Microsoft Office, Aspose.Slides FOSS for C++ provides `a` lightweight, cross-platform solution. Built on the `Aspose::Slides::Foss` namespace, it supports core `presentation` operations including `slide` manipulation, shape rendering, and format conversion.
 
-The library supports core presentation operations: opening and saving `.pptx` files, managing slides and shapes, and applying text and fill formatting. With `#include <Aspose.Slides FOSS for C++>`, you gain access to a minimal but complete API surface for presentation automation—ideal for embedded systems, CLI tools, or server-side batch processing where GUI dependencies are unacceptable.
+- Process presentation files in PPTX, PPT, ODP, and other supported formats with full round-trip fidelity
+- Add, remove, clone, and reorder slides using the `Presentation` and `ISlideCollection` interfaces
+- Work with shapes, text frames, and formatting via `AutoShape`, `TextFrame`, and `Portion` classes
 
 ## Key Highlights
 
-If you have ever needed to programmatically generate or modify PowerPoint presentations in a C++ application without relying on Microsoft Office, Aspose.Slides FOSS for C++ delivers a headless, cross-platform solution. Built around the `Aspose::Slides` namespace, it enables direct manipulation of `.pptx` files using native C++ constructs.
+If you have ever needed to programmatically manage `presentation` metadata or apply precise `text` formatting in C++ without external dependencies, Aspose.Slides FOSS for C++ provides lightweight, header-based APIs for document properties and paragraph styling.
 
-- Create presentations from scratch using the `Presentation` class and save them as `.pptx` files.
-- Add, remove, clone, and reorder slides within a presentation using the `ISlideCollection` interface.
-- Insert and format shapes—including AutoShapes, PictureFrames, and Tables—using the `IShape` hierarchy.
-- Edit text content and apply formatting at the portion, paragraph, and text frame levels via `ITextFrame`, `IParagraph`, and `IPortion`.
-- Apply solid, gradient, pattern, or picture fills to shapes using the `IFill` system.
+- Set presentation metadata using `DocumentProperties` to define title, subject, and application name.
+- Configure paragraph bullet formatting via `BulletFormat` to specify bullet type, character, and position.
+- Apply gradient fills to shapes using `GradientFormat` and `GradientStopCollection` for visual consistency.
+- Attach comments to slides with `Comment`, including author, position, and creation timestamp.
 
 ```cpp
-#include <Aspose::Slides>
+using namespace Aspose::Slides::Foss;
 
-int main() {
-    auto pres = System::[identifier omitted]<Aspose::Slides::Presentation>();
-    auto slide = pres->get_Slides()->[identifier omitted](pres->get_Slides()->get_Count());
-    auto shape = slide->get_Shapes()->[identifier omitted](Aspose::Slides::[identifier omitted]::Rectangle, 100.0f, 100.0f, 300.0f, 100.0f);
-    shape->get_TextFrame()->get_Paragraphs()->Clear();
-    auto paragraph = System::[identifier omitted]<Aspose::Slides::Paragraph>();
-    paragraph->get_Portions()->Clear();
-    paragraph->get_Portions()->Add(System::[identifier omitted]<Aspose::Slides::Portion>(System::[identifier omitted]<String>("Hello, C++ Slides!")));
-    shape->get_TextFrame()->get_Paragraphs()->Add(paragraph);
-    pres->Save(u"output.pptx", Aspose::Slides::[identifier omitted]::Pptx);
-    return 0;
-}
+// Set presentation title and subject
+auto docProps = MakeObject<DocumentProperties>();
+docProps->set_title(L"Q4 Sales Report");
+docProps->set_subject(L"Quarterly Financial Summary");
+docProps->set_name_of_application(L"Aspose.Slides FOSS for C++");
 ```
 
 ## Getting Started
 
-If you have ever needed to programmatically generate or modify PowerPoint presentations in a C++ application without relying on Microsoft Office, Aspose.Slides FOSS for C++ delivers a lightweight, header-only solution for working with `.pptx` files. The library exposes core presentation manipulation capabilities through the `Aspose::Slides` namespace, enabling developers to build slideshows, insert content, and export results entirely in code.
+If you have ever needed to programmatically manage `presentation` metadata or apply precise `text` formatting in C++, Aspose.Slides FOSS for C++ provides lightweight, header-only access to core PowerPoint features via the `Aspose::Slides::Foss` namespace. The library exposes classes like `DocumentProperties` for metadata and `BulletFormat` for paragraph styling without requiring external dependencies or GUI interaction.
 
 ```cpp
-#include <Aspose::Slides>
+using namespace Aspose::Slides::Foss;
 
-int main() {
-    auto pres = System::[identifier omitted]<Aspose::Slides::Presentation>();
-    pres->Save(u"output.pptx", Aspose::Slides::[identifier omitted]::Pptx);
-    return 0;
-}
+// Create a new presentation and set document properties
+auto pres = System::MakeObject<Presentation>();
+pres->get_DocumentProperties()->set_Title(u"CppSlides 2025 Overview");
+pres->get_DocumentProperties()->set_Subject(u"Technical presentation for C++ developers");
+
+// Save the presentation
+pres->Save(u"output.pptx", SaveFormat::Pptx);
 ```
 
-This minimal example creates a new blank presentation and saves it as `output.pptx`. The `Presentation` class serves as the entry point for all operations, and `[identifier omitted]::Pptx` ensures the output conforms to the Office Open XML standard. No external dependencies or COM interop are required.
-
-- Create a new presentation from scratch using the `Presentation` constructor
-- Add slides, shapes, and text using the `ISlideCollection`, `IShapeCollection`, and related interfaces
-- Save the result in `.pptx` format with full fidelity using `Save()`
+The `DocumentProperties` class enables setting standard metadata such as `title` and `subject`, while `BulletFormat` allows fine-grained control over paragraph `bullet` types and characters. These classes integrate directly into `slide` content workflows without requiring commercial licensing or external services.
 
 ## See Also
 
-- [Explore visual effects support](/blog.aspose.org/slides/cpp/introducing-slides-foss-cpp/)
-- [Get started with presentations](/docs.aspose.org/slides/cpp/developer-guide/presentation-creation/)
-- [Manage slides programmatically](/docs.aspose.org/slides/cpp/developer-guide/slide-manipulation/)
-- [Convert file formats easily](/kb.aspose.org/slides/cpp/how-to-convert-presentations-cpp/)
-- [Resolve common errors](/kb.aspose.org/slides/cpp/how-to-fix-presentations-errors-cpp/)
+- [Introducing the open-source C++ library](/slides/cpp/slides-introduction/)
+- [Create presentations from scratch](/slides/cpp/developer-guide/presentation-creation/)
+- [Work with slides programmatically](/slides/cpp/developer-guide/slide-manipulation/)
+- [Convert file formats easily](/slides/cpp/convert-pptx-to-fodp/)
+- [Fix common errors and errors](/slides/cpp/fix-presentations-errors/)

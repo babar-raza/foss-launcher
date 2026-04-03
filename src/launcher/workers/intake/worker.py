@@ -10,12 +10,15 @@ from launcher.models.base import LauncherBaseModel
 from launcher.models.intake import IntakeBundle
 from launcher.orchestrator.worker_contract import WorkerContract, WorkerContext, SelfReviewResult
 from launcher.phase1.acquisition import (
-    build_repo_signals,
-    compute_acquisition_confidence,
     load_allowed_org_prefixes,
-    resolve_tier,
 )
 from launcher.shared.identity import IdentityResolution, _clear_families_cache, resolve_identity
+from launcher.workers.intake.acquisition import (
+    _extract_canonical_import_candidates,
+    build_repo_signals as _build_repo_signals,
+    compute_acquisition_confidence,
+    resolve_tier,
+)
 from launcher.workers.intake.clone import clone_repo_cached
 
 logger = logging.getLogger(__name__)
@@ -76,6 +79,18 @@ class IntakeWorker(WorkerContract):
             ) from exc
 
         launch_tier = resolve_tier(config.launch_tier)
+        repo_signals = _build_repo_signals(repo_dir)
+        candidates, import_confidence = _extract_canonical_import_candidates(repo_dir, config.platform)
+        acquisition_confidence = compute_acquisition_confidence(provenance)
+        if candidates and import_confidence == "high" and candidates[0] != canonical_import:
+            logger.warning(
+                "[Intake] canonical_import mismatch: config=%r repo_extracted=%r "
+                "(platform=%r). Downstream phases will use config value.",
+                canonical_import,
+                candidates[0],
+                config.platform,
+            )
+        discovered_at = datetime.now(timezone.utc).isoformat()
         artifact = {
             "phase": "phase1_acquisition",
             "family": config.family,
@@ -87,12 +102,14 @@ class IntakeWorker(WorkerContract):
             "launch_tier": launch_tier,
             "repo_sha": repo_sha,
             "repo_dir": str(repo_dir),
-            "discovered_at": datetime.now(timezone.utc).isoformat(),
+            "discovered_at": discovered_at,
             "is_fresh_clone": is_fresh_clone,
             "clone_cache_hit": not is_fresh_clone and bool(repo_sha),
             "field_provenance": provenance,
-            "acquisition_confidence": compute_acquisition_confidence(provenance),
-            "repo_signals": build_repo_signals(repo_dir),
+            "acquisition_confidence": acquisition_confidence,
+            "repo_signals": repo_signals,
+            "canonical_import_candidates": candidates,
+            "import_confidence": import_confidence,
             "failure_state": "" if repo_dir.is_dir() and any(repo_dir.iterdir()) else "unusable_clone",
         }
         bundle = IntakeBundle(
@@ -105,7 +122,13 @@ class IntakeWorker(WorkerContract):
             launch_tier=launch_tier,
             repo_sha=repo_sha,
             repo_dir=str(repo_dir),
-            discovered_at=artifact["discovered_at"],
+            discovered_at=discovered_at,
+            acquisition_confidence=acquisition_confidence,
+            import_confidence=import_confidence,
+            canonical_import_candidates=candidates,
+            repo_signals=repo_signals,
+            field_provenance=provenance,
+            is_fresh_clone=is_fresh_clone,
         )
 
         try:
@@ -198,8 +221,8 @@ def _compute_acquisition_confidence(provenance: dict[str, str]) -> str:
     return compute_acquisition_confidence(provenance)
 
 
-def _build_repo_signals(repo_dir: Path) -> dict[str, Any]:
-    return build_repo_signals(repo_dir)
+def _build_repo_signals_compat(repo_dir: Path) -> dict[str, Any]:
+    return _build_repo_signals(repo_dir)
 
 
 def create_worker() -> IntakeWorker:

@@ -99,6 +99,26 @@ class TestBuildPageIndex:
         assert idx["reference-api"].section == "reference"
         assert idx["docs-install"].url == "/install/"
 
+    def test_subdomain_prefix_stripped(self):
+        """TC-EVAL-508: build_page_index strips /kb.aspose.org/ prefix from frontmatter URLs."""
+        plans = [
+            _make_page_plan("kb-faq", title="FAQ", url="/kb.aspose.org/cells/python/faq/"),
+            _make_page_plan("docs-install", title="Install", url="/docs.aspose.org/cells/python/install/"),
+            _make_page_plan("reference-api", title="API", url="https://reference.aspose.org/cells/python/"),
+        ]
+        idx = build_page_index(plans)
+        # Subdomain-prefix paths are stripped to clean relative paths
+        assert idx["kb-faq"].url == "/cells/python/faq/"
+        assert idx["docs-install"].url == "/cells/python/install/"
+        # Absolute https:// URLs are passed through unchanged
+        assert idx["reference-api"].url == "https://reference.aspose.org/cells/python/"
+
+    def test_clean_relative_url_unchanged(self):
+        """TC-EVAL-508: build_page_index does not modify already-clean relative URLs."""
+        plans = [_make_page_plan("docs-install", title="Install", url="/cells/python/install/")]
+        idx = build_page_index(plans)
+        assert idx["docs-install"].url == "/cells/python/install/"
+
 
 # ---------------------------------------------------------------------------
 # Tests: score_links

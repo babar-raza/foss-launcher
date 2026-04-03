@@ -24,7 +24,7 @@ class TestHeadingEcho:
         findings = check_heading_echo(content, "test-page")
         assert len(findings) == 1
         assert findings[0].check == "heading_echo"
-        assert findings[0].severity == "medium"
+        assert findings[0].severity == "low"
 
     def test_longer_paragraph_not_flagged(self):
         content = (

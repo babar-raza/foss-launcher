@@ -51,24 +51,13 @@ def _force_rmtree(path: Path) -> None:
         pass
 
 
+from launcher.shared.families_loader import get_manifest_language_map as _get_manifest_language_map
+
 _CLONE_SHA_MARKER = ".clone_sha"
 _CLONE_TIMESTAMP_MARKER = ".clone_timestamp"
 _CLONE_URL_MARKER = ".clone_url"
 _STALE_CACHE_DAYS = 7
 _SLUG_STOP_WORDS = frozenset({"foss", "for", "the", "a", "ai", "org", "net", "python", "java"})
-_MANIFEST_LANGUAGE_MAP: dict[str, str] = {
-    "package.json": "node/typescript",
-    "pyproject.toml": "python",
-    "setup.py": "python",
-    "setup.cfg": "python",
-    "go.mod": "go",
-    "cargo.toml": "rust",
-    "pom.xml": "java",
-    "build.gradle": "java",
-    "gemfile": "ruby",
-    "composer.json": "php",
-    "cmakelists.txt": "cpp",  # SR-02: C++ projects identified by CMakeLists.txt
-}
 
 # SR-02: License detection constants
 _LICENSE_FILE_NAMES: frozenset[str] = frozenset({
@@ -270,16 +259,43 @@ def clone_repo_cached(
             return cache_dir, cached_sha, False
         _force_rmtree(cache_dir)
 
-    if cache_dir.exists():
+    # TC-5300: preserve stale cache before attempting fresh clone so we can
+    # fall back to it if the network clone fails (e.g. CI without internet).
+    stale_backup = cache_dir.parent / (cache_dir.name + "_stale")
+    had_stale = cache_dir.exists()
+    if had_stale:
+        if stale_backup.exists():
+            _force_rmtree(stale_backup)
+        shutil.copytree(str(cache_dir), str(stale_backup))
         _force_rmtree(cache_dir)
+
     cache_dir.mkdir(parents=True, exist_ok=True)
-    subprocess.run(
-        ["git", "clone", "--depth", "1", "--single-branch", str(repo_url), str(cache_dir)],
-        check=True,
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
+    try:
+        subprocess.run(
+            ["git", "clone", "--depth", "1", "--single-branch", str(repo_url), str(cache_dir)],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+    except Exception as clone_exc:
+        _force_rmtree(cache_dir)
+        if had_stale and stale_backup.exists():
+            stale_backup.rename(cache_dir)
+            stale_sha = marker.read_text(encoding="utf-8").strip() if marker.exists() else "unknown"
+            logger.warning(
+                "[Clone] Fresh clone of %r failed (%s). "
+                "Falling back to stale cache (sha=%s).",
+                repo_url,
+                clone_exc,
+                stale_sha,
+            )
+            return cache_dir, stale_sha, False
+        raise
+
+    if had_stale and stale_backup.exists():
+        _force_rmtree(stale_backup)
+
     sha = remote_sha or _get_repo_sha(cache_dir)
     marker.write_text(sha, encoding="utf-8")
     (cache_dir / _CLONE_URL_MARKER).write_text(repo_url, encoding="utf-8")
@@ -330,14 +346,15 @@ def build_repo_signals(repo_dir: Path) -> dict[str, Any]:
         )
         manifests: list[str] = []
         inferred_language = ""
+        _manifest_map = _get_manifest_language_map()
         for child in children:
             if not child.is_file():
                 continue
             lower_name = child.name.lower()
-            if lower_name in _MANIFEST_LANGUAGE_MAP:
+            if lower_name in _manifest_map:
                 manifests.append(child.name)
                 if not inferred_language:
-                    inferred_language = _MANIFEST_LANGUAGE_MAP[lower_name]
+                    inferred_language = _manifest_map[lower_name]
             elif child.suffix.lower() in {".csproj", ".sln"}:
                 manifests.append(child.name)
                 if not inferred_language:
@@ -386,6 +403,246 @@ def build_repo_signals(repo_dir: Path) -> dict[str, Any]:
         }
 
 
+def _extract_canonical_import_candidates(
+    repo_dir: Path,
+    platform: str,
+    *,
+    scan_limit: int = 30,
+) -> tuple[list[str], str]:
+    """Extract repo-grounded canonical_import candidates by scanning source files.
+
+    Returns (candidates, confidence) where:
+    - candidates: top-ranked namespace/package strings derived from the repo
+    - confidence: "high" (one clear winner >=70%), "medium" (found but ambiguous),
+      "low" (scan ran but nothing useful found), "none" (platform unsupported)
+
+    Platforms:
+    - cpp: scans .h/.hpp for ``namespace A::B::C {`` patterns
+    - dotnet: scans .cs for ``namespace A.B.C`` patterns
+    - java: scans .java for ``package A.B.C;`` patterns
+    - typescript: reads package.json ``name`` field
+    - python: detects ``aspose/X/__init__.py`` namespace package paths
+
+    TC-5321 (INT-H2): First structural verification of canonical_import at Intake.
+    """
+    plat = (platform or "").lower().strip()
+
+    if plat == "cpp":
+        return _scan_cpp_namespaces(repo_dir, scan_limit=scan_limit)
+    if plat in ("dotnet", "csharp"):
+        return _scan_dotnet_namespaces(repo_dir, scan_limit=scan_limit)
+    if plat == "java":
+        return _scan_java_packages(repo_dir, scan_limit=scan_limit)
+    if plat == "typescript":
+        return _scan_typescript_package(repo_dir)
+    if plat == "python":
+        return _scan_python_module(repo_dir)
+    return [], "none"
+
+
+# Internal namespace markers — segments containing these are NOT public API.
+_CPP_INTERNAL_SEGMENTS: frozenset[str] = frozenset({"internal", "detail", "impl", "private"})
+_DOTNET_INTERNAL_SEGMENTS: frozenset[str] = frozenset({"internal", "impl", "detail", "private"})
+_JAVA_INTERNAL_SEGMENTS: frozenset[str] = frozenset({"internal", "impl", "detail"})
+
+# Maximum depth of namespace/package to retain — trims very deep chains.
+_NS_MAX_DEPTH = 4
+
+# Minimum frequency fraction to declare "high" confidence (70% of sampled files agree).
+_HIGH_CONF_THRESHOLD = 0.70
+
+
+def _score_candidates(counter: dict[str, int], total: int) -> tuple[list[str], str]:
+    """Convert a frequency counter to (candidates, confidence).
+
+    Root-namespace promotion: if any candidate is a strict prefix of the top
+    candidate and has meaningful presence (>= 5% of total), promote it to first
+    place. This handles .NET/Java libraries where sub-namespaces like
+    ``Aspose.ThreeD.Entities`` are more frequent than the root ``Aspose.ThreeD``.
+    """
+    if not counter or total == 0:
+        return [], "low"
+    ranked = sorted(counter.items(), key=lambda kv: (-kv[1], kv[0]))
+    top_ns, top_count = ranked[0]
+
+    # Root-namespace promotion: prefer shortest prefix that appears meaningfully.
+    min_presence = max(1, int(total * 0.05))
+    for ns, count in ranked:
+        if ns == top_ns:
+            continue
+        if count < min_presence:
+            continue
+        sep = "::" if "::" in top_ns else "."
+        if top_ns.startswith(ns + sep) and len(ns) < len(top_ns):
+            # ns is a shorter prefix of top_ns — promote it as root namespace.
+            top_ns = ns
+            top_count = count
+            break
+
+    combined = top_count + sum(
+        c for n, c in ranked
+        if n != top_ns and (
+            n.startswith(top_ns + "::") or n.startswith(top_ns + ".")
+        )
+    )
+    confidence = "high" if (combined / total) >= _HIGH_CONF_THRESHOLD else "medium"
+    other = [ns for ns, _ in ranked if ns != top_ns][:2]
+    return [top_ns] + other, confidence
+
+
+def _scan_cpp_namespaces(repo_dir: Path, *, scan_limit: int) -> tuple[list[str], str]:
+    """Scan C++ header files for namespace declarations."""
+    import re as _re
+
+    # Prefer public headers (not in _internal/); sort them first.
+    all_headers = list(repo_dir.rglob("*.h")) + list(repo_dir.rglob("*.hpp"))
+    public_first = sorted(
+        all_headers,
+        key=lambda p: (1 if "_internal" in str(p).lower() else 0, str(p)),
+    )[:scan_limit]
+
+    # Match: namespace Aspose::Slides::Foss {  (C++17 style)
+    ns_re = _re.compile(r"^namespace\s+([\w:]+)\s*\{?\s*$", _re.MULTILINE)
+
+    counter: dict[str, int] = {}
+    total = 0
+    for header in public_first:
+        try:
+            text = header.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        for match in ns_re.finditer(text):
+            raw_ns = match.group(1).strip(":").strip()
+            segments = [s for s in raw_ns.split("::") if s]
+            if any(seg.lower() in _CPP_INTERNAL_SEGMENTS for seg in segments):
+                continue
+            ns = "::".join(segments[:_NS_MAX_DEPTH])
+            if ns:
+                counter[ns] = counter.get(ns, 0) + 1
+                total += 1
+
+    return _score_candidates(counter, total)
+
+
+def _scan_dotnet_namespaces(repo_dir: Path, *, scan_limit: int) -> tuple[list[str], str]:
+    """Scan .cs files for namespace declarations."""
+    import re as _re
+
+    cs_files = sorted(repo_dir.rglob("*.cs"))
+    public_first = sorted(
+        cs_files,
+        key=lambda p: (
+            1 if any(
+                seg.lower() in {"tests", "test", "internal", "impl"}
+                for seg in p.parts
+            ) else 0,
+            str(p),
+        ),
+    )[:scan_limit]
+
+    # Match: namespace Aspose.Slides.Foss;  OR  namespace Aspose.Slides.Foss {
+    ns_re = _re.compile(r"^namespace\s+([\w\.]+)\s*[{;]?\s*$", _re.MULTILINE)
+
+    counter: dict[str, int] = {}
+    total = 0
+    for cs_file in public_first:
+        try:
+            text = cs_file.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        for match in ns_re.finditer(text):
+            raw_ns = match.group(1).strip()
+            segments = raw_ns.split(".")
+            if any(seg.lower() in _DOTNET_INTERNAL_SEGMENTS for seg in segments):
+                continue
+            ns = ".".join(segments[:_NS_MAX_DEPTH])
+            if ns:
+                counter[ns] = counter.get(ns, 0) + 1
+                total += 1
+
+    return _score_candidates(counter, total)
+
+
+def _scan_java_packages(repo_dir: Path, *, scan_limit: int) -> tuple[list[str], str]:
+    """Scan .java files for package declarations."""
+    import re as _re
+
+    java_files = sorted(repo_dir.rglob("*.java"))
+    public_first = sorted(
+        java_files,
+        key=lambda p: (
+            1 if any(
+                seg.lower() in {"test", "tests", "internal", "impl"}
+                for seg in p.parts
+            ) else 0,
+            str(p),
+        ),
+    )[:scan_limit]
+
+    pkg_re = _re.compile(r"^package\s+([\w\.]+)\s*;", _re.MULTILINE)
+
+    counter: dict[str, int] = {}
+    total = 0
+    for jf in public_first:
+        try:
+            text = jf.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        for match in pkg_re.finditer(text):
+            raw_pkg = match.group(1).strip()
+            segments = raw_pkg.split(".")
+            if any(seg.lower() in _JAVA_INTERNAL_SEGMENTS for seg in segments):
+                continue
+            pkg = ".".join(segments[:_NS_MAX_DEPTH])
+            if pkg:
+                counter[pkg] = counter.get(pkg, 0) + 1
+                total += 1
+
+    return _score_candidates(counter, total)
+
+
+def _scan_typescript_package(repo_dir: Path) -> tuple[list[str], str]:
+    """Read package.json to extract the npm package name."""
+    import json as _json
+
+    pkg_json = repo_dir / "package.json"
+    if not pkg_json.is_file():
+        return [], "low"
+    try:
+        data = _json.loads(pkg_json.read_text(encoding="utf-8"))
+        name = data.get("name", "").strip()
+        if name:
+            return [name], "high"
+    except (OSError, ValueError):
+        pass
+    return [], "low"
+
+
+def _scan_python_module(repo_dir: Path) -> tuple[list[str], str]:
+    """Detect the Python module import path from namespace package layout.
+
+    Handles two layouts:
+    - Flat: ``repo_root/aspose/X/__init__.py`` → ``aspose.X``
+    - Src:  ``repo_root/src/aspose/X/__init__.py`` → ``aspose.X``
+    """
+    candidates: list[str] = []
+    for base in [repo_dir, repo_dir / "src"]:
+        aspose_dir = base / "aspose"
+        if not aspose_dir.is_dir():
+            continue
+        for subdir in sorted(aspose_dir.iterdir()):
+            if not subdir.is_dir():
+                continue
+            if (subdir / "__init__.py").exists():
+                module_path = f"aspose.{subdir.name}"
+                if module_path not in candidates:
+                    candidates.append(module_path)
+    if not candidates:
+        return [], "low"
+    confidence = "high" if len(candidates) == 1 else "medium"
+    return candidates, confidence
+
+
 def build_acquisition_artifact(
     *,
     family: str,
@@ -402,6 +659,15 @@ def build_acquisition_artifact(
     provenance: dict[str, str],
 ) -> dict[str, Any]:
     repo_signals = build_repo_signals(repo_dir)
+    candidates, import_confidence = _extract_canonical_import_candidates(repo_dir, platform)
+    if candidates and import_confidence == "high" and candidates[0] != canonical_import:
+        logger.warning(
+            "[Intake] canonical_import mismatch: config=%r repo_extracted=%r "
+            "(platform=%r). Config value used; repo value in candidates list.",
+            canonical_import,
+            candidates[0],
+            platform,
+        )
     return {
         "phase": "phase1_acquisition",
         "family": family,
@@ -419,6 +685,8 @@ def build_acquisition_artifact(
         "field_provenance": provenance,
         "acquisition_confidence": compute_acquisition_confidence(provenance),
         "repo_signals": repo_signals,
+        "canonical_import_candidates": candidates,
+        "import_confidence": import_confidence,
         "failure_state": "" if repo_dir.is_dir() and not repo_signals["is_empty_clone"] else "unusable_clone",
     }
 
@@ -431,6 +699,7 @@ __all__ = [
     "_check_url_collision",
     "_extract_brand_from_org",
     "_extract_brand_from_url",
+    "_extract_canonical_import_candidates",
     "_get_cache_dir",
     "_get_repo_sha",
     "_log_cache_age",

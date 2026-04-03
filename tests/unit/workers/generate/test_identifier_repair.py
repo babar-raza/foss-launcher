@@ -114,7 +114,13 @@ class TestCodeBlockRepair:
     """Test B: hallucinated identifiers in code blocks annotated with comments."""
 
     def test_code_block_hallucination_annotated(self) -> None:
-        """RowIterator in code block → comment appended; code line preserved."""
+        """TC-5317: RowIterator in code block → line preserved with _UNKNOWN_ marker.
+
+        Previously (TC-GEN-601) the line was silently deleted, breaking surrounding
+        code. Now the line is preserved with the identifier replaced by _UNKNOWN_{name}_
+        so the code block remains syntactically coherent and evaluation can detect
+        the marker via the api_allowlist check.
+        """
         surface = _workbook_surface()
         text = (
             "Example:\n\n"
@@ -127,9 +133,11 @@ class TestCodeBlockRepair:
         repaired, repairs = repair_identifiers(text, surface)
         # The hallucinated identifier should be noted in repairs
         assert "RowIterator" in repairs
-        # The code line should contain an annotation comment
-        assert "# RowIterator: unknown" in repaired
-        # The surrounding code structure should be preserved
+        # TC-5317: line is preserved (not silently deleted) with _UNKNOWN_ marker
+        assert "_UNKNOWN_RowIterator_" in repaired
+        # Raw identifier is gone (replaced by marker), no comment annotation
+        assert "# RowIterator: unknown" not in repaired
+        # The surrounding code structure must still be present (no cascade breakage)
         assert "for row in iterator:" in repaired
         assert "print(row)" in repaired
 

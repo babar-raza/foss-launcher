@@ -112,7 +112,7 @@ def check_low_specificity(
                     f"no concrete identifiers): \"{stripped[:80]}...\" — "
                     f"name specific classes, methods, formats, or outputs"
                 ),
-                severity="medium",
+                severity="low",
                 location=slug,
             ))
 

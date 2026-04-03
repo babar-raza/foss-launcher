@@ -5,7 +5,7 @@ launch_tier: auto
 validation_profile: pilot
 product_name: The official open-source C++ library by Aspose
 display_name: Aspose.Slides FOSS for C++
-canonical_import: "Aspose::Slides"
+canonical_import: "Aspose::Slides::Foss"
 llm:
   primary:
     base_url: https://llm.professionalize.com/v1
@@ -17,8 +17,8 @@ llm:
     model: gemma3:12b
   routing:
     extract: standard
-    generate: reasoning
-    review: reasoning
+    generate: standard
+    review: standard
   temperature: 0.0
   max_tokens: 6000
   max_concurrency: 4

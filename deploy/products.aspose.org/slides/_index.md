@@ -1,31 +1,29 @@
 ---
 canonical: https://products.aspose.org/slides/_index/
-canonical_import: com.aspose.slides
-code_import: com.aspose.slides
-date: '2026-03-24T17:06:48Z'
-dateModified: '2026-03-24T17:06:48Z'
-datePublished: '2026-03-24T17:06:48Z'
-description: It supports reading, writing, and modifying .pptx files with full fidelity,
-  enabling developers to automate slide generation, formatting, and conversion in...
-display_name: Aspose.Slides FOSS for Java
+canonical_import: Aspose::Slides::Foss
+code_import: Aspose::Slides::Foss
+date: '2026-04-01T14:10:08Z'
+dateModified: '2026-04-01T14:41:49Z'
+datePublished: '2026-04-01T14:10:08Z'
+description: It supports reading, writing, and modifying.pptx files with full fidelity,
+  including `slide` management, shape rendering, and `text` formatting.
+display_name: Aspose.Slides FOSS for C++
 family: slides
 keywords:
-- slides javascript
-- slides java
-- slides javascript library
-- slideshow javascript
-- javascript slides pdf
-- java slides pdf
-- slideshow javascript library
-- java slides ppt
-lastmod: '2026-03-24T17:06:48Z'
+- cppcon slides
+- cpp slides
+- cppnow slides
+- cppcon slides 2025
+- aspose slides cpp
+- meeting cpp slides
+lastmod: '2026-04-01T14:41:49Z'
 page_role: landing
-platform: java
+platform: cpp
 reading_time: 1
 robots: noindex, follow
-seoTitle: Aspose.Slides FOSS for Java | Guide
+seoTitle: Aspose.Slides FOSS for C++ | Guide
 slug: _index
-title: Aspose.Slides FOSS for Java
+title: Aspose.Slides FOSS for C++
 type: landing
 url: /products.aspose.org/slides/_index/
 weight: 1
@@ -33,103 +31,46 @@ weight: 1
 
 ## Overview
 
-Aspose.Slides FOSS for Java -- Product introduction and key value proposition.
+Aspose.Slides FOSS for C++ enables developers to process PowerPoint presentations programmatically without requiring Microsoft PowerPoint. It supports reading, writing, and modifying.pptx files with full fidelity, including `slide` management, shape rendering, and `text` formatting.
 
-Aspose.Slides FOSS for Java Install Aspose.Slides FOSS for Java via: mvn dependency:get -Dartifact=org.aspose.slides.foss:aspose-slides-foss:1.0.0.
+The library exposes core `presentation` constructs through the `IPresentation` interface and supporting classes such as `Slide`, `Shape`, and `TextFrame`. Formatting capabilities include `FillFormat`, `GradientFormat`, `BulletFormat`, and `EffectFormat`, while metadata is handled via `DocumentProperties` and `IDocumentProperties`. Comments are supported through the `Comment` and `IComment` interfaces.
 
-```java
-import org.aspose.slides.foss.Presentation;
-import org.aspose.slides.foss.export.SaveFormat;
-
-// Open an existing presentation
-try (Presentation prs = new Presentation("input.pptx")) {
-    System.out.println("Slides: " + prs.getSlides().size());
-    prs.save("output.pptx", SaveFormat.PPTX);
-}
-
-// Create a new presentation
-try (Presentation prs = new Presentation()) {
-    var slide = prs.getSlides().get(0);
-    prs.save("new.pptx", SaveFormat.PPTX);
-}
-```
-
-```java
-import org.aspose.slides.foss.Presentation;
-import org.aspose.slides.foss.ShapeType;
-import org.aspose.slides.foss.IAutoShape;
-import org.aspose.slides.foss.ISlide;
-import org.aspose.slides.foss.export.SaveFormat;
-
-try (Presentation prs = new Presentation()) {
-    ISlide slide = prs.getSlides().get(0);
-    IAutoShape shape = slide.getShapes().addAutoShape(ShapeType.RECTANGLE, 50, 50, 300, 100);
-    shape.addTextFrame("Hello, world!");
-    prs.save("shapes.pptx", SaveFormat.PPTX);
-}
-```
-
-```java
-import org.aspose.slides.foss.*;
-import org.aspose.slides.foss.drawing.Color;
-import org.aspose.slides.foss.export.SaveFormat;
-
-try (Presentation prs = new Presentation()) {
-    IAutoShape shape = prs.getSlides().get(0).getShapes()
-            .addAutoShape(ShapeType.RECTANGLE, 50, 50, 400, 150);
-    shape.addTextFrame("Formatted text");
-    IPortionFormat fmt = shape.getTextFrame().getParagraphs().get(0)
-            .getPortions().get(0).getPortionFormat();
-    fmt.setFontHeight(24);
-    fmt.setFontBold(NullableBool.TRUE);
-    fmt.getFillFormat().setFillType(FillType.SOLID);
-    fmt.getFillFormat().getSolidFillColor().setColor(Color.fromArgb(255, 0, 70, 127));
-    prs.save("text.pptx", SaveFormat.PPTX);
-}
-```
+- Read and write .pptx files with round-trip fidelity
+- Manage slides: add, remove, clone, and reorder
+- Format shapes with solid, gradient, and picture fills
+- Apply paragraph and character formatting including bullets
+- Add and manipulate slide comments with timestamps
+- Access and modify presentation metadata (title, subject, app version)
 
 ## Key Features
 
-Aspose.Slides FOSS for Java processes PowerPoint presentations without requiring Microsoft PowerPoint. It supports reading, writing, and modifying .pptx files with full fidelity, enabling developers to automate slide generation, formatting, and conversion in Java applications.
+Aspose.Slides FOSS for C++ enables developers to process PowerPoint presentations programmatically without requiring Microsoft PowerPoint. It exposes core `presentation` constructs through the `IPresentation` interface and supporting classes such as `Slide`, `Shape`, `TextFrame`, and `FillFormat`, all under the `Aspose::Slides::Foss` namespace.
 
-- Open existing presentations with `Presentation` to load and modify .pptx files
-- Create new presentations from scratch using the parameterless `Presentation` constructor
-- Add and format shapes—including rectangles, connectors, and picture frames—with full layout control
-- Apply text formatting at portion, paragraph, and text frame levels, including font size, bold, and color
-- Configure solid, gradient, and pattern fills for shapes and text using `ColorFormat` and `FillFormat`
-- Manage comments with authors, positions, and timestamps for collaborative review workflows
-
-```java
-import com.aspose.slides.*;
-import com.aspose.slides.export.SaveFormat;
-
-// Open an existing presentation
-try (Presentation prs = new Presentation("input.pptx")) {
-    prs.save("output.pptx", SaveFormat.PPTX);
-}
-
-// Create a new presentation
-try (Presentation prs = new Presentation()) {
-    var slide = prs.getSlides().get(0);
-    prs.save("new.pptx", SaveFormat.PPTX);
-}
-```
+- Read and write `.pptx` files with full round-trip fidelity using the `IPresentation` interface
+- Manipulate slides—add, remove, clone, and reorder—via the `SlideCollection` interface
+- Format text with character, paragraph, and bullet styling through `TextFrame`, `Paragraph`, and `BulletFormat`
+- Apply fill styles—including solid, gradient, and picture fills—using `FillFormat`, `GradientFormat`, and `GradientStopCollection`
+- Attach comments to slides with timestamps and author context via the `Comment` class
+- Access and modify document properties such as title, subject, and company using `DocumentProperties`
 
 ## Quick Start
 
-Aspose.Slides FOSS for Java processes PowerPoint files without requiring Microsoft PowerPoint. It supports reading, writing, and modifying .pptx presentations programmatically, enabling server-side slide generation, report automation, and document conversion in Java applications.
+Aspose.Slides FOSS for C++ enables programmatic creation, modification, and conversion of PowerPoint presentations without requiring Microsoft PowerPoint. It exposes core `presentation` constructs through the `IPresentation` interface and supporting classes such as `AutoShape`, `AdjustValue`, and `BasePortionFormat`.
 
-- Open existing presentations with `new Presentation("input.pptx")`
-- Create new presentations from scratch with `new Presentation()`
-- Add shapes, text, and formatting to slides
-- Save presentations in .pptx format with full fidelity
+```cpp
+using namespace Aspose::Slides::Foss;
+
+// Create a new presentation and add a title slide
+auto pres = MakeObject<Presentation>();
+auto slide = pres->get_Slides()->idx_get(0);
+slide->get_Shapes()->AddAutoShape(ShapeType::Rectangle, 50.0f, 50.0f, 400.0f, 100.0f);
+pres->Save(u"output.pptx", SaveFormat::Pptx);
+```
 
 ## See Also
 
-To begin using Aspose.Slides FOSS for Java, install it via Maven using the command `mvn dependency:get -Dartifact=org.aspose.slides.foss:aspose-slides-foss:1.0.0`. The `Presentation` class supports both opening existing presentations and creating new ones from scratch, enabling end-to-end slide manipulation without requiring Microsoft PowerPoint.
-
-- [Open existing presentations with Presentation class](/blog.aspose.org/slides/java/slides-foss-java/)
-- [Key features of Aspose.Slides FOSS for Java](/blog.aspose.org/slides/java/slides-features/)
-- [Create new presentations step by step](/docs.aspose.org/slides/java/developer-guide/presentation-creation/)
-- [Work with slides programmatically](/docs.aspose.org/slides/java/developer-guide/slide-manipulation/)
-- [Convert file formats easily](/kb.aspose.org/slides/java/convert-png-pptx-java/)
+- [Introducing Slides Foss Cpp](/slides/cpp/slides-introduction/)
+- [Explore key features](/slides/cpp/slides-key-features/)
+- [Create presentations from scratch](/slides/cpp/developer-guide/presentation-creation/)
+- [Work with slides efficiently](/slides/cpp/developer-guide/slide-manipulation/)
+- [Convert file formats easily](/slides/cpp/convert-pptx-to-fodp/)

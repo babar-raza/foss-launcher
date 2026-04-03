@@ -1,0 +1,114 @@
+[
+  {
+    "path": "3d/python/convert-obj-to-stl/_index.md",
+    "role": "howto_article",
+    "family": "3d",
+    "platform": "python",
+    "note": "howto — 3D format conversion"
+  },
+  {
+    "path": "3d/python/load-3d-scene/_index.md",
+    "role": "howto_article",
+    "family": "3d",
+    "platform": "python",
+    "note": "howto — scene loading"
+  },
+  {
+    "path": "3d/python/create-3d-mesh/_index.md",
+    "role": "howto_article",
+    "family": "3d",
+    "platform": "python",
+    "note": "howto — mesh creation"
+  },
+  {
+    "path": "3d/java/convert-fbx-to-gltf/_index.md",
+    "role": "howto_article",
+    "family": "3d",
+    "platform": "java",
+    "note": "howto — cross-platform comparison"
+  },
+  {
+    "path": "cells/python/convert-excel-to-pdf/_index.md",
+    "role": "howto_article",
+    "family": "cells",
+    "platform": "python",
+    "note": "howto — Cells format conversion"
+  },
+  {
+    "path": "cells/python/read-excel-file/_index.md",
+    "role": "howto_article",
+    "family": "cells",
+    "platform": "python",
+    "note": "howto — Cells data reading"
+  },
+  {
+    "path": "3d/python/getting-started/_index.md",
+    "role": "installation",
+    "family": "3d",
+    "platform": "python",
+    "note": "installation page"
+  },
+  {
+    "path": "cells/python/getting-started/_index.md",
+    "role": "installation",
+    "family": "cells",
+    "platform": "python",
+    "note": "installation page"
+  },
+  {
+    "path": "3d/python/blog/convert-3d-models-python/_index.md",
+    "role": "blog_announcement",
+    "family": "3d",
+    "platform": "python",
+    "note": "blog — announcement"
+  },
+  {
+    "path": "3d/python/blog/3d-file-processing-python/_index.md",
+    "role": "feature_blog",
+    "family": "3d",
+    "platform": "python",
+    "note": "blog — feature overview"
+  },
+  {
+    "path": "cells/python/blog/excel-automation-python/_index.md",
+    "role": "feature_blog",
+    "family": "cells",
+    "platform": "python",
+    "note": "blog — feature overview"
+  },
+  {
+    "path": "3d/python/faq/_index.md",
+    "role": "faq",
+    "family": "3d",
+    "platform": "python",
+    "note": "FAQ page"
+  },
+  {
+    "path": "3d/python/troubleshooting/_index.md",
+    "role": "troubleshooting",
+    "family": "3d",
+    "platform": "python",
+    "note": "troubleshooting page"
+  },
+  {
+    "path": "3d/python/Scene/_index.md",
+    "role": "reference_object_page",
+    "family": "3d",
+    "platform": "python",
+    "note": "API reference — Scene class"
+  },
+  {
+    "path": "cells/python/Workbook/_index.md",
+    "role": "reference_object_page",
+    "family": "cells",
+    "platform": "python",
+    "note": "API reference — Workbook class"
+  },
+  {
+    "path": "3d/python/_index.md",
+    "role": "landing",
+    "family": "3d",
+    "platform": "python",
+    "note": "landing page"
+  }
+]

@@ -147,16 +147,17 @@ class TestHG11EvidenceInjection:
         )
         assert "KNOWN API CLASSES" not in prompt
 
-    def test_api_ids_guard_capped_at_thirty(self):
-        """API identifiers guard includes at most 30 names."""
+    def test_api_ids_guard_capped_at_sixty(self):
+        """API identifiers guard includes at most 60 names (TC-EVAL-507: raised from 30)."""
         from launcher.workers.generate.section_prompt import _format_api_ids_guard
 
-        # 50 capitalized class names
-        ids = [f"Class{i}" for i in range(50)]
+        # 80 capitalized class names
+        ids = [f"Class{i}" for i in range(80)]
         result = _format_api_ids_guard(ids, "TestLib")
         # Count how many "Class" tokens appear
         parts = result.split(",")
-        assert len(parts) <= 30, "Guard must be capped at 30 identifiers"
+        assert len(parts) <= 60, "Guard must be capped at 60 identifiers"
+        assert len(parts) > 30, "Guard should now show more than 30 identifiers"
 
     def test_both_blocks_injected_together(self):
         """Both limitations and API guard can coexist in the same prompt."""

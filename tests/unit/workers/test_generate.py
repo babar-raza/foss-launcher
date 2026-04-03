@@ -1754,10 +1754,10 @@ class TestCountProseWords:
 
         call_count = 0
 
-        async def mock_call_llm(prompt, ctx, max_tokens=None):
+        async def mock_call_llm(prompt, ctx, max_tokens=None, _override_temperature=None):
             nonlocal call_count
             call_count += 1
-            return thin_response
+            return thin_response, ""
 
         with patch("launcher.workers.generate.worker._call_llm", side_effect=mock_call_llm):
             from launcher.models.product import ApiSurface
